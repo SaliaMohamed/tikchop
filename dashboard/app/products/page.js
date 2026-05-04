@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ImagePlus,
+  Loader2,
   Package,
   Pencil,
   Plus,
@@ -12,17 +13,20 @@ import {
   Share2,
   X,
 } from "lucide-react";
-import { getSellerProducts, updateProduct } from "../actions";
+import { getSellerProducts, updateProduct, uploadProductImage } from "../actions";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
 }
 
 export default function ProductsPage() {
+  const editFileInputRef = useRef(null);
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -52,6 +56,7 @@ export default function ProductsPage() {
 
   function openEditor(product) {
     setEditingProduct(product);
+    setImageError("");
     setFormData({
       name: product.name || "",
       price: String(product.price ?? ""),
@@ -63,7 +68,30 @@ export default function ProductsPage() {
 
   function closeEditor() {
     setEditingProduct(null);
+    setImageError("");
     setFormData({ name: "", price: "", stock_quantity: "", image_url: "", description: "" });
+  }
+
+  async function handleEditImageSelection(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setImageError("");
+      setImageUploading(true);
+      const preview = URL.createObjectURL(file);
+      setFormData((current) => ({ ...current, image_url: preview }));
+
+      const payload = new FormData();
+      payload.append("image", file);
+      const result = await uploadProductImage(payload);
+      setFormData((current) => ({ ...current, image_url: result.url }));
+    } catch (err) {
+      setImageError(err.message || "Image impossible a envoyer.");
+    } finally {
+      setImageUploading(false);
+      event.target.value = "";
+    }
   }
 
   async function saveProduct() {
@@ -193,13 +221,43 @@ export default function ProductsPage() {
                 <input className="mobile-input bg-zinc-50" type="number" placeholder="Prix" value={formData.price} onChange={(event) => setFormData({ ...formData, price: event.target.value })} />
                 <input className="mobile-input bg-zinc-50" type="number" placeholder="Stock" value={formData.stock_quantity} onChange={(event) => setFormData({ ...formData, stock_quantity: event.target.value })} />
               </div>
-              <input className="mobile-input bg-zinc-50" placeholder="Lien image" value={formData.image_url} onChange={(event) => setFormData({ ...formData, image_url: event.target.value })} />
+              <input
+                ref={editFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleEditImageSelection}
+              />
+              <button
+                type="button"
+                onClick={() => editFileInputRef.current?.click()}
+                className="relative flex min-h-[156px] items-center justify-center overflow-hidden rounded-xl border border-[var(--outline)]/45 bg-zinc-50 text-center"
+              >
+                {formData.image_url && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={formData.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute inset-0 bg-black/25" />
+                  </>
+                )}
+                <span className="relative z-10 rounded-lg bg-white/95 px-4 py-3 text-sm font-extrabold text-[var(--primary)] shadow-sm">
+                  {formData.image_url ? "Changer la photo" : "Choisir une photo"}
+                </span>
+                {imageUploading && (
+                  <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
+                    <Loader2 className="animate-spin" size={20} />
+                  </span>
+                )}
+              </button>
+              {imageError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{imageError}</p>
+              )}
               <textarea className="mobile-input min-h-[96px] resize-none bg-zinc-50" placeholder="Description" value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} />
             </div>
 
-            <button onClick={saveProduct} disabled={saving} className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
+            <button onClick={saveProduct} disabled={saving || imageUploading} className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
               <Save size={18} />
-              {saving ? "Enregistrement..." : "Enregistrer"}
+              {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
         </div>

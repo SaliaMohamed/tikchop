@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ImagePlus, Mic, PackagePlus, Sparkles, Upload } from "lucide-react";
-import { addProduct, addProductsBulk, getSellersForProductForm } from "../actions";
+import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Upload } from "lucide-react";
+import { addProduct, addProductsBulk, getSellersForProductForm, uploadProductImage } from "../actions";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -11,7 +11,11 @@ function formatPrice(value) {
 
 export default function AddProductPage() {
   const router = useRouter();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageError, setImageError] = useState("");
   const [listening, setListening] = useState(false);
   const [mode, setMode] = useState("MANUAL");
   const [bulkText, setBulkText] = useState("");
@@ -70,6 +74,30 @@ export default function AddProductPage() {
     setFormData({ ...formData, [event.target.name]: event.target.value });
   }
 
+  async function handleImageSelection(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImageError("");
+    setImageUploading(true);
+    setImagePreview(URL.createObjectURL(file));
+
+    try {
+      const payload = new FormData();
+      payload.append("image", file);
+      const result = await uploadProductImage(payload);
+      setFormData((current) => ({ ...current, image_url: result.url }));
+      setImagePreview(result.url);
+    } catch (error) {
+      console.error("Image upload error:", error);
+      setImageError(error.message || "Image impossible a envoyer.");
+      setFormData((current) => ({ ...current, image_url: "" }));
+    } finally {
+      setImageUploading(false);
+      event.target.value = "";
+    }
+  }
+
   function applyVoiceText(text) {
     const parsed = parseVoiceProduct(text);
     setFormData((current) => ({
@@ -105,7 +133,7 @@ export default function AddProductPage() {
   const bulkProducts = parseBulkProducts(bulkText);
   const canSubmit = mode === "BULK"
     ? bulkProducts.length > 0 && formData.seller_id
-    : formData.seller_id && formData.name && formData.price;
+    : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading;
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
@@ -126,9 +154,9 @@ export default function AddProductPage() {
 
         <section className="app-card bg-white p-4">
           <div className="grid grid-cols-3 gap-2 text-center">
-            <StepChip done={Boolean(formData.image_url) || mode === "BULK"} label="Photo" />
-            <StepChip done={Boolean(formData.name) || bulkProducts.length > 0} label="Nom" />
-            <StepChip done={Boolean(formData.price) || bulkProducts.length > 0} label="Prix" />
+            <StepChip done={Boolean(formData.image_url) || mode === "BULK"} step="1" label="Photo" />
+            <StepChip done={Boolean(formData.name) || bulkProducts.length > 0} step="2" label="Nom" />
+            <StepChip done={Boolean(formData.price) || bulkProducts.length > 0} step="3" label="Prix" />
           </div>
         </section>
 
@@ -206,15 +234,53 @@ export default function AddProductPage() {
 
           {mode !== "BULK" && (
             <section className="space-y-3">
-              <div className="flex min-h-[154px] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-[var(--outline)]/55 bg-[var(--surface-mid)] p-6 text-center md:min-h-[220px]">
-                <ImagePlus className="text-[var(--secondary)]" size={44} />
-                <p className="mt-3 font-semibold text-[var(--text-main)]">Photo du produit</p>
-                <p className="mt-1 max-w-[15rem] text-sm leading-5 text-[var(--text-dim)]">Pour le MVP, colle le lien image juste en dessous.</p>
-              </div>
-
-              <Field label="Lien photo">
-                <input type="url" name="image_url" placeholder="https://..." value={formData.image_url} onChange={handleChange} className="mobile-input" />
-              </Field>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelection}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`relative flex min-h-[190px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-0 text-center transition active:scale-[0.99] md:min-h-[250px] ${
+                  formData.image_url ? "border-[var(--primary)] bg-white" : "border-[var(--outline)]/55 bg-[var(--surface-mid)]"
+                }`}
+              >
+                {imagePreview ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imagePreview} alt="Apercu produit" className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                    <span className="absolute bottom-4 left-4 right-4 flex min-h-[46px] items-center justify-center rounded-lg bg-white/92 px-4 text-sm font-bold text-[var(--primary)] shadow-sm">
+                      {imageUploading ? "Envoi de la photo..." : "Changer la photo"}
+                    </span>
+                  </>
+                ) : (
+                  <span className="flex flex-col items-center px-6">
+                    <ImagePlus className="text-[var(--secondary)]" size={46} />
+                    <span className="mt-3 font-display text-xl font-bold text-[var(--text-main)]">Choisir dans la galerie</span>
+                    <span className="mt-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[var(--primary)] shadow-sm">Appuie ici</span>
+                    <span className="mt-1 max-w-[15rem] text-sm leading-5 text-[var(--text-dim)]">Une belle photo vend plus vite.</span>
+                  </span>
+                )}
+                {imageUploading && (
+                  <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
+                    <Loader2 className="animate-spin" size={20} />
+                  </span>
+                )}
+                {formData.image_url && !imageUploading && (
+                  <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
+                    <CheckCircle2 size={20} />
+                  </span>
+                )}
+              </button>
+              {imageError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+                  {imageError}
+                </p>
+              )}
             </section>
           )}
 
@@ -245,8 +311,15 @@ export default function AddProductPage() {
             <section>
               <h2 className="mb-4 font-display text-xl font-semibold text-[var(--text-main)]">Apercu</h2>
               <div className="app-card flex overflow-hidden">
-                <div className="flex aspect-square w-1/3 shrink-0 items-center justify-center bg-[var(--surface-mid)] text-[var(--outline)]">
-                  <ImagePlus size={32} />
+                <div className="relative flex aspect-square w-1/3 shrink-0 items-center justify-center overflow-hidden bg-[var(--surface-mid)] text-[var(--outline)]">
+                  {imagePreview ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+                    </>
+                  ) : (
+                    <ImagePlus size={32} />
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-center p-4">
                   <p className="truncate font-display text-xl font-semibold text-[var(--text-main)]">{formData.name || "Nouvel article"}</p>
@@ -312,10 +385,12 @@ function parseBulkProducts(text) {
     .filter((product) => product.name && product.price);
 }
 
-function StepChip({ done, label }) {
+function StepChip({ done, step, label }) {
   return (
     <div className={`rounded-lg border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
-      <CheckCircle2 className="mx-auto" size={18} strokeWidth={2.5} />
+      <span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${done ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+        {done ? <CheckCircle2 size={16} strokeWidth={2.6} /> : step}
+      </span>
       <p className="mt-1 text-xs font-bold">{label}</p>
     </div>
   );

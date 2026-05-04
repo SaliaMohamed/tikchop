@@ -1,7 +1,61 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { supabaseAdmin } from "../lib/supabase-admin";
 import { initializeTransaction } from "../lib/paystack";
+
+export async function uploadProductImage(formData) {
+  const file = formData?.get("image");
+
+  if (!file || typeof file === "string") {
+    throw new Error("Image manquante.");
+  }
+
+  if (!file.type?.startsWith("image/")) {
+    throw new Error("Selectionnez une vraie image.");
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error("Image trop lourde. Maximum 8 MB.");
+  }
+
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error("Cloudinary n'est pas configure.");
+  }
+
+  const timestamp = Math.round(Date.now() / 1000);
+  const folder = "tikchop/products";
+  const signature = createHash("sha1")
+    .update(`folder=${folder}&timestamp=${timestamp}${apiSecret}`)
+    .digest("hex");
+
+  const payload = new FormData();
+  payload.append("file", file);
+  payload.append("api_key", apiKey);
+  payload.append("timestamp", String(timestamp));
+  payload.append("folder", folder);
+  payload.append("signature", signature);
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: payload,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Upload image impossible.");
+  }
+
+  return {
+    url: data.secure_url,
+    publicId: data.public_id,
+  };
+}
 
 export async function createOrder(sellerId, cartItems, options = {}) {
   const { 
