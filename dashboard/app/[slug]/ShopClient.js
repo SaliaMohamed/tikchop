@@ -10,7 +10,6 @@ import {
   Plus,
   Search,
   ShoppingBag,
-  Trash2,
   X,
 } from "lucide-react";
 
@@ -105,14 +104,6 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
         return next;
       }
       return { ...current, [productId]: currentQuantity - 1 };
-    });
-  }
-
-  function removeItem(productId) {
-    setCart((current) => {
-      const next = { ...current };
-      delete next[productId];
-      return next;
     });
   }
 
@@ -220,14 +211,15 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       </section>
       )}
 
-      <section className="mt-8 min-h-[52px]">
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+      <main className="pt-8">
+      <section>
+        <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto pb-4">
           {categories.map((item) => (
             <button
               key={item.value}
               type="button"
               onClick={() => setCategory(item.value)}
-              className={`min-h-[40px] whitespace-nowrap rounded-full px-5 text-sm font-semibold transition ${
+              className={`min-h-[40px] whitespace-nowrap rounded-full px-6 text-base font-semibold transition ${
                 item.value === category ? "bg-[var(--primary)] text-white" : "border border-[var(--outline)]/30 bg-[var(--surface-mid)] text-[var(--text-main)]"
               }`}
             >
@@ -239,7 +231,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
 
       <section className="mt-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {filteredProducts.map((product, index) => (
               <ProductTile
                 key={product.id}
@@ -259,16 +251,17 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           </div>
         )}
       </section>
+      </main>
 
       {cartCount > 0 && (
-        <div className="fixed bottom-[92px] right-5 z-40 md:hidden">
+        <div className="fixed bottom-6 right-6 z-40 md:bottom-8 md:right-8">
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_8px_30px_rgba(16,185,129,0.30)]"
+            className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_8px_30px_rgba(16,185,129,0.30)] transition-transform active:scale-95 md:hover:scale-105"
           >
             <ShoppingBag size={28} />
-            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-red-600 px-1 text-[0.62rem] font-bold text-white">
+            <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-red-600 px-1 text-[0.62rem] font-bold text-white">
               {cartCount}
             </span>
           </button>
@@ -292,9 +285,6 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           isSubmitting={isSubmitting}
           onCheckout={handleCheckout}
           onClose={() => setCartOpen(false)}
-          onAdd={addToCart}
-          onMinus={decrement}
-          onRemove={removeItem}
           deliveryType={deliveryType}
           setDeliveryType={setDeliveryType}
           deliveryZone={deliveryZone}
@@ -317,7 +307,7 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
 
   if (featured) {
     return (
-      <article className="app-card group relative col-span-2 row-span-2 cursor-pointer overflow-hidden">
+      <article className="group relative col-span-2 row-span-2 cursor-pointer overflow-hidden rounded-xl border border-[var(--outline)]/20 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
         <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="block w-full text-left">
           <div className="aspect-[4/3] w-full overflow-hidden bg-[var(--surface-mid)]">
             <SafeProductImage
@@ -330,10 +320,10 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
           <span className="absolute left-4 top-4 rounded bg-white/90 px-2 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.05em] text-[var(--text-main)] backdrop-blur">
             Nouveau
           </span>
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/86 to-transparent p-4 pt-14">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent p-4 pt-24">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="font-display text-xl font-semibold leading-7 text-[var(--text-main)] drop-shadow-sm line-clamp-2">
+                <h3 className="font-display text-xl font-semibold leading-7 text-[var(--text-main)] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] line-clamp-2">
                   {product.name}
                 </h3>
                 <p className="mt-1 font-display text-base font-semibold text-[var(--primary)]">{formatPrice(product.price)}</p>
@@ -353,7 +343,7 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
   }
 
   return (
-    <article className="app-card group flex flex-col overflow-hidden transition active:scale-[0.99]">
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-[var(--outline)]/20 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition active:scale-[0.99]">
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="block w-full text-left">
         <div className="relative aspect-square overflow-hidden bg-[var(--surface-mid)]">
           <SafeProductImage
@@ -368,11 +358,11 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
             </span>
           )}
         </div>
-        <div className="p-3">
+        <div className="flex flex-grow flex-col justify-between p-4">
           <h3 className="text-base font-semibold leading-6 text-[var(--text-main)] line-clamp-2">
             {product.name}
           </h3>
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="mt-2 flex items-center justify-between gap-2">
             <p className="font-display text-base font-semibold text-[var(--primary)]">{formatPrice(product.price)}</p>
             <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} />
           </div>
@@ -467,9 +457,6 @@ function CartSheet({
   isSubmitting, 
   onCheckout, 
   onClose, 
-  onAdd, 
-  onMinus, 
-  onRemove,
   deliveryType,
   setDeliveryType,
   deliveryZone,
@@ -483,50 +470,28 @@ function CartSheet({
   displayedDeliveryFee
 }) {
   return (
-    <div className="fixed inset-0 z-[260] flex items-end bg-black/40 backdrop-blur-[2px] md:items-center md:px-3">
-      <div className="mx-auto flex max-h-[94vh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-xl bg-white shadow-2xl md:rounded-xl">
-        <div className="flex items-center justify-between border-b border-[var(--outline)]/30 px-5 py-4">
+    <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/40 backdrop-blur-[2px]">
+      <div className="mx-auto flex max-h-[795px] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.10)]">
+        <div className="flex w-full justify-center pt-2 pb-1">
+          <div className="h-1 w-8 rounded-full bg-[var(--outline)]/50" />
+        </div>
+        <div className="flex items-center justify-between border-b border-[var(--outline)]/30 px-6 pb-4">
           <h3 className="font-display text-2xl font-bold text-[var(--text-main)]">Finaliser la commande</h3>
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-mid)]">
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 space-y-8 overflow-y-auto p-6">
           {cartItems.length > 0 ? (
-          <div className="space-y-3">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--text-dim)]">Resume ({cartItems.length} article{cartItems.length > 1 ? "s" : ""})</p>
-              <p className="font-display font-semibold text-[var(--primary)]">{formatPrice(cartTotal + displayedDeliveryFee)}</p>
-            </div>
-            {cartItems.map(({ product, quantity }) => (
-              <div key={product.id} className="flex gap-3 rounded-xl bg-[var(--surface-soft)] p-3">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--surface-mid)]">
-                  <SafeProductImage
-                    src={product.image_url}
-                    alt={product.name}
-                    sizes="64px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-display font-semibold text-[var(--text-main)]">{product.name}</p>
-                  <p className="text-sm font-semibold text-[var(--primary)]">{formatPrice(product.price)}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button type="button" onClick={() => onMinus(product.id)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
-                      <Minus size={14} />
-                    </button>
-                    <span className="min-w-5 text-center text-sm font-extrabold">{quantity}</span>
-                    <button type="button" onClick={() => onAdd(product)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-                <button type="button" onClick={() => onRemove(product.id)} className="self-start rounded-full p-2 text-[var(--outline)]">
-                  <Trash2 size={17} />
-                </button>
+          <div>
+            <div>
+              <h3 className="font-display text-xl font-semibold text-[var(--text-main)]">Résumé ({cartItems.length} article{cartItems.length > 1 ? "s" : ""})</h3>
+              <div className="mt-3 flex items-center justify-between text-lg font-semibold text-[var(--text-main)]">
+                <span>Total à payer</span>
+                <span className="text-[var(--primary)]">{formatPrice(cartTotal + displayedDeliveryFee)}</span>
               </div>
-            ))}
+            </div>
           </div>
         ) : (
           <div className="rounded-xl bg-[var(--surface-soft)] p-8 text-center">
@@ -536,13 +501,9 @@ function CartSheet({
         )}
 
         {cartItems.length > 0 && (
-          <div className="mt-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--text-dim)]">Total a payer</p>
-              <p className="font-display text-xl font-bold text-[var(--primary)]">{formatPrice(cartTotal + displayedDeliveryFee)}</p>
-            </div>
-
-            <h4 className="text-sm font-semibold text-[var(--text-dim)]">Type de reception</h4>
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <h4 className="text-base font-semibold text-[var(--text-dim)]">Type de réception</h4>
             
             <div className="grid grid-cols-2 rounded-xl border border-[var(--outline)]/40 bg-[var(--surface-mid)] p-1">
               <button 
@@ -562,12 +523,13 @@ function CartSheet({
                 Retrait Boutique
               </button>
             </div>
+            </div>
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-[var(--text-dim)]">Vos informations</h4>
+            <div className="space-y-4">
+              <h4 className="text-base font-semibold text-[var(--text-dim)]">Vos informations</h4>
               <input 
                 type="text" 
-                placeholder="Ton numero WhatsApp"
+                placeholder="Ex: 01 02 03 04 05"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 className="mobile-input bg-white"
@@ -598,7 +560,7 @@ function CartSheet({
                   )}
                   <input 
                     type="text" 
-                    placeholder="Adresse ou point de repere"
+                    placeholder="Quartier, rue, repère..."
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     className="mobile-input bg-white"
