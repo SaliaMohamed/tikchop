@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+
+# local env and secrets
+.env
+.env.*
+!.env.example
+
+# Vercel local state
+.vercel/
+
+# generated QA screenshots
+qa-*.png
+dashboard/qa-*.png
+
+# local design exports and scratch artifacts
+stitch-export/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

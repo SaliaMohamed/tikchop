@@ -1,0 +1,112 @@
+﻿{
+    "name":  "TikTok Sales Bot: Full Experience (Adapted from PLA)",
+    "nodes":  [
+                  {
+                      "parameters":  "@{httpMethod=POST; path=whatsapp-incoming; options=}",
+                      "name":  "WAHA Trigger",
+                      "type":  "n8n-nodes-base.webhook",
+                      "typeVersion":  1,
+                      "position":  "100 300",
+                      "id":  "2e1e7f3b-de92-4bd6-b29b-3d37d3012cce"
+                  },
+                  {
+                      "parameters":  "@{conditions=}",
+                      "name":  "Check Ref Commande",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  1,
+                      "position":  "300 300",
+                      "id":  "504ffa1b-709d-4839-b0a1-fc2d6f48cfc4"
+                  },
+                  {
+                      "parameters":  "@{jsCode=const body = $node[\"WAHA Trigger\"].json[\"body\"][\"payload\"][\"body\"];\nconst match = body.match(/Ref Commande:\\s*([A-F0-9]+)/i);\nreturn {\n  ref: match ? match[1] : null,\n  phone: $node[\"WAHA Trigger\"].json[\"body\"][\"payload\"][\"from\"]\n};}",
+                      "name":  "Extract Ref",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  1,
+                      "position":  "500 150",
+                      "id":  "6b902c93-ab0b-43a6-8947-9fbc955f044f"
+                  },
+                  {
+                      "parameters":  "@{operation=list; tableName=orders; filters=}",
+                      "name":  "Find Order",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "700 150",
+                      "credentials":  "@{supabaseApi=YOUR_SUPABASE_CREDENTIALS}",
+                      "id":  "405c5ba3-ca87-484f-b12c-7baf93082bef"
+                  },
+                  {
+                      "parameters":  "@{operation=update; tableName=orders; id=={{$node[\"Find Order\"].json[\"id\"]}}; fields=}",
+                      "name":  "Link Order to Phone",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "900 150",
+                      "credentials":  "@{supabaseApi=}",
+                      "id":  "8955a965-b324-4d08-8b52-c87783f68187"
+                  },
+                  {
+                      "parameters":  "@{model=gpt-4o-mini; promptType=define; text=={{$node[\"WAHA Trigger\"].json[\"body\"][\"payload\"][\"body\"]}}; options=}",
+                      "name":  "AI Assistant (Brain)",
+                      "type":  "n8n-nodes-base.agent",
+                      "typeVersion":  1,
+                      "position":  "500 450",
+                      "id":  "904c0a3d-6db6-4190-a0ab-5ad24c04743f"
+                  },
+                  {
+                      "parameters":  "@{operation=list; tableName=products; limit=50}",
+                      "name":  "Get Products",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "300 550",
+                      "credentials":  "@{supabaseApi=}",
+                      "id":  "b1df0e1b-e5e1-49f2-b32c-c1728d4d9d84"
+                  },
+                  {
+                      "parameters":  "@{method=POST; url=YOUR_WAHA_URL/api/sendText; sendBody=True; bodyParametersUi=}",
+                      "name":  "Send Reply",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  1,
+                      "position":  "1200 300",
+                      "id":  "319cf187-c504-4782-bc49-d059cb6d215d"
+                  }
+              ],
+    "connections":  {
+                        "WAHA Trigger":  {
+                                             "main":  "System.Object[]"
+                                         },
+                        "Check Ref Commande":  {
+                                                   "main":  "System.Object[] System.Object[]"
+                                               },
+                        "Extract Ref":  {
+                                            "main":  "System.Object[]"
+                                        },
+                        "Find Order":  {
+                                           "main":  "System.Object[]"
+                                       },
+                        "Link Order to Phone":  {
+                                                    "main":  "System.Object[]"
+                                                },
+                        "Get Products":  {
+                                             "main":  "System.Object[]"
+                                         },
+                        "AI Assistant (Brain)":  {
+                                                     "main":  "System.Object[]"
+                                                 }
+                    },
+    "settings":  {
+                     "callerPolicy":  "workflowsFromSameOwner",
+                     "availableInMCP":  false
+                 },
+    "active":  false,
+    "versionId":  "f4bc1c0a-478c-4e6e-b8f3-7ebdb2a9debf",
+    "id":  "Y0e8gHYmZRxb1xsO",
+    "description":  null,
+    "staticData":  null,
+    "meta":  null,
+    "pinData":  null,
+    "activeVersionId":  null,
+    "updatedAt":  "2026-05-03T15:57:52.080Z",
+    "createdAt":  "2026-05-03T15:57:52.080Z",
+    "isArchived":  false,
+    "versionCounter":  1,
+    "triggerCount":  0
+}

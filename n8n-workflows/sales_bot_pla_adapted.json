@@ -1,0 +1,154 @@
+{
+  "name": "Sales Bot: Adapted from PLA Logic",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sales-bot-incoming",
+        "options": {}
+      },
+      "name": "Waha Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WAHA_URL/api/startTyping",
+        "sendBody": true,
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "chatId",
+              "value": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"from\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Start Typing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "promptType": "define",
+        "text": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"body\"]}}",
+        "options": {
+          "systemMessage": "Vous êtes un assistant de vente expert. \nCONSIGNES :\n1. Vouvoyer TOUJOURS le client.\n2. Pas d'astérisques (*).\n3. Soyez concis et chaleureux.\n4. Si vous voulez citer un message important, commencez par [REPLY].\n\nINFOS PRODUITS :\n{{$node[\"Get Products\"].json}}"
+        }
+      },
+      "name": "Router Ai (Brain)",
+      "type": "n8n-nodes-base.agent",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Router Ai (Brain)\"].json[\"output\"]}}",
+              "operation": "contains",
+              "value2": "[REPLY]"
+            }
+          ]
+        }
+      },
+      "name": "Should Reply/Quote?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WAHA_URL/api/sendText",
+        "sendBody": true,
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "chatId",
+              "value": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"from\"]}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$node[\"Router Ai (Brain)\"].json[\"output\"].replace('[REPLY]', '')}}"
+            },
+            {
+              "name": "reply_to",
+              "value": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"id\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Send Text (With Quote)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Waha Webhook": {
+      "main": [
+        [
+          {
+            "node": "Start Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing": {
+      "main": [
+        [
+          {
+            "node": "Router Ai (Brain)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Ai (Brain)": {
+      "main": [
+        [
+          {
+            "node": "Should Reply/Quote?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Reply/Quote?": {
+      "main": [
+        [
+          {
+            "node": "Send Text (With Quote)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

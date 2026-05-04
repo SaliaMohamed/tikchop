@@ -1,0 +1,197 @@
+{
+  "name": "TikTok Sales: Order Link Processor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-incoming",
+        "options": {}
+      },
+      "name": "Waha Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"body\"]}}",
+              "operation": "contains",
+              "value2": "Ref Commande:"
+            }
+          ]
+        }
+      },
+      "name": "Is Website Order?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"body\"];\nconst match = body.match(/Ref Commande:\\s*([A-Z0-9]{8})/i);\nreturn {\n  ref: match ? match[1].toUpperCase() : null,\n  phone: $node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"from\"]\n};"
+      },
+      "name": "Extract Ref",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        500,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "list",
+        "tableName": "orders",
+        "filters": {
+          "customFilter": "order_ref=eq.{{$node[\"Extract Ref\"].json[\"ref\"]}}"
+        }
+      },
+      "name": "Find Order in Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        700,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": "YOUR_SUPABASE_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableName": "orders",
+        "id": "={{$node[\"Find Order in Supabase\"].json[\"id\"]}}",
+        "fields": {
+          "customer_phone": "={{$node[\"Extract Ref\"].json[\"phone\"]}}"
+        }
+      },
+      "name": "Link Phone to Order",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        900,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": "YOUR_SUPABASE_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WAHA_URL/api/sendText",
+        "sendBody": true,
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "chatId",
+              "value": "={{$node[\"Extract Ref\"].json[\"phone\"]}}"
+            },
+            {
+              "name": "text",
+              "value": "Merci ! Votre commande {{$node[\"Extract Ref\"].json[\"ref\"]}} a bien ete recue. \n\nSouhaitez-vous payer maintenant par Wave ou Paystack pour valider l'envoi ?"
+            }
+          ]
+        }
+      },
+      "name": "Confirm & Pay CTA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "promptType": "define",
+        "text": "={{$node[\"Waha Webhook\"].json[\"body\"][\"payload\"][\"body\"]}}",
+        "options": {
+          "systemMessage": "Tu es un assistant de vente. Réponds aux questions sur les produits."
+        }
+      },
+      "name": "Standard AI Chat",
+      "type": "n8n-nodes-base.agent",
+      "typeVersion": 1,
+      "position": [
+        500,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "Waha Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Website Order?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Website Order?": {
+      "main": [
+        [
+          {
+            "node": "Extract Ref",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard AI Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ref": {
+      "main": [
+        [
+          {
+            "node": "Find Order in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Order in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Link Phone to Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Phone to Order": {
+      "main": [
+        [
+          {
+            "node": "Confirm & Pay CTA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

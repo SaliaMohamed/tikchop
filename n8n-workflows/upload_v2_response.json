@@ -1,0 +1,383 @@
+﻿{
+    "name":  "Tikchop Sales Bot V2 (Adapted from Base)",
+    "nodes":  [
+                  {
+                      "parameters":  "@{rules=; options=}",
+                      "id":  "ecfc5d42-a148-4efa-930d-c874775ed1b0",
+                      "name":  "Switch Texte",
+                      "type":  "n8n-nodes-base.switch",
+                      "typeVersion":  3.3,
+                      "position":  "-3088 1984"
+                  },
+                  {
+                      "parameters":  "@{conditions=; looseTypeValidation=True; options=}",
+                      "id":  "d740b1c5-6b84-45d4-ace5-cc85865a2fe8",
+                      "name":  "If media is image",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.1,
+                      "position":  "-3088 2368"
+                  },
+                  {
+                      "parameters":  "@{conditions=; looseTypeValidation=True; options=}",
+                      "id":  "215dac5f-0b3b-4306-829a-04476bd9500b",
+                      "name":  "If media is Audio",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.1,
+                      "position":  "-3088 2160"
+                  },
+                  {
+                      "parameters":  "@{url=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.media.url.replace(\u0027http://localhost:3000\u0027, \u0027https://sakawaha.online\u0027) }}; authentication=genericCredentialType; genericAuthType=httpHeaderAuth; options=}",
+                      "id":  "143ea6aa-e956-4a42-aa49-54f4919e3f60",
+                      "name":  "Get Image",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  "-2880 2336",
+                      "credentials":  "@{httpHeaderAuth=}"
+                  },
+                  {
+                      "parameters":  "@{url=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.media.url.replace(\u0027http://localhost:3000\u0027, \u0027https://sakawaha.online\u0027) }}; authentication=genericCredentialType; genericAuthType=httpHeaderAuth; options=}",
+                      "id":  "caad9b7d-fdfd-425b-998c-9d353e39da45",
+                      "name":  "Get Audio",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  "-2880 2144",
+                      "credentials":  "@{httpHeaderAuth=; wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{resource=audio; operation=transcribe; options=}",
+                      "id":  "752d9f39-3b0f-42a5-9efc-de5cd78c8dc5",
+                      "name":  "Transcribe Audio",
+                      "type":  "@n8n/n8n-nodes-langchain.openAi",
+                      "typeVersion":  2,
+                      "position":  "-2704 2144",
+                      "credentials":  "@{openAiApi=}"
+                  },
+                  {
+                      "parameters":  "@{assignments=; options=}",
+                      "id":  "7710757b-a943-4a37-9c92-7f3558e02019",
+                      "name":  "Edit Fields Texte",
+                      "type":  "n8n-nodes-base.set",
+                      "typeVersion":  3.4,
+                      "position":  "-2160 1984"
+                  },
+                  {
+                      "parameters":  "@{assignments=; options=}",
+                      "id":  "030333d2-d465-4e89-9498-4e60439dcd70",
+                      "name":  "Edit Fields Audio",
+                      "type":  "n8n-nodes-base.set",
+                      "typeVersion":  3.4,
+                      "position":  "-2160 2144"
+                  },
+                  {
+                      "parameters":  "@{resource=image; operation=analyze; modelId=; text=Analyser cette image. Si c\u0027est un re�u Wave:\n- Montant pay�\n- Destinataire (doit �tre \"Tikchop Boutique\")\n- Date/heure\n- Statut (r�ussi/�chou�)\n\nFormat r�ponse:\nTYPE: [PAIEMENT_WAVE ou AUTRE]\nVALIDE: [OUI/NON]\nMONTANT: [montant]\nDETAILS: [description courte]\n\nSi autre image: d�crire bri�vement.; inputType=base64; options=}",
+                      "id":  "238df5fb-e2a2-4347-a2e3-c71850d9066c",
+                      "name":  "Analyze image",
+                      "type":  "@n8n/n8n-nodes-langchain.openAi",
+                      "typeVersion":  2,
+                      "position":  "-2704 2336",
+                      "credentials":  "@{openAiApi=}"
+                  },
+                  {
+                      "parameters":  "@{assignments=; options=}",
+                      "id":  "f415e763-d87a-4927-af7b-ebc3086b5cc9",
+                      "name":  "Edit Fields Image",
+                      "type":  "n8n-nodes-base.set",
+                      "typeVersion":  3.4,
+                      "position":  "-2160 2336"
+                  },
+                  {
+                      "parameters":  "@{resource=Chatting; operation=Start Typing; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; requestOptions=}",
+                      "id":  "f57256f1-6684-4f2f-b90a-dc50233e55d4",
+                      "name":  "Start Typing",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2368 1984",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{resource=Chats; operation=Get Chat Message; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; messageId=={{$(\u0027WAHA Trigger\u0027).item.json.payload.id}}; requestOptions=}",
+                      "id":  "6f7227c3-5b33-4028-a4c6-ffa59d9b0de6",
+                      "name":  "Send Seen",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2592 1984",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{resource=Chats; operation=Get Chat Message; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; messageId=={{$(\u0027WAHA Trigger\u0027).item.json.payload.id}}; requestOptions=}",
+                      "id":  "799c80ca-641a-4156-8b38-c34ce83447c7",
+                      "name":  "Send Seen1",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2560 2144",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{resource=Chatting; operation=Start Typing; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; requestOptions=}",
+                      "id":  "8fbaccaf-c256-4240-bd8f-4a23480243f3",
+                      "name":  "Start Typing2",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2368 2336",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{resource=Chats; operation=Get Chat Message; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; messageId=={{$(\u0027WAHA Trigger\u0027).item.json.payload.id}}; requestOptions=}",
+                      "id":  "2e432887-6fbc-4a53-bf1f-191358d889f9",
+                      "name":  "Send Seen2",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2544 2336",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{tableId=messages; fieldsUi=}",
+                      "id":  "cb0053e3-3d24-4fdb-8102-9fd4c15b8998",
+                      "name":  "Create Batch Row",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "-1888 2144",
+                      "credentials":  "@{supabaseApi=}"
+                  },
+                  {
+                      "parameters":  "@{amount=1}",
+                      "id":  "51061a87-2a32-4ee3-bb8f-e6f6f25fc20e",
+                      "webhookId":  "552ab1c5-e175-4d9b-a4bb-8383b04900f5",
+                      "name":  "Wait for Buffer",
+                      "type":  "n8n-nodes-base.wait",
+                      "typeVersion":  1.1,
+                      "position":  "-1664 2144"
+                  },
+                  {
+                      "parameters":  "@{operation=getAll; tableId=messages; returnAll=True; matchType=allFilters; filters=}",
+                      "id":  "856b4de4-30ef-447d-aa43-9011fa78d575",
+                      "name":  "Get Batch Rows",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "-1440 2144",
+                      "credentials":  "@{supabaseApi=}"
+                  },
+                  {
+                      "parameters":  "@{conditions=; options=}",
+                      "id":  "feb18ada-ee6b-45cc-89b9-6e768a7b8532",
+                      "name":  "Is Chosen One?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  "-1232 2144"
+                  },
+                  {
+                      "parameters":  "",
+                      "id":  "a928619f-5575-4390-b169-681999264cc5",
+                      "name":  "Stop Duplicate",
+                      "type":  "n8n-nodes-base.noOp",
+                      "typeVersion":  1,
+                      "position":  "-1072 2320"
+                  },
+                  {
+                      "parameters":  "@{jsCode=const items = $input.all();\n\n// 1. Fusionner les textes\nconst contenus = items\n  .map(i =\u003e i.json.contenu)\n  .filter(Boolean);\n\nlet messageFusionne = contenus.join(\u0027 [SUITE] \u0027);\n\n// 2. R�cup�rer les IDs pour la mise � jour\nconst idsToUpdate = items.map(i =\u003e i.json.id);\n\n// 3. Infos client\nconst client = items[0].json.client;\n// Extract phone: \"Name : 225... @c.us\" -\u003e \"225...\"\nconst phone = client.split(\u0027 : \u0027).pop().replace(\u0027@c.us\u0027, \u0027\u0027);\n\nreturn [\n  {\n    json: {\n      message: messageFusionne,\n      client: client,\n      phone: phone,\n      batchIds: idsToUpdate\n    }\n  }\n];}",
+                      "id":  "23541e90-2614-40f3-82d5-1c46fcafce53",
+                      "name":  "Fusion Pro",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  "-1008 2032"
+                  },
+                  {
+                      "parameters":  "@{resource=Chatting; operation=Send Text; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; text=={{ ($json.output || \u0027\u0027).replace(\u0027[SEND_BROCHURE]\u0027, \u0027\u0027).trim() }}; requestOptions=}",
+                      "id":  "fb8122ec-37b6-446c-8ea8-4f9ca26dce7f",
+                      "name":  "Envoyer R�ponse",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "208 2016",
+                      "executeOnce":  false,
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{method=POST; url=https://rvxwejxlrzvrzdndrter.supabase.co/rest/v1/rpc/mark_processed; authentication=genericCredentialType; genericAuthType=httpHeaderAuth; sendBody=True; specifyBody=json; jsonBody=={ \"ids\": {{ JSON.stringify($json.batchIds) }} }; options=}",
+                      "id":  "c98f0521-a886-434e-a52a-679fe6fbac67",
+                      "name":  "Mark as Processed",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  "-800 2032",
+                      "credentials":  "@{httpHeaderAuth=}",
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  "@{promptType=define; text=={{ $(\u0027Fusion Pro\u0027).item.json.message }}; options=}",
+                      "id":  "3842e0ca-4bc6-4665-bb51-7ce65b3009c4",
+                      "name":  "Router Ai",
+                      "type":  "@n8n/n8n-nodes-langchain.agent",
+                      "typeVersion":  1.4,
+                      "position":  "-256 2032"
+                  },
+                  {
+                      "parameters":  "@{operation=executeQuery; query=SELECT name FROM sellers WHERE id = $1;; options=}",
+                      "id":  "8e8dd170-85b7-4f73-a911-ba635c30d45a",
+                      "name":  "Get Shop Info",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.2,
+                      "position":  "-480 2032",
+                      "alwaysOutputData":  true,
+                      "credentials":  "@{postgres=}",
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  "@{operation=list; tableName=products; limit=20}",
+                      "id":  "tikchop-products-tool",
+                      "name":  "Get Products",
+                      "type":  "n8n-nodes-base.supabase",
+                      "typeVersion":  1,
+                      "position":  "-480 2150",
+                      "credentials":  "@{supabaseApi=}"
+                  },
+                  {
+                      "parameters":  "",
+                      "type":  "n8n-nodes-waha.wahaTrigger",
+                      "typeVersion":  202411,
+                      "position":  "-3600 2032",
+                      "id":  "09d0b654-9aa9-4ab3-887d-44edd49cfd0d",
+                      "name":  "WAHA Trigger",
+                      "webhookId":  "98aee036-a4d5-4338-88fb-3c4bba9d7950"
+                  },
+                  {
+                      "parameters":  "@{model=; builtInTools=; options=}",
+                      "type":  "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                      "typeVersion":  1.3,
+                      "position":  "-320 2272",
+                      "id":  "ffd0ebcf-c042-4890-923c-6e2c7d343c1d",
+                      "name":  "OpenAI Chat Model"
+                  },
+                  {
+                      "parameters":  "@{sessionIdType=customKey; sessionKey=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}_tikchop; contextWindowLength=8}",
+                      "type":  "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+                      "typeVersion":  1.3,
+                      "position":  "-176 2272",
+                      "id":  "dfe4aa28-0f9c-4c38-8217-833ec944ba9f",
+                      "name":  "Postgres Chat Memory",
+                      "credentials":  "@{postgres=}"
+                  },
+                  {
+                      "parameters":  "@{resource=Chatting; operation=Start Typing; session=={{ $(\u0027WAHA Trigger\u0027).item.json.session }}; chatId=={{ $(\u0027WAHA Trigger\u0027).item.json.payload.from }}; requestOptions=}",
+                      "id":  "592df8d5-526c-414b-9b51-1040cea7b271",
+                      "name":  "Start Typing1",
+                      "type":  "n8n-nodes-waha.WAHA",
+                      "typeVersion":  202411,
+                      "position":  "-2368 2144",
+                      "credentials":  "@{wahaApi=}"
+                  },
+                  {
+                      "parameters":  "@{amount=1}",
+                      "id":  "a209a1b9-6ffe-427a-8d37-2f7c162e4da9",
+                      "webhookId":  "71c44d7e-3b1d-4651-bc35-12f1698c2aad",
+                      "name":  "Wait",
+                      "type":  "n8n-nodes-base.wait",
+                      "typeVersion":  1.1,
+                      "position":  "-2784 1984"
+                  }
+              ],
+    "connections":  {
+                        "Switch Texte":  {
+                                             "main":  "System.Object[]"
+                                         },
+                        "If media is image":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "If media is Audio":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "Get Image":  {
+                                          "main":  "System.Object[]"
+                                      },
+                        "Get Audio":  {
+                                          "main":  "System.Object[]"
+                                      },
+                        "Transcribe Audio":  {
+                                                 "main":  "System.Object[]"
+                                             },
+                        "Edit Fields Texte":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "Edit Fields Audio":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "Analyze image":  {
+                                              "main":  "System.Object[]"
+                                          },
+                        "Edit Fields Image":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "Start Typing":  {
+                                             "main":  "System.Object[]"
+                                         },
+                        "Send Seen":  {
+                                          "main":  "System.Object[]"
+                                      },
+                        "Send Seen1":  {
+                                           "main":  "System.Object[]"
+                                       },
+                        "Start Typing2":  {
+                                              "main":  "System.Object[]"
+                                          },
+                        "Send Seen2":  {
+                                           "main":  "System.Object[]"
+                                       },
+                        "Create Batch Row":  {
+                                                 "main":  "System.Object[]"
+                                             },
+                        "Wait for Buffer":  {
+                                                "main":  "System.Object[]"
+                                            },
+                        "Get Batch Rows":  {
+                                               "main":  "System.Object[]"
+                                           },
+                        "Is Chosen One?":  {
+                                               "main":  "System.Object[] System.Object[]"
+                                           },
+                        "Fusion Pro":  {
+                                           "main":  "System.Object[]"
+                                       },
+                        "Mark as Processed":  {
+                                                  "main":  "System.Object[]"
+                                              },
+                        "Router Ai":  {
+                                          "main":  "System.Object[]"
+                                      },
+                        "Get Shop Info":  {
+                                              "main":  "System.Object[]"
+                                          },
+                        "Get Products":  {
+                                             "main":  "System.Object[]"
+                                         },
+                        "WAHA Trigger":  {
+                                             "main":  "System.Object[] System.Object[]"
+                                         },
+                        "OpenAI Chat Model":  {
+                                                  "ai_languageModel":  "System.Object[]"
+                                              },
+                        "Postgres Chat Memory":  {
+                                                     "ai_memory":  "System.Object[]"
+                                                 },
+                        "Start Typing1":  {
+                                              "main":  "System.Object[]"
+                                          },
+                        "Wait":  {
+                                     "main":  "System.Object[]"
+                                 }
+                    },
+    "settings":  {
+                     "callerPolicy":  "workflowsFromSameOwner",
+                     "availableInMCP":  false
+                 },
+    "active":  false,
+    "versionId":  "1f43943e-5593-42ff-adaf-5e37d723c0fe",
+    "id":  "idPm0z9ZRmDZ8XtB",
+    "description":  null,
+    "staticData":  null,
+    "meta":  null,
+    "pinData":  null,
+    "activeVersionId":  null,
+    "updatedAt":  "2026-05-03T16:12:37.811Z",
+    "createdAt":  "2026-05-03T16:12:37.811Z",
+    "isArchived":  false,
+    "versionCounter":  1,
+    "triggerCount":  0
+}

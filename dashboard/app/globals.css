@@ -1,0 +1,434 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+@import "tailwindcss";
+
+:root {
+  --primary: #006c49;
+  --primary-hover: #005236;
+  --primary-bright: #10b981;
+  --secondary: #575e70;
+  --background: #f4fbf4;
+  --surface: #ffffff;
+  --surface-soft: #eef6ee;
+  --surface-mid: #e8f0e9;
+  --line: #dce6df;
+  --text-main: #161d19;
+  --text-dim: #3c4a42;
+  --outline: #bbcabf;
+  --shadow-sm: 0 4px 20px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 12px 34px rgb(0 108 73 / 0.12);
+  --radius-md: 12px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--text-main);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  min-width: 320px;
+  text-rendering: geometricPrecision;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.btn-primary {
+  align-items: center;
+  background-color: var(--primary);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.navbar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgb(187 202 191 / 0.45);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem max(1rem, env(safe-area-inset-left)) 0.85rem max(1rem, env(safe-area-inset-left));
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.desktop-nav {
+  display: flex;
+}
+
+.logo {
+  color: var(--primary);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+
+.logo span {
+  color: var(--text-main);
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav-link {
+  color: var(--text-dim);
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0.55rem 0.78rem;
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background: var(--surface-soft);
+  color: var(--primary);
+}
+
+.seller-chip {
+  align-items: center;
+  background: var(--surface-soft);
+  border-radius: 999px;
+  color: var(--primary);
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 0.8rem;
+  white-space: nowrap;
+}
+
+.mobile-tabbar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border: 0;
+  border-top: 1px solid rgb(232 240 233);
+  border-radius: 0;
+  bottom: 0;
+  box-shadow: 0 -4px 20px rgb(0 0 0 / 0.05);
+  display: none;
+  gap: 0.25rem;
+  justify-content: space-around;
+  left: 50%;
+  max-width: none;
+  padding: 0.5rem 0.5rem calc(0.5rem + var(--safe-bottom));
+  position: fixed;
+  transform: translateX(-50%);
+  width: 100%;
+  z-index: 30;
+}
+
+.mobile-seller-topbar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgb(232 240 233);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+  display: none;
+  height: calc(4rem + env(safe-area-inset-top, 0px));
+  justify-content: space-between;
+  left: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.75rem) 1.25rem 0.75rem;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 80;
+}
+
+.mobile-tabbar a {
+  text-decoration: none;
+}
+
+.mobile-tabbar-item,
+.mobile-tabbar-action {
+  align-items: center;
+  border-radius: 0;
+  color: #6c7a71;
+  display: flex;
+  flex-direction: column;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  gap: 0.2rem;
+  min-height: 50px;
+  min-width: 64px;
+  padding: 0.35rem 0.55rem;
+}
+
+.mobile-tabbar-action {
+  background: transparent;
+  box-shadow: none;
+  color: var(--primary);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.mobile-input {
+  background: #ffffff;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 700;
+  min-height: 54px;
+  outline: none;
+  padding: 0.88rem 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.mobile-input::placeholder {
+  color: #a6adb5;
+}
+
+.mobile-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgb(16 185 129 / 0.14);
+}
+
+.app-shell {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 460px;
+  padding-bottom: 1.5rem;
+}
+
+.app-shell-wide {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1080px;
+  padding-bottom: 1.5rem;
+}
+
+.app-card {
+  background: white;
+  border: 1px solid rgb(187 202 191 / 0.55);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-hero {
+  background: white;
+  border: 1px solid rgb(187 202 191 / 0.55);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+.app-icon-button {
+  align-items: center;
+  background: white;
+  border: 1px solid rgb(187 202 191 / 0.55);
+  border-radius: 999px;
+  color: var(--primary);
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
+  min-width: 44px;
+}
+
+.app-primary-action {
+  align-items: center;
+  background: var(--primary);
+  border-radius: 12px;
+  color: white;
+  display: inline-flex;
+  font-weight: 850;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 1rem;
+  text-decoration: none;
+}
+
+.app-green-action {
+  align-items: center;
+  background: var(--primary-bright);
+  border-radius: 12px;
+  color: #07100a;
+  display: inline-flex;
+  font-weight: 850;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 1rem;
+  text-decoration: none;
+}
+
+.mobile-top {
+  background: rgb(244 251 244 / 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding: calc(0.7rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.quiet-label {
+  color: #6c7a71;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.font-display {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  body {
+    padding-bottom: calc(88px + var(--safe-bottom));
+  }
+
+  .container {
+    padding: 0 0.85rem;
+  }
+
+  .navbar {
+    margin-bottom: 0.7rem;
+  }
+
+  .nav-links {
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    width: 100%;
+  }
+
+  .seller-chip {
+    display: none;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-tabbar {
+    display: flex;
+  }
+
+  .mobile-seller-topbar {
+    display: flex;
+  }
+
+  .seller-chrome-main {
+    padding-top: calc(4.9rem + env(safe-area-inset-top, 0px));
+  }
+
+  body:has(.public-chrome) {
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    max-width: 1080px;
+  }
+
+  .mobile-top {
+    background: transparent;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    position: static;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-tabbar-item,
+  .mobile-tabbar-action {
+    min-width: 62px;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+}

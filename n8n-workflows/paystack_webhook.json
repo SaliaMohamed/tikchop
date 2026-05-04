@@ -1,0 +1,134 @@
+{
+  "name": "TikTok Sales: Paystack Webhook Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "paystack-webhook",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Webhook\"].json[\"body\"][\"event\"]}}",
+              "value2": "charge.success"
+            }
+          ]
+        }
+      },
+      "name": "Is Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "baseId": "YOUR_BASE_ID",
+        "tableId": "Orders",
+        "id": "={{$node[\"Webhook\"].json[\"body\"][\"data\"][\"metadata\"][\"order_id\"]}}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Status",
+              "fieldValue": "Paid"
+            },
+            {
+              "fieldId": "Paystack_Ref",
+              "fieldValue": "={{$node[\"Webhook\"].json[\"body\"][\"data\"][\"reference\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Update Airtable Order",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        700,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WAHA_URL/api/sendText",
+        "sendHeaders": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "chatId",
+              "value": "={{$node[\"Webhook\"].json[\"body\"][\"data\"][\"customer\"][\"phone\"]}}@c.us"
+            },
+            {
+              "name": "text",
+              "value": "✅ Paiement confirmé ! Merci pour votre commande. Votre reçu sera généré sous peu."
+            }
+          ]
+        }
+      },
+      "name": "Send WA Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        950,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Success?": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable Order": {
+      "main": [
+        [
+          {
+            "node": "Send WA Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

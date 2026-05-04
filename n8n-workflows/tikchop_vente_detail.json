@@ -1,0 +1,752 @@
+{
+  "updatedAt": "2026-05-03T17:55:30.096Z",
+  "createdAt": "2026-05-03T15:57:52.080Z",
+  "id": "Y0e8gHYmZRxb1xsO",
+  "name": "Tikchop vente",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "= IDENTITÉ\nVous êtes Tikbot, l'assistant expert de la boutique Tikchop. Votre rôle est d'aider les clients à finaliser leurs achats.\n\n= CAPACITÉS\n- Rechercher des produits (nom, prix, stock).\n- Vérifier une commande avec sa référence (ex: TK-8F3A2C1B).\n- Rediriger vers la boutique : tikchop.app/salia.\n\n= RÈGLES\n1. VOUVOIEMENT obligatoire.\n2. CONCISION : Messages courts, pas de gras, pas d'astérisques.\n3. Si le client donne une Ref Commande, confirmez la réception et proposez de payer par Wave.\n4. Toujours donner le prix si demandé.\n"
+        }
+      },
+      "id": "aa1476b3-126b-4e92-8196-247e64fe6a52",
+      "name": "Tikbot Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.4,
+      "position": [
+        192,
+        3616
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "f1d508c7-d48e-43b2-9a0b-abeecff001e9",
+      "name": "GPT-4o Mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        3856
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BIHws4yOghxzT3pq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "product_search",
+        "description": "Recherche des produits dans le catalogue par nom ou description.",
+        "operation": "list",
+        "tableName": "products",
+        "filters": {
+          "customFilter": "name=ilike.%{{$parameter[\"query\"]}}%"
+        }
+      },
+      "id": "e5b7df31-6abb-4dd8-a730-0bb50aa5d3f6",
+      "name": "Search Products Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolSupabase",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        3760
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "zbXZeThyqRRMXR4s",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "order_lookup",
+        "description": "Récupère les détails d'une commande à partir de sa référence (ex: TK-XXXXX).",
+        "operation": "list",
+        "tableName": "orders",
+        "filters": {
+          "customFilter": "order_ref=eq.{{$parameter[\"order_ref\"]}}"
+        }
+      },
+      "id": "03fdbe86-f294-40e6-b61c-8901f62f9073",
+      "name": "Order Lookup Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolSupabase",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        3888
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "zbXZeThyqRRMXR4s",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "link_order_phone",
+        "description": "Lie le numéro de téléphone du client à une commande existante via sa référence.",
+        "operation": "update",
+        "tableName": "orders",
+        "id": "={{$parameter[\"order_id\"]}}",
+        "fields": {
+          "customer_phone": "={{$parameter[\"phone\"]}}"
+        }
+      },
+      "id": "51920964-a67c-4e04-bbcc-470913ca7c7f",
+      "name": "Link Order Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolSupabase",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        4048
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "zbXZeThyqRRMXR4s",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('WAHA Trigger').item.json.session }}",
+        "chatId": "={{ $('WAHA Trigger').item.json.payload.from }}",
+        "text": "={{ $json.output }}",
+        "requestOptions": {}
+      },
+      "id": "4d0f9143-12e6-48fe-b8d3-b21ef1493cfc",
+      "name": "Envoyer Réponse WhatsApp",
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        608,
+        3616
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "LRRIowGId4qbEAqA",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d729675-89d1-4bdc-b3fa-0dc2bc5ee9c5",
+              "name": "Texte",
+              "value": "={{ $('WAHA Trigger').item.json.payload.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "22f87406-cbe5-470a-a7b3-2a0e7b1cada2",
+      "name": "Edit Fields Texte1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1712,
+        3568
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8dfc9675-52b0-4115-aefc-1a5dadffb366",
+              "name": "Texte",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eea5ba8b-24f5-421a-9ad0-0e1337b3f4a9",
+      "name": "Edit Fields Audio1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1712,
+        3728
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9445a2c7-b690-46bd-8370-121c4fa07a38",
+              "name": "Texte",
+              "value": "={{ $json['0'].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "218d62eb-1e33-44ac-8e5e-aa18e5fbe990",
+      "name": "Edit Fields Image1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1712,
+        3920
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        3840
+      ],
+      "id": "608e21cc-f1a5-42e0-95a0-828f42b55015",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "3nOsdzFArVQH863B",
+          "name": "Supabase PLA PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst contenus = items.map(i => i.json.contenu).filter(Boolean);\nconst messageFusionne = contenus.join(' [SUITE] ');\nconst idsToUpdate = items.map(i => i.json.id);\nconst phone = items[0].json.client.replace('@c.us', '');\n\nreturn [{\n  json: {\n    message: messageFusionne,\n    phone: phone,\n    batchIds: idsToUpdate\n  }\n}];"
+      },
+      "id": "85cb0287-dc03-4da8-935e-5d081cdc0b2e",
+      "name": "Fusion Pro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        3616
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "messages",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "client",
+              "condition": "eq",
+              "keyValue": "={{ $('WAHA Trigger').item.json.payload.from }}"
+            },
+            {
+              "keyName": "statut",
+              "condition": "eq",
+              "keyValue": "batch"
+            }
+          ]
+        }
+      },
+      "id": "fe71ed63-0305-4b01-a022-057795b847b7",
+      "name": "Get Batch Rows",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        3728
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "zbXZeThyqRRMXR4s",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1.5
+      },
+      "id": "a8d8f5e2-44b8-4e61-94c2-752bfd3e1d7c",
+      "name": "Wait for Buffer",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1216,
+        3728
+      ],
+      "webhookId": "410d466d-aed5-4ec9-94c5-b964d9383664"
+    },
+    {
+      "parameters": {
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "contenu",
+              "fieldValue": "={{ $json.Texte }}"
+            },
+            {
+              "fieldId": "client",
+              "fieldValue": "={{ $('WAHA Trigger').item.json.payload.from }}"
+            },
+            {
+              "fieldId": "statut",
+              "fieldValue": "batch"
+            }
+          ]
+        }
+      },
+      "id": "0f788163-f747-4960-aec6-79c7443fee01",
+      "name": "Create Batch Row",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        3728
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "zbXZeThyqRRMXR4s",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Start Typing",
+        "session": "={{ $('WAHA Trigger').item.json.session }}",
+        "chatId": "={{ $('WAHA Trigger').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "id": "8eb449a5-06cb-4edd-b087-0df4e8fd8351",
+      "name": "Start Typing",
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        -1920,
+        3568
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "LRRIowGId4qbEAqA",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "c780cc9b-3754-4622-baa4-9b17c6044052",
+      "name": "Transcribe Audio",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -2256,
+        3728
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BIHws4yOghxzT3pq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "Analyser cette image. Si c'est un article de mode, décris le pour que je puisse le chercher dans mon catalogue Supabase. Si c'est un reçu de paiement Wave ou Orange Money, extrais le montant et la référence.",
+        "options": {}
+      },
+      "id": "93f26013-d41f-4957-9acf-8f0f3bcdd0fe",
+      "name": "Analyze image",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -2256,
+        3920
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BIHws4yOghxzT3pq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "f827f7f8-d40c-4d97-9677-9e62d99c7e7a",
+              "leftValue": "={{ $json.payload.media.mimetype }}",
+              "rightValue": "audio",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "c999da06-252c-4c2f-8d1a-cefb14ebdc2d",
+      "name": "If media is Audio",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -2640,
+        3744
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "f827f7f8-d40c-4d97-9677-9e62d99c7e7a",
+              "leftValue": "={{ $json.payload.media.mimetype }}",
+              "rightValue": "image/jpeg",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f7831bde-d8a1-491a-9bd8-132a62fc22cd",
+      "name": "If media is image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -2640,
+        3952
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c2b0b69c-7967-48e9-b1b7-7d4022a35e4f",
+                    "leftValue": "={{ $json.payload.hasMedia === false }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texte"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff893178-23fc-4194-9cc5-daa9d6ad654e",
+      "name": "Switch Texte",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -2640,
+        3568
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-waha.wahaTrigger",
+      "typeVersion": 202411,
+      "position": [
+        -3152,
+        3616
+      ],
+      "id": "f7f5e78a-f598-4723-ade1-ae639260d445",
+      "name": "WAHA Trigger",
+      "webhookId": "98aee036-a4d5-4338-88fb-3c4bba9d7950"
+    }
+  ],
+  "connections": {
+    "GPT-4o Mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Tikbot Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tikbot Agent": {
+      "main": [
+        [
+          {
+            "node": "Envoyer Réponse WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Texte1": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Audio1": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Image1": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Tikbot Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fusion Pro": {
+      "main": [
+        [
+          {
+            "node": "Tikbot Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Batch Rows": {
+      "main": [
+        [
+          {
+            "node": "Fusion Pro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Buffer": {
+      "main": [
+        [
+          {
+            "node": "Get Batch Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Batch Row": {
+      "main": [
+        [
+          {
+            "node": "Wait for Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Audio1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If media is Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If media is image": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Texte": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Texte1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA Trigger": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Switch Texte",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If media is Audio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If media is image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "1ffd7448-563f-48a8-b35b-1fe3347f17e6",
+  "activeVersionId": null,
+  "versionCounter": 54,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-03T15:57:52.084Z",
+      "createdAt": "2026-05-03T15:57:52.084Z",
+      "role": "workflow:owner",
+      "workflowId": "Y0e8gHYmZRxb1xsO",
+      "projectId": "ug0sUdrQqxOUb1kC",
+      "project": {
+        "updatedAt": "2026-02-26T03:15:41.702Z",
+        "createdAt": "2026-02-26T02:51:31.412Z",
+        "id": "ug0sUdrQqxOUb1kC",
+        "name": "Salia Koffi Mohamed <saliamohamed05@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "4a40f9c4-48d0-4b0b-8528-31d3c1875fd9"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
