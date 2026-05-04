@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+
+qa-*.png
+.next/
+node_modules/
