@@ -4,12 +4,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ClipboardList,
+  Copy,
+  ImagePlus,
   Package,
-  PackagePlus,
   ReceiptText,
   Store,
   TrendingUp,
-  Truck,
 } from "lucide-react";
 import { getDashboardData } from "./actions";
 
@@ -70,8 +70,25 @@ export default function Dashboard() {
         <section className="space-y-2">
           <h2 className="font-display text-2xl font-bold leading-8 text-[var(--text-main)]">Bonjour, Salia</h2>
           <p className="text-sm leading-6 text-[var(--text-dim)]">
-            Voici un resume de l&apos;activite de Salia Boutique aujourd&apos;hui.
+            Choisis une action. Le plus important reste en haut.
           </p>
+        </section>
+
+        <section className="space-y-3">
+          <Link href="/add-product" className="flex min-h-[118px] items-center gap-4 rounded-xl bg-[var(--primary)] p-5 text-white no-underline shadow-[0_14px_34px_rgba(0,108,73,0.18)] active:scale-[0.99]">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15">
+              <ImagePlus size={27} strokeWidth={2.4} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-2xl font-bold leading-8">Ajouter un article</span>
+              <span className="mt-1 block text-sm font-semibold leading-5 text-white/78">Photo, prix, stock. Vocal possible si besoin.</span>
+            </span>
+          </Link>
+
+          <div className="grid grid-cols-2 gap-3">
+            <SellerShortcut href="/orders" icon={<ClipboardList size={22} />} title="Voir les commandes" subtitle="Clients et livraison" />
+            <SellerShortcut href="/salia" icon={<Copy size={22} />} title="Lien boutique" subtitle="Partager aux clients" />
+          </div>
         </section>
 
         <section className="grid grid-cols-2 gap-4">
@@ -107,16 +124,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        <section className="space-y-4">
-          <h3 className="font-display text-xl font-semibold text-[var(--text-main)]">Actions rapides</h3>
-          <div className="grid grid-cols-4 gap-2">
-            <QuickAction href="/add-product" icon={<PackagePlus size={20} />} title="Ajouter" primary />
-            <QuickAction href="/orders" icon={<ClipboardList size={20} />} title="Commandes" />
-            <QuickAction href="/products" icon={<Package size={20} />} title="Catalogue" />
-            <QuickAction href="/delivery-settings" icon={<Truck size={20} />} title="Livraison" />
-          </div>
-        </section>
-
         <section>
           <SectionTitle title="Commandes récentes" action="Voir tout" href="/orders" />
           <div className="mt-4 space-y-4">
@@ -137,16 +144,16 @@ export default function Dashboard() {
   );
 }
 
-function QuickAction({ href, icon, title, primary = false }) {
+function SellerShortcut({ href, icon, title, subtitle }) {
   return (
-    <Link
-      href={href}
-      className="app-card flex min-h-[94px] flex-col items-center justify-center gap-2 p-3 text-center no-underline transition active:scale-95"
-    >
-      <span className={`flex h-11 w-11 items-center justify-center rounded-full ${primary ? "bg-[var(--primary-bright)]/15 text-[var(--primary)]" : "bg-[var(--surface-mid)] text-[var(--secondary)]"}`}>
+    <Link href={href} className="app-card flex min-h-[104px] flex-col justify-between p-4 no-underline active:scale-[0.99]">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-mid)] text-[var(--primary)]">
         {icon}
       </span>
-      <span className="text-[0.72rem] font-semibold leading-4 text-[var(--text-dim)]">{title}</span>
+      <span>
+        <span className="block text-sm font-bold leading-5 text-[var(--text-main)]">{title}</span>
+        <span className="mt-0.5 block text-xs font-semibold leading-4 text-[var(--text-dim)]">{subtitle}</span>
+      </span>
     </Link>
   );
 }
