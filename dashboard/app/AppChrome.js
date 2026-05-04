@@ -16,6 +16,7 @@ export default function AppChrome({ children }) {
   const pathname = usePathname();
   const showSellerChrome = dashboardRoutes.has(pathname);
   const showMobileTopbar = showSellerChrome && pathname !== "/";
+  const showMobileTabbar = showSellerChrome && pathname !== "/add-product";
 
   if (!showSellerChrome) {
     return <main className="container public-chrome">{children}</main>;
@@ -55,6 +56,7 @@ export default function AppChrome({ children }) {
         </div>
       </nav>
       <main className={`container ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
+      {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
         <Link href="/" className="mobile-tabbar-item">
           <LayoutDashboard size={20} strokeWidth={2.2} />
@@ -77,6 +79,7 @@ export default function AppChrome({ children }) {
           <span>Réglages</span>
         </Link>
       </nav>
+      )}
     </>
   );
 }
