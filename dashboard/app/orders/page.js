@@ -27,11 +27,11 @@ function cleanPhone(phoneNumber) {
 
 const statusLabels = {
   ALL: "Toutes",
-  WORK: "A traiter",
+  WORK: "En cours",
   PENDING: "A preparer",
-  PAID: "Payees",
-  PREPARED: "Pretes",
-  DELIVERED: "Livrees",
+  PAID: "A preparer",
+  PREPARED: "A livrer",
+  DELIVERED: "Effectuees",
   CANCELLED: "Annulees",
 };
 
@@ -124,7 +124,7 @@ export default function OrdersPage() {
           <div>
             <p className="quiet-label text-[var(--primary)]">Preparation</p>
             <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Commandes du jour</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Ouvre une commande, prepare, puis envoie au livreur.</p>
+            <p className="mt-1 text-base text-[var(--text-dim)]">Prepare, marque pret, puis marque livre.</p>
           </div>
           <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
             <RefreshCw size={19} strokeWidth={2.5} />
@@ -160,7 +160,7 @@ export default function OrdersPage() {
           <div className="grid grid-cols-3 gap-2">
             <WorkTile title="Preparer" value={pendingCount} tone="primary" />
             <WorkTile title="Livrer" value={readyCount} />
-            <WorkTile title="Fini" value={doneCount} />
+            <WorkTile title="Fait" value={doneCount} />
           </div>
           {nextOrder && (
             <button
@@ -198,7 +198,13 @@ export default function OrdersPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {filteredOrders.map((order) => (
-              <OrderCard key={order.id} order={order} onClick={() => setSelectedOrder(order)} />
+              <OrderCard
+                key={order.id}
+                order={order}
+                onClick={() => setSelectedOrder(order)}
+                onPrepared={() => markStatus(order, "PREPARED")}
+                onDelivered={() => markStatus(order, "DELIVERED")}
+              />
             ))}
           </div>
         )}
@@ -218,68 +224,111 @@ export default function OrdersPage() {
   );
 }
 
-function OrderCard({ order, onClick }) {
+function OrderCard({ order, onClick, onPrepared, onDelivered }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   const primaryLine = order.customer_phone && order.customer_phone !== "UNKNOWN"
     ? order.customer_phone
     : "Client WhatsApp";
   const action = getNextAction(order);
+  const quickAction = getQuickAction(order, onPrepared, onDelivered);
   const itemCount = (order.order_items || []).reduce((count, item) => count + Number(item.quantity || 0), 0);
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="app-card w-full overflow-hidden p-0 text-left transition active:scale-[0.99]"
-    >
-      <div className="p-4">
-        <div className="flex justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full ${action.iconTone}`}>
-                {action.icon}
-              </span>
-              <div>
-                <p className="font-display text-base font-semibold text-[var(--text-main)]">#{order.order_ref || order.id?.slice(0, 8)}</p>
-                <p className="text-xs font-semibold text-[var(--text-dim)]">{primaryLine}</p>
+    <div className="app-card w-full overflow-hidden p-0 text-left">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left transition active:scale-[0.99]"
+      >
+        <div className="p-4">
+          <div className="flex justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${action.iconTone}`}>
+                  {action.icon}
+                </span>
+                <div>
+                  <p className="font-display text-base font-semibold text-[var(--text-main)]">#{order.order_ref || order.id?.slice(0, 8)}</p>
+                  <p className="text-xs font-semibold text-[var(--text-dim)]">{primaryLine}</p>
+                </div>
               </div>
             </div>
+            <div className="shrink-0 text-right">
+              <p className="font-display text-base font-semibold text-[var(--primary)]">{formatPrice(total)}</p>
+              <p className="mt-1 text-xs text-[var(--outline)]">
+                {new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+              </p>
+            </div>
           </div>
-          <div className="shrink-0 text-right">
-            <p className="font-display text-base font-semibold text-[var(--primary)]">{formatPrice(total)}</p>
-            <p className="mt-1 text-xs text-[var(--outline)]">
-              {new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-            </p>
+
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+            <div className="min-w-0 rounded-lg bg-[var(--surface-soft)] px-3 py-2">
+              <p className="text-xs font-bold text-[var(--text-dim)]">Articles</p>
+              <p className="mt-0.5 truncate text-sm font-semibold text-[var(--text-main)]">
+                {itemCount || (order.order_items || []).length || 1} article{itemCount > 1 ? "s" : ""} a preparer
+              </p>
+            </div>
+            <span className={`self-start rounded px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[order.status] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+              {statusLabels[order.status] || order.status}
+            </span>
+          </div>
+
+          <div className="mt-3 flex items-center gap-1 text-sm text-[var(--text-dim)]">
+            <MapPin size={16} className="shrink-0 text-[var(--outline)]" />
+            <span className="truncate">{order.delivery_zone || order.delivery_address || "Adresse a confirmer"}</span>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-          <div className="min-w-0 rounded-lg bg-[var(--surface-soft)] px-3 py-2">
-            <p className="text-xs font-bold text-[var(--text-dim)]">Articles</p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-[var(--text-main)]">
-              {itemCount || (order.order_items || []).length || 1} article{itemCount > 1 ? "s" : ""} a preparer
-            </p>
-          </div>
-          <span className={`self-start rounded px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[order.status] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
-            {statusLabels[order.status] || order.status}
+        <div className={`flex items-center justify-between gap-3 px-4 py-3 ${action.barClass}`}>
+          <span className="min-w-0 text-sm font-bold">{action.title}</span>
+          <span className="flex shrink-0 items-center gap-1 text-sm font-bold">
+            Details
+            <ChevronRight size={16} />
           </span>
         </div>
+      </button>
 
-        <div className="mt-3 flex items-center gap-1 text-sm text-[var(--text-dim)]">
-          <MapPin size={16} className="shrink-0 text-[var(--outline)]" />
-          <span className="truncate">{order.delivery_zone || order.delivery_address || "Adresse a confirmer"}</span>
-        </div>
+      <div className="border-t border-[var(--surface-mid)] bg-white p-3">
+        {quickAction ? (
+          <button
+            type="button"
+            onClick={quickAction.onClick}
+            className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg text-sm font-extrabold shadow-sm active:scale-[0.99] ${quickAction.className}`}
+          >
+            {quickAction.icon}
+            {quickAction.label}
+          </button>
+        ) : (
+          <div className="flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-zinc-100 text-sm font-extrabold text-zinc-500">
+            <CheckCircle2 size={17} />
+            Effectuee
+          </div>
+        )}
       </div>
-
-      <div className={`flex items-center justify-between gap-3 px-4 py-3 ${action.barClass}`}>
-        <span className="min-w-0 text-sm font-bold">{action.title}</span>
-        <span className="flex shrink-0 items-center gap-1 text-sm font-bold">
-          Ouvrir
-          <ChevronRight size={16} />
-        </span>
-      </div>
-    </button>
+    </div>
   );
+}
+
+function getQuickAction(order, onPrepared, onDelivered) {
+  if (order.status === "PREPARED" || order.delivery_status === "READY") {
+    return {
+      label: "Marquer livree",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-green-500 text-zinc-950",
+      onClick: onDelivered,
+    };
+  }
+
+  if (order.status === "PENDING" || order.status === "PAID") {
+    return {
+      label: "Marquer pret",
+      icon: <Package size={18} />,
+      className: "bg-[var(--text-main)] text-white",
+      onClick: onPrepared,
+    };
+  }
+
+  return null;
 }
 
 function OrderSheet({ order, drivers, onClose, onPrepared, onDelivered, onDriverShared }) {
@@ -392,7 +441,7 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
               </button>
               <button onClick={onDelivered} disabled={isDone} className={`flex min-h-[58px] items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${isDone ? "bg-zinc-100 text-zinc-400" : "bg-green-500 text-zinc-950"}`}>
                 <CheckCircle2 size={17} />
-                {isDone ? "Deja livree" : "Livree"}
+                {isDone ? "Effectuee" : "Marquer livree"}
               </button>
             </div>
           )}
