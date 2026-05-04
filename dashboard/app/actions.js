@@ -57,6 +57,101 @@ export async function uploadProductImage(formData) {
   };
 }
 
+export async function analyzeProductImage(imageUrl, voiceHint = "") {
+  if (!imageUrl) {
+    throw new Error("Image manquante.");
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OpenAI n'est pas configure.");
+  }
+
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                "Analyse cette photo de produit pour une mini-boutique mobile en Afrique francophone.",
+                "Retourne un nom usuel court, une petite description vendeuse, la categorie, les couleurs visibles, les tailles possibles si c'est un vetement.",
+                "Ne devine pas de marque si elle n'est pas clairement visible.",
+                "Si l'utilisateur donne une indication vocale, utilise-la pour corriger le nom, la taille ou la quantite.",
+                voiceHint ? `Indication vendeur: ${voiceHint}` : "",
+              ].filter(Boolean).join("\n"),
+            },
+            {
+              type: "input_image",
+              image_url: imageUrl,
+              detail: "low",
+            },
+          ],
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "tikchop_product_analysis",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              category: { type: "string" },
+              colors: { type: "array", items: { type: "string" } },
+              suggested_sizes: { type: "array", items: { type: "string" } },
+              size: { type: "string" },
+              quantity: { type: "number" },
+              confidence: { type: "number" },
+            },
+            required: ["name", "description", "category", "colors", "suggested_sizes", "size", "quantity", "confidence"],
+          },
+        },
+      },
+      max_output_tokens: 500,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Analyse IA impossible.");
+  }
+
+  const textOutput = data.output_text
+    || data.output?.flatMap((item) => item.content || [])
+      .find((content) => content.type === "output_text")?.text;
+
+  if (!textOutput) {
+    throw new Error("Analyse IA vide.");
+  }
+
+  const analysis = JSON.parse(textOutput);
+
+  return {
+    name: String(analysis.name || "").trim(),
+    description: String(analysis.description || "").trim(),
+    category: String(analysis.category || "").trim(),
+    colors: Array.isArray(analysis.colors) ? analysis.colors.filter(Boolean).map(String) : [],
+    suggested_sizes: Array.isArray(analysis.suggested_sizes) ? analysis.suggested_sizes.filter(Boolean).map(String) : [],
+    size: String(analysis.size || "").trim(),
+    quantity: Number.isFinite(Number(analysis.quantity)) ? Number(analysis.quantity) : 1,
+    confidence: Number.isFinite(Number(analysis.confidence)) ? Number(analysis.confidence) : 0,
+  };
+}
+
 export async function createOrder(sellerId, cartItems, options = {}) {
   const { 
     paymentMethod = "WAVE", 

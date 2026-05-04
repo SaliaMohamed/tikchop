@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Trash2, Upload } from "lucide-react";
-import { addProduct, addProductsBulk, getSellersForProductForm, uploadProductImage } from "../actions";
+import { addProduct, addProductsBulk, analyzeProductImage, getSellersForProductForm, uploadProductImage } from "../actions";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -15,10 +15,13 @@ export default function AddProductPage() {
   const bulkFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [imageAnalyzing, setImageAnalyzing] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const [imageError, setImageError] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
   const [listening, setListening] = useState(false);
+  const [bulkListeningId, setBulkListeningId] = useState("");
   const [mode, setMode] = useState("MANUAL");
   const [bulkText, setBulkText] = useState("");
   const [bulkPhotoItems, setBulkPhotoItems] = useState([]);
@@ -27,6 +30,7 @@ export default function AddProductPage() {
     name: "",
     price: "",
     stock_quantity: "1",
+    size: "",
     description: "",
     image_url: "",
     seller_id: "",
@@ -61,7 +65,7 @@ export default function AddProductPage() {
             price: item.price,
             stock_quantity: item.stock_quantity || 1,
             image_url: item.image_url,
-            description: item.description || "",
+            description: buildDescription(item.description, item.size),
             seller_id: formData.seller_id,
           }));
         const textProducts = parseBulkProducts(bulkText).map((product) => ({
@@ -72,7 +76,10 @@ export default function AddProductPage() {
         await addProductsBulk(products);
         alert(`${products.length} produits ajoutes.`);
       } else {
-        await addProduct(formData);
+        await addProduct({
+          ...formData,
+          description: buildDescription(formData.description, formData.size),
+        });
         alert("Produit ajoute.");
       }
       router.push("/products");
@@ -93,6 +100,7 @@ export default function AddProductPage() {
     if (!file) return;
 
     setImageError("");
+    setAnalysisError("");
     setImageUploading(true);
     setImagePreview(URL.createObjectURL(file));
 
@@ -102,10 +110,21 @@ export default function AddProductPage() {
       const result = await uploadProductImage(payload);
       setFormData((current) => ({ ...current, image_url: result.url }));
       setImagePreview(result.url);
+      setImageAnalyzing(true);
+      try {
+        const analysis = await analyzeProductImage(result.url, formData.description);
+        setFormData((current) => applyAnalysisToProduct(current, analysis));
+      } catch (analysisFailure) {
+        console.warn("Image analysis unavailable:", analysisFailure);
+        setAnalysisError("IA non activee pour l'instant. Tu peux remplir a la main.");
+      } finally {
+        setImageAnalyzing(false);
+      }
     } catch (error) {
       console.error("Image upload error:", error);
       setImageError(error.message || "Image impossible a envoyer.");
       setFormData((current) => ({ ...current, image_url: "" }));
+      setImageAnalyzing(false);
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -125,23 +144,42 @@ export default function AddProductPage() {
       image_url: "",
       name: "",
       price: "",
+      size: "",
+      description: "",
       stock_quantity: 1,
       uploading: true,
+      analyzing: false,
+      analysisError: "",
     }));
 
     setBulkPhotoItems((current) => [...current, ...pendingItems]);
 
-    for (const item of pendingItems) {
+    for (const [index, item] of pendingItems.entries()) {
       try {
         const payload = new FormData();
-        const file = files[pendingItems.indexOf(item)];
+        const file = files[index];
         payload.append("image", file);
         const result = await uploadProductImage(payload);
         setBulkPhotoItems((current) => current.map((entry) => (
           entry.id === item.id
-            ? { ...entry, image_url: result.url, preview: result.url, uploading: false }
+            ? { ...entry, image_url: result.url, preview: result.url, uploading: false, analyzing: true }
             : entry
         )));
+        try {
+          const analysis = await analyzeProductImage(result.url);
+          setBulkPhotoItems((current) => current.map((entry) => (
+            entry.id === item.id
+              ? { ...applyAnalysisToProduct(entry, analysis), analyzing: false }
+              : entry
+          )));
+        } catch (analysisFailure) {
+          console.warn("Bulk image analysis unavailable:", analysisFailure);
+          setBulkPhotoItems((current) => current.map((entry) => (
+            entry.id === item.id
+              ? { ...entry, analysisError: "IA non activee. Complete a la main.", analyzing: false }
+              : entry
+          )));
+        }
       } catch (error) {
         console.error("Bulk image upload error:", error);
         setBulkPhotoItems((current) => current.map((entry) => (
@@ -173,6 +211,7 @@ export default function AddProductPage() {
       name: parsed.name || current.name,
       price: parsed.price || current.price,
       stock_quantity: parsed.stock_quantity || current.stock_quantity || "1",
+      size: parsed.size || current.size,
       description: text || current.description,
     }));
   }
@@ -198,11 +237,48 @@ export default function AddProductPage() {
     recognition.start();
   }
 
+  function applyBulkVoiceText(id, text) {
+    const parsed = parseVoiceProduct(text);
+    setBulkPhotoItems((current) => current.map((item) => (
+      item.id === id
+        ? {
+          ...item,
+          name: parsed.name || item.name,
+          price: parsed.price || item.price,
+          size: parsed.size || item.size,
+          stock_quantity: parsed.stock_quantity || item.stock_quantity || 1,
+          description: text || item.description,
+        }
+        : item
+    )));
+  }
+
+  function startBulkVoiceCapture(id) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("La dictee vocale n'est pas disponible ici. Le vendeur peut utiliser le micro du clavier.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setBulkListeningId(id);
+    recognition.onend = () => setBulkListeningId("");
+    recognition.onerror = () => setBulkListeningId("");
+    recognition.onresult = (event) => {
+      const text = event.results?.[0]?.[0]?.transcript || "";
+      applyBulkVoiceText(id, text);
+    };
+    recognition.start();
+  }
+
   const bulkProducts = parseBulkProducts(bulkText);
   const readyBulkPhotos = bulkPhotoItems.filter((item) => item.image_url && item.name && item.price);
   const canSubmit = mode === "BULK"
     ? formData.seller_id && !bulkUploading && (readyBulkPhotos.length > 0 || bulkProducts.length > 0)
-    : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading;
+    : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing;
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
@@ -275,7 +351,7 @@ export default function AddProductPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm text-[var(--text-dim)]">Selectionne plusieurs photos, puis ajoute prix et nom.</p>
+                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom, tu ajoutes prix, taille et quantite.</p>
                 </div>
               </div>
               <input
@@ -314,26 +390,60 @@ export default function AddProductPage() {
                         </div>
                         <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-bold text-[var(--text-main)]">Article {index + 1}</p>
-                            <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Retirer">
-                              <Trash2 size={16} />
-                            </button>
+                            <div>
+                              <p className="text-sm font-bold text-[var(--text-main)]">Article {index + 1}</p>
+                              {item.analyzing && (
+                                <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-[var(--primary)]">
+                                  <Loader2 className="animate-spin" size={12} />
+                                  IA analyse...
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => startBulkVoiceCapture(item.id)} className={`flex h-8 w-8 items-center justify-center rounded-full ${bulkListeningId === item.id ? "bg-red-500 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`} aria-label="Dicter cet article">
+                                <Mic size={15} />
+                              </button>
+                              <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Retirer">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                           <input
                             value={item.name}
                             onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
-                            placeholder="Nom"
+                            placeholder={item.analyzing ? "Nom propose par l'IA..." : "Nom"}
                             className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
                           />
-                          <input
-                            value={item.price}
-                            onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
-                            placeholder="Prix"
-                            inputMode="numeric"
-                            className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
-                          />
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={item.price}
+                              onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
+                              placeholder="Prix"
+                              inputMode="numeric"
+                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                            />
+                            <input
+                              value={item.size}
+                              onChange={(event) => updateBulkPhotoItem(item.id, "size", event.target.value)}
+                              placeholder="Taille"
+                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                            />
+                            <input
+                              value={item.stock_quantity}
+                              onChange={(event) => updateBulkPhotoItem(item.id, "stock_quantity", event.target.value)}
+                              placeholder="Qte"
+                              inputMode="numeric"
+                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                            />
+                          </div>
                         </div>
                       </div>
+                      {item.description && (
+                        <p className="mt-2 rounded-lg bg-[var(--surface-soft)] px-3 py-2 text-xs leading-5 text-[var(--text-dim)]">{item.description}</p>
+                      )}
+                      {item.analysisError && (
+                        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">{item.analysisError}</p>
+                      )}
                       {item.uploadError && (
                         <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{item.uploadError}</p>
                       )}
@@ -392,7 +502,7 @@ export default function AddProductPage() {
                     <img src={imagePreview} alt="Apercu produit" className="absolute inset-0 h-full w-full object-cover" />
                     <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
                     <span className="absolute bottom-4 left-4 right-4 flex min-h-[46px] items-center justify-center rounded-lg bg-white/92 px-4 text-sm font-bold text-[var(--primary)] shadow-sm">
-                      {imageUploading ? "Envoi de la photo..." : "Changer la photo"}
+                      {imageUploading ? "Envoi de la photo..." : imageAnalyzing ? "IA propose le nom..." : "Changer la photo"}
                     </span>
                   </>
                 ) : (
@@ -403,12 +513,12 @@ export default function AddProductPage() {
                     <span className="mt-1 max-w-[15rem] text-sm leading-5 text-[var(--text-dim)]">Une belle photo vend plus vite.</span>
                   </span>
                 )}
-                {imageUploading && (
+                {(imageUploading || imageAnalyzing) && (
                   <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
                     <Loader2 className="animate-spin" size={20} />
                   </span>
                 )}
-                {formData.image_url && !imageUploading && (
+                {formData.image_url && !imageUploading && !imageAnalyzing && (
                   <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
                     <CheckCircle2 size={20} />
                   </span>
@@ -417,6 +527,11 @@ export default function AddProductPage() {
               {imageError && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
                   {imageError}
+                </p>
+              )}
+              {analysisError && (
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                  {analysisError}
                 </p>
               )}
             </section>
@@ -432,9 +547,21 @@ export default function AddProductPage() {
                 <Field label="Prix">
                   <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input" />
                 </Field>
-                <Field label="Stock">
+                <Field label="Taille">
+                  <input type="text" name="size" placeholder="M, L, 42..." value={formData.size} onChange={handleChange} className="mobile-input" />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Quantite">
                   <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
                 </Field>
+                <div className="rounded-xl bg-[var(--surface-soft)] px-4 py-3">
+                  <span className="quiet-label text-[var(--secondary)]">Aide IA</span>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-main)]">
+                    {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom pre-rempli" : "Apres la photo"}
+                  </p>
+                </div>
               </div>
 
               {mode === "MANUAL" && (
@@ -463,7 +590,7 @@ export default function AddProductPage() {
                   <p className="truncate font-display text-xl font-semibold text-[var(--text-main)]">{formData.name || "Nouvel article"}</p>
                   <p className="mt-1 font-semibold text-[var(--primary)]">{formatPrice(formData.price)}</p>
                   <span className="mt-2 self-start rounded bg-[var(--surface-mid)] px-2 py-1 text-xs font-semibold text-[var(--secondary)]">
-                    Stock: {formData.stock_quantity || 0}
+                    {formData.size ? `Taille ${formData.size} - ` : ""}Stock: {formData.stock_quantity || 0}
                   </span>
                 </div>
               </div>
@@ -478,7 +605,7 @@ export default function AddProductPage() {
             }`}
           >
             <Upload size={19} />
-            {loading ? "Enregistrement..." : mode === "BULK" ? `Publier ${bulkProducts.length || ""} articles` : "Mettre en ligne"}
+            {loading ? "Enregistrement..." : mode === "BULK" ? `Publier ${readyBulkPhotos.length || bulkProducts.length || ""} articles` : "Mettre en ligne"}
           </button>
         </form>
       </main>
@@ -490,18 +617,40 @@ function parseVoiceProduct(text) {
   const source = String(text || "").toLowerCase();
   const priceMatch = source.match(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)?/i);
   const quantityMatch = source.match(/(?:quantite|quantite|stock|reste|il y a)\s*(\d+)/i);
+  const sizeMatch = source.match(/(?:taille|size|pointure)\s*([a-z0-9]+)/i);
   const price = priceMatch ? priceMatch[1].replace(/[^\d]/g, "") : "";
   const name = String(text || "")
     .replace(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)?/i, "")
     .replace(/(?:quantite|quantite|stock|reste|il y a)\s*\d+/i, "")
+    .replace(/(?:taille|size|pointure)\s*[a-z0-9]+/i, "")
     .replace(/[,.]/g, " ")
     .trim();
 
   return {
     name,
     price,
+    size: sizeMatch?.[1]?.toUpperCase() || "",
     stock_quantity: quantityMatch?.[1] || "1",
   };
+}
+
+function applyAnalysisToProduct(product, analysis) {
+  const quantity = Number.parseInt(analysis?.quantity || product.stock_quantity || 1, 10);
+
+  return {
+    ...product,
+    name: analysis?.name || product.name,
+    description: analysis?.description || product.description,
+    size: analysis?.size || product.size || analysis?.suggested_sizes?.[0] || "",
+    stock_quantity: Number.isFinite(quantity) && quantity > 0 ? String(quantity) : product.stock_quantity || "1",
+  };
+}
+
+function buildDescription(description, size) {
+  const parts = [];
+  if (size) parts.push(`Taille: ${size}`);
+  if (description) parts.push(description);
+  return parts.join("\n");
 }
 
 function parseBulkProducts(text) {
