@@ -62,11 +62,74 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
     throw new Error("Image manquante.");
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OpenAI n'est pas configure.");
+  if (process.env.GEMINI_API_KEY) {
+    return analyzeProductImageWithGemini(imageUrl, voiceHint);
   }
 
+  if (process.env.OPENAI_API_KEY) {
+    return analyzeProductImageWithOpenAI(imageUrl, voiceHint);
+  }
+
+  throw new Error("IA non configuree. Ajoute GEMINI_API_KEY ou OPENAI_API_KEY.");
+}
+
+async function analyzeProductImageWithGemini(imageUrl, voiceHint = "") {
+  const imageResponse = await fetch(imageUrl);
+  if (!imageResponse.ok) {
+    throw new Error("Image impossible a lire pour l'IA.");
+  }
+
+  const mimeType = imageResponse.headers.get("content-type")?.startsWith("image/")
+    ? imageResponse.headers.get("content-type")
+    : "image/jpeg";
+  const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+  const imageBase64 = imageBuffer.toString("base64");
+  const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: imageBase64,
+              },
+            },
+            { text: productAnalysisPrompt(voiceHint) },
+          ],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseJsonSchema: productAnalysisSchema(),
+      },
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Analyse Gemini impossible.");
+  }
+
+  const textOutput = data.candidates?.[0]?.content?.parts
+    ?.find((part) => typeof part.text === "string")?.text;
+
+  if (!textOutput) {
+    throw new Error("Analyse Gemini vide.");
+  }
+
+  return normalizeProductAnalysis(JSON.parse(textOutput));
+}
+
+async function analyzeProductImageWithOpenAI(imageUrl, voiceHint = "") {
+  const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -82,13 +145,7 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
           content: [
             {
               type: "input_text",
-              text: [
-                "Analyse cette photo de produit pour une mini-boutique mobile en Afrique francophone.",
-                "Retourne un nom usuel court, une petite description vendeuse, la categorie, les couleurs visibles, les tailles possibles si c'est un vetement.",
-                "Ne devine pas de marque si elle n'est pas clairement visible.",
-                "Si l'utilisateur donne une indication vocale, utilise-la pour corriger le nom, la taille ou la quantite.",
-                voiceHint ? `Indication vendeur: ${voiceHint}` : "",
-              ].filter(Boolean).join("\n"),
+              text: productAnalysisPrompt(voiceHint),
             },
             {
               type: "input_image",
@@ -103,21 +160,7 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
           type: "json_schema",
           name: "tikchop_product_analysis",
           strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              name: { type: "string" },
-              description: { type: "string" },
-              category: { type: "string" },
-              colors: { type: "array", items: { type: "string" } },
-              suggested_sizes: { type: "array", items: { type: "string" } },
-              size: { type: "string" },
-              quantity: { type: "number" },
-              confidence: { type: "number" },
-            },
-            required: ["name", "description", "category", "colors", "suggested_sizes", "size", "quantity", "confidence"],
-          },
+          schema: productAnalysisSchema(),
         },
       },
       max_output_tokens: 500,
@@ -140,6 +183,39 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
 
   const analysis = JSON.parse(textOutput);
 
+  return normalizeProductAnalysis(analysis);
+}
+
+function productAnalysisPrompt(voiceHint = "") {
+  return [
+    "Analyse cette photo de produit pour une mini-boutique mobile en Afrique francophone.",
+    "Retourne un nom usuel court, une petite description vendeuse, la categorie, les couleurs visibles, les tailles possibles si c'est un vetement.",
+    "Ne devine pas de marque si elle n'est pas clairement visible.",
+    "Si la taille ou la quantite ne sont pas visibles, retourne une chaine vide pour size et 1 pour quantity.",
+    "Si l'utilisateur donne une indication vocale, utilise-la pour corriger le nom, la taille ou la quantite.",
+    voiceHint ? `Indication vendeur: ${voiceHint}` : "",
+  ].filter(Boolean).join("\n");
+}
+
+function productAnalysisSchema() {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      name: { type: "string" },
+      description: { type: "string" },
+      category: { type: "string" },
+      colors: { type: "array", items: { type: "string" } },
+      suggested_sizes: { type: "array", items: { type: "string" } },
+      size: { type: "string" },
+      quantity: { type: "number" },
+      confidence: { type: "number" },
+    },
+    required: ["name", "description", "category", "colors", "suggested_sizes", "size", "quantity", "confidence"],
+  };
+}
+
+function normalizeProductAnalysis(analysis) {
   return {
     name: String(analysis.name || "").trim(),
     description: String(analysis.description || "").trim(),

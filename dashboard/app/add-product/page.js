@@ -116,7 +116,7 @@ export default function AddProductPage() {
         setFormData((current) => applyAnalysisToProduct(current, analysis));
       } catch (analysisFailure) {
         console.warn("Image analysis unavailable:", analysisFailure);
-        setAnalysisError("IA non activee pour l'instant. Tu peux remplir a la main.");
+        setAnalysisError("IA pas encore configuree. Ajoute une cle Gemini pour remplir le nom automatiquement.");
       } finally {
         setImageAnalyzing(false);
       }
@@ -176,7 +176,7 @@ export default function AddProductPage() {
           console.warn("Bulk image analysis unavailable:", analysisFailure);
           setBulkPhotoItems((current) => current.map((entry) => (
             entry.id === item.id
-              ? { ...entry, analysisError: "IA non activee. Complete a la main.", analyzing: false }
+              ? { ...entry, analysisError: "IA pas encore configuree. Complete a la main.", analyzing: false }
               : entry
           )));
         }
@@ -281,27 +281,27 @@ export default function AddProductPage() {
     : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing;
 
   return (
-    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
-      <main className="space-y-6">
+    <div className="app-shell pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">
+      <main className="space-y-5">
         <section>
-          <p className="quiet-label text-[var(--primary)]">Mise en ligne</p>
-          <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Ajouter un article</h1>
+          <p className="quiet-label text-[var(--primary)]">Publication rapide</p>
+          <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Nouvel article</h1>
           <p className="mt-1 text-base leading-6 text-[var(--text-dim)]">
-            Le vendeur remplit l&apos;essentiel. Le vocal reste une option.
+            Photo d&apos;abord. L&apos;IA remplit le nom, puis le vendeur met prix, taille et quantite.
           </p>
         </section>
 
         <section className="grid grid-cols-3 gap-2" aria-label="Choisir une methode">
-          <ModeButton active={mode === "MANUAL"} icon={<Sparkles size={18} />} label="Simple" onClick={() => setMode("MANUAL")} />
-          <ModeButton active={mode === "BULK"} icon={<PackagePlus size={18} />} label="Plusieurs" onClick={() => setMode("BULK")} />
+          <ModeButton active={mode === "MANUAL"} icon={<Sparkles size={18} />} label="1 photo" onClick={() => setMode("MANUAL")} />
+          <ModeButton active={mode === "BULK"} icon={<PackagePlus size={18} />} label="Lot photos" onClick={() => setMode("BULK")} />
           <ModeButton active={mode === "VOICE"} icon={<Mic size={18} />} label="Vocal" onClick={() => setMode("VOICE")} />
         </section>
 
-        <section className="app-card bg-white p-4">
+        <section className="app-card bg-white p-3">
           <div className="grid grid-cols-3 gap-2 text-center">
             <StepChip done={mode === "BULK" ? bulkPhotoItems.length > 0 || bulkProducts.length > 0 : Boolean(formData.image_url)} step="1" label={mode === "BULK" ? "Photos" : "Photo"} />
             <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.name)} step="2" label="Nom" />
-            <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.price)} step="3" label="Prix" />
+            <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.price)} step="3" label="Prix" important />
           </div>
         </section>
 
@@ -322,7 +322,7 @@ export default function AddProductPage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-[var(--text-main)]">Parler au lieu d&apos;ecrire</p>
-                  <p className="mt-1 text-sm text-[var(--text-dim)]">Ex: robe rouge 15000, quantite 1</p>
+                  <p className="mt-1 text-sm text-[var(--text-dim)]">Ex: robe rouge 15000, taille M, quantite 1</p>
                 </div>
                 <button type="button" onClick={startVoiceCapture} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${listening ? "bg-red-500" : "bg-[var(--primary)]"}`} aria-label="Dicter le produit">
                   <Mic size={22} />
@@ -351,7 +351,7 @@ export default function AddProductPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom, tu ajoutes prix, taille et quantite.</p>
+                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom, puis tu completes les champs importants.</p>
                 </div>
               </div>
               <input
@@ -414,14 +414,14 @@ export default function AddProductPage() {
                             placeholder={item.analyzing ? "Nom propose par l'IA..." : "Nom"}
                             className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
                           />
-                          <div className="grid grid-cols-3 gap-2">
-                            <input
-                              value={item.price}
-                              onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
-                              placeholder="Prix"
-                              inputMode="numeric"
-                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
-                            />
+                          <input
+                            value={item.price}
+                            onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
+                            placeholder="Prix obligatoire"
+                            inputMode="numeric"
+                            className="min-h-[48px] w-full rounded-lg border border-[var(--primary)]/45 bg-white px-3 text-base font-extrabold text-[var(--primary)] outline-none"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
                             <input
                               value={item.size}
                               onChange={(event) => updateBulkPhotoItem(item.id, "size", event.target.value)}
@@ -431,7 +431,7 @@ export default function AddProductPage() {
                             <input
                               value={item.stock_quantity}
                               onChange={(event) => updateBulkPhotoItem(item.id, "stock_quantity", event.target.value)}
-                              placeholder="Qte"
+                              placeholder="Quantite"
                               inputMode="numeric"
                               className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
                             />
@@ -492,7 +492,7 @@ export default function AddProductPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative flex min-h-[190px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-0 text-center transition active:scale-[0.99] md:min-h-[250px] ${
+                className={`relative flex min-h-[210px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-0 text-center transition active:scale-[0.99] md:min-h-[250px] ${
                   formData.image_url ? "border-[var(--primary)] bg-white" : "border-[var(--outline)]/55 bg-[var(--surface-mid)]"
                 }`}
               >
@@ -530,7 +530,7 @@ export default function AddProductPage() {
                 </p>
               )}
               {analysisError && (
-                <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
                   {analysisError}
                 </p>
               )}
@@ -539,30 +539,43 @@ export default function AddProductPage() {
 
           {mode !== "BULK" && (
             <div className="space-y-4">
-              <Field label="Nom visible par le client">
-                <input type="text" name="name" placeholder="Ex: Robe rouge" value={formData.name} onChange={handleChange} required className="mobile-input" />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Prix">
-                  <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input" />
-                </Field>
-                <Field label="Taille">
-                  <input type="text" name="size" placeholder="M, L, 42..." value={formData.size} onChange={handleChange} className="mobile-input" />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Quantite">
-                  <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
-                </Field>
-                <div className="rounded-xl bg-[var(--surface-soft)] px-4 py-3">
-                  <span className="quiet-label text-[var(--secondary)]">Aide IA</span>
-                  <p className="mt-1 text-sm font-semibold text-[var(--text-main)]">
-                    {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom pre-rempli" : "Apres la photo"}
-                  </p>
+              <section className="app-card space-y-4 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="quiet-label text-[var(--primary)]">Champs importants</p>
+                    <h2 className="mt-1 font-display text-xl font-bold text-[var(--text-main)]">Prix, taille, quantite</h2>
+                  </div>
+                  <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--primary)]">
+                    Obligatoire
+                  </span>
                 </div>
-              </div>
+                <Field label="Prix de vente">
+                  <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input text-xl text-[var(--primary)]" />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Taille">
+                    <input type="text" name="size" placeholder="M, L, 42..." value={formData.size} onChange={handleChange} className="mobile-input" />
+                  </Field>
+                  <Field label="Quantite">
+                    <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
+                  </Field>
+                </div>
+              </section>
+
+              <section className="app-card space-y-3 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="quiet-label text-[var(--secondary)]">Aide IA</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--text-main)]">
+                      {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom propose par l'IA" : "Ajoute une photo pour activer l'IA"}
+                    </p>
+                  </div>
+                  {imageAnalyzing ? <Loader2 className="animate-spin text-[var(--primary)]" size={22} /> : <Sparkles className="text-[var(--primary)]" size={22} />}
+                </div>
+                <Field label="Nom de l'article">
+                  <input type="text" name="name" placeholder="Ex: Robe rouge" value={formData.name} onChange={handleChange} required className="mobile-input" />
+                </Field>
+              </section>
 
               {mode === "MANUAL" && (
                 <Field label="Petit detail optionnel">
@@ -672,9 +685,9 @@ function parseBulkProducts(text) {
     .filter((product) => product.name && product.price);
 }
 
-function StepChip({ done, step, label }) {
+function StepChip({ done, step, label, important = false }) {
   return (
-    <div className={`rounded-lg border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
+    <div className={`rounded-lg border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : important ? "border-[var(--primary)]/45 bg-white text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
       <span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${done ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
         {done ? <CheckCircle2 size={16} strokeWidth={2.6} /> : step}
       </span>
