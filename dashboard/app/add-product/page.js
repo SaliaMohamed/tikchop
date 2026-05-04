@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Upload } from "lucide-react";
+import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Trash2, Upload } from "lucide-react";
 import { addProduct, addProductsBulk, getSellersForProductForm, uploadProductImage } from "../actions";
 
 function formatPrice(value) {
@@ -12,13 +12,16 @@ function formatPrice(value) {
 export default function AddProductPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
+  const bulkFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const [imageError, setImageError] = useState("");
   const [listening, setListening] = useState(false);
   const [mode, setMode] = useState("MANUAL");
   const [bulkText, setBulkText] = useState("");
+  const [bulkPhotoItems, setBulkPhotoItems] = useState([]);
   const [sellers, setSellers] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -51,10 +54,21 @@ export default function AddProductPage() {
 
     try {
       if (mode === "BULK") {
-        const products = parseBulkProducts(bulkText).map((product) => ({
+        const photoProducts = bulkPhotoItems
+          .filter((item) => item.image_url && item.name && item.price)
+          .map((item) => ({
+            name: item.name,
+            price: item.price,
+            stock_quantity: item.stock_quantity || 1,
+            image_url: item.image_url,
+            description: item.description || "",
+            seller_id: formData.seller_id,
+          }));
+        const textProducts = parseBulkProducts(bulkText).map((product) => ({
           ...product,
           seller_id: formData.seller_id,
         }));
+        const products = photoProducts.length > 0 ? photoProducts : textProducts;
         await addProductsBulk(products);
         alert(`${products.length} produits ajoutes.`);
       } else {
@@ -98,6 +112,60 @@ export default function AddProductPage() {
     }
   }
 
+  async function handleBulkImageSelection(event) {
+    const files = Array.from(event.target.files || []).filter((file) => file.type?.startsWith("image/"));
+    if (files.length === 0) return;
+
+    setImageError("");
+    setBulkUploading(true);
+
+    const pendingItems = files.map((file) => ({
+      id: crypto.randomUUID(),
+      preview: URL.createObjectURL(file),
+      image_url: "",
+      name: "",
+      price: "",
+      stock_quantity: 1,
+      uploading: true,
+    }));
+
+    setBulkPhotoItems((current) => [...current, ...pendingItems]);
+
+    for (const item of pendingItems) {
+      try {
+        const payload = new FormData();
+        const file = files[pendingItems.indexOf(item)];
+        payload.append("image", file);
+        const result = await uploadProductImage(payload);
+        setBulkPhotoItems((current) => current.map((entry) => (
+          entry.id === item.id
+            ? { ...entry, image_url: result.url, preview: result.url, uploading: false }
+            : entry
+        )));
+      } catch (error) {
+        console.error("Bulk image upload error:", error);
+        setBulkPhotoItems((current) => current.map((entry) => (
+          entry.id === item.id
+            ? { ...entry, uploadError: error.message || "Erreur image", uploading: false }
+            : entry
+        )));
+      }
+    }
+
+    setBulkUploading(false);
+    event.target.value = "";
+  }
+
+  function updateBulkPhotoItem(id, field, value) {
+    setBulkPhotoItems((current) => current.map((item) => (
+      item.id === id ? { ...item, [field]: value } : item
+    )));
+  }
+
+  function removeBulkPhotoItem(id) {
+    setBulkPhotoItems((current) => current.filter((item) => item.id !== id));
+  }
+
   function applyVoiceText(text) {
     const parsed = parseVoiceProduct(text);
     setFormData((current) => ({
@@ -131,8 +199,9 @@ export default function AddProductPage() {
   }
 
   const bulkProducts = parseBulkProducts(bulkText);
+  const readyBulkPhotos = bulkPhotoItems.filter((item) => item.image_url && item.name && item.price);
   const canSubmit = mode === "BULK"
-    ? bulkProducts.length > 0 && formData.seller_id
+    ? formData.seller_id && !bulkUploading && (readyBulkPhotos.length > 0 || bulkProducts.length > 0)
     : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading;
 
   return (
@@ -154,9 +223,9 @@ export default function AddProductPage() {
 
         <section className="app-card bg-white p-4">
           <div className="grid grid-cols-3 gap-2 text-center">
-            <StepChip done={Boolean(formData.image_url) || mode === "BULK"} step="1" label="Photo" />
-            <StepChip done={Boolean(formData.name) || bulkProducts.length > 0} step="2" label="Nom" />
-            <StepChip done={Boolean(formData.price) || bulkProducts.length > 0} step="3" label="Prix" />
+            <StepChip done={mode === "BULK" ? bulkPhotoItems.length > 0 || bulkProducts.length > 0 : Boolean(formData.image_url)} step="1" label={mode === "BULK" ? "Photos" : "Photo"} />
+            <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.name)} step="2" label="Nom" />
+            <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.price)} step="3" label="Prix" />
           </div>
         </section>
 
@@ -198,16 +267,84 @@ export default function AddProductPage() {
           )}
 
           {mode === "BULK" && (
-            <section className="app-card p-4">
+            <section className="space-y-4">
+            <div className="app-card p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-mid)] text-[var(--primary)]">
                   <PackagePlus size={19} />
                 </div>
                 <div>
                   <p className="font-semibold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm text-[var(--text-dim)]">Une ligne = un produit. Stock 1 par defaut.</p>
+                  <p className="text-sm text-[var(--text-dim)]">Selectionne plusieurs photos, puis ajoute prix et nom.</p>
                 </div>
               </div>
+              <input
+                ref={bulkFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleBulkImageSelection}
+              />
+              <button
+                type="button"
+                onClick={() => bulkFileInputRef.current?.click()}
+                className="mt-4 flex min-h-[74px] w-full items-center justify-center gap-3 rounded-xl bg-[var(--primary)] px-4 text-base font-bold text-white shadow-sm active:scale-[0.99]"
+              >
+                {bulkUploading ? <Loader2 className="animate-spin" size={21} /> : <ImagePlus size={22} />}
+                {bulkUploading ? "Envoi des photos..." : "Choisir plusieurs photos"}
+              </button>
+              {bulkPhotoItems.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between rounded-lg bg-[var(--surface-soft)] px-3 py-2 text-sm">
+                    <span className="font-semibold text-[var(--text-dim)]">Articles prets</span>
+                    <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
+                  </div>
+                  {bulkPhotoItems.map((item, index) => (
+                    <div key={item.id} className="rounded-xl border border-[var(--outline)]/35 bg-white p-3">
+                      <div className="flex gap-3">
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[var(--surface-mid)]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={item.preview} alt="" className="h-full w-full object-cover" />
+                          {item.uploading && (
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white">
+                              <Loader2 className="animate-spin" size={22} />
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-bold text-[var(--text-main)]">Article {index + 1}</p>
+                            <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Retirer">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <input
+                            value={item.name}
+                            onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
+                            placeholder="Nom"
+                            className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                          />
+                          <input
+                            value={item.price}
+                            onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
+                            placeholder="Prix"
+                            inputMode="numeric"
+                            className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+                      {item.uploadError && (
+                        <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{item.uploadError}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <details className="app-card p-4">
+              <summary className="cursor-pointer text-sm font-bold text-[var(--primary)]">Ou coller une liste sans photos</summary>
               <textarea
                 value={bulkText}
                 onChange={(event) => setBulkText(event.target.value)}
@@ -229,6 +366,7 @@ export default function AddProductPage() {
                   ))}
                 </div>
               )}
+            </details>
             </section>
           )}
 
