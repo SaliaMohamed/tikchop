@@ -25,11 +25,19 @@ function cleanPhone(phoneNumber) {
 
 const statusLabels = {
   ALL: "Toutes",
-  PENDING: "A traiter",
+  PENDING: "A preparer",
   PAID: "Payees",
   PREPARED: "Pretes",
   DELIVERED: "Livrees",
   CANCELLED: "Annulees",
+};
+
+const statusHints = {
+  PENDING: "Nouveau: verifier puis preparer",
+  PAID: "Paiement OK: preparer",
+  PREPARED: "Pret: envoyer au livreur",
+  DELIVERED: "Livre au client",
+  CANCELLED: "Annule",
 };
 
 const statusClasses = {
@@ -100,6 +108,8 @@ export default function OrdersPage() {
     if (filter === "ALL") return orders;
     return orders.filter((order) => order.status === filter);
   }, [filter, orders]);
+  const pendingCount = orders.filter((order) => order.status === "PENDING" || order.status === "PAID").length;
+  const readyCount = orders.filter((order) => order.status === "PREPARED").length;
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
@@ -107,7 +117,7 @@ export default function OrdersPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Commandes</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Gerez vos expeditions et suivis.</p>
+            <p className="mt-1 text-base text-[var(--text-dim)]">Ce qu&apos;il faut preparer et livrer.</p>
           </div>
           <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
             <RefreshCw size={19} strokeWidth={2.5} />
@@ -136,6 +146,13 @@ export default function OrdersPage() {
             Si les champs livraison manquent, applique la migration `2026-05-03-delivery-and-order-management.sql`.
           </p>
         </div>
+      )}
+
+      {!loading && !error && orders.length > 0 && (
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <WorkTile title="A preparer" value={pendingCount} tone="primary" />
+          <WorkTile title="A livrer" value={readyCount} />
+        </section>
       )}
 
       <section className="mt-5 md:mt-6">
@@ -177,6 +194,9 @@ export default function OrdersPage() {
 
 function OrderCard({ order, onClick }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
+  const primaryLine = order.customer_phone && order.customer_phone !== "UNKNOWN"
+    ? order.customer_phone
+    : "Client WhatsApp";
 
   return (
     <button
@@ -192,7 +212,7 @@ function OrderCard({ order, onClick }) {
               {statusLabels[order.status] || order.status}
             </span>
           </div>
-          <p className="mt-1 truncate text-sm text-[var(--text-dim)]">{order.customer_phone || "Client inconnu"}</p>
+          <p className="mt-1 truncate text-sm text-[var(--text-dim)]">{primaryLine}</p>
         </div>
         <div className="shrink-0 text-right">
           <p className="font-display text-base font-semibold text-[var(--primary)]">{formatPrice(total)}</p>
@@ -206,6 +226,10 @@ function OrderCard({ order, onClick }) {
         <MapPin size={16} className="shrink-0 text-[var(--outline)]" />
         <span className="truncate">{order.delivery_zone || order.delivery_address || "Adresse non renseignee"}</span>
       </div>
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-[var(--surface-soft)] px-3 py-2">
+        <span className="text-xs font-bold text-[var(--text-dim)]">{statusHints[order.status] || "Ouvrir la commande"}</span>
+        <span className="text-sm font-bold text-[var(--primary)]">Ouvrir</span>
+      </div>
     </button>
   );
 }
@@ -216,7 +240,9 @@ function OrderSheet({ order, drivers, onClose, onPrepared, onDelivered, onDriver
   const deliveryAmount = Number(order.delivery_fee || 0);
   const deliveryText = deliveryAmount > 0 ? `${formatPrice(deliveryAmount)} a encaisser` : "Aucun frais";
   const clientPhone = cleanPhone(order.customer_phone);
+  const displayClientPhone = order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Client WhatsApp";
   const availableDrivers = drivers.filter((driver) => driver.is_active !== false);
+  const isPrepared = order.status === "PREPARED" || order.delivery_status === "READY";
   const driverMessage = encodeURIComponent(`Nouvelle livraison Tikchop
 
 Boutique: Salia Boutique
@@ -258,7 +284,7 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
         </div>
 
         <div className="no-scrollbar max-h-[58vh] space-y-5 overflow-y-auto p-5">
-          <InfoBlock icon={<Phone size={18} />} label="Client" value={order.customer_phone || "Non renseigne"} />
+          <InfoBlock icon={<Phone size={18} />} label="Client" value={displayClientPhone} />
           <InfoBlock icon={<MapPin size={18} />} label="Adresse" value={`${order.delivery_zone || "Zone non renseignee"} - ${order.delivery_address || "Adresse non renseignee"}`} />
           <InfoBlock icon={<Truck size={18} />} label="Livreur" value={order.delivery_drivers?.name || "Pas encore assigne"} />
 
@@ -293,23 +319,26 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 p-4">
-          <button onClick={onPrepared} className="flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-zinc-100 text-sm font-extrabold text-zinc-950">
+        <div className="space-y-3 border-t border-zinc-100 p-4">
+          <p className="quiet-label">Action suivante</p>
+          <div className="grid grid-cols-2 gap-2">
+          <button onClick={onPrepared} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${isPrepared ? "bg-zinc-100 text-zinc-500" : "bg-green-500 text-zinc-950"}`}>
             <Package size={17} />
-            Prete
+            {isPrepared ? "Deja pret" : "Article pret"}
           </button>
-          <button onClick={onDelivered} className="flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-green-500 text-sm font-extrabold text-zinc-950">
+          <button onClick={onDelivered} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${isPrepared ? "bg-green-500 text-zinc-950" : "bg-zinc-100 text-zinc-500"}`}>
             <CheckCircle2 size={17} />
             Livree
           </button>
           <button onClick={() => openDriverWhatsapp()} className="flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-zinc-950 text-sm font-extrabold text-white">
             <Share2 size={17} />
-            Livreur
+            Envoyer livreur
           </button>
           <a href={clientPhone ? `https://wa.me/${clientPhone}?text=${clientMessage}` : undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${clientPhone ? "bg-white text-zinc-950 ring-1 ring-zinc-200" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
             <Send size={17} />
-            Client
+            Ecrire client
           </a>
+          </div>
         </div>
 
         <div className="border-t border-zinc-100 px-4 pb-4">
@@ -338,6 +367,15 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function WorkTile({ title, value, tone = "default" }) {
+  return (
+    <div className={`rounded-xl border p-4 ${tone === "primary" ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--outline)]/35 bg-white text-[var(--text-main)]"}`}>
+      <p className={`text-sm font-bold ${tone === "primary" ? "text-white/80" : "text-[var(--text-dim)]"}`}>{title}</p>
+      <p className="mt-2 font-display text-3xl font-bold leading-none">{value}</p>
     </div>
   );
 }
