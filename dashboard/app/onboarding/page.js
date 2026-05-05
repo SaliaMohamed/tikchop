@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, LogOut,
 import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 function slugify(value) {
   return String(value || "")
@@ -160,7 +161,8 @@ export default function OnboardingPage() {
       writeActiveSeller(seller);
       setCreatedSeller(seller);
       try {
-        const pairingResult = await requestSellerWhatsAppPairing(seller);
+        const token = await getSellerAccessToken();
+        const pairingResult = await requestSellerWhatsAppPairing(seller, token);
         setPairing(pairingResult);
       } catch (pairingError) {
         setPairing({

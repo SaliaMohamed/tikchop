@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Camera, ClipboardList, Home, Loader2, LogOut, Package, SlidersHorizontal, Store } from "lucide-react";
+import { Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Store } from "lucide-react";
 import { getSellerByOwner } from "./seller-actions";
 import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
 import { supabase } from "../lib/supabase";
@@ -14,6 +14,7 @@ const dashboardRoutes = new Set([
   "/products",
   "/add-product",
   "/delivery-settings",
+  "/whatsapp",
 ]);
 
 export default function AppChrome({ children }) {
@@ -54,6 +55,7 @@ export default function AppChrome({ children }) {
           <Link href="/orders" className="nav-link">Commandes</Link>
           <Link href="/products" className="nav-link">Articles</Link>
           <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="nav-link">Boutique</Link>
+          <Link href="/whatsapp" className="nav-link">WhatsApp</Link>
           <Link href="/delivery-settings" className="nav-link">Livraison</Link>
           <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/onboarding" className="nav-link">Nouveau vendeur</Link>
@@ -83,9 +85,9 @@ export default function AppChrome({ children }) {
           <ClipboardList size={20} strokeWidth={2.2} />
           <span>Commandes</span>
         </Link>
-        <Link href="/delivery-settings" className={`mobile-tabbar-item ${pathname === "/delivery-settings" ? "is-active" : ""}`}>
-          <SlidersHorizontal size={20} strokeWidth={2.2} />
-          <span>Livraison</span>
+        <Link href="/whatsapp" className={`mobile-tabbar-item ${pathname === "/whatsapp" ? "is-active" : ""}`}>
+          <MessageCircle size={20} strokeWidth={2.2} />
+          <span>WhatsApp</span>
         </Link>
       </nav>
       )}

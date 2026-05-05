@@ -56,10 +56,86 @@ async function evolutionRequest(path, options = {}) {
   });
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text ? { message: text } : null;
+  }
 
   if (!response.ok) {
-    throw new Error(data?.message || data?.error || "Evolution API a refuse la demande.");
+    const message = Array.isArray(data?.message) ? data.message.join(" ") : data?.message;
+    throw new Error(message || data?.error || "Evolution API a refuse la demande.");
+  }
+
+  return data;
+}
+
+function normalizeEvolutionState(data) {
+  return String(
+    data?.instance?.state
+    || data?.state
+    || data?.connectionState
+    || data?.status
+    || "disconnected",
+  ).toLowerCase();
+}
+
+async function saveSellerWhatsAppFields(seller, fields) {
+  const slug = slugify(seller?.slug);
+  if (!slug || !supabaseAdmin) return;
+
+  const { error } = await supabaseAdmin
+    .from("sellers")
+    .update(fields)
+    .eq("slug", slug);
+
+  if (error && /whatsapp_|evolution_|schema cache|column/i.test(error.message || "")) {
+    return;
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function requireOwnedSeller(seller, accessToken) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  if (!accessToken) {
+    throw new Error("Session vendeur manquante. Reconnecte-toi.");
+  }
+
+  const slug = slugify(seller?.slug);
+  if (!slug) {
+    throw new Error("Boutique introuvable.");
+  }
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
+  if (authError || !authData?.user) {
+    throw new Error("Session vendeur invalide. Reconnecte-toi.");
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("sellers")
+    .select("id, name, slug, phone_number")
+    .eq("slug", slug)
+    .eq("owner_user_id", authData.user.id)
+    .maybeSingle();
+
+  if (error && /owner_user_id|schema cache|column/i.test(error.message || "")) {
+    throw new Error("Applique d'abord la migration des comptes vendeurs dans Supabase.");
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    throw new Error("Cette boutique n'est pas liee a ton compte vendeur.");
   }
 
   return data;
@@ -101,6 +177,54 @@ export async function getSellerOptions() {
   }
 
   return data || [];
+}
+
+export async function getSellerWhatsAppConnection(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const slug = slugify(ownedSeller.slug);
+  const phone = cleanEvolutionPhone(ownedSeller.phone_number);
+
+  const { n8nWebhookUrl } = getEvolutionConfig();
+  const instanceName = slug;
+  const webhookUrl = `${n8nWebhookUrl}?seller=${encodeURIComponent(slug)}`;
+  let state = "disconnected";
+  let webhook = null;
+  let errorMessage = "";
+
+  try {
+    const data = await evolutionRequest(`/instance/connectionState/${encodeURIComponent(instanceName)}`);
+    state = normalizeEvolutionState(data);
+  } catch (error) {
+    errorMessage = error.message || "Instance Evolution introuvable.";
+  }
+
+  try {
+    webhook = await evolutionRequest(`/webhook/find/${encodeURIComponent(instanceName)}`);
+  } catch {
+    webhook = null;
+  }
+
+  const isConnected = ["open", "connected"].includes(state);
+
+  await saveSellerWhatsAppFields(ownedSeller, {
+    whatsapp_provider: "evolution",
+    evolution_instance: instanceName,
+    whatsapp_status: isConnected ? "connected" : state,
+    whatsapp_last_error: errorMessage || null,
+    ...(isConnected ? { whatsapp_connected_at: new Date().toISOString() } : {}),
+  });
+
+  return {
+    provider: "evolution",
+    instanceName,
+    phone,
+    state,
+    isConnected,
+    webhookUrl,
+    webhookEnabled: Boolean(webhook?.enabled ?? webhook?.webhook?.enabled),
+    webhookEvents: webhook?.events || webhook?.webhook?.events || [],
+    error: errorMessage,
+  };
 }
 
 export async function getSellerByOwner(ownerUserId) {
@@ -268,9 +392,10 @@ export async function createSellerFromOnboarding(payload) {
   return data;
 }
 
-export async function requestSellerWhatsAppPairing(seller) {
-  const slug = slugify(seller?.slug);
-  const phone = cleanEvolutionPhone(seller?.phone_number);
+export async function requestSellerWhatsAppPairing(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const slug = slugify(ownedSeller.slug);
+  const phone = cleanEvolutionPhone(ownedSeller.phone_number);
 
   if (!slug || phone.length < 8) {
     throw new Error("Boutique ou numero WhatsApp invalide.");
@@ -312,6 +437,14 @@ export async function requestSellerWhatsAppPairing(seller) {
     data = await evolutionRequest(`/instance/connect/${encodeURIComponent(instanceName)}?number=${encodeURIComponent(phone)}`);
   }
 
+  await saveSellerWhatsAppFields(ownedSeller, {
+    whatsapp_provider: "evolution",
+    evolution_instance: instanceName,
+    whatsapp_status: "pairing",
+    whatsapp_last_pairing_at: new Date().toISOString(),
+    whatsapp_last_error: null,
+  });
+
   const qrcode = data?.qrcode || data;
   const pairingCode = qrcode?.pairingCode || data?.pairingCode || "";
 
@@ -320,5 +453,28 @@ export async function requestSellerWhatsAppPairing(seller) {
     phone,
     pairingCode,
     qrBase64: qrcode?.base64 || data?.base64 || "",
+    webhookUrl,
+  };
+}
+
+export async function disconnectSellerWhatsApp(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const slug = slugify(ownedSeller.slug);
+
+  await evolutionRequest(`/instance/logout/${encodeURIComponent(slug)}`, {
+    method: "DELETE",
+  });
+
+  await saveSellerWhatsAppFields(ownedSeller, {
+    whatsapp_provider: "evolution",
+    evolution_instance: slug,
+    whatsapp_status: "disconnected",
+    whatsapp_last_error: null,
+  });
+
+  return {
+    instanceName: slug,
+    state: "disconnected",
+    isConnected: false,
   };
 }
