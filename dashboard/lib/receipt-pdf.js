@@ -1,3 +1,5 @@
+import { getPaymentOption } from "./local-commerce";
+
 function escapePdfText(value) {
   return String(value || "")
     .normalize("NFD")
@@ -56,6 +58,7 @@ function buildReceiptLines(order, payment = {}) {
   const items = order.order_items || [];
   const paidAt = payment.paid_at || payment.transaction_date || order.paystack_paid_at || order.created_at;
   const date = paidAt ? new Date(paidAt).toLocaleString("fr-FR") : "Non renseignee";
+  const paymentStatus = ["PAID", "PREPARED", "DELIVERED"].includes(order.status) ? "confirme" : "a confirmer";
 
   const lines = [
     { text: "RECU TIKCHOP", size: 20, gap: 24 },
@@ -63,7 +66,7 @@ function buildReceiptLines(order, payment = {}) {
     { text: `Boutique: ${seller?.name || "Tikchop"}`, size: 11 },
     { text: `Client: ${order.customer_phone || "Non renseigne"}`, size: 11 },
     { text: `Date: ${date}`, size: 11 },
-    { text: `Paiement: ${order.payment_method || "Paystack"} - confirme`, size: 11, gap: 18 },
+    { text: `Paiement: ${getPaymentOption(order.payment_method).label} - ${paymentStatus}`, size: 11, gap: 18 },
     { text: "ARTICLES", size: 13, gap: 15 },
   ];
 

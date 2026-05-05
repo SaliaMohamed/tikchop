@@ -14,10 +14,11 @@ import {
   User,
   X,
 } from "lucide-react";
-import { addDeliveryDriver, addDeliveryZone, deleteDeliveryDriver, deleteDeliveryZone, getSellerDeliverySettings, saveSellerDeliverySettings, updateDeliveryDriver, updateDeliveryZone } from "../actions";
+import { addDeliveryDriver, addDeliveryZone, addDeliveryZonesBulk, deleteDeliveryDriver, deleteDeliveryZone, getSellerDeliverySettings, saveSellerDeliverySettings, updateDeliveryDriver, updateDeliveryZone } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import { ABIDJAN_DELIVERY_AREAS } from "../../lib/local-commerce";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -27,19 +28,7 @@ const defaultSettings = {
   auto_share_to_driver: false,
 };
 
-const abidjanZoneSuggestions = [
-  "Abobo",
-  "Adjame",
-  "Angre",
-  "Bingerville",
-  "Cocody",
-  "Koumassi",
-  "Marcory",
-  "Plateau",
-  "Riviera",
-  "Treichville",
-  "Yopougon",
-];
+const abidjanZoneSuggestions = ABIDJAN_DELIVERY_AREAS;
 
 export default function DeliverySettingsPage() {
   const activeSeller = useActiveSeller();
@@ -198,6 +187,33 @@ export default function DeliverySettingsPage() {
     }
   }
 
+  async function handleAddAbidjanZones() {
+    if (!seller) return;
+
+    try {
+      setSaving(true);
+      setError("");
+      const token = await getSellerAccessToken();
+      const fee = Number(settings.fixed_delivery_fee || 1000);
+      const inserted = await addDeliveryZonesBulk(
+        seller.id,
+        abidjanZoneSuggestions.map((name) => ({ name, fee })),
+        token,
+      );
+
+      if (inserted.length === 0) {
+        setError("Les communes Abidjan sont deja dans ta liste. Tu peux modifier les frais une par une.");
+        return;
+      }
+
+      setZones((current) => [...current, ...inserted].sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (err) {
+      setError(friendlyError(err, "Communes non ajoutees. Reessaie avec une bonne connexion."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleDeleteZone(zoneId) {
     try {
       const token = await getSellerAccessToken();
@@ -314,6 +330,13 @@ export default function DeliverySettingsPage() {
                   onClick={() => setSettings({ ...settings, delivery_payment_timing: "OFFERED" })}
                 />
               </div>
+
+              <div className="mt-5 rounded-2xl bg-[var(--surface-soft)] p-4">
+                <p className="quiet-label text-[var(--primary)]">Options visibles client</p>
+                <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">
+                  Wave, Orange Money, MTN Money, paiement a la livraison et paiement en ligne.
+                </p>
+              </div>
             </div>
           </div>
           </section>
@@ -325,19 +348,30 @@ export default function DeliverySettingsPage() {
                   <MapPin className="text-[var(--primary)]" size={21} />
                   Gestion des zones
                 </h2>
-                <button onClick={() => openZoneModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
-                  <Plus size={16} strokeWidth={3} />
-                  Ajouter
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={handleAddAbidjanZones} disabled={saving} className="hidden min-h-[40px] items-center gap-1 rounded-full bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)] disabled:opacity-60 min-[390px]:flex">
+                    Abidjan
+                  </button>
+                  <button onClick={() => openZoneModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
+                    <Plus size={16} strokeWidth={3} />
+                    Ajouter
+                  </button>
+                </div>
               </div>
+              <button onClick={handleAddAbidjanZones} disabled={saving} className="mb-3 flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-[var(--surface-soft)] px-4 text-sm font-extrabold text-[var(--primary)] disabled:opacity-60 min-[390px]:hidden">
+                Ajouter les communes d&apos;Abidjan
+              </button>
 
               {zones.length === 0 ? (
                 <div className="rounded-[18px] border border-[var(--line)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
                   <MapPin className="mx-auto text-zinc-300" size={30} />
                   <p className="mt-3 font-extrabold text-zinc-950">Frais fixes actifs</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute librement les communes, quartiers ou sous-quartiers que tu livres.</p>
+                  <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute toutes les communes d&apos;Abidjan en un geste, puis ajuste les frais selon ton livreur.</p>
+                  <button onClick={handleAddAbidjanZones} disabled={saving} className="mt-4 min-h-[52px] w-full rounded-2xl bg-[var(--text-main)] text-sm font-extrabold text-white disabled:bg-zinc-300">
+                    {saving ? "Ajout..." : "Ajouter Abidjan"}
+                  </button>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    {abidjanZoneSuggestions.slice(0, 8).map((name) => (
+                    {abidjanZoneSuggestions.slice(0, 12).map((name) => (
                       <button key={name} onClick={() => openSuggestedZone(name)} className="min-h-[38px] rounded-full bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)]">
                         {name}
                       </button>

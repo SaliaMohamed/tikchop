@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { createOrder, initiatePayment } from "../actions";
+import { getPaymentOption, LOCAL_PAYMENT_OPTIONS } from "../../lib/local-commerce";
 import {
   ChevronRight,
   CreditCard,
@@ -52,6 +53,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
   const [deliveryZone, setDeliveryZone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("WAVE");
 
   const categories = useMemo(() => {
     const values = new Set(products.map((product) => productCategory(product)));
@@ -89,6 +91,10 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
   const displayedDeliveryFee = deliveryType === "DELIVERY"
     ? Number(selectedZone?.fee ?? seller.fixed_delivery_fee ?? 0)
     : 0;
+  const deliveryPaymentTiming = seller.delivery_payment_timing || "AT_RECEPTION";
+  const deliveryFeePaidOnline = deliveryType === "DELIVERY" && deliveryPaymentTiming === "INCLUDED";
+  const onlinePaymentTotal = cartTotal + (deliveryFeePaidOnline ? displayedDeliveryFee : 0);
+  const orderGrandTotal = cartTotal + displayedDeliveryFee;
   const featuredProduct = filteredProducts[0] || products[0] || null;
   const availableProducts = products.filter((product) => Number(product.stock_quantity || 0) > 0).length;
 
@@ -117,20 +123,13 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
     });
   }
 
-  const whatsappText = [
-    `Bonjour ${seller.name}, je veux commander :`,
-    ...cartItems.map(({ product, quantity }) => `- ${quantity} x ${product.name} (${formatPrice(product.price)}) Ref: ${product.id}`),
-    `Total: ${formatPrice(cartTotal)}`,
-    "Mode de paiement souhaite: Wave",
-  ].join("\n");
-
-  const whatsappUrl = `https://wa.me/${cleanPhone(seller.phone_number)}?text=${encodeURIComponent(whatsappText)}`;
-
-  async function handleCheckout(method = "WHATSAPP") {
+  async function handleCheckout(selectedMethod = paymentMethod) {
     if (!customerPhone || (deliveryType === "DELIVERY" && (!deliveryZone || !deliveryAddress))) {
-      alert("Veuillez remplir toutes les informations de livraison.");
+      alert("Ajoute ton numero et les informations de livraison.");
       return;
     }
+
+    const selectedPayment = getPaymentOption(selectedMethod);
 
     setIsSubmitting(true);
     try {
@@ -140,29 +139,43 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       }));
       
       const { orderId, orderRef, productsTotal, deliveryFee, totalToPay } = await createOrder(seller.id, checkoutItems, {
-        paymentMethod: method === "PAYSTACK" ? "PAYSTACK" : "WAVE",
+        paymentMethod: selectedPayment.value,
         deliveryType,
         deliveryZone,
         deliveryAddress,
         customerPhone
       });
       
-      if (method === "PAYSTACK") {
+      if (selectedPayment.online) {
         const { authorization_url } = await initiatePayment(orderId);
         window.location.href = authorization_url;
         return;
       }
       
       const textWithOrder = [
-        `Bonjour ${seller.name}, je veux commander :`,
-        ...cartItems.map(({ product, quantity }) => `- ${quantity} x ${product.name} (${formatPrice(product.price)})`),
+        `Bonjour ${seller.name}, je veux confirmer ma commande Tikchop.`,
+        ``,
+        `Commande: ${orderRef}`,
+        `Articles:`,
+        ...cartItems.map(({ product, quantity }) => {
+          const lineTotal = Number(product.price || 0) * quantity;
+          return `- ${quantity} x ${product.name} - ${formatPrice(lineTotal)}`;
+        }),
         `---`,
         `Produits: ${formatPrice(productsTotal)}`,
-        `Livraison (${deliveryType === 'PICKUP' ? 'Retrait' : 'Zone ' + deliveryZone}): ${formatPrice(deliveryFee)}`,
+        `Livraison: ${deliveryType === "PICKUP" ? "Retrait boutique" : deliveryZone}`,
+        `Frais livraison: ${formatPrice(deliveryFee)}`,
         `TOTAL: ${formatPrice(productsTotal + deliveryFee)}`,
         `---`,
-        `Client: ${customerPhone}`,
-        `Adresse: ${deliveryAddress}`,
+        `Numero client: ${customerPhone}`,
+        `Commune: ${deliveryType === "PICKUP" ? "Retrait" : deliveryZone}`,
+        `Adresse: ${deliveryType === "PICKUP" ? "Retrait boutique" : deliveryAddress}`,
+        `Paiement souhaite: ${selectedPayment.label}`,
+        selectedPayment.value === "CASH_ON_DELIVERY"
+          ? `Montant a payer apres reception: ${formatPrice(productsTotal + deliveryFee)}`
+          : deliveryPaymentTiming === "AT_RECEPTION" && deliveryType === "DELIVERY"
+            ? `Livraison a payer apres reception: ${formatPrice(deliveryFee)}`
+            : `Montant a regler maintenant: ${formatPrice(totalToPay)}`,
         `---`,
         `Ref Commande: ${orderRef}`,
       ].join("\n");
@@ -344,6 +357,11 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           seller={seller}
           deliveryZones={deliveryZones}
           displayedDeliveryFee={displayedDeliveryFee}
+          deliveryPaymentTiming={deliveryPaymentTiming}
+          onlinePaymentTotal={onlinePaymentTotal}
+          orderGrandTotal={orderGrandTotal}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
         />
       )}
     </>
@@ -606,8 +624,21 @@ function CartSheet({
   setCustomerPhone,
   seller,
   deliveryZones,
-  displayedDeliveryFee
+  displayedDeliveryFee,
+  deliveryPaymentTiming,
+  onlinePaymentTotal,
+  orderGrandTotal,
+  paymentMethod,
+  setPaymentMethod
 }) {
+  const selectedPayment = getPaymentOption(paymentMethod);
+  const primaryTotal = selectedPayment.online ? onlinePaymentTotal : orderGrandTotal;
+  const deliveryNote = deliveryPaymentTiming === "AT_RECEPTION"
+    ? "Livraison payable apres reception"
+    : deliveryPaymentTiming === "OFFERED"
+      ? "Livraison offerte par la boutique"
+      : "Livraison incluse au paiement";
+
   return (
     <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/45 backdrop-blur-[3px]">
       <div className="mx-auto flex max-h-[84svh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-18px_45px_rgba(16,24,20,0.20)]">
@@ -634,7 +665,8 @@ function CartSheet({
               </div>
               <div className="text-right">
                 <p className="text-xs font-bold text-white/50">Total</p>
-                <p className="font-display text-xl font-extrabold text-[var(--primary-bright)]">{formatPrice(cartTotal + displayedDeliveryFee)}</p>
+                <p className="font-display text-xl font-extrabold text-[var(--primary-bright)]">{formatPrice(orderGrandTotal)}</p>
+                {displayedDeliveryFee > 0 && <p className="mt-1 text-[0.68rem] font-bold text-white/50">{deliveryNote}</p>}
               </div>
             </div>
             <div className="mt-4 space-y-2">
@@ -701,7 +733,7 @@ function CartSheet({
                       onChange={(e) => setDeliveryZone(e.target.value)}
                       className="mobile-input bg-white"
                     >
-                      <option value="">Choisir une zone</option>
+                      <option value="">Choisir commune / quartier</option>
                       {deliveryZones.map((zone) => (
                         <option key={zone.id} value={zone.name}>
                           {zone.name} - {formatPrice(zone.fee)}
@@ -727,6 +759,32 @@ function CartSheet({
                 </>
               )}
             </div>
+
+            <div className="space-y-3">
+              <h4 className="flex items-center gap-2 text-base font-extrabold text-[var(--text-main)]">
+                <CreditCard size={18} className="text-[var(--primary)]" />
+                Paiement
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {LOCAL_PAYMENT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setPaymentMethod(option.value)}
+                    className={`min-h-[72px] rounded-2xl border p-3 text-left active:scale-[0.99] ${
+                      paymentMethod === option.value
+                        ? "border-[var(--text-main)] bg-[var(--text-main)] text-white"
+                        : "border-[var(--line)] bg-white text-[var(--text-main)]"
+                    }`}
+                  >
+                    <span className="block text-sm font-extrabold">{option.shortLabel}</span>
+                    <span className={`mt-1 block text-[0.68rem] font-bold leading-4 ${paymentMethod === option.value ? "text-white/62" : "text-[var(--text-dim)]"}`}>
+                      {option.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
         </div>
@@ -734,24 +792,16 @@ function CartSheet({
         <div className="border-t border-[var(--outline)]/30 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
           <div className="space-y-3">
             <button
-              onClick={() => onCheckout("PAYSTACK")}
+              onClick={() => onCheckout(paymentMethod)}
               disabled={!cartItems.length || isSubmitting}
               className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${
-                cartItems.length && !isSubmitting ? "bg-[var(--text-main)] text-white" : "pointer-events-none bg-[var(--surface-mid)] text-[var(--outline)]"
+                cartItems.length && !isSubmitting
+                  ? selectedPayment.online ? "bg-[var(--text-main)] text-white" : "bg-[#25D366] text-white"
+                  : "pointer-events-none bg-[var(--surface-mid)] text-[var(--outline)]"
               }`}
             >
-              <CreditCard size={18} />
-              {isSubmitting ? "Initialisation..." : `Payer en ligne (${formatPrice(cartTotal + displayedDeliveryFee)})`}
-            </button>
-            <button
-              onClick={() => onCheckout("WHATSAPP")}
-              disabled={!cartItems.length || isSubmitting}
-              className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${
-                cartItems.length && !isSubmitting ? "bg-[#25D366] text-white" : "pointer-events-none bg-[var(--surface-mid)] text-[var(--outline)]"
-              }`}
-            >
-              <MessageCircle size={18} />
-              {isSubmitting ? "Creation..." : "Envoyer sur WhatsApp"}
+              {selectedPayment.online ? <CreditCard size={18} /> : <MessageCircle size={18} />}
+              {isSubmitting ? "Preparation..." : `${selectedPayment.online ? "Payer maintenant" : "Confirmer sur WhatsApp"} (${formatPrice(primaryTotal)})`}
             </button>
           </div>
         </div>

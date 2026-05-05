@@ -14,6 +14,7 @@ import {
   Truck,
 } from "lucide-react";
 import { getReadableOrderRef, getReceiptOrder, getReceiptTotals } from "../../lib/receipt";
+import { getPaymentOption } from "../../lib/local-commerce";
 import ReceiptActions from "./ReceiptActions";
 
 export const dynamic = "force-dynamic";
@@ -205,7 +206,7 @@ export default async function ReceiptPage({ searchParams }) {
             <InfoBox icon={CalendarDays} label="Date" value={formatDate(order.created_at)} />
             <InfoBox icon={Phone} label="Client" value={order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Non renseigne"} />
             <InfoBox icon={Truck} label="Livraison" value={deliveryLabel} />
-            <InfoBox icon={CreditCard} label="Paiement" value={order.payment_method || "A confirmer"} />
+            <InfoBox icon={CreditCard} label="Paiement" value={order.payment_method ? getPaymentOption(order.payment_method).label : "A confirmer"} />
           </div>
 
           {order.delivery_address && (

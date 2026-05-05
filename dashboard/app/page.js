@@ -25,6 +25,10 @@ const emptyStats = {
   sales: 0,
   orders: 0,
   products: 0,
+  messagesReceived: 0,
+  confirmedOrders: 0,
+  clientsFollowedUp: 0,
+  weeklyClientsHandled: 0,
 };
 
 export default function Dashboard() {
@@ -55,7 +59,9 @@ export default function Dashboard() {
 
   const summary = useMemo(
     () => [
-      { label: "Commandes", value: stats.orders, icon: <ReceiptText size={19} /> },
+      { label: "Messages recus", value: stats.messagesReceived, icon: <MessageCircle size={19} /> },
+      { label: "Confirmees", value: stats.confirmedOrders, icon: <ReceiptText size={19} /> },
+      { label: "Clients relances", value: stats.clientsFollowedUp, icon: <ClipboardList size={19} /> },
       { label: "Produits actifs", value: stats.products, icon: <Package size={19} /> },
     ],
     [stats],
@@ -126,9 +132,26 @@ export default function Dashboard() {
         </section>
 
         <section className="grid grid-cols-2 gap-4">
+          <div className="app-card col-span-2 overflow-hidden bg-[var(--text-main)] p-5 text-white">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/45">Preuve de resultat</p>
+                <p className="mt-2 font-display text-2xl font-bold leading-8">
+                  Tikchop a traite {stats.weeklyClientsHandled || 0} client{stats.weeklyClientsHandled > 1 ? "s" : ""} cette semaine.
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-5 text-white/62">
+                  Commandes boutique et WhatsApp reunies pour montrer la valeur au vendeur.
+                </p>
+              </div>
+              <span className="app-icon-pill shrink-0 bg-white text-[var(--text-main)]">
+                <TrendingUp size={21} />
+              </span>
+            </div>
+          </div>
+
           <div className="app-card col-span-2 p-5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="quiet-label">Chiffre d&apos;affaires</p>
+              <p className="quiet-label">Ventes estimees</p>
               <span className="app-icon-pill bg-[var(--accent-soft)] text-[var(--accent)]">
                 <TrendingUp size={21} />
               </span>

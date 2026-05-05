@@ -5,6 +5,7 @@ import { supabaseAdmin } from "../lib/supabase-admin";
 import { initializeTransaction } from "../lib/paystack";
 import { savePaystackInitialization, sendOrderLifecycleMessage } from "../lib/order-payments";
 import { sendEvolutionText } from "../lib/evolution";
+import { getPaymentOption } from "../lib/local-commerce";
 
 async function requireSellerUser(accessToken) {
   if (!supabaseAdmin) {
@@ -513,6 +514,9 @@ export async function createOrder(sellerId, cartItems, options = {}) {
     throw new Error("No valid order items.");
   }
 
+  const selectedPayment = getPaymentOption(paymentMethod);
+  const normalizedPaymentMethod = selectedPayment.value;
+
   const productIds = requestedItems.map((item) => item.productId);
   const { data: products, error: productsError } = await supabaseAdmin
     .from("products")
@@ -558,7 +562,7 @@ export async function createOrder(sellerId, cartItems, options = {}) {
         customer_phone: customerPhone,
         status: "PENDING",
         total_amount: productsTotal,
-        payment_method: paymentMethod === "PAYSTACK" ? "PAYSTACK" : "WAVE",
+        payment_method: normalizedPaymentMethod,
         delivery_type: deliveryType,
         delivery_zone: deliveryZone,
         delivery_address: deliveryAddress,
@@ -569,7 +573,7 @@ export async function createOrder(sellerId, cartItems, options = {}) {
     .select("id, order_ref, total_amount")
     .single();
 
-  if (orderError && /(order_ref|delivery_|fixed_delivery_fee|delivery_payment_timing)/i.test(orderError.message || "")) {
+  if (orderError && /(order_ref|delivery_|fixed_delivery_fee|delivery_payment_timing|payment_method)/i.test(orderError.message || "")) {
     const fallbackResult = await supabaseAdmin
       .from("orders")
       .insert([
@@ -578,7 +582,7 @@ export async function createOrder(sellerId, cartItems, options = {}) {
           customer_phone: customerPhone,
           status: "PENDING",
           total_amount: productsTotal,
-          payment_method: paymentMethod === "PAYSTACK" ? "PAYSTACK" : "WAVE",
+          payment_method: normalizedPaymentMethod === "PAYSTACK" ? "PAYSTACK" : "WAVE",
         },
       ])
       .select("id, total_amount")
@@ -1059,6 +1063,54 @@ export async function updateDeliveryZone(zoneId, zone, accessToken) {
   return data;
 }
 
+export async function addDeliveryZonesBulk(sellerId, zones, accessToken) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  await requireSellerById(sellerId, accessToken);
+
+  const cleanZones = (zones || [])
+    .map((zone) => ({
+      seller_id: sellerId,
+      name: String(zone.name || "").trim(),
+      fee: Number(zone.fee || 0),
+      is_active: true,
+    }))
+    .filter((zone) => zone.name && zone.fee >= 0);
+
+  if (cleanZones.length === 0) {
+    throw new Error("Aucune zone valide.");
+  }
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("delivery_zones")
+    .select("name")
+    .eq("seller_id", sellerId);
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  const existingNames = new Set((existing || []).map((zone) => zone.name.toLowerCase()));
+  const payload = cleanZones.filter((zone) => !existingNames.has(zone.name.toLowerCase()));
+
+  if (payload.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("delivery_zones")
+    .insert(payload)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data || [];
+}
+
 export async function deleteDeliveryZone(zoneId, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
@@ -1094,18 +1146,25 @@ export async function getDashboardData(slug, accessToken) {
   }
 
   const seller = await requireSellerBySlug(slug, accessToken, "id");
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { count: productCount },
     { count: orderCount },
+    { count: weeklyOrderCount },
+    { count: confirmedOrderCount },
+    { count: pendingOrderCount },
     { data: orders, error: ordersError },
     { data: paidOrders, error: paidOrdersError },
   ] = await Promise.all([
     supabaseAdmin.from("products").select("*", { count: "exact", head: true }).eq("seller_id", seller.id),
     supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).gte("created_at", weekAgo),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).in("status", ["PAID", "PREPARED", "DELIVERED"]),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).eq("status", "PENDING"),
     supabaseAdmin
       .from("orders")
-      .select("id, order_ref, customer_phone, total_amount, status, created_at")
+      .select("id, order_ref, customer_phone, total_amount, delivery_fee, status, created_at")
       .eq("seller_id", seller.id)
       .order("created_at", { ascending: false })
       .limit(4),
@@ -1113,7 +1172,7 @@ export async function getDashboardData(slug, accessToken) {
       .from("orders")
       .select("total_amount, delivery_fee")
       .eq("seller_id", seller.id)
-      .in("status", ["PAID", "DELIVERED"]),
+      .in("status", ["PAID", "PREPARED", "DELIVERED"]),
   ]);
 
   if (ordersError) {
@@ -1132,6 +1191,10 @@ export async function getDashboardData(slug, accessToken) {
       sales,
       orders: orderCount || 0,
       products: productCount || 0,
+      messagesReceived: orderCount || 0,
+      confirmedOrders: confirmedOrderCount || 0,
+      clientsFollowedUp: pendingOrderCount || 0,
+      weeklyClientsHandled: weeklyOrderCount || 0,
     },
     recentOrders: orders || [],
   };

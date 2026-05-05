@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "./supabase-admin";
 import { sendEvolutionMedia, sendEvolutionText } from "./evolution";
 import { buildReceiptPdfBuffer, getReceiptPdfFileName } from "./receipt-pdf";
+import { getPaymentOption } from "./local-commerce";
 
 function getPaystackUpdatePayload(payment = {}) {
   const paidAt = payment.paid_at || payment.transaction_date || new Date().toISOString();
@@ -54,6 +55,18 @@ function getDeliveryPlace(order) {
   return order?.delivery_zone || order?.delivery_address || "";
 }
 
+function getOrderItemsSummary(order) {
+  const items = order?.order_items || [];
+  if (!items.length) return [];
+
+  return items.map((item) => {
+    const quantity = Number(item.quantity || 0);
+    const price = Number(item.price_at_time || 0);
+    const lineTotal = quantity * price;
+    return `- ${quantity} x ${item.products?.name || "Article"} - ${formatCfa(lineTotal)}`;
+  });
+}
+
 function getSellerEvolutionInstance(seller) {
   if (seller?.evolution_instance) {
     return seller.evolution_instance;
@@ -76,6 +89,7 @@ async function getOrderForWhatsAppMessage(orderId) {
     order_ref,
     customer_phone,
     status,
+    payment_method,
     total_amount,
     delivery_fee,
     delivery_zone,
@@ -106,6 +120,7 @@ async function getOrderForWhatsAppMessage(orderId) {
     order_ref,
     customer_phone,
     status,
+    payment_method,
     total_amount,
     delivery_fee,
     created_at,
@@ -175,18 +190,23 @@ export async function sendPaystackReceiptMessage(orderId, payment = {}) {
   const sellerName = seller?.name || "la boutique";
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   const deliveryPlace = getDeliveryPlace(order);
+  const paymentLabel = getPaymentOption(order.payment_method).label;
   const lines = [
-    "Commande prise en charge",
-    `Votre paiement est confirme chez ${sellerName}.`,
+    "Paiement recu",
+    `${sellerName} a bien recu votre paiement.`,
     `Commande: ${orderRef}`,
-    `Montant paye: ${formatCfa(total)}`,
     "",
-    "Statut: preparation en cours",
+    "Resume:",
+    ...getOrderItemsSummary(order),
+    `Paiement: ${paymentLabel}`,
+    `Montant: ${formatCfa(total)}`,
+    "",
+    "On prepare votre commande maintenant.",
     deliveryPlace
       ? `Livraison: ${deliveryPlace}`
-      : "Livraison: la boutique confirme les details avec vous.",
+      : "Envoyez votre zone si ce n'est pas encore fait.",
     "",
-    "Votre recu PDF arrive juste apres ce message.",
+    "Le recu PDF arrive juste apres.",
   ];
 
   const result = await sendEvolutionText({
@@ -221,27 +241,27 @@ function buildOrderStatusMessage(order, status, driver = null) {
 
   if (status === "PAID") {
     return [
-      "Commande prise en charge",
-      `Votre commande ${orderRef} est confirmee chez ${sellerName}.`,
-      "La boutique prepare maintenant vos articles.",
-      deliveryPlace ? `Livraison: ${deliveryPlace}` : "Livraison: details a confirmer avec vous.",
+      "Commande confirmee",
+      `${sellerName} a bien pris votre commande ${orderRef}.`,
+      "On prepare ca maintenant.",
+      deliveryPlace ? `Livraison: ${deliveryPlace}` : "Donnez votre zone pour caler la livraison.",
     ].join(String.fromCharCode(10));
   }
 
   if (status === "PREPARED") {
     return [
       "Colis pret",
-      `Votre commande ${orderRef} est preparee.`,
-      "Elle peut maintenant etre retiree ou confiee au livreur.",
-      deliveryPlace ? `Destination: ${deliveryPlace}` : "Nous confirmons la destination de livraison avec vous.",
+      `Votre commande ${orderRef} est prete.`,
+      "On peut passer a la livraison.",
+      deliveryPlace ? `Destination: ${deliveryPlace}` : "Confirmez votre zone de livraison svp.",
     ].join(String.fromCharCode(10));
   }
 
   if (status === "ASSIGNED") {
     return [
-      "Livraison prise en charge",
-      `Votre commande ${orderRef} est confiee a la livraison.`,
-      driver?.name ? `Livreur: ${driver.name}` : "Un livreur prend votre colis en charge.",
+      "Livraison lancee",
+      `Votre commande ${orderRef} est avec la livraison.`,
+      driver?.name ? `Livreur: ${driver.name}` : "Un livreur arrive avec votre colis.",
       deliveryPlace ? `Destination: ${deliveryPlace}` : "Destination a confirmer.",
     ].join(String.fromCharCode(10));
   }
@@ -249,8 +269,8 @@ function buildOrderStatusMessage(order, status, driver = null) {
   if (status === "DELIVERED") {
     return [
       "Commande livree",
-      `Votre commande ${orderRef} est marquee comme livree.`,
-      `Merci d'avoir commande chez ${sellerName}.`,
+      `Votre commande ${orderRef} est bien livree.`,
+      `Merci pour la confiance chez ${sellerName}.`,
     ].join(String.fromCharCode(10));
   }
 
@@ -258,7 +278,7 @@ function buildOrderStatusMessage(order, status, driver = null) {
     return [
       "Commande annulee",
       `Votre commande ${orderRef} est annulee.`,
-      "Vous pouvez recontacter la boutique si besoin.",
+      "Vous pouvez recontacter la boutique si vous voulez reprendre.",
     ].join(String.fromCharCode(10));
   }
 
