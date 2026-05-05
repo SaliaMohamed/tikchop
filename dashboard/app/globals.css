@@ -296,6 +296,21 @@ img {
   box-shadow: var(--shadow-sm);
 }
 
+.public-shop {
+  isolation: isolate;
+  position: relative;
+}
+
+.public-shop::before {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.86), rgb(234 240 255 / 0.48) 42%, rgb(246 248 245 / 0));
+  content: "";
+  inset: 0 -1rem auto;
+  min-height: 34rem;
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+}
+
 .app-hero {
   background: white;
   border: 1px solid rgb(187 202 191 / 0.55);

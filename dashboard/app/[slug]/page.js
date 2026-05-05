@@ -44,7 +44,7 @@ export default async function SellerShopPage({ params, searchParams }) {
   const { seller, products, deliveryZones } = data;
 
   return (
-    <div className="mx-auto max-w-[480px] pb-8 md:max-w-6xl">
+    <div className="public-shop mx-auto max-w-[480px] pb-8 md:max-w-6xl">
       <ShopClient seller={seller} products={products} deliveryZones={deliveryZones} initialProductId={query?.product || ""} />
 
       <footer className="mt-8 text-center text-xs font-bold text-zinc-400">
