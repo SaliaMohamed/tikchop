@@ -437,3 +437,24 @@ img {
     padding-right: 0.35rem;
   }
 }
+
+@media print {
+  body {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .no-print,
+  .mobile-tabbar,
+  .mobile-seller-topbar,
+  .navbar {
+    display: none !important;
+  }
+
+  .print-receipt {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+}
