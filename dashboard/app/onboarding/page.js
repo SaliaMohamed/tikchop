@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Copy, Loader2, MessageCircle, Store, Truck } from "lucide-react";
-import { createSellerFromOnboarding } from "../seller-actions";
-import { writeActiveSeller } from "../components/sellerContext";
+import { createSellerFromOnboarding, getSellerOptions } from "../seller-actions";
+import { getSellerInitials, useActiveSeller, writeActiveSeller } from "../components/sellerContext";
 
 function slugify(value) {
   return String(value || "")
@@ -23,9 +23,13 @@ function formatPrice(value) {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const activeSeller = useActiveSeller();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [loadingSellers, setLoadingSellers] = useState(true);
   const [error, setError] = useState("");
+  const [sellerError, setSellerError] = useState("");
+  const [sellerOptions, setSellerOptions] = useState([]);
   const [createdSeller, setCreatedSeller] = useState(null);
   const [form, setForm] = useState({
     name: "",
@@ -38,6 +42,29 @@ export default function OnboardingPage() {
 
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadSellers() {
+      try {
+        setSellerError("");
+        const sellers = await getSellerOptions();
+        if (alive) setSellerOptions(sellers || []);
+      } catch (err) {
+        if (alive) setSellerError(err.message || "Impossible de charger les boutiques.");
+      } finally {
+        if (alive) setLoadingSellers(false);
+      }
+    }
+
+    const timeout = setTimeout(loadSellers, 0);
+
+    return () => {
+      alive = false;
+      clearTimeout(timeout);
+    };
+  }, []);
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -61,6 +88,7 @@ export default function OnboardingPage() {
         slug: suggestedSlug,
       });
       writeActiveSeller(seller);
+      setSellerOptions((current) => [seller, ...current.filter((item) => item.id !== seller.id)]);
       setCreatedSeller(seller);
       setStep(4);
     } catch (err) {
@@ -74,6 +102,11 @@ export default function OnboardingPage() {
     if (!shopUrl) return;
     await navigator.clipboard.writeText(shopUrl);
     alert("Lien boutique copie.");
+  }
+
+  function activateSeller(seller) {
+    writeActiveSeller(seller);
+    router.push("/");
   }
 
   return (
@@ -96,6 +129,14 @@ export default function OnboardingPage() {
             title="Nom de la boutique"
             subtitle="Le client doit comprendre tout de suite chez qui il achete."
           >
+            <ExistingSellerList
+              activeSeller={activeSeller}
+              sellers={sellerOptions}
+              loading={loadingSellers}
+              error={sellerError}
+              onSelect={activateSeller}
+            />
+
             <label className="block">
               <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nom boutique</span>
               <input
@@ -281,6 +322,82 @@ function OnboardingCard({ icon, title, subtitle, children }) {
         </div>
       </div>
       {children}
+    </section>
+  );
+}
+
+function ExistingSellerList({ activeSeller, sellers, loading, error, onSelect }) {
+  if (loading) {
+    return (
+      <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4 text-sm font-bold text-[var(--text-dim)]">
+        Chargement des boutiques...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mb-5 rounded-xl bg-amber-50 p-4 text-sm font-bold leading-5 text-amber-800 ring-1 ring-amber-100">
+        {error}
+      </div>
+    );
+  }
+
+  if (!sellers.length) {
+    return (
+      <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4">
+        <p className="quiet-label">Premiere boutique</p>
+        <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+          Cree la premiere boutique vendeur. Ensuite elle apparaitra ici pour changer rapidement.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="mb-6">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <p className="quiet-label">Boutiques existantes</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">Active celle que tu veux gerer maintenant.</p>
+        </div>
+        <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--primary)]">
+          {sellers.length}
+        </span>
+      </div>
+
+      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {sellers.map((seller) => {
+          const active = seller.slug === activeSeller.slug;
+          return (
+            <button
+              type="button"
+              key={seller.id || seller.slug}
+              onClick={() => onSelect(seller)}
+              className={`min-w-[210px] rounded-xl border p-3 text-left active:scale-[0.99] ${
+                active ? "border-[var(--primary)] bg-[var(--surface-soft)]" : "border-[var(--outline)]/45 bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+                  active ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--primary)]"
+                }`}>
+                  {getSellerInitials(seller)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate font-display text-base font-bold text-[var(--text-main)]">{seller.name}</span>
+                  <span className="mt-0.5 block truncate text-xs font-bold text-[var(--primary)]">/{seller.slug}</span>
+                </span>
+              </div>
+              <span className={`mt-3 flex min-h-[36px] items-center justify-center rounded-lg text-xs font-extrabold ${
+                active ? "bg-white text-[var(--primary)]" : "bg-[var(--text-main)] text-white"
+              }`}>
+                {active ? "Boutique active" : "Gerer cette boutique"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }
