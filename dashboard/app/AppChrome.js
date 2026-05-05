@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Home, Package, PlusCircle, Settings, Store } from "lucide-react";
+import { Camera, ClipboardList, Home, Package, SlidersHorizontal, Store } from "lucide-react";
 import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
 
 const dashboardRoutes = new Set([
@@ -72,7 +72,7 @@ export default function AppChrome({ children }) {
           <span>Articles</span>
         </Link>
         <Link href="/add-product" className="mobile-tabbar-action" aria-label="Publier un article">
-          <PlusCircle size={24} strokeWidth={2.3} />
+          <Camera size={24} strokeWidth={2.3} />
           <span>Publier</span>
         </Link>
         <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
@@ -80,7 +80,7 @@ export default function AppChrome({ children }) {
           <span>Commandes</span>
         </Link>
         <Link href="/delivery-settings" className={`mobile-tabbar-item ${pathname === "/delivery-settings" ? "is-active" : ""}`}>
-          <Settings size={20} strokeWidth={2.2} />
+          <SlidersHorizontal size={20} strokeWidth={2.2} />
           <span>Livraison</span>
         </Link>
       </nav>
