@@ -83,25 +83,29 @@ export async function uploadProductImage(formData) {
     throw new Error("Image trop lourde. Maximum 8 MB.");
   }
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudinary = getCloudinaryConfig();
+  const cloudName = cloudinary.cloudName;
+  const apiKey = cloudinary.apiKey;
+  const apiSecret = cloudinary.apiSecret;
 
   if (!cloudName || !apiKey || !apiSecret) {
     throw new Error("Cloudinary n'est pas configure.");
   }
 
   const timestamp = Math.round(Date.now() / 1000);
-  const folder = "tikchop/products";
+  const publicId = `tikchop/products/${timestamp}-${createHash("sha1")
+    .update(`${file.name}-${file.size}-${timestamp}`)
+    .digest("hex")
+    .slice(0, 12)}`;
   const signature = createHash("sha1")
-    .update(`folder=${folder}&timestamp=${timestamp}${apiSecret}`)
+    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
     .digest("hex");
 
   const payload = new FormData();
   payload.append("file", file);
   payload.append("api_key", apiKey);
   payload.append("timestamp", String(timestamp));
-  payload.append("folder", folder);
+  payload.append("public_id", publicId);
   payload.append("signature", signature);
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
@@ -119,6 +123,32 @@ export async function uploadProductImage(formData) {
     url: data.secure_url,
     publicId: data.public_id,
   };
+}
+
+function getCloudinaryConfig() {
+  const directConfig = {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+  };
+
+  if (directConfig.cloudName && directConfig.apiKey && directConfig.apiSecret) {
+    return directConfig;
+  }
+
+  const cloudinaryUrl = process.env.CLOUDINARY_URL;
+  if (!cloudinaryUrl) return directConfig;
+
+  try {
+    const url = new URL(cloudinaryUrl);
+    return {
+      cloudName: directConfig.cloudName || url.hostname,
+      apiKey: directConfig.apiKey || decodeURIComponent(url.username),
+      apiSecret: directConfig.apiSecret || decodeURIComponent(url.password),
+    };
+  } catch {
+    return directConfig;
+  }
 }
 
 export async function analyzeProductImage(imageUrl, voiceHint = "") {
