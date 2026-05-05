@@ -31,6 +31,7 @@ export default function OnboardingPage() {
   const [accountMethod, setAccountMethod] = useState("EMAIL");
   const [sellerAccount, setSellerAccount] = useState(null);
   const [existingSeller, setExistingSeller] = useState(null);
+  const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState("");
   const [createdSeller, setCreatedSeller] = useState(null);
   const [pairing, setPairing] = useState(null);
@@ -211,6 +212,37 @@ export default function OnboardingPage() {
     setStep(0);
     if (supabase) {
       await supabase.auth.signOut();
+    }
+  }
+
+  async function handlePasswordReset() {
+    if (!supabase) {
+      setError("Supabase Auth n'est pas configure.");
+      return;
+    }
+
+    const email = form.email.trim().toLowerCase();
+    if (!email.includes("@")) {
+      setError("Ajoute ton email avant de demander le lien.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/account/update-password`,
+      });
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setResetSent(true);
+    } catch (resetError) {
+      setError(resetError.message || "Impossible d'envoyer le lien de recuperation.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -401,6 +433,30 @@ export default function OnboardingPage() {
                 />
               </div>
             </label>
+
+            {accountMode === "SIGN_IN" && accountMethod === "EMAIL" && (
+              <div className="mt-3 rounded-xl bg-[var(--surface-soft)] p-3">
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={saving}
+                  className="text-sm font-extrabold text-[var(--primary)] disabled:text-[var(--text-dim)]"
+                >
+                  Mot de passe oublie ? Envoyer un lien par email
+                </button>
+                {resetSent && (
+                  <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                    Si ce compte existe, un email de recuperation vient d&apos;etre envoye.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {accountMode === "SIGN_IN" && accountMethod === "PHONE" && (
+              <p className="mt-3 rounded-xl bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                Recuperation telephone par code SMS/WhatsApp a brancher avec un fournisseur OTP.
+              </p>
+            )}
 
             <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
               {accountMethod === "EMAIL"
