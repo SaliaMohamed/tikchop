@@ -2,7 +2,9 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  ArrowRight,
   CheckCircle2,
+  CircleDollarSign,
   MapPin,
   Pencil,
   Plus,
@@ -52,6 +54,14 @@ export default function DeliverySettingsPage() {
   const [newZone, setNewZone] = useState({ name: "", fee: "" });
   const [editingDriver, setEditingDriver] = useState(null);
   const [editingZone, setEditingZone] = useState(null);
+  const nextAction = getDeliveryNextAction({
+    zones,
+    drivers,
+    settings,
+    onAddZone: () => openZoneModal(),
+    onAddDriver: () => openDriverModal(),
+    onSave: saveSettings,
+  });
 
   const fetchData = useCallback(async function fetchData() {
     try {
@@ -205,8 +215,9 @@ export default function DeliverySettingsPage() {
       <header className="mobile-top">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Réglages de livraison</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Configurez vos options d&apos;expédition, zones et livreurs.</p>
+            <p className="quiet-label text-[var(--primary)]">Livraison</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Reglages livraison</h1>
+            <p className="mt-1 text-base text-[var(--text-dim)]">Choisis retrait, livraison, frais par zone et livreurs WhatsApp.</p>
           </div>
           <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[var(--primary-bright)] text-white disabled:bg-[var(--surface-mid)]" aria-label="Enregistrer">
             <Save size={19} strokeWidth={2.5} />
@@ -227,14 +238,22 @@ export default function DeliverySettingsPage() {
         </div>
       ) : (
         <main className="mt-8 space-y-5 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+          <DeliveryNextActionCard action={nextAction} saving={saving} />
+
+          <section className="grid grid-cols-3 gap-2">
+            <DeliveryStat icon={<MapPin size={17} />} label="Zones" value={zones.length} tone="primary" />
+            <DeliveryStat icon={<Truck size={17} />} label="Livreurs" value={drivers.length} tone="info" />
+            <DeliveryStat icon={<CircleDollarSign size={17} />} label="Frais" value={`${Number(settings.fixed_delivery_fee || 0).toLocaleString("fr-FR")} F`} tone="accent" />
+          </section>
+
           <div className="grid gap-6 md:grid-cols-[0.95fr_1.05fr] md:items-start">
           <section className="space-y-5">
           <div>
-            <h2 className="mb-6 flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
+            <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
               <Truck className="text-[var(--primary)]" size={21} />
               Modes de livraison
             </h2>
-            <div className="app-card overflow-hidden p-2">
+            <div className="overflow-hidden rounded-[18px] border border-[var(--line)] bg-white p-2 shadow-[var(--shadow-sm)]">
               <ToggleRow
                 title="Livraison a domicile"
                 text="Le client renseigne son quartier et son adresse."
@@ -261,16 +280,16 @@ export default function DeliverySettingsPage() {
               <CheckCircle2 className="text-[var(--primary)]" size={21} />
               Frais & Paiement
             </h2>
-            <div className="app-card p-5">
+            <div className="rounded-[18px] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)]">
               <label className="block">
-                <span className="quiet-label mb-2 block">Frais de livraison fixes (CFA)</span>
+                <span className="quiet-label mb-2 block">Frais fixes si aucune zone ne correspond</span>
                 <input type="number" value={settings.fixed_delivery_fee} onChange={(event) => setSettings({ ...settings, fixed_delivery_fee: event.target.value })} className="mobile-input" placeholder="1000" />
               </label>
 
               <div className="mt-5 space-y-3">
                 <PaymentChoice
-                  title="A la reception"
-                  text="Le livreur encaisse les frais."
+                  title="Apres reception"
+                  text="Le client paie la livraison au livreur."
                   active={settings.delivery_payment_timing === "AT_RECEPTION"}
                   onClick={() => setSettings({ ...settings, delivery_payment_timing: "AT_RECEPTION" })}
                 />
@@ -281,7 +300,7 @@ export default function DeliverySettingsPage() {
                   onClick={() => setSettings({ ...settings, delivery_payment_timing: "INCLUDED" })}
                 />
                 <PaymentChoice
-                  title="Offert"
+                  title="Livraison offerte"
                   text="La boutique prend en charge."
                   active={settings.delivery_payment_timing === "OFFERED"}
                   onClick={() => setSettings({ ...settings, delivery_payment_timing: "OFFERED" })}
@@ -298,20 +317,20 @@ export default function DeliverySettingsPage() {
                   <MapPin className="text-[var(--primary)]" size={21} />
                   Gestion des zones
                 </h2>
-                <button onClick={() => openZoneModal()} className="flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">
+                <button onClick={() => openZoneModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
                   <Plus size={16} strokeWidth={3} />
                   Ajouter
                 </button>
               </div>
 
               {zones.length === 0 ? (
-                <div className="app-card p-6 text-center">
+                <div className="rounded-[18px] border border-[var(--line)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
                   <MapPin className="mx-auto text-zinc-300" size={30} />
                   <p className="mt-3 font-extrabold text-zinc-950">Frais fixes actifs</p>
                   <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute librement les communes, quartiers ou sous-quartiers que tu livres.</p>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {abidjanZoneSuggestions.slice(0, 8).map((name) => (
-                      <button key={name} onClick={() => openSuggestedZone(name)} className="min-h-[36px] rounded-full bg-[var(--surface-mid)] px-3 text-sm font-semibold text-[var(--text-main)]">
+                      <button key={name} onClick={() => openSuggestedZone(name)} className="min-h-[38px] rounded-full bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)]">
                         {name}
                       </button>
                     ))}
@@ -320,9 +339,9 @@ export default function DeliverySettingsPage() {
               ) : (
                 <div className="space-y-3">
                   {zones.map((zone) => (
-                    <div key={zone.id} className="app-card flex items-center justify-between p-4">
+                    <div key={zone.id} className="flex items-center justify-between rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-mid)] text-[var(--outline)]">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
                           <MapPin size={18} />
                         </div>
                         <div className="min-w-0">
@@ -331,7 +350,7 @@ export default function DeliverySettingsPage() {
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
-                        <button onClick={() => openZoneModal(zone)} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-500" aria-label={`Modifier ${zone.name}`}>
+                        <button onClick={() => openZoneModal(zone)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-50 text-zinc-500" aria-label={`Modifier ${zone.name}`}>
                           <Pencil size={17} />
                         </button>
                         <button onClick={() => handleDeleteZone(zone.id)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300" aria-label={`Supprimer ${zone.name}`}>
@@ -349,14 +368,14 @@ export default function DeliverySettingsPage() {
                 <Truck className="text-[var(--primary)]" size={21} />
                 Livreurs
               </h2>
-              <button onClick={() => openDriverModal()} className="flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">
+                <button onClick={() => openDriverModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
                 <Plus size={16} strokeWidth={3} />
                 Ajouter
               </button>
             </div>
 
             {drivers.length === 0 ? (
-              <div className="app-card p-7 text-center">
+              <div className="rounded-[18px] border border-[var(--line)] bg-white p-7 text-center shadow-[var(--shadow-sm)]">
                 <Truck className="mx-auto text-zinc-300" size={34} />
                 <p className="mt-3 font-extrabold text-zinc-950">Aucun livreur</p>
                 <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute les numeros WhatsApp de ta panoplie.</p>
@@ -364,9 +383,9 @@ export default function DeliverySettingsPage() {
             ) : (
               <div className="space-y-3">
                 {drivers.map((driver) => (
-                  <div key={driver.id} className="app-card flex items-center justify-between p-4">
+                  <div key={driver.id} className="flex items-center justify-between rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--secondary-container)] text-[var(--on-secondary-fixed)]">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--info-soft)] text-[var(--info)]">
                         <User size={18} />
                       </div>
                       <div className="min-w-0">
@@ -375,7 +394,7 @@ export default function DeliverySettingsPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <button onClick={() => openDriverModal(driver)} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-500" aria-label={`Modifier ${driver.name}`}>
+                      <button onClick={() => openDriverModal(driver)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-50 text-zinc-500" aria-label={`Modifier ${driver.name}`}>
                         <Pencil size={17} />
                       </button>
                       <button onClick={() => handleDeleteDriver(driver.id)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300" aria-label={`Supprimer ${driver.name}`}>
@@ -393,7 +412,7 @@ export default function DeliverySettingsPage() {
 
       {showAddDriver && (
         <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] rounded-lg bg-white p-5 shadow-2xl">
+          <div className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white p-5 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-2xl font-extrabold text-zinc-950">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
               <button onClick={closeDriverModal} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
@@ -405,7 +424,7 @@ export default function DeliverySettingsPage() {
               <input className="mobile-input bg-zinc-50" placeholder="WhatsApp" value={newDriver.phone_number} onChange={(event) => setNewDriver({ ...newDriver, phone_number: event.target.value })} />
               <input className="mobile-input bg-zinc-50" placeholder="Zone optionnelle" value={newDriver.zone} onChange={(event) => setNewDriver({ ...newDriver, zone: event.target.value })} />
             </div>
-            <button onClick={handleSaveDriver} disabled={saving} className="mt-5 min-h-[56px] w-full rounded-lg bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
+            <button onClick={handleSaveDriver} disabled={saving} className="mt-5 min-h-[58px] w-full rounded-2xl bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
               {editingDriver ? "Mettre a jour" : "Enregistrer"}
             </button>
           </div>
@@ -414,7 +433,7 @@ export default function DeliverySettingsPage() {
 
       {showAddZone && (
         <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] rounded-lg bg-white p-5 shadow-2xl">
+          <div className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white p-5 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-2xl font-extrabold text-zinc-950">{editingZone ? "Modifier la zone" : "Nouvelle zone"}</h2>
               <button onClick={closeZoneModal} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
@@ -425,12 +444,93 @@ export default function DeliverySettingsPage() {
               <input className="mobile-input bg-zinc-50" placeholder="Ex: Angre, Riviera 2, Koumassi..." value={newZone.name} onChange={(event) => setNewZone({ ...newZone, name: event.target.value })} />
               <input className="mobile-input bg-zinc-50" type="number" placeholder="Frais livraison" value={newZone.fee} onChange={(event) => setNewZone({ ...newZone, fee: event.target.value })} />
             </div>
-            <button onClick={handleSaveZone} disabled={saving} className="mt-5 min-h-[56px] w-full rounded-lg bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
+            <button onClick={handleSaveZone} disabled={saving} className="mt-5 min-h-[58px] w-full rounded-2xl bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
               {editingZone ? "Mettre a jour" : "Enregistrer"}
             </button>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDriver, onSave }) {
+  if (zones.length === 0 && settings.delivery_enabled) {
+    return {
+      step: "1",
+      title: "Ajoute tes zones",
+      body: "Le vendeur choisit lui-meme les quartiers, communes ou sous-quartiers qu'il livre.",
+      label: "Ajouter une zone",
+      icon: <MapPin size={20} />,
+      onClick: onAddZone,
+    };
+  }
+
+  if (drivers.length === 0 && settings.delivery_enabled) {
+    return {
+      step: "2",
+      title: "Ajoute un livreur",
+      body: "Son numero WhatsApp permettra de partager une commande prete en un geste.",
+      label: "Ajouter un livreur",
+      icon: <Truck size={20} />,
+      onClick: onAddDriver,
+    };
+  }
+
+  return {
+    step: "OK",
+    title: "Livraison prete",
+    body: "Les clients pourront choisir retrait ou livraison selon tes reglages.",
+    label: "Enregistrer les reglages",
+    icon: <Save size={20} />,
+    onClick: onSave,
+    strong: true,
+  };
+}
+
+function DeliveryNextActionCard({ action, saving }) {
+  return (
+    <section className={`rounded-[20px] border p-4 shadow-[var(--shadow-sm)] ${action.strong ? "border-[var(--text-main)] bg-[var(--text-main)] text-white" : "border-[var(--line)] bg-white text-[var(--text-main)]"}`}>
+      <div className="flex items-start gap-3">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${action.strong ? "bg-white text-[var(--text-main)]" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+          {action.step}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={`quiet-label ${action.strong ? "text-white/55" : "text-[var(--primary)]"}`}>Action suivante</p>
+          <h2 className="mt-1 font-display text-xl font-bold leading-7">{action.title}</h2>
+          <p className={`mt-1 text-sm leading-5 ${action.strong ? "text-white/68" : "text-[var(--text-dim)]"}`}>{action.body}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={action.onClick}
+        disabled={saving}
+        className={`mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold active:scale-[0.99] disabled:opacity-70 ${
+          action.strong ? "bg-[var(--primary-bright)] text-zinc-950" : "bg-[var(--text-main)] text-white"
+        }`}
+      >
+        {saving ? "Enregistrement..." : action.icon}
+        {saving ? "" : action.label}
+        {!saving && <ArrowRight size={18} />}
+      </button>
+    </section>
+  );
+}
+
+function DeliveryStat({ icon, label, value, tone }) {
+  const toneClass = {
+    primary: "bg-[var(--surface-soft)] text-[var(--primary)]",
+    info: "bg-[var(--info-soft)] text-[var(--info)]",
+    accent: "bg-[var(--accent-soft)] text-[var(--accent)]",
+  }[tone];
+
+  return (
+    <div className="rounded-[18px] border border-[var(--line)] bg-white p-3 shadow-[var(--shadow-sm)]">
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
+        {icon}
+      </span>
+      <p className="mt-3 font-display text-lg font-bold leading-none text-[var(--text-main)]">{value}</p>
+      <p className="mt-1 text-xs font-bold text-[var(--text-dim)]">{label}</p>
     </div>
   );
 }

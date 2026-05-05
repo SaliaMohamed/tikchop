@@ -13,6 +13,7 @@ import {
   ReceiptText,
   Store,
   TrendingUp,
+  Truck,
 } from "lucide-react";
 import { getDashboardData } from "./actions";
 import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
@@ -116,6 +117,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-3">
             <SellerShortcut href="/orders" tone="blue" icon={<ClipboardList size={22} />} title="Commandes" subtitle="A preparer" />
             <SellerShortcut href={`/${seller.slug}`} tone="amber" icon={<ExternalLink size={22} />} title="Boutique" subtitle="Voir le lien" />
+            <SellerShortcut href="/products" tone="green" icon={<Package size={22} />} title="Articles" subtitle="Prix et stock" />
+            <SellerShortcut href="/delivery-settings" tone="blue" icon={<Truck size={22} />} title="Livraison" subtitle="Zones, livreurs" />
           </div>
         </section>
 
@@ -155,7 +158,7 @@ export default function Dashboard() {
         )}
 
         <section>
-          <SectionTitle title="Commandes récentes" action="Voir tout" href="/orders" />
+          <SectionTitle title="Commandes recentes" action="Voir tout" href="/orders" />
           <div className="mt-4 space-y-4">
             {recentOrders.length > 0 ? (
               recentOrders.map((order) => <OrderLine key={order.id} order={order} />)
