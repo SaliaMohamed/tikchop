@@ -1,201 +1,229 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Camera,
-  ClipboardList,
-  ExternalLink,
+  BarChart3,
+  Check,
+  ChevronRight,
+  Clock3,
   MessageCircle,
-  Package,
-  PlusCircle,
+  PackageCheck,
   ReceiptText,
-  Store,
-  TrendingUp,
+  ShieldCheck,
+  Sparkles,
   Truck,
+  Wallet,
 } from "lucide-react";
-import { getDashboardData } from "./actions";
-import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
-import { getSellerAccessToken } from "../lib/seller-auth-client";
 
-const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} CFA`;
-
-const emptyStats = {
-  sales: 0,
-  orders: 0,
-  products: 0,
-  messagesReceived: 0,
-  confirmedOrders: 0,
-  clientsFollowedUp: 0,
-  weeklyClientsHandled: 0,
+const reveal = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0 },
 };
 
-export default function Dashboard() {
-  const seller = useActiveSeller();
-  const sellerInitials = getSellerInitials(seller);
-  const [stats, setStats] = useState(emptyStats);
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [offlineMode, setOfflineMode] = useState(false);
+const stagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        const token = await getSellerAccessToken();
-        const data = await getDashboardData(seller.slug, token);
-        setRecentOrders(data.recentOrders || []);
-        setStats(data.stats || emptyStats);
-      } catch (err) {
-        console.error("Dashboard data fetch error:", err);
-        setOfflineMode(true);
-      } finally {
-        setLoading(false);
-      }
-    }
+const wins = [
+  { label: "reponse instantanee", value: "24h/24" },
+  { label: "essai offert", value: "7 jours" },
+  { label: "prix boutique", value: "11 000 F" },
+];
 
-    fetchDashboardData();
-  }, [seller.slug]);
+const desktopCards = [
+  {
+    icon: MessageCircle,
+    title: "Repondre vite",
+    text: "Le client demande prix, stock, taille ou livraison. Tikchop donne une reponse claire pendant que le vendeur est occupe.",
+  },
+  {
+    icon: ReceiptText,
+    title: "Prendre la commande",
+    text: "Nom, telephone, commune, paiement, produit et total sont ranges dans le dashboard.",
+  },
+  {
+    icon: Truck,
+    title: "Livrer sans confusion",
+    text: "Les commandes restent propres pour preparer, partager au livreur et relancer le client.",
+  },
+];
 
-  const summary = useMemo(
-    () => [
-      { label: "Messages recus", value: stats.messagesReceived, icon: <MessageCircle size={19} /> },
-      { label: "Confirmees", value: stats.confirmedOrders, icon: <ReceiptText size={19} /> },
-      { label: "Clients relances", value: stats.clientsFollowedUp, icon: <ClipboardList size={19} /> },
-      { label: "Produits actifs", value: stats.products, icon: <Package size={19} /> },
-    ],
-    [stats],
-  );
+const localFeatures = [
+  "Communes d'Abidjan",
+  "Wave, Orange Money, MTN",
+  "Paiement a la livraison",
+  "Relance client automatique",
+  "Catalogue avec photos",
+  "Multi-boutiques sur demande",
+];
 
+const mobileSteps = [
+  "Le client ecrit sur WhatsApp",
+  "Tikchop repond et confirme les infos",
+  "La commande arrive dans l'app",
+];
+
+export default function TikchopLanding() {
   return (
-    <div className="app-shell">
-      <header className="mobile-top md:mb-6">
-        <div className="flex items-center justify-between">
-          <button className="app-icon-button bg-white" aria-label="Boutique">
-            <Store size={20} strokeWidth={2.3} />
-          </button>
-          <h1 className="font-display text-xl font-extrabold text-[var(--primary)]">Tikchop</h1>
-          <Link href={`/${seller.slug}`} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[var(--outline)] bg-white text-sm font-extrabold text-[var(--primary)] no-underline">
-            {sellerInitials}
+    <div className="tk-page">
+      <DesktopLanding />
+      <MobileLanding />
+    </div>
+  );
+}
+
+function DesktopLanding() {
+  return (
+    <div className="tk-desktop">
+      <header className="tk-nav">
+        <Link href="/" className="tk-brand" aria-label="Tikchop accueil">
+          <span>T</span>
+          Tikchop
+        </Link>
+        <nav aria-label="Navigation Tikchop">
+          <a href="#produit">Produit</a>
+          <a href="#abidjan">Abidjan</a>
+          <a href="#prix">Prix</a>
+        </nav>
+        <div className="tk-nav-actions">
+          <Link href="/dashboard">Dashboard</Link>
+          <Link href="/onboarding" className="tk-dark-button">
+            Essai gratuit
           </Link>
         </div>
       </header>
 
-      <main className="space-y-7 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] md:pb-0">
-        <section className="space-y-2">
-          <h2 className="font-display text-2xl font-bold leading-8 text-[var(--text-main)]">Bonjour, {seller.name.split(" ")[0]}</h2>
-          <p className="text-sm leading-6 text-[var(--text-dim)]">
-            Choisis une action. Le plus important reste en haut.
-          </p>
+      <main>
+        <section className="tk-hero">
+          <motion.div className="tk-hero-copy" initial="hidden" animate="visible" variants={stagger}>
+            <motion.p className="tk-eyebrow" variants={reveal}>
+              <Sparkles size={16} />
+              Pour les vendeurs TikTok, Instagram et WhatsApp a Abidjan
+            </motion.p>
+            <motion.h1 variants={reveal}>Vends plus vite quand les clients ecrivent.</motion.h1>
+            <motion.p className="tk-hero-lead" variants={reveal}>
+              Tikchop combine une boutique mobile, un assistant WhatsApp et un dashboard vendeur. En quelques secondes, le client comprend, commande et le vendeur suit tout proprement.
+            </motion.p>
+            <motion.div className="tk-hero-actions" variants={reveal}>
+              <Link href="/onboarding" className="tk-dark-button tk-big-button">
+                Tester 7 jours gratuitement
+                <ArrowRight size={18} />
+              </Link>
+              <a href="#produit" className="tk-light-button">
+                Voir comment ca marche
+              </a>
+            </motion.div>
+            <motion.div className="tk-win-row" variants={stagger}>
+              {wins.map((win) => (
+                <motion.div className="tk-win-card" key={win.label} variants={reveal}>
+                  <strong>{win.value}</strong>
+                  <span>{win.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="tk-screen-stage"
+            initial={{ opacity: 0, y: 28, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <div className="tk-screen-card tk-screen-shop">
+              <Image src="/tikchop-shop-preview.png" alt="Boutique mobile Tikchop avec produits" width={390} height={844} priority />
+            </div>
+            <div className="tk-screen-card tk-screen-dashboard">
+              <Image src="/tikchop-dashboard-preview.png" alt="Dashboard vendeur Tikchop" width={390} height={844} priority />
+            </div>
+            <motion.div className="tk-live-chip" animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+              <span />
+              Commandes WhatsApp + boutique dans un seul espace
+            </motion.div>
+          </motion.div>
         </section>
 
-        <section className="app-card flex items-center justify-between gap-3 p-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="app-icon-pill shrink-0 bg-[var(--info-soft)] text-[var(--info)]">
-              <Store size={21} />
-            </span>
-            <div className="min-w-0">
-              <p className="quiet-label">Boutique active</p>
-              <p className="mt-1 break-words font-display text-lg font-bold leading-6 text-[var(--text-main)]">{seller.name}</p>
-              <p className="truncate text-sm font-semibold text-[var(--primary)]">/{seller.slug}</p>
-            </div>
-          </div>
-          <Link href="/onboarding" className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg bg-[#101814] px-3 text-xs font-extrabold text-white no-underline min-[380px]:gap-2 min-[380px]:text-sm">
-            <PlusCircle size={17} />
-            Changer
-          </Link>
-        </section>
-
-        <section className="space-y-3">
-          <Link href="/add-product" className="app-dashboard-hero block min-h-[126px] no-underline active:scale-[0.99]">
-            <span className="relative z-10 flex items-center gap-4">
-              <span className="flex h-15 w-15 shrink-0 items-center justify-center rounded-xl bg-white text-[#101814]">
-                <Camera size={29} strokeWidth={2.4} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-2xl font-bold leading-8 text-white">Publier un article</span>
-                <span className="mt-1 block text-sm font-semibold leading-5 text-white/70">Photo depuis galerie, IA, prix et quantite.</span>
-              </span>
-              <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white min-[390px]:flex">
-                <ArrowRight size={21} />
-              </span>
-            </span>
-          </Link>
-
-          <div className="grid grid-cols-2 gap-3">
-            <SellerShortcut href="/orders" tone="blue" icon={<ClipboardList size={22} />} title="Commandes" subtitle="A preparer" />
-            <SellerShortcut href={`/${seller.slug}`} tone="amber" icon={<ExternalLink size={22} />} title="Boutique" subtitle="Voir le lien" />
-            <SellerShortcut href="/products" tone="green" icon={<Package size={22} />} title="Articles" subtitle="Prix et stock" />
-            <SellerShortcut href="/whatsapp" tone="green" icon={<MessageCircle size={22} />} title="WhatsApp" subtitle="Chatbot vendeur" />
-            <SellerShortcut href="/delivery-settings" tone="blue" icon={<Truck size={22} />} title="Livraison" subtitle="Zones, livreurs" />
-          </div>
-        </section>
-
-        <section className="grid grid-cols-2 gap-4">
-          <div className="app-card col-span-2 overflow-hidden bg-[var(--text-main)] p-5 text-white">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/45">Preuve de resultat</p>
-                <p className="mt-2 font-display text-2xl font-bold leading-8">
-                  Tikchop a traite {stats.weeklyClientsHandled || 0} client{stats.weeklyClientsHandled > 1 ? "s" : ""} cette semaine.
-                </p>
-                <p className="mt-2 text-sm font-semibold leading-5 text-white/62">
-                  Commandes boutique et WhatsApp reunies pour montrer la valeur au vendeur.
-                </p>
-              </div>
-              <span className="app-icon-pill shrink-0 bg-white text-[var(--text-main)]">
-                <TrendingUp size={21} />
-              </span>
-            </div>
-          </div>
-
-          <div className="app-card col-span-2 p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="quiet-label">Ventes estimees</p>
-              <span className="app-icon-pill bg-[var(--accent-soft)] text-[var(--accent)]">
-                <TrendingUp size={21} />
-              </span>
-            </div>
-            <p className="font-display text-[2rem] font-bold leading-none text-[var(--text-main)]">
-              {money(stats.sales)}
-            </p>
-            <p className="mt-2 text-sm font-semibold text-[var(--primary-bright)]">
-              {stats.orders > 0 ? `${stats.orders} commandes au total` : "Pret a recevoir les premieres ventes"}
+        <section className="tk-product-section" id="produit">
+          <div className="tk-section-copy">
+            <p className="tk-eyebrow">Ce que le site doit faire comprendre</p>
+            <h2>Ce n&apos;est pas juste un chatbot. C&apos;est un vendeur digital.</h2>
+            <p>
+              Le site explique Tikchop sans long discours : repondre aux clients, prendre les commandes, suivre la livraison et montrer au commercant qu&apos;il perd moins d&apos;opportunites.
             </p>
           </div>
-
-          {summary.map((item) => (
-            <div key={item.label} className="app-card flex min-h-[132px] flex-col justify-between p-4">
-              <div className="app-icon-pill bg-[var(--surface-mid)] text-[var(--secondary)]">
-                {item.icon}
-              </div>
-              <div>
-                <p className="font-display text-2xl font-bold text-[var(--text-main)]">{item.value}</p>
-                <p className="mt-1 text-sm text-[var(--text-dim)]">{item.label}</p>
-              </div>
-            </div>
-          ))}
+          <div className="tk-feature-grid">
+            {desktopCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <motion.article className="tk-feature-card" key={card.title} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.35 }} variants={reveal}>
+                  <Icon size={24} />
+                  <h3>{card.title}</h3>
+                  <p>{card.text}</p>
+                </motion.article>
+              );
+            })}
+          </div>
         </section>
 
-        {offlineMode && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-950">
-            Supabase n&apos;est pas configure localement. Les donnees reelles apparaitront apres configuration.
+        <section className="tk-abidjan-section" id="abidjan">
+          <div className="tk-abidjan-panel">
+            <p className="tk-eyebrow">Reference ivoirienne</p>
+            <h2>La demo doit parler comme un business d&apos;Abidjan.</h2>
+            <div className="tk-local-grid">
+              {localFeatures.map((feature) => (
+                <span key={feature}>
+                  <Check size={16} />
+                  {feature}
+                </span>
+              ))}
+            </div>
           </div>
-        )}
-
-        <section>
-          <SectionTitle title="Commandes recentes" action="Voir tout" href="/orders" />
-          <div className="mt-4 space-y-4">
-            {recentOrders.length > 0 ? (
-              recentOrders.map((order) => <OrderLine key={order.id} order={order} />)
-            ) : (
-              <div className="app-card p-7 text-center">
-                <p className="font-display text-lg font-bold text-[var(--text-main)]">{loading ? "Chargement..." : "Aucune commande"}</p>
-                <p className="mx-auto mt-1 max-w-[16rem] text-sm leading-5 text-[var(--text-dim)]">
-                  Les commandes boutique et WhatsApp apparaitront ici.
-                </p>
+          <div className="tk-chat-panel" aria-label="Exemple de conversation WhatsApp">
+            <div className="tk-chat-top">
+              <span>Salia Boutique</span>
+              <span>En ligne</span>
+            </div>
+            <div className="tk-chat client">Bonjour, la robe rouge est disponible ?</div>
+            <div className="tk-chat bot">Oui disponible. Prix 15 000 F. Livraison possible a Cocody, Marcory, Yopougon.</div>
+            <div className="tk-order-summary">
+              <PackageCheck size={20} />
+              <div>
+                <strong>Commande prete</strong>
+                <span>Robe Premium, Cocody, paiement Wave</span>
               </div>
-            )}
+            </div>
+          </div>
+        </section>
+
+        <section className="tk-pricing-section" id="prix">
+          <div>
+            <p className="tk-eyebrow">Offre simple</p>
+            <h2>Un prix facile a comprendre, une semaine pour convaincre.</h2>
+          </div>
+          <div className="tk-price-card">
+            <span className="tk-price-label">1 boutique</span>
+            <strong>11 000 FCFA</strong>
+            <p>par mois apres 7 jours gratuits. App + chatbot WhatsApp dans la meme offre.</p>
+            <Link href="/onboarding" className="tk-dark-button tk-big-button">
+              Demarrer le test
+              <ChevronRight size={18} />
+            </Link>
+          </div>
+          <div className="tk-price-card tk-price-card-dark">
+            <span className="tk-price-label">Plusieurs boutiques</span>
+            <strong>Prix pro</strong>
+            <p>Pour agences, vendeurs avec plusieurs pages, plusieurs numeros ou plusieurs catalogues.</p>
+            <Link href="/onboarding" className="tk-light-button">
+              Creer une boutique
+              <ChevronRight size={18} />
+            </Link>
           </div>
         </section>
       </main>
@@ -203,60 +231,69 @@ export default function Dashboard() {
   );
 }
 
-function SellerShortcut({ href, icon, title, subtitle, tone = "green" }) {
-  const toneClass = {
-    green: "bg-[var(--surface-soft)] text-[var(--primary)]",
-    blue: "bg-[var(--info-soft)] text-[var(--info)]",
-    amber: "bg-[var(--accent-soft)] text-[var(--accent)]",
-  }[tone];
-
+function MobileLanding() {
   return (
-    <Link href={href} className="app-quick-tile flex-col justify-between bg-white no-underline active:scale-[0.99]">
-      <span className={`app-icon-pill ${toneClass}`}>
-        {icon}
-      </span>
-      <span>
-        <span className="block text-sm font-bold leading-5 text-[var(--text-main)]">{title}</span>
-        <span className="mt-0.5 block text-xs font-semibold leading-4 text-[var(--text-dim)]">{subtitle}</span>
-      </span>
-    </Link>
-  );
-}
-
-function SectionTitle({ title, action, href }) {
-  return (
-    <div className="flex items-center justify-between">
-      <h3 className="font-display text-xl font-semibold text-[var(--text-main)]">{title}</h3>
-      {href && (
-        <Link href={href} className="text-sm font-semibold text-[var(--primary)] no-underline">
-          {action}
+    <div className="tk-mobile">
+      <header className="tk-mobile-top">
+        <Link href="/" className="tk-brand" aria-label="Tikchop accueil">
+          <span>T</span>
+          Tikchop
         </Link>
-      )}
-    </div>
-  );
-}
+        <Link href="/onboarding">Essai 7j</Link>
+      </header>
 
-function OrderLine({ order }) {
-  const paid = order.status === "PAID" || order.status === "DELIVERED";
+      <main>
+        <section className="tk-mobile-hero">
+          <p className="tk-eyebrow">
+            <Sparkles size={15} />
+            Vendeurs d&apos;Abidjan
+          </p>
+          <h1>Ton WhatsApp peut vendre meme quand tu es occupe.</h1>
+          <p>
+            Tikchop repond, confirme les commandes et range tout dans ton application.
+          </p>
+          <Link href="/onboarding" className="tk-dark-button tk-big-button">
+            Commencer gratuitement
+            <ArrowRight size={18} />
+          </Link>
+        </section>
 
-  return (
-    <div className="app-card flex items-center p-4">
-      <span className="mr-3 hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--primary)] min-[390px]:flex">
-        <MessageCircle size={19} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate font-display font-semibold text-[var(--text-main)]">#{order.order_ref || order.id?.slice(0, 8)}</p>
-          <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold uppercase ${paid ? "bg-emerald-100 text-emerald-800" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
-            {paid ? "Paye" : "En attente"}
-          </span>
-        </div>
-        <p className="mt-1 truncate text-sm text-[var(--text-dim)]">{order.customer_phone || "Client non renseigne"}</p>
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="font-display font-semibold text-[var(--text-main)]">{money(order.total_amount)}</p>
-        <p className="text-xs text-[var(--text-dim)]">Recent</p>
-      </div>
+        <section className="tk-mobile-screen">
+          <Image src="/tikchop-shop-preview.png" alt="Boutique Tikchop sur mobile" width={390} height={844} priority />
+          <div className="tk-mobile-floating">
+            <BarChart3 size={18} />
+            47 clients traites cette semaine
+          </div>
+        </section>
+
+        <section className="tk-mobile-steps">
+          {mobileSteps.map((step, index) => (
+            <div key={step}>
+              <span>{index + 1}</span>
+              <p>{step}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="tk-mobile-local">
+          <h2>Fait pour vendre ici.</h2>
+          <div>
+            <span><Truck size={17} /> Communes d&apos;Abidjan</span>
+            <span><Wallet size={17} /> Wave et Mobile Money</span>
+            <span><Clock3 size={17} /> Relances automatiques</span>
+            <span><ShieldCheck size={17} /> Commandes propres</span>
+          </div>
+        </section>
+
+        <section className="tk-mobile-price">
+          <span>1 boutique</span>
+          <strong>11 000 FCFA/mois</strong>
+          <p>La premiere semaine est offerte. App + chatbot ensemble.</p>
+          <Link href="/onboarding" className="tk-dark-button tk-big-button">
+            Tester Tikchop
+          </Link>
+        </section>
+      </main>
     </div>
   );
 }

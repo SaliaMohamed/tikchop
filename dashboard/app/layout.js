@@ -2,8 +2,8 @@ import "./globals.css";
 import AppChrome from "./AppChrome";
 
 export const metadata = {
-  title: "Tikchop | Mini-boutiques WhatsApp",
-  description: "Mini-boutiques automatisees pour les vendeurs TikTok, Instagram et WhatsApp.",
+  title: "Tikchop | Assistant de vente WhatsApp a Abidjan",
+  description: "Application et chatbot WhatsApp pour transformer les messages TikTok en commandes suivies.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -9,7 +9,7 @@ import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSelle
 import { supabase } from "../lib/supabase";
 
 const dashboardRoutes = new Set([
-  "/",
+  "/dashboard",
   "/orders",
   "/products",
   "/add-product",
@@ -22,7 +22,7 @@ export default function AppChrome({ children }) {
   const seller = useActiveSeller();
   const sellerInitials = getSellerInitials(seller);
   const showSellerChrome = dashboardRoutes.has(pathname);
-  const showMobileTopbar = showSellerChrome && pathname !== "/";
+  const showMobileTopbar = showSellerChrome && pathname !== "/dashboard";
   const showMobileTabbar = showSellerChrome && pathname !== "/add-product" && pathname !== "/onboarding";
 
   if (!showSellerChrome) {
@@ -38,7 +38,7 @@ export default function AppChrome({ children }) {
               <Home size={19} strokeWidth={2.2} />
             </span>
           </div>
-          <Link href="/" className="font-display text-xl font-bold text-[var(--primary)] no-underline">
+          <Link href="/dashboard" className="font-display text-xl font-bold text-[var(--primary)] no-underline">
             Tikchop
           </Link>
           <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--outline)]/55 bg-[var(--surface-mid)] text-sm font-bold text-[var(--text-dim)] no-underline">
@@ -47,15 +47,15 @@ export default function AppChrome({ children }) {
         </header>
       )}
       <nav className="navbar desktop-nav">
-        <Link href="/" className="logo" aria-label="Accueil Tikchop">
+        <Link href="/dashboard" className="logo" aria-label="Accueil Tikchop">
           Tikchop
         </Link>
         <div className="nav-links">
-          <Link href="/" className="nav-link">Accueil</Link>
+          <Link href="/dashboard" className="nav-link">Accueil</Link>
           <Link href="/orders" className="nav-link">Commandes</Link>
           <Link href="/products" className="nav-link">Articles</Link>
           <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="nav-link">Boutique</Link>
-          <Link href="/whatsapp" className="nav-link">WhatsApp</Link>
+          <Link href="/whatsapp" className="nav-link">Assistant</Link>
           <Link href="/delivery-settings" className="nav-link">Livraison</Link>
           <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/onboarding" className="nav-link">Nouveau vendeur</Link>
@@ -69,7 +69,7 @@ export default function AppChrome({ children }) {
       <main className={`container ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
-        <Link href="/" className={`mobile-tabbar-item ${pathname === "/" ? "is-active" : ""}`}>
+        <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
           <Home size={20} strokeWidth={2.2} />
           <span>Accueil</span>
         </Link>
@@ -87,7 +87,7 @@ export default function AppChrome({ children }) {
         </Link>
         <Link href="/whatsapp" className={`mobile-tabbar-item ${pathname === "/whatsapp" ? "is-active" : ""}`}>
           <MessageCircle size={20} strokeWidth={2.2} />
-          <span>WhatsApp</span>
+          <span>Aide</span>
         </Link>
       </nav>
       )}

@@ -194,7 +194,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
 
   return (
     <>
-      <section className="sticky top-0 z-40 -mx-4 border-b border-white/70 bg-white/92 px-5 py-3 shadow-[0_8px_26px_rgba(16,24,20,0.06)] backdrop-blur-xl md:mx-0 md:rounded-2xl md:border md:border-[var(--line)]">
+      <section className="shop-topbar sticky top-0 z-40 -mx-4 px-5 py-3 md:mx-0 md:rounded-[22px]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--line)] bg-[var(--text-main)] font-display text-sm font-bold text-white shadow-[var(--shadow-sm)]">
@@ -204,7 +204,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
               <h1 className="truncate font-display text-lg font-extrabold text-[var(--text-main)]">{seller.name}</h1>
               <p className="mt-0.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-dim)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--primary-bright)]" />
-                Boutique active
+                Commande rapide
               </p>
             </div>
           </div>
@@ -247,7 +247,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       </section>
       )}
 
-      <main className="pt-5">
+      <main className="shop-main pt-5">
       {featuredProduct && (
         <ShopHero
           seller={seller}
@@ -292,11 +292,10 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       <section className="mt-0 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]">
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
-            {filteredProducts.map((product, index) => (
+            {filteredProducts.map((product) => (
               <ProductTile
                 key={product.id}
                 product={product}
-                featured={index === 0}
                 quantity={cart[product.id] || 0}
                 onOpen={() => setSelectedProduct(product)}
                 onAdd={() => addToCart(product)}
@@ -372,48 +371,38 @@ function ShopHero({ seller, product, totalProducts, availableProducts, deliveryZ
   const stock = Number(product.stock_quantity || 0);
 
   return (
-    <section className="relative overflow-hidden rounded-[26px] bg-[var(--text-main)] text-white shadow-[var(--shadow-md)]">
-      <button type="button" onClick={onOpen} className="absolute inset-0 z-0 text-left" aria-label={`Voir ${product.name}`}>
-        <SafeProductImage
-          src={product.image_url}
-          alt={product.name}
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover opacity-[0.42]"
-        />
-        <span className="absolute inset-0 bg-gradient-to-t from-[#101814] via-[#101814]/70 to-[#101814]/12" />
-      </button>
-
-      <div className="relative z-10 flex min-h-[360px] flex-col justify-between p-5">
+    <section className="shop-hero relative overflow-hidden rounded-[28px] text-white shadow-[var(--shadow-lg)]">
+      <div className="relative z-10 flex min-h-[342px] flex-col justify-between p-5">
         <div className="flex items-center justify-between gap-3">
-          <span className="inline-flex min-h-[34px] items-center gap-2 rounded-full bg-white/12 px-3 text-xs font-extrabold text-white/86 backdrop-blur">
+          <span className="inline-flex min-h-[34px] items-center gap-2 rounded-full bg-white/12 px-3 text-xs font-extrabold text-white/88 backdrop-blur">
             <ShieldCheck size={15} />
-            Achat via WhatsApp
+            Paiement local
           </span>
-          <span className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-white px-3 text-xs font-extrabold text-[var(--text-main)]">
+          <span className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-white/95 px-3 text-xs font-extrabold text-[var(--text-main)]">
             <Store size={15} />
             {totalProducts} articles
           </span>
         </div>
 
         <div>
-          <p className="quiet-label text-white/55">{seller.name}</p>
-          <h2 className="mt-2 max-w-[18rem] font-display text-[2.25rem] font-bold leading-[2.55rem] text-white">
-            Selection du moment
+          <p className="quiet-label text-white/58">{seller.name}</p>
+          <h2 className="mt-2 max-w-[18rem] font-display text-[2.35rem] font-bold leading-[2.55rem] text-white">
+            Choisis. Ajoute. Confirme.
           </h2>
-          <p className="mt-2 max-w-[18rem] text-sm font-semibold leading-5 text-white/68">
-            {availableProducts} articles en stock. Commande rapide, retrait ou livraison.
+          <p className="mt-2 max-w-[19rem] text-sm font-semibold leading-5 text-white/70">
+            {availableProducts} articles en stock. Livraison, retrait, Wave ou paiement a la reception selon la boutique.
           </p>
 
-          <div className="mt-4 rounded-[20px] bg-white/12 p-3 backdrop-blur">
+          <div className="mt-5 rounded-[22px] border border-white/10 bg-white/12 p-3 backdrop-blur-xl">
             <div className="flex gap-3">
-              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-white/10">
+              <button type="button" onClick={onOpen} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] bg-white/10 text-left" aria-label={`Voir ${product.name}`}>
                 <SafeProductImage
                   src={product.image_url}
                   alt={product.name}
                   sizes="80px"
                   className="object-cover"
                 />
-              </div>
+              </button>
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 font-display text-lg font-bold leading-6">{product.name}</p>
                 <p className="mt-1 text-base font-extrabold text-[var(--primary-bright)]">{formatPrice(product.price)}</p>
@@ -491,16 +480,16 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
   }
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-[22px] border border-[var(--line)] bg-white shadow-[var(--shadow-sm)] transition active:scale-[0.99]">
+    <article className="group flex flex-col overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[rgba(191,206,197,0.34)] transition active:scale-[0.99] md:hover:-translate-y-1 md:hover:shadow-[var(--shadow-md)]">
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="block w-full text-left">
-        <div className="relative aspect-square overflow-hidden bg-[var(--surface-mid)]">
+        <div className="relative aspect-[4/5] overflow-hidden bg-[var(--surface-mid)]">
           <SafeProductImage
             src={product.image_url}
             alt={product.name}
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition duration-500 group-active:scale-105 md:group-hover:scale-105"
           />
-          <span className="absolute left-2 top-2 rounded-full bg-white/92 px-2.5 py-1 text-[0.64rem] font-extrabold text-[var(--text-main)] shadow-sm">
+          <span className="absolute left-2 top-2 rounded-full bg-white/92 px-2.5 py-1 text-[0.64rem] font-extrabold text-[var(--text-main)] shadow-sm backdrop-blur">
             {productCategory(product)}
           </span>
           {stock === 0 && (
@@ -509,13 +498,13 @@ function ProductTile({ product, featured = false, quantity, onOpen, onAdd, onMin
             </span>
           )}
         </div>
-        <div className="flex flex-grow flex-col justify-between p-3">
+        <div className="flex flex-grow flex-col justify-between p-3.5">
           <h3 className="min-h-[2.6rem] text-sm font-extrabold leading-5 text-[var(--text-main)] line-clamp-2">
             {product.name}
           </h3>
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-display text-base font-extrabold leading-none text-[var(--primary)]">{formatPrice(product.price)}</p>
+              <p className="font-display text-[1.05rem] font-extrabold leading-none text-[var(--primary)]">{formatPrice(product.price)}</p>
               <p className="mt-1 text-[0.68rem] font-bold text-[var(--outline)]">Stock {stock}</p>
             </div>
             <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} />
@@ -559,7 +548,7 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus }) {
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-black/45 backdrop-blur-[3px] md:items-center md:px-3">
-      <div className="mx-auto max-h-[92svh] w-full max-w-[430px] overflow-y-auto rounded-t-[26px] bg-white shadow-2xl md:rounded-[26px]">
+      <div className="mx-auto max-h-[92svh] w-full max-w-[430px] overflow-y-auto rounded-t-[30px] bg-white shadow-2xl md:rounded-[30px]">
         <div className="relative aspect-[4/3] bg-[var(--surface-mid)]">
           <SafeProductImage
             src={product.image_url}
@@ -641,14 +630,14 @@ function CartSheet({
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/45 backdrop-blur-[3px]">
-      <div className="mx-auto flex max-h-[84svh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-18px_45px_rgba(16,24,20,0.20)]">
+      <div className="mx-auto flex max-h-[88svh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[30px] bg-white shadow-[0_-18px_45px_rgba(16,24,20,0.20)]">
         <div className="flex w-full justify-center pt-2 pb-1">
           <div className="h-1 w-8 rounded-full bg-[var(--outline)]/50" />
         </div>
         <div className="flex items-center justify-between border-b border-[var(--outline)]/30 px-5 pb-4">
           <div>
             <p className="quiet-label text-[var(--primary)]">Panier</p>
-            <h3 className="font-display text-2xl font-bold text-[var(--text-main)]">Finaliser</h3>
+            <h3 className="font-display text-2xl font-bold text-[var(--text-main)]">Finaliser ma commande</h3>
           </div>
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-mid)]" aria-label="Fermer">
             <X size={18} />
@@ -689,6 +678,7 @@ function CartSheet({
           <div className="space-y-6">
             <div className="space-y-3">
               <h4 className="flex items-center gap-2 text-base font-extrabold text-[var(--text-main)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs text-[var(--primary)]">1</span>
                 <Truck size={18} className="text-[var(--primary)]" />
                 Reception
               </h4>
@@ -715,6 +705,7 @@ function CartSheet({
 
             <div className="space-y-4">
               <h4 className="flex items-center gap-2 text-base font-extrabold text-[var(--text-main)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs text-[var(--primary)]">2</span>
                 <MapPin size={18} className="text-[var(--primary)]" />
                 Informations
               </h4>
@@ -762,6 +753,7 @@ function CartSheet({
 
             <div className="space-y-3">
               <h4 className="flex items-center gap-2 text-base font-extrabold text-[var(--text-main)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs text-[var(--primary)]">3</span>
                 <CreditCard size={18} className="text-[var(--primary)]" />
                 Paiement
               </h4>

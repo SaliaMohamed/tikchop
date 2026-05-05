@@ -327,7 +327,6 @@ export default function OnboardingPage() {
           <OnboardingCard
             icon={<UserRound size={28} />}
             title="Compte vendeur"
-            subtitle="Le vendeur se connecte a son espace. Sa boutique reste separee des autres."
           >
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-soft)] p-1">
               <button
@@ -665,7 +664,7 @@ function OnboardingCard({ icon, title, subtitle, children }) {
         </div>
         <div className="min-w-0">
           <h1 className="font-display text-3xl font-bold leading-9 text-[var(--text-main)]">{title}</h1>
-          <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">{subtitle}</p>
+          {subtitle ? <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">{subtitle}</p> : null}
         </div>
       </div>
       {children}
