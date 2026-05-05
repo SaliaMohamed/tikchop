@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Camera,
   ImagePlus,
   Loader2,
   Package,
@@ -152,21 +153,22 @@ export default function ProductsPage() {
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <h1 className="font-display text-2xl font-bold text-[var(--text-main)]">Catalogue</h1>
-              <p className="mt-1 text-sm text-[var(--text-dim)]">Gerez vos produits et vos stocks.</p>
+              <p className="quiet-label text-[var(--primary)]">Boutique</p>
+              <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Catalogue</h1>
+              <p className="mt-1 text-sm text-[var(--text-dim)]">Prix, stock, lien de partage. Tout est ici.</p>
             </div>
-            <Link href="/add-product" className="flex min-h-[52px] shrink-0 items-center gap-2 rounded-xl bg-[var(--primary-bright)] px-4 text-sm font-semibold text-[#042719] no-underline" aria-label="Ajouter">
+            <Link href="/add-product" className="flex min-h-[52px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--text-main)] px-4 text-sm font-extrabold text-white no-underline shadow-[var(--shadow-sm)]" aria-label="Ajouter">
               <Plus size={20} strokeWidth={2.6} />
-              <span className="hidden min-[360px]:inline">Nouveau Produit</span>
+              <span className="hidden min-[360px]:inline">Ajouter</span>
             </Link>
           </div>
 
-          <div className="flex min-h-[52px] items-center gap-2 rounded-xl border border-[var(--outline)]/70 bg-white px-4">
+          <div className="flex min-h-[54px] items-center gap-2 rounded-2xl border border-[var(--outline)]/70 bg-white px-4 shadow-[var(--shadow-sm)]">
             <Search className="shrink-0 text-[var(--outline)]" size={18} />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Rechercher un produit"
+              placeholder="Chercher robe, sac, taille..."
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
             />
           </div>
@@ -272,11 +274,14 @@ function ProductCard({ product, onEdit, onShare }) {
   const stock = Number(product.stock_quantity || 0);
 
   return (
-    <div className="app-card flex flex-col overflow-hidden">
+    <div className="flex flex-col overflow-hidden rounded-[18px] border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
       <div className="relative aspect-square bg-[var(--surface-mid)]">
         <ProductImage src={product.image_url} />
-        <span className={`absolute right-3 top-3 rounded-md px-2 py-1 text-[0.72rem] font-semibold ${stock > 0 ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[var(--error-container)] text-[var(--on-error-container)]"}`}>
+        <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-[0.72rem] font-extrabold shadow-sm ${stock > 0 ? "bg-white text-[var(--primary)]" : "bg-red-50 text-red-700"}`}>
           {stock > 0 ? `En stock (${stock})` : "Rupture (0)"}
+        </span>
+        <span className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/92 text-[var(--text-main)] shadow-sm">
+          <Camera size={17} />
         </span>
       </div>
 
@@ -293,10 +298,10 @@ function ProductCard({ product, onEdit, onShare }) {
         <div className="flex items-center justify-between gap-3">
           <p className="font-display text-2xl font-bold text-[var(--primary)]">{formatPrice(product.price)}</p>
           <div className="flex shrink-0 items-center gap-2">
-            <button onClick={onEdit} className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--outline)]/50 bg-white text-[var(--secondary)]" aria-label={`Modifier ${product.name}`}>
+            <button onClick={onEdit} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--outline)]/50 bg-white text-[var(--secondary)] shadow-sm" aria-label={`Modifier ${product.name}`}>
               <Pencil size={17} />
             </button>
-            <button onClick={onShare} className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--outline)]/50 bg-white text-[var(--secondary)]" aria-label={`Partager ${product.name}`}>
+            <button onClick={onShare} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--text-main)] text-white shadow-sm" aria-label={`Partager ${product.name}`}>
               <Share2 size={17} />
             </button>
           </div>

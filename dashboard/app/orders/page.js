@@ -28,19 +28,19 @@ function cleanPhone(phoneNumber) {
 
 const statusLabels = {
   ALL: "Toutes",
-  WORK: "En cours",
-  PENDING: "A preparer",
+  WORK: "A faire",
+  PENDING: "A verifier",
   PAID: "A preparer",
-  PREPARED: "A livrer",
-  DELIVERED: "Effectuees",
+  PREPARED: "Pret",
+  DELIVERED: "Livrees",
   CANCELLED: "Annulees",
 };
 
 const statusHints = {
-  PENDING: "Verifier les articles",
-  PAID: "Preparer maintenant",
-  PREPARED: "Remettre au livreur",
-  DELIVERED: "Livre au client",
+  PENDING: "Verifier client et articles",
+  PAID: "Paiement recu, preparer",
+  PREPARED: "Partager au livreur",
+  DELIVERED: "Terminee",
   CANCELLED: "Annule",
 };
 
@@ -119,18 +119,29 @@ export default function OrdersPage() {
     return orders.filter((order) => order.status === filter);
   }, [filter, orders]);
   const pendingCount = orders.filter((order) => order.status === "PENDING" || order.status === "PAID").length;
+  const verifyCount = orders.filter((order) => order.status === "PENDING").length;
+  const prepareCount = orders.filter((order) => order.status === "PAID").length;
   const readyCount = orders.filter((order) => order.status === "PREPARED").length;
   const doneCount = orders.filter((order) => order.status === "DELIVERED").length;
   const nextOrder = orders.find((order) => ["PENDING", "PAID", "PREPARED"].includes(order.status));
+
+  function getFilterCount(item) {
+    if (item === "WORK") return pendingCount + readyCount;
+    if (item === "PENDING") return verifyCount + prepareCount;
+    if (item === "PREPARED") return readyCount;
+    if (item === "DELIVERED") return doneCount;
+    if (item === "ALL") return orders.length;
+    return orders.filter((order) => order.status === item).length;
+  }
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
       <header className="mobile-top">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[var(--primary)]">Preparation</p>
+            <p className="quiet-label text-[var(--primary)]">Commandes</p>
             <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Commandes du jour</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Prepare, marque pret, puis marque livre.</p>
+            <p className="mt-1 text-base text-[var(--text-dim)]">Une commande avance en 3 gestes: verifier, preparer, livrer.</p>
           </div>
           <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
             <RefreshCw size={19} strokeWidth={2.5} />
@@ -143,10 +154,13 @@ export default function OrdersPage() {
               key={item}
               onClick={() => setFilter(item)}
               className={`min-h-[40px] whitespace-nowrap rounded-full px-4 text-sm font-semibold ${
-                filter === item ? "border border-[var(--primary)] bg-white text-[var(--primary)] shadow-sm" : "border border-[var(--outline)]/40 bg-white text-[var(--text-dim)] shadow-sm"
+                filter === item ? "border border-[var(--text-main)] bg-[var(--text-main)] text-white shadow-sm" : "border border-[var(--outline)]/40 bg-white text-[var(--text-dim)] shadow-sm"
               }`}
             >
               {statusLabels[item]}
+              <span className={`ml-2 rounded-full px-2 py-0.5 text-[0.68rem] ${filter === item ? "bg-white/14 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+                {getFilterCount(item)}
+              </span>
             </button>
           ))}
         </div>
@@ -164,9 +178,9 @@ export default function OrdersPage() {
       {!loading && !error && orders.length > 0 && (
         <section className="mt-5 space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <WorkTile title="Preparer" value={pendingCount} tone="primary" />
+            <WorkTile title="Verifier" value={verifyCount} tone="primary" />
+            <WorkTile title="Preparer" value={prepareCount} tone="accent" />
             <WorkTile title="Livrer" value={readyCount} />
-            <WorkTile title="Fait" value={doneCount} />
           </div>
           {nextOrder && (
             <button
@@ -241,7 +255,7 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
   const itemCount = (order.order_items || []).reduce((count, item) => count + Number(item.quantity || 0), 0);
 
   return (
-    <div className="app-card w-full overflow-hidden p-0 text-left">
+    <div className="w-full overflow-hidden rounded-[18px] border border-[var(--line)] bg-white text-left shadow-[var(--shadow-sm)]">
       <button
         type="button"
         onClick={onClick}
@@ -261,7 +275,7 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
               </div>
             </div>
             <div className="shrink-0 text-right">
-              <p className="font-display text-base font-semibold text-[var(--primary)]">{formatPrice(total)}</p>
+              <p className="font-display text-lg font-bold text-[var(--primary)]">{formatPrice(total)}</p>
               <p className="mt-1 text-xs text-[var(--outline)]">
                 {new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
               </p>
@@ -269,13 +283,13 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
           </div>
 
           <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-            <div className="min-w-0 rounded-lg bg-[var(--surface-soft)] px-3 py-2">
-              <p className="text-xs font-bold text-[var(--text-dim)]">Articles</p>
+            <div className="min-w-0 rounded-2xl bg-[var(--surface-soft)] px-3 py-2">
+              <p className="text-xs font-bold text-[var(--text-dim)]">{statusHints[order.status] || "Action"}</p>
               <p className="mt-0.5 truncate text-sm font-semibold text-[var(--text-main)]">
                 {itemCount || (order.order_items || []).length || 1} article{itemCount > 1 ? "s" : ""} a preparer
               </p>
             </div>
-            <span className={`self-start rounded px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[order.status] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+            <span className={`self-start rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[order.status] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
               {statusLabels[order.status] || order.status}
             </span>
           </div>
@@ -300,7 +314,7 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
           <button
             type="button"
             onClick={quickAction.onClick}
-            className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg text-sm font-extrabold shadow-sm active:scale-[0.99] ${quickAction.className}`}
+            className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold shadow-sm active:scale-[0.99] ${quickAction.className}`}
           >
             {quickAction.icon}
             {quickAction.label}
@@ -321,7 +335,7 @@ function getQuickAction(order, onPrepared, onDelivered) {
     return {
       label: "Marquer livree",
       icon: <CheckCircle2 size={18} />,
-      className: "bg-green-500 text-zinc-950",
+      className: "bg-[var(--primary-bright)] text-zinc-950",
       onClick: onDelivered,
     };
   }
@@ -378,24 +392,30 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-      <div className="mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-lg bg-white shadow-2xl">
+      <div className="mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-[22px] bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-zinc-100 p-5">
           <div className="min-w-0">
             <p className="quiet-label text-green-700">Commande #{order.order_ref || order.id?.slice(0, 8)}</p>
             <h2 className="mt-1 text-2xl font-extrabold leading-8 text-zinc-950">{nextAction.title}</h2>
             <p className="mt-1 text-sm font-semibold text-zinc-500">{nextAction.subtitle}</p>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100">
+          <button onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
             <X size={18} />
           </button>
         </div>
 
         <div className="no-scrollbar max-h-[60vh] space-y-4 overflow-y-auto p-5">
+          <div className="rounded-2xl bg-[var(--surface-soft)] p-3 text-sm font-bold leading-5 text-[var(--text-dim)]">
+            {isPrepared || isDone
+              ? "La commande est prete. Tu peux l'envoyer a un livreur, puis marquer livree apres reception client."
+              : "Verifie les articles ci-dessous. Quand le paquet est pret, appuie sur le bouton principal en bas."}
+          </div>
+
           <section>
             <SectionTitle step="1" title="Articles a preparer" />
             <div className="mt-3 space-y-2">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-zinc-50 p-3">
                   <div className="min-w-0">
                     <p className="font-extrabold text-zinc-950">{item.products?.name || "Article"}</p>
                     <p className="text-sm font-bold text-zinc-400">Quantite a mettre: {item.quantity}</p>
@@ -417,7 +437,7 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
             </div>
           </section>
 
-          <div className="rounded-lg bg-zinc-950 p-4 text-white">
+          <div className="rounded-2xl bg-zinc-950 p-4 text-white">
             <div className="flex justify-between text-sm font-bold text-white/60">
               <span>Produits</span>
               <span>{formatPrice(order.total_amount)}</span>
@@ -436,17 +456,17 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
         <div className="space-y-3 border-t border-zinc-100 p-4">
           <p className="quiet-label">Action a faire maintenant</p>
           {!isPrepared && !isDone ? (
-            <button onClick={onPrepared} className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-lg bg-green-500 text-base font-extrabold text-zinc-950 shadow-sm active:scale-[0.99]">
+            <button onClick={onPrepared} className="flex min-h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-bright)] text-base font-extrabold text-zinc-950 shadow-sm active:scale-[0.99]">
               <Package size={19} />
-              J&apos;ai prepare la commande
+              Commande prete
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => openDriverWhatsapp()} className="flex min-h-[58px] items-center justify-center gap-2 rounded-lg bg-zinc-950 text-sm font-extrabold text-white">
+              <button onClick={() => openDriverWhatsapp()} className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-zinc-950 text-sm font-extrabold text-white">
                 <Share2 size={17} />
                 Envoyer livreur
               </button>
-              <button onClick={onDelivered} disabled={isDone} className={`flex min-h-[58px] items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${isDone ? "bg-zinc-100 text-zinc-400" : "bg-green-500 text-zinc-950"}`}>
+              <button onClick={onDelivered} disabled={isDone} className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${isDone ? "bg-zinc-100 text-zinc-400" : "bg-[var(--primary-bright)] text-zinc-950"}`}>
                 <CheckCircle2 size={17} />
                 {isDone ? "Effectuee" : "Marquer livree"}
               </button>
@@ -501,7 +521,7 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
             </>
           ) : (
             <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 ring-1 ring-zinc-100">
-              Le livreur vient apres le bouton “J&apos;ai prepare la commande”.
+              Le livreur vient apres le bouton Commande prete.
             </div>
           )}
         </div>
@@ -511,8 +531,14 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
 }
 
 function WorkTile({ title, value, tone = "default" }) {
+  const className = tone === "primary"
+    ? "border-[var(--text-main)] bg-[var(--text-main)] text-white"
+    : tone === "accent"
+      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-main)]"
+      : "border-[var(--outline)]/35 bg-white text-[var(--text-main)]";
+
   return (
-    <div className={`rounded-xl border p-3 ${tone === "primary" ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--outline)]/35 bg-white text-[var(--text-main)]"}`}>
+    <div className={`rounded-[18px] border p-3 shadow-[var(--shadow-sm)] ${className}`}>
       <p className={`text-sm font-bold ${tone === "primary" ? "text-white/80" : "text-[var(--text-dim)]"}`}>{title}</p>
       <p className="mt-2 font-display text-3xl font-bold leading-none">{value}</p>
     </div>
@@ -522,7 +548,7 @@ function WorkTile({ title, value, tone = "default" }) {
 function getNextAction(order) {
   if (order.status === "PREPARED" || order.delivery_status === "READY") {
     return {
-      title: "Envoyer au livreur",
+      title: "Partager au livreur",
       subtitle: "La commande est prete. Partage les details au livreur.",
       icon: <Truck size={17} />,
       iconTone: "bg-blue-100 text-blue-700",
@@ -541,8 +567,8 @@ function getNextAction(order) {
   }
 
   return {
-    title: order.status === "PAID" ? "Preparer la commande" : "Verifier et preparer",
-    subtitle: "Mets les articles ensemble, puis marque la commande comme prete.",
+    title: order.status === "PAID" ? "Preparer la commande" : "Verifier la commande",
+    subtitle: "Controle les articles, puis marque la commande comme prete.",
     icon: order.status === "PAID" ? <CheckCircle2 size={17} /> : <Clock3 size={17} />,
     iconTone: order.status === "PAID" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700",
     barClass: order.status === "PAID" ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800",

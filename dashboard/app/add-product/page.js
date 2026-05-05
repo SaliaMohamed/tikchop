@@ -2,7 +2,22 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Trash2, Upload } from "lucide-react";
+import {
+  BadgeCheck,
+  Boxes,
+  Camera,
+  CheckCircle2,
+  CircleDollarSign,
+  ImagePlus,
+  Layers3,
+  Loader2,
+  Mic,
+  PackagePlus,
+  Ruler,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { addProduct, addProductsBulk, analyzeProductImage, uploadProductImage } from "../actions";
 import { getSellerOptions } from "../seller-actions";
 import { useActiveSeller } from "../components/sellerContext";
@@ -287,21 +302,28 @@ export default function AddProductPage() {
   return (
     <div className="app-shell pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">
       <main className="space-y-5">
-        <section>
-          <p className="quiet-label text-[var(--primary)]">Publication rapide</p>
-          <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Nouvel article</h1>
-          <p className="mt-1 text-base leading-6 text-[var(--text-dim)]">
-            Photo d&apos;abord. L&apos;IA propose le nom. Le vendeur met prix, taille et quantite par ecrit ou vocal.
-          </p>
+        <section className="app-dashboard-hero">
+          <div className="relative z-10">
+            <p className="quiet-label text-white/55">Publication rapide</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-white">Nouvel article</h1>
+            <p className="mt-2 max-w-sm text-base leading-6 text-white/72">
+              Prends une photo. Tikchop aide pour le nom. Le vendeur valide seulement le prix, la taille et le stock.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <HeroMiniStat icon={<Camera size={16} />} label="Photo" />
+              <HeroMiniStat icon={<Sparkles size={16} />} label="IA" />
+              <HeroMiniStat icon={<BadgeCheck size={16} />} label="Prix" />
+            </div>
+          </div>
         </section>
 
         <section className="grid grid-cols-3 gap-2" aria-label="Choisir une methode">
-          <ModeButton active={mode === "MANUAL"} icon={<Sparkles size={18} />} label="1 photo" onClick={() => setMode("MANUAL")} />
-          <ModeButton active={mode === "BULK"} icon={<PackagePlus size={18} />} label="Lot photos" onClick={() => setMode("BULK")} />
-          <ModeButton active={mode === "VOICE"} icon={<Mic size={18} />} label="Vocal" onClick={() => setMode("VOICE")} />
+          <ModeButton active={mode === "MANUAL"} icon={<Camera size={19} />} label="1 photo" hint="Le plus simple" onClick={() => setMode("MANUAL")} />
+          <ModeButton active={mode === "BULK"} icon={<Layers3 size={19} />} label="Lot" hint="Plusieurs" onClick={() => setMode("BULK")} />
+          <ModeButton active={mode === "VOICE"} icon={<Mic size={19} />} label="Vocal" hint="Option" onClick={() => setMode("VOICE")} />
         </section>
 
-        <section className="app-card bg-white p-3">
+        <section className="rounded-[18px] border border-[var(--line)] bg-white p-3 shadow-[var(--shadow-sm)]">
           <div className="grid grid-cols-3 gap-2 text-center">
             <StepChip done={mode === "BULK" ? bulkPhotoItems.length > 0 || bulkProducts.length > 0 : Boolean(formData.image_url)} step="1" label={mode === "BULK" ? "Photos" : "Photo"} />
             <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.name)} step="2" label="Nom" />
@@ -348,14 +370,14 @@ export default function AddProductPage() {
 
           {mode === "BULK" && (
             <section className="space-y-4">
-            <div className="app-card p-4">
+            <div className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-mid)] text-[var(--primary)]">
-                  <PackagePlus size={19} />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--text-main)] text-white">
+                  <PackagePlus size={20} />
                 </div>
                 <div>
-                  <p className="font-semibold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom. Prix, taille et quantite restent a valider.</p>
+                  <p className="font-display text-lg font-bold text-[var(--text-main)]">Mettre plusieurs articles</p>
+                  <p className="text-sm leading-5 text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose les noms. Le vendeur valide les prix un par un.</p>
                 </div>
               </div>
               <input
@@ -369,10 +391,18 @@ export default function AddProductPage() {
               <button
                 type="button"
                 onClick={() => bulkFileInputRef.current?.click()}
-                className="mt-4 flex min-h-[74px] w-full items-center justify-center gap-3 rounded-xl bg-[var(--primary)] px-4 text-base font-bold text-white shadow-sm active:scale-[0.99]"
+                className="mt-4 flex min-h-[82px] w-full items-center justify-between gap-3 rounded-2xl bg-[var(--text-main)] px-4 text-left text-base font-bold text-white shadow-sm active:scale-[0.99]"
               >
-                {bulkUploading ? <Loader2 className="animate-spin" size={21} /> : <ImagePlus size={22} />}
-                {bulkUploading ? "Envoi des photos..." : "Choisir plusieurs photos"}
+                <span className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/12">
+                    {bulkUploading ? <Loader2 className="animate-spin" size={21} /> : <ImagePlus size={22} />}
+                  </span>
+                  <span>
+                    <span className="block">{bulkUploading ? "Envoi des photos..." : "Ouvrir la galerie"}</span>
+                    <span className="block text-xs font-semibold text-white/55">Selection multiple si le telephone le permet</span>
+                  </span>
+                </span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[var(--text-main)]">Photos</span>
               </button>
               {bulkPhotoItems.length > 0 && (
                 <div className="mt-4 space-y-3">
@@ -381,7 +411,7 @@ export default function AddProductPage() {
                     <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
                   </div>
                   {bulkPhotoItems.map((item, index) => (
-                    <div key={item.id} className="rounded-xl border border-[var(--outline)]/35 bg-white p-3">
+                    <div key={item.id} className="rounded-2xl border border-[var(--outline)]/35 bg-white p-3 shadow-[0_10px_24px_rgb(16_24_20_/_0.05)]">
                       <div className="flex gap-3">
                         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[var(--surface-mid)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -412,8 +442,8 @@ export default function AddProductPage() {
                               </button>
                             </div>
                           </div>
-                          <p className="rounded-lg bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--text-dim)]">
-                            Dicte ou inscris prix, taille et quantite.
+                          <p className="rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--text-dim)]">
+                            Priorite: prix. Taille et quantite peuvent etre dites au micro.
                           </p>
                           <input
                             value={item.name}
@@ -426,7 +456,7 @@ export default function AddProductPage() {
                             onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
                             placeholder="Prix obligatoire"
                             inputMode="numeric"
-                            className="min-h-[48px] w-full rounded-lg border border-[var(--primary)]/45 bg-white px-3 text-base font-extrabold text-[var(--primary)] outline-none"
+                            className="min-h-[52px] w-full rounded-xl border border-[var(--primary)]/45 bg-white px-3 text-lg font-extrabold text-[var(--primary)] outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_4px_rgb(5_122_85_/_0.13)]"
                           />
                           <div className="grid grid-cols-2 gap-2">
                             <input
@@ -499,8 +529,8 @@ export default function AddProductPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative flex min-h-[210px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-0 text-center transition active:scale-[0.99] md:min-h-[250px] ${
-                  formData.image_url ? "border-[var(--primary)] bg-white" : "border-[var(--outline)]/55 bg-[var(--surface-mid)]"
+                className={`relative flex min-h-[240px] w-full flex-col items-center justify-center overflow-hidden rounded-[22px] border p-0 text-center transition active:scale-[0.99] md:min-h-[280px] ${
+                  formData.image_url ? "border-[var(--primary)] bg-white" : "border-[var(--line)] bg-white shadow-[var(--shadow-sm)]"
                 }`}
               >
                 {imagePreview ? (
@@ -508,16 +538,18 @@ export default function AddProductPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={imagePreview} alt="Apercu produit" className="absolute inset-0 h-full w-full object-cover" />
                     <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                    <span className="absolute bottom-4 left-4 right-4 flex min-h-[46px] items-center justify-center rounded-lg bg-white/92 px-4 text-sm font-bold text-[var(--primary)] shadow-sm">
+                    <span className="absolute bottom-4 left-4 right-4 flex min-h-[52px] items-center justify-center rounded-2xl bg-white/94 px-4 text-sm font-extrabold text-[var(--primary)] shadow-sm">
                       {imageUploading ? "Envoi de la photo..." : imageAnalyzing ? "IA propose le nom..." : "Changer la photo"}
                     </span>
                   </>
                 ) : (
-                  <span className="flex flex-col items-center px-6">
-                    <ImagePlus className="text-[var(--secondary)]" size={46} />
-                    <span className="mt-3 font-display text-xl font-bold text-[var(--text-main)]">Choisir dans la galerie</span>
-                    <span className="mt-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[var(--primary)] shadow-sm">Appuie ici</span>
-                    <span className="mt-1 max-w-[15rem] text-sm leading-5 text-[var(--text-dim)]">Une belle photo vend plus vite.</span>
+                  <span className="flex w-full flex-col items-center px-6">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--text-main)] text-white shadow-[var(--shadow-sm)]">
+                      <ImagePlus size={30} />
+                    </span>
+                    <span className="mt-4 font-display text-2xl font-bold text-[var(--text-main)]">Ouvrir la galerie</span>
+                    <span className="mt-2 max-w-[17rem] text-sm leading-5 text-[var(--text-dim)]">Choisis la photo la plus claire. Le nom sera propose automatiquement.</span>
+                    <span className="mt-4 rounded-full bg-[var(--surface-soft)] px-4 py-2 text-sm font-extrabold text-[var(--primary)]">Appuie ici</span>
                   </span>
                 )}
                 {(imageUploading || imageAnalyzing) && (
@@ -546,14 +578,14 @@ export default function AddProductPage() {
 
           {mode !== "BULK" && (
             <div className="space-y-4">
-              <section className="app-card space-y-4 bg-white p-4">
+              <section className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="quiet-label text-[var(--primary)]">Champs importants</p>
-                    <h2 className="mt-1 font-display text-xl font-bold text-[var(--text-main)]">Prix, taille, quantite</h2>
+                    <p className="quiet-label text-[var(--primary)]">A valider</p>
+                    <h2 className="mt-1 font-display text-xl font-bold text-[var(--text-main)]">Prix, taille, stock</h2>
                   </div>
                   <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--primary)]">
-                    Obligatoire
+                    Important
                   </span>
                 </div>
                 <button
@@ -562,22 +594,24 @@ export default function AddProductPage() {
                   className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${listening ? "bg-red-500 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}
                 >
                   <Mic size={18} />
-                  {listening ? "J'ecoute..." : "Dicter prix, taille, quantite"}
+                  {listening ? "J'ecoute..." : "Dicter au lieu d'ecrire"}
                 </button>
-                <Field label="Prix de vente">
-                  <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input text-xl text-[var(--primary)]" />
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Taille">
-                    <input type="text" name="size" placeholder="M, L, 42..." value={formData.size} onChange={handleChange} className="mobile-input" />
+                <div className="mt-4 space-y-3">
+                  <Field label="Prix de vente" icon={<CircleDollarSign size={17} />}>
+                    <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input text-xl text-[var(--primary)]" />
                   </Field>
-                  <Field label="Quantite">
-                    <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
-                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Taille" icon={<Ruler size={16} />}>
+                      <input type="text" name="size" placeholder="M, L, 42" value={formData.size} onChange={handleChange} className="mobile-input" />
+                    </Field>
+                    <Field label="Stock" icon={<Boxes size={16} />}>
+                      <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
+                    </Field>
+                  </div>
                 </div>
               </section>
 
-              <section className="app-card space-y-3 bg-white p-4">
+              <section className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="quiet-label text-[var(--secondary)]">Aide IA</p>
@@ -587,7 +621,7 @@ export default function AddProductPage() {
                   </div>
                   {imageAnalyzing ? <Loader2 className="animate-spin text-[var(--primary)]" size={22} /> : <Sparkles className="text-[var(--primary)]" size={22} />}
                 </div>
-                <Field label="Nom de l'article">
+                <Field label="Nom de l'article" icon={<Sparkles size={16} />}>
                   <input type="text" name="name" placeholder="Ex: Robe rouge" value={formData.name} onChange={handleChange} required className="mobile-input" />
                 </Field>
               </section>
@@ -708,8 +742,8 @@ function parseBulkProducts(text) {
 
 function StepChip({ done, step, label, important = false }) {
   return (
-    <div className={`rounded-lg border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : important ? "border-[var(--primary)]/45 bg-white text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
-      <span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${done ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+    <div className={`rounded-2xl border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : important ? "border-[var(--primary)]/45 bg-white text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
+      <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl text-sm font-bold ${done ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
         {done ? <CheckCircle2 size={16} strokeWidth={2.6} /> : step}
       </span>
       <p className="mt-1 text-xs font-bold">{label}</p>
@@ -717,26 +751,41 @@ function StepChip({ done, step, label, important = false }) {
   );
 }
 
-function ModeButton({ active, icon, label, onClick }) {
+function ModeButton({ active, icon, label, hint, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition ${
-        active ? "border-[var(--primary)] bg-white text-[var(--primary)] shadow-sm" : "border-[var(--outline)]/40 bg-[var(--surface-mid)] text-[var(--text-dim)]"
+      className={`flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-[18px] border text-sm font-extrabold transition active:scale-[0.99] ${
+        active ? "border-[var(--text-main)] bg-[var(--text-main)] text-white shadow-[var(--shadow-sm)]" : "border-[var(--outline)]/40 bg-white text-[var(--text-dim)] shadow-[var(--shadow-sm)]"
       }`}
     >
-      {icon}
-      {label}
+      <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${active ? "bg-white/12" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+        {icon}
+      </span>
+      <span>{label}</span>
+      <span className={`text-[0.66rem] font-bold ${active ? "text-white/55" : "text-[var(--outline)]"}`}>{hint}</span>
     </button>
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, icon, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block font-semibold text-[var(--text-main)]">{label}</span>
+      <span className="mb-2 flex items-center gap-2 font-semibold text-[var(--text-main)]">
+        {icon && <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--primary)]">{icon}</span>}
+        {label}
+      </span>
       {children}
     </label>
+  );
+}
+
+function HeroMiniStat({ icon, label }) {
+  return (
+    <span className="flex min-h-[44px] items-center justify-center gap-1 rounded-2xl bg-white/10 px-2 text-xs font-extrabold text-white/82">
+      {icon}
+      {label}
+    </span>
   );
 }
