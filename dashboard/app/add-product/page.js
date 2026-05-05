@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   BadgeCheck,
   Boxes,
   Camera,
@@ -10,6 +11,7 @@ import {
   CircleDollarSign,
   ImagePlus,
   Layers3,
+  ListChecks,
   Loader2,
   Mic,
   PackagePlus,
@@ -29,6 +31,7 @@ function formatPrice(value) {
 export default function AddProductPage() {
   const router = useRouter();
   const activeSeller = useActiveSeller();
+  const formRef = useRef(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -298,6 +301,25 @@ export default function AddProductPage() {
   const canSubmit = mode === "BULK"
     ? formData.seller_id && !bulkUploading && (readyBulkPhotos.length > 0 || bulkProducts.length > 0)
     : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing;
+  const assistant = getPublishAssistant({
+    mode,
+    canSubmit,
+    formData,
+    bulkPhotoItems,
+    bulkProducts,
+    readyBulkPhotos,
+    bulkUploading,
+    imageUploading,
+    imageAnalyzing,
+    onPhoto: () => fileInputRef.current?.click(),
+    onBulkPhoto: () => bulkFileInputRef.current?.click(),
+    onDetails: () => {
+      const target = document.getElementById("product-details") || document.getElementById("bulk-products");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+    onPublish: () => formRef.current?.requestSubmit(),
+    onVoice: startVoiceCapture,
+  });
 
   return (
     <div className="app-shell pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">
@@ -331,7 +353,9 @@ export default function AddProductPage() {
           </div>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <NextActionCard assistant={assistant} />
+
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {sellers.length > 1 && (
             <Field label="Boutique">
               <select name="seller_id" value={formData.seller_id} onChange={handleChange} required className="mobile-input">
@@ -410,6 +434,7 @@ export default function AddProductPage() {
                     <span className="font-semibold text-[var(--text-dim)]">Articles prets</span>
                     <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
                   </div>
+                  <div id="bulk-products" className="space-y-3">
                   {bulkPhotoItems.map((item, index) => (
                     <div key={item.id} className="rounded-2xl border border-[var(--outline)]/35 bg-white p-3 shadow-[0_10px_24px_rgb(16_24_20_/_0.05)]">
                       <div className="flex gap-3">
@@ -486,6 +511,7 @@ export default function AddProductPage() {
                       )}
                     </div>
                   ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -578,7 +604,7 @@ export default function AddProductPage() {
 
           {mode !== "BULK" && (
             <div className="space-y-4">
-              <section className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
+              <section id="product-details" className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="quiet-label text-[var(--primary)]">A valider</p>
@@ -738,6 +764,142 @@ function parseBulkProducts(text) {
       };
     })
     .filter((product) => product.name && product.price);
+}
+
+function getPublishAssistant({
+  mode,
+  canSubmit,
+  formData,
+  bulkPhotoItems,
+  bulkProducts,
+  readyBulkPhotos,
+  bulkUploading,
+  imageUploading,
+  imageAnalyzing,
+  onPhoto,
+  onBulkPhoto,
+  onDetails,
+  onPublish,
+  onVoice,
+}) {
+  if (mode === "BULK") {
+    if (bulkUploading) {
+      return {
+        step: "Photos",
+        title: "Les photos arrivent",
+        body: "Garde cette page ouverte. Tikchop va creer une fiche par image.",
+        label: "Envoi en cours",
+        icon: <Loader2 className="animate-spin" size={20} />,
+        disabled: true,
+      };
+    }
+
+    if (bulkPhotoItems.length === 0 && bulkProducts.length === 0) {
+      return {
+        step: "1",
+        title: "Selectionne les articles",
+        body: "Ouvre la galerie et choisis toutes les photos du lot.",
+        label: "Ouvrir la galerie",
+        icon: <ImagePlus size={20} />,
+        onClick: onBulkPhoto,
+      };
+    }
+
+    if (!canSubmit) {
+      return {
+        step: "2",
+        title: "Complete les prix",
+        body: `${readyBulkPhotos.length}/${bulkPhotoItems.length || bulkProducts.length} article pret. Le prix est le champ le plus important.`,
+        label: "Completer",
+        icon: <ListChecks size={20} />,
+        onClick: onDetails,
+      };
+    }
+
+    return {
+      step: "3",
+      title: "Le lot est pret",
+      body: `${readyBulkPhotos.length || bulkProducts.length} article${(readyBulkPhotos.length || bulkProducts.length) > 1 ? "s" : ""} peuvent etre mis en ligne.`,
+      label: "Publier maintenant",
+      icon: <Upload size={20} />,
+      onClick: onPublish,
+      strong: true,
+    };
+  }
+
+  if (!formData.image_url) {
+    return {
+      step: "1",
+      title: "Commence par la photo",
+      body: mode === "VOICE"
+        ? "Tu peux dicter les infos, mais il faut quand meme une photo pour vendre."
+        : "Une photo claire aide l'IA et rassure le client.",
+      label: "Ouvrir la galerie",
+      icon: <ImagePlus size={20} />,
+      onClick: onPhoto,
+    };
+  }
+
+  if (imageUploading || imageAnalyzing) {
+    return {
+      step: "IA",
+      title: imageUploading ? "Photo en envoi" : "Tikchop analyse l'image",
+      body: "Patiente quelques secondes. Le nom peut se remplir automatiquement.",
+      label: "Analyse en cours",
+      icon: <Loader2 className="animate-spin" size={20} />,
+      disabled: true,
+    };
+  }
+
+  if (!formData.name || !formData.price) {
+    return {
+      step: "2",
+      title: "Valide le nom et le prix",
+      body: "Le vendeur peut ecrire ou dicter. Le prix est obligatoire avant publication.",
+      label: mode === "VOICE" ? "Dicter les infos" : "Completer les infos",
+      icon: mode === "VOICE" ? <Mic size={20} /> : <ListChecks size={20} />,
+      onClick: mode === "VOICE" ? onVoice : onDetails,
+    };
+  }
+
+  return {
+    step: "3",
+    title: "Article pret a vendre",
+    body: `${formData.name} peut apparaitre dans la boutique.`,
+    label: "Mettre en ligne",
+    icon: <Upload size={20} />,
+    onClick: onPublish,
+    strong: true,
+  };
+}
+
+function NextActionCard({ assistant }) {
+  return (
+    <section className={`rounded-[20px] border p-4 shadow-[var(--shadow-sm)] ${assistant.strong ? "border-[var(--text-main)] bg-[var(--text-main)] text-white" : "border-[var(--line)] bg-white text-[var(--text-main)]"}`}>
+      <div className="flex items-start gap-3">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${assistant.strong ? "bg-white text-[var(--text-main)]" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+          {assistant.step}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={`quiet-label ${assistant.strong ? "text-white/55" : "text-[var(--primary)]"}`}>Action suivante</p>
+          <h2 className="mt-1 font-display text-xl font-bold leading-7">{assistant.title}</h2>
+          <p className={`mt-1 text-sm leading-5 ${assistant.strong ? "text-white/68" : "text-[var(--text-dim)]"}`}>{assistant.body}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={assistant.onClick}
+        disabled={assistant.disabled}
+        className={`mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold active:scale-[0.99] disabled:opacity-70 ${
+          assistant.strong ? "bg-[var(--primary-bright)] text-zinc-950" : "bg-[var(--text-main)] text-white"
+        }`}
+      >
+        {assistant.icon}
+        {assistant.label}
+        {!assistant.disabled && <ArrowRight size={18} />}
+      </button>
+    </section>
+  );
 }
 
 function StepChip({ done, step, label, important = false }) {

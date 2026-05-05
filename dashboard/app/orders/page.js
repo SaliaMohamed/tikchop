@@ -411,6 +411,8 @@ Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTAC
               : "Verifie les articles ci-dessous. Quand le paquet est pret, appuie sur le bouton principal en bas."}
           </div>
 
+          <OrderProgress status={order.status} />
+
           <section>
             <SectionTitle step="1" title="Articles a preparer" />
             <div className="mt-3 space-y-2">
@@ -541,6 +543,27 @@ function WorkTile({ title, value, tone = "default" }) {
     <div className={`rounded-[18px] border p-3 shadow-[var(--shadow-sm)] ${className}`}>
       <p className={`text-sm font-bold ${tone === "primary" ? "text-white/80" : "text-[var(--text-dim)]"}`}>{title}</p>
       <p className="mt-2 font-display text-3xl font-bold leading-none">{value}</p>
+    </div>
+  );
+}
+
+function OrderProgress({ status }) {
+  const steps = [
+    { key: "CHECK", label: "Verifier", active: ["PENDING", "PAID", "PREPARED", "DELIVERED"].includes(status) },
+    { key: "READY", label: "Pret", active: ["PREPARED", "DELIVERED"].includes(status) },
+    { key: "DONE", label: "Livre", active: status === "DELIVERED" },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {steps.map((step, index) => (
+        <div key={step.key} className={`rounded-2xl border p-3 text-center ${step.active ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-zinc-100 bg-zinc-50 text-zinc-400"}`}>
+          <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold ${step.active ? "bg-[var(--primary)] text-white" : "bg-white text-zinc-400"}`}>
+            {step.active ? <CheckCircle2 size={16} /> : index + 1}
+          </span>
+          <p className="mt-1 text-xs font-extrabold">{step.label}</p>
+        </div>
+      ))}
     </div>
   );
 }
