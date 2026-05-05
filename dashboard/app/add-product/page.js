@@ -287,7 +287,7 @@ export default function AddProductPage() {
           <p className="quiet-label text-[var(--primary)]">Publication rapide</p>
           <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Nouvel article</h1>
           <p className="mt-1 text-base leading-6 text-[var(--text-dim)]">
-            Photo d&apos;abord. L&apos;IA remplit le nom, puis le vendeur met prix, taille et quantite.
+            Photo d&apos;abord. L&apos;IA propose le nom. Le vendeur met prix, taille et quantite par ecrit ou vocal.
           </p>
         </section>
 
@@ -351,7 +351,7 @@ export default function AddProductPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom, puis tu completes les champs importants.</p>
+                  <p className="text-sm text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose le nom. Prix, taille et quantite restent a valider.</p>
                 </div>
               </div>
               <input
@@ -408,6 +408,9 @@ export default function AddProductPage() {
                               </button>
                             </div>
                           </div>
+                          <p className="rounded-lg bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--text-dim)]">
+                            Dicte ou inscris prix, taille et quantite.
+                          </p>
                           <input
                             value={item.name}
                             onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
@@ -549,6 +552,14 @@ export default function AddProductPage() {
                     Obligatoire
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={startVoiceCapture}
+                  className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg text-sm font-extrabold ${listening ? "bg-red-500 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}
+                >
+                  <Mic size={18} />
+                  {listening ? "J'ecoute..." : "Dicter prix, taille, quantite"}
+                </button>
                 <Field label="Prix de vente">
                   <input type="number" name="price" placeholder="15000" value={formData.price} onChange={handleChange} required min="0" className="mobile-input text-xl text-[var(--primary)]" />
                 </Field>
@@ -627,14 +638,24 @@ export default function AddProductPage() {
 }
 
 function parseVoiceProduct(text) {
+  const originalText = String(text || "");
   const source = String(text || "").toLowerCase();
-  const priceMatch = source.match(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)?/i);
-  const quantityMatch = source.match(/(?:quantite|quantite|stock|reste|il y a)\s*(\d+)/i);
+  const explicitPriceMatch = source.match(/(?:prix|a|à)\s*(\d[\d\s.]*)/i)
+    || source.match(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)/i);
+  const quantityMatch = source.match(/(?:quantite|quantité|qte|stock|reste|il y a)\s*(\d+)/i);
   const sizeMatch = source.match(/(?:taille|size|pointure)\s*([a-z0-9]+)/i);
-  const price = priceMatch ? priceMatch[1].replace(/[^\d]/g, "") : "";
-  const name = String(text || "")
-    .replace(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)?/i, "")
-    .replace(/(?:quantite|quantite|stock|reste|il y a)\s*\d+/i, "")
+  const loosePriceMatch = explicitPriceMatch ? null : [...originalText.matchAll(/\d[\d\s.]*/g)]
+    .map((match) => ({ raw: match[0], digits: match[0].replace(/[^\d]/g, "") }))
+    .find((match) => match.digits.length >= 4 || Number(match.digits) >= 1000);
+  const price = explicitPriceMatch
+    ? explicitPriceMatch[1].replace(/[^\d]/g, "")
+    : loosePriceMatch?.digits || "";
+  const priceTextToRemove = explicitPriceMatch?.[0] || loosePriceMatch?.raw || "";
+  const name = originalText
+    .replace(priceTextToRemove, "")
+    .replace(/(?:prix|a|à)\s*(\d[\d\s.]*)/i, "")
+    .replace(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)/i, "")
+    .replace(/(?:quantite|quantité|qte|stock|reste|il y a)\s*\d+/i, "")
     .replace(/(?:taille|size|pointure)\s*[a-z0-9]+/i, "")
     .replace(/[,.]/g, " ")
     .trim();
@@ -648,14 +669,10 @@ function parseVoiceProduct(text) {
 }
 
 function applyAnalysisToProduct(product, analysis) {
-  const quantity = Number.parseInt(analysis?.quantity || product.stock_quantity || 1, 10);
-
   return {
     ...product,
     name: analysis?.name || product.name,
     description: analysis?.description || product.description,
-    size: analysis?.size || product.size || analysis?.suggested_sizes?.[0] || "",
-    stock_quantity: Number.isFinite(quantity) && quantity > 0 ? String(quantity) : product.stock_quantity || "1",
   };
 }
 

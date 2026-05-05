@@ -191,8 +191,9 @@ function productAnalysisPrompt(voiceHint = "") {
     "Analyse cette photo de produit pour une mini-boutique mobile en Afrique francophone.",
     "Retourne un nom usuel court, une petite description vendeuse, la categorie, les couleurs visibles, les tailles possibles si c'est un vetement.",
     "Ne devine pas de marque si elle n'est pas clairement visible.",
-    "Si la taille ou la quantite ne sont pas visibles, retourne une chaine vide pour size et 1 pour quantity.",
-    "Si l'utilisateur donne une indication vocale, utilise-la pour corriger le nom, la taille ou la quantite.",
+    "Ne remplis pas la taille definitive ni la quantite depuis la photo: le vendeur les renseigne au clavier ou au vocal.",
+    "Retourne toujours size comme chaine vide et quantity comme 1, sauf si l'indication vocale du vendeur les donne explicitement.",
+    "Si l'utilisateur donne une indication vocale, utilise-la pour corriger le nom seulement si elle parle du produit.",
     voiceHint ? `Indication vendeur: ${voiceHint}` : "",
   ].filter(Boolean).join("\n");
 }
