@@ -14,12 +14,14 @@ import {
   X,
 } from "lucide-react";
 import { getSellerProducts, updateProduct, uploadProductImage } from "../actions";
+import { useActiveSeller } from "../components/sellerContext";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
 }
 
 export default function ProductsPage() {
+  const seller = useActiveSeller();
   const editFileInputRef = useRef(null);
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
@@ -42,7 +44,7 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         setError("");
-        const data = await getSellerProducts("salia");
+        const data = await getSellerProducts(seller.slug);
         setProducts(data || []);
       } catch (err) {
         setError(err.message || "Impossible de charger le catalogue.");
@@ -52,7 +54,7 @@ export default function ProductsPage() {
     }
 
     loadProducts();
-  }, []);
+  }, [seller.slug]);
 
   function openEditor(product) {
     setEditingProduct(product);
@@ -100,7 +102,7 @@ export default function ProductsPage() {
     try {
       setSaving(true);
       setError("");
-      const product = await updateProduct(editingProduct.id, formData, "salia");
+      const product = await updateProduct(editingProduct.id, formData, seller.slug);
       setProducts((current) => current.map((item) => (item.id === product.id ? product : item)));
       closeEditor();
     } catch (err) {
@@ -112,7 +114,7 @@ export default function ProductsPage() {
 
   async function copyProductLink(product) {
     const origin = window.location.origin;
-    const url = `${origin}/salia?product=${product.id}`;
+    const url = `${origin}/${seller.slug}?product=${product.id}`;
 
     try {
       if (navigator.share) {

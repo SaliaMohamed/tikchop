@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Home, Package, PlusCircle, Settings } from "lucide-react";
+import { ClipboardList, Home, Package, PlusCircle, Settings, Store } from "lucide-react";
+import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
 
 const dashboardRoutes = new Set([
   "/",
@@ -14,9 +15,11 @@ const dashboardRoutes = new Set([
 
 export default function AppChrome({ children }) {
   const pathname = usePathname();
+  const seller = useActiveSeller();
+  const sellerInitials = getSellerInitials(seller);
   const showSellerChrome = dashboardRoutes.has(pathname);
   const showMobileTopbar = showSellerChrome && pathname !== "/";
-  const showMobileTabbar = showSellerChrome && pathname !== "/add-product";
+  const showMobileTabbar = showSellerChrome && pathname !== "/add-product" && pathname !== "/onboarding";
 
   if (!showSellerChrome) {
     return <main className="container public-chrome">{children}</main>;
@@ -34,8 +37,8 @@ export default function AppChrome({ children }) {
           <Link href="/" className="font-display text-xl font-bold text-[var(--primary)] no-underline">
             Tikchop
           </Link>
-          <Link href="/salia" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--outline)]/55 bg-[var(--surface-mid)] text-sm font-bold text-[var(--text-dim)] no-underline">
-            SA
+          <Link href={`/${seller.slug}`} className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--outline)]/55 bg-[var(--surface-mid)] text-sm font-bold text-[var(--text-dim)] no-underline">
+            {sellerInitials}
           </Link>
         </header>
       )}
@@ -47,12 +50,14 @@ export default function AppChrome({ children }) {
           <Link href="/" className="nav-link">Accueil</Link>
           <Link href="/orders" className="nav-link">Commandes</Link>
           <Link href="/products" className="nav-link">Articles</Link>
-          <Link href="/salia" className="nav-link">Boutique test</Link>
+          <Link href={`/${seller.slug}`} className="nav-link">Boutique</Link>
           <Link href="/delivery-settings" className="nav-link">Livraison</Link>
           <Link href="/add-product" className="nav-link">Publier</Link>
+          <Link href="/onboarding" className="nav-link">Nouveau vendeur</Link>
         </div>
         <div className="seller-chip">
-          <span>Salia Boutique</span>
+          <Store size={15} className="mr-1.5" />
+          <span>{seller.name}</span>
         </div>
       </nav>
       <main className={`container ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>

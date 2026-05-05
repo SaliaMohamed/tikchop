@@ -3,7 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ImagePlus, Loader2, Mic, PackagePlus, Sparkles, Trash2, Upload } from "lucide-react";
-import { addProduct, addProductsBulk, analyzeProductImage, getSellersForProductForm, uploadProductImage } from "../actions";
+import { addProduct, addProductsBulk, analyzeProductImage, uploadProductImage } from "../actions";
+import { getSellerOptions } from "../seller-actions";
+import { useActiveSeller } from "../components/sellerContext";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -11,6 +13,7 @@ function formatPrice(value) {
 
 export default function AddProductPage() {
   const router = useRouter();
+  const activeSeller = useActiveSeller();
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -39,10 +42,11 @@ export default function AddProductPage() {
   useEffect(() => {
     async function fetchSellers() {
       try {
-        const data = await getSellersForProductForm();
+        const data = await getSellerOptions();
         setSellers(data || []);
-        if (data?.length === 1) {
-          setFormData((current) => ({ ...current, seller_id: data[0].id }));
+        const selectedSeller = data?.find((seller) => seller.slug === activeSeller.slug) || data?.[0];
+        if (selectedSeller) {
+          setFormData((current) => ({ ...current, seller_id: selectedSeller.id }));
         }
       } catch (error) {
         console.error("Erreur chargement vendeurs:", error);
@@ -50,7 +54,7 @@ export default function AddProductPage() {
     }
 
     fetchSellers();
-  }, []);
+  }, [activeSeller.slug]);
 
   async function handleSubmit(event) {
     event.preventDefault();

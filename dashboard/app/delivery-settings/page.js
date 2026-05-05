@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   MapPin,
@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { addDeliveryDriver, addDeliveryZone, deleteDeliveryDriver, deleteDeliveryZone, getSellerDeliverySettings, saveSellerDeliverySettings, updateDeliveryDriver, updateDeliveryZone } from "../actions";
+import { useActiveSeller } from "../components/sellerContext";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -37,6 +38,7 @@ const abidjanZoneSuggestions = [
 ];
 
 export default function DeliverySettingsPage() {
+  const activeSeller = useActiveSeller();
   const [seller, setSeller] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [drivers, setDrivers] = useState([]);
@@ -51,16 +53,12 @@ export default function DeliverySettingsPage() {
   const [editingDriver, setEditingDriver] = useState(null);
   const [editingZone, setEditingZone] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
+  const fetchData = useCallback(async function fetchData() {
     try {
       setLoading(true);
       setError("");
 
-      const { seller: sellerData, drivers: driverData, zones: zoneData } = await getSellerDeliverySettings("salia");
+      const { seller: sellerData, drivers: driverData, zones: zoneData } = await getSellerDeliverySettings(activeSeller.slug);
       setSeller(sellerData);
       setSettings({
         delivery_enabled: sellerData.delivery_enabled ?? true,
@@ -78,7 +76,15 @@ export default function DeliverySettingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeSeller.slug]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchData();
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [fetchData]);
 
   async function saveSettings() {
     if (!seller) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { assignOrderDriver, getSellerDeliverySettings, getSellerOrders, updateOrderStatus } from "../actions";
+import { useActiveSeller } from "../components/sellerContext";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -52,6 +53,7 @@ const statusClasses = {
 };
 
 export default function OrdersPage() {
+  const seller = useActiveSeller();
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,18 +61,14 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState("WORK");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  async function fetchOrders() {
+  const fetchOrders = useCallback(async function fetchOrders() {
     try {
       setLoading(true);
       setError("");
 
       const [orderData, deliveryData] = await Promise.all([
-        getSellerOrders(),
-        getSellerDeliverySettings("salia"),
+        getSellerOrders(seller.slug),
+        getSellerDeliverySettings(seller.slug),
       ]);
 
       setOrders(orderData || []);
@@ -81,7 +79,15 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [seller.slug]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchOrders();
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [fetchOrders]);
 
   async function markStatus(order, status) {
     try {
@@ -214,6 +220,7 @@ export default function OrdersPage() {
         <OrderSheet
           order={selectedOrder}
           drivers={drivers}
+          sellerName={seller.name}
           onClose={() => setSelectedOrder(null)}
           onPrepared={() => markStatus(selectedOrder, "PREPARED")}
           onDelivered={() => markStatus(selectedOrder, "DELIVERED")}
@@ -331,7 +338,7 @@ function getQuickAction(order, onPrepared, onDelivered) {
   return null;
 }
 
-function OrderSheet({ order, drivers, onClose, onPrepared, onDelivered, onDriverShared }) {
+function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDelivered, onDriverShared }) {
   const items = order.order_items || [];
   const itemsText = items.map((item) => `- ${item.quantity} x ${item.products?.name || "Article"}`).join("\n");
   const deliveryAmount = Number(order.delivery_fee || 0);
@@ -344,7 +351,7 @@ function OrderSheet({ order, drivers, onClose, onPrepared, onDelivered, onDriver
   const nextAction = getNextAction(order);
   const driverMessage = encodeURIComponent(`Nouvelle livraison Tikchop
 
-Boutique: Salia Boutique
+Boutique: ${sellerName || "Tikchop"}
 Commande: ${order.order_ref || order.id?.slice(0, 8)}
 
 Client: ${order.customer_phone || "Non renseigne"}

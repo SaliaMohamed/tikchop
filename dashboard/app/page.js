@@ -7,11 +7,13 @@ import {
   Copy,
   ImagePlus,
   Package,
+  PlusCircle,
   ReceiptText,
   Store,
   TrendingUp,
 } from "lucide-react";
 import { getDashboardData } from "./actions";
+import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
 
 const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} CFA`;
 
@@ -22,6 +24,8 @@ const emptyStats = {
 };
 
 export default function Dashboard() {
+  const seller = useActiveSeller();
+  const sellerInitials = getSellerInitials(seller);
   const [stats, setStats] = useState(emptyStats);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +34,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const data = await getDashboardData();
+        const data = await getDashboardData(seller.slug);
         setRecentOrders(data.recentOrders || []);
         setStats(data.stats || emptyStats);
       } catch (err) {
@@ -42,7 +46,7 @@ export default function Dashboard() {
     }
 
     fetchDashboardData();
-  }, []);
+  }, [seller.slug]);
 
   const summary = useMemo(
     () => [
@@ -60,18 +64,30 @@ export default function Dashboard() {
             <Store size={20} strokeWidth={2.3} />
           </button>
           <h1 className="font-display text-xl font-extrabold text-[var(--primary)]">Tikchop</h1>
-          <Link href="/salia" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[var(--outline)] bg-white text-sm font-extrabold text-[var(--primary)] no-underline">
-            SA
+          <Link href={`/${seller.slug}`} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[var(--outline)] bg-white text-sm font-extrabold text-[var(--primary)] no-underline">
+            {sellerInitials}
           </Link>
         </div>
       </header>
 
       <main className="space-y-7 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] md:pb-0">
         <section className="space-y-2">
-          <h2 className="font-display text-2xl font-bold leading-8 text-[var(--text-main)]">Bonjour, Salia</h2>
+          <h2 className="font-display text-2xl font-bold leading-8 text-[var(--text-main)]">Bonjour, {seller.name.split(" ")[0]}</h2>
           <p className="text-sm leading-6 text-[var(--text-dim)]">
             Choisis une action. Le plus important reste en haut.
           </p>
+        </section>
+
+        <section className="app-card flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="quiet-label">Boutique active</p>
+            <p className="mt-1 truncate font-display text-xl font-bold text-[var(--text-main)]">{seller.name}</p>
+            <p className="truncate text-sm font-semibold text-[var(--primary)]">/{seller.slug}</p>
+          </div>
+          <Link href="/onboarding" className="flex min-h-[46px] shrink-0 items-center gap-2 rounded-lg bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)] no-underline">
+            <PlusCircle size={17} />
+            Vendeur
+          </Link>
         </section>
 
         <section className="space-y-3">
@@ -87,7 +103,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-2 gap-3">
             <SellerShortcut href="/orders" icon={<ClipboardList size={22} />} title="Voir les commandes" subtitle="Clients et livraison" />
-            <SellerShortcut href="/salia" icon={<Copy size={22} />} title="Lien boutique" subtitle="Partager aux clients" />
+            <SellerShortcut href={`/${seller.slug}`} icon={<Copy size={22} />} title="Lien boutique" subtitle="Partager aux clients" />
           </div>
         </section>
 
