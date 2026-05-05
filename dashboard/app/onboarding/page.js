@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, Mail, MessageCircle, Store, Truck, UserRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, LogOut, Mail, MessageCircle, Store, Truck, UserRound } from "lucide-react";
 import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
-import { writeActiveSeller } from "../components/sellerContext";
+import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 
 function slugify(value) {
@@ -25,9 +25,11 @@ function formatPrice(value) {
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accountMode, setAccountMode] = useState("SIGN_UP");
   const [sellerAccount, setSellerAccount] = useState(null);
+  const [existingSeller, setExistingSeller] = useState(null);
   const [error, setError] = useState("");
   const [createdSeller, setCreatedSeller] = useState(null);
   const [pairing, setPairing] = useState(null);
@@ -46,6 +48,42 @@ export default function OnboardingPage() {
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
   const totalSteps = 6;
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkExistingSession() {
+      if (!supabase) {
+        setCheckingSession(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        if (!user) {
+          if (active) setCheckingSession(false);
+          return;
+        }
+
+        const seller = await getSellerByOwner(user.id);
+        if (seller) {
+          writeActiveSeller(seller);
+          if (active) setExistingSeller(seller);
+        }
+      } catch (sessionError) {
+        console.error("Onboarding session check error:", sessionError);
+      } finally {
+        if (active) setCheckingSession(false);
+      }
+    }
+
+    checkExistingSession();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -148,6 +186,76 @@ export default function OnboardingPage() {
     if (!shopUrl) return;
     await navigator.clipboard.writeText(shopUrl);
     alert("Lien boutique copie.");
+  }
+
+  async function handleSignOut() {
+    clearActiveSeller();
+    setExistingSeller(null);
+    setSellerAccount(null);
+    setStep(0);
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="app-shell min-h-screen">
+        <main className="flex min-h-[70vh] flex-col items-center justify-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
+            <Loader2 className="animate-spin" size={24} />
+          </div>
+          <p className="mt-4 font-display text-xl font-bold text-[var(--text-main)]">Verification du compte vendeur...</p>
+          <p className="mt-2 max-w-[18rem] text-sm font-semibold leading-5 text-[var(--text-dim)]">
+            On regarde si une boutique est deja liee a ce compte.
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  if (existingSeller) {
+    return (
+      <div className="app-shell min-h-screen pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+        <header className="mobile-top">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-lg font-bold text-[var(--primary)]">Tikchop</p>
+            <button type="button" onClick={handleSignOut} className="flex min-h-[40px] items-center gap-2 rounded-full bg-white px-3 text-sm font-extrabold text-[var(--text-dim)] shadow-sm">
+              <LogOut size={16} />
+              Sortir
+            </button>
+          </div>
+        </header>
+
+        <main className="mt-6 space-y-5">
+          <OnboardingCard
+            icon={<CheckCircle2 size={30} />}
+            title="Boutique deja creee"
+            subtitle="Ce compte vendeur possede deja un espace Tikchop."
+          >
+            <div className="rounded-xl bg-[var(--surface-soft)] p-4">
+              <p className="quiet-label text-[var(--primary)]">Boutique active</p>
+              <p className="mt-1 font-display text-2xl font-bold text-[var(--text-main)]">{existingSeller.name}</p>
+              <p className="mt-1 break-all text-sm font-extrabold text-[var(--primary)]">/{existingSeller.slug}</p>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-base font-extrabold text-white"
+              >
+                Aller a mon espace
+                <ArrowRight size={19} />
+              </button>
+              <Link href={`/${existingSeller.slug}`} className="flex min-h-[56px] items-center justify-center rounded-xl border border-[var(--outline)] bg-white text-base font-extrabold text-[var(--text-main)] no-underline">
+                Voir ma boutique publique
+              </Link>
+            </div>
+          </OnboardingCard>
+        </main>
+      </div>
+    );
   }
 
   return (
