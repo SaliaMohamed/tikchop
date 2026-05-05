@@ -18,6 +18,7 @@ import {
 import { assignOrderDriver, getSellerDeliverySettings, getSellerOrders, updateOrderStatus } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -30,7 +31,7 @@ function cleanPhone(phoneNumber) {
 const statusLabels = {
   ALL: "Toutes",
   WORK: "A faire",
-  PENDING: "A verifier",
+  PENDING: "Nouvelles",
   PAID: "A preparer",
   PREPARED: "Pret",
   DELIVERED: "Livrees",
@@ -38,9 +39,9 @@ const statusLabels = {
 };
 
 const statusHints = {
-  PENDING: "Verifier client et articles",
-  PAID: "Paiement recu, preparer",
-  PREPARED: "Partager au livreur",
+  PENDING: "A confirmer avant preparation",
+  PAID: "Paiement recu, paquet a faire",
+  PREPARED: "Pret pour livraison",
   DELIVERED: "Terminee",
   CANCELLED: "Annule",
 };
@@ -77,7 +78,7 @@ export default function OrdersPage() {
       setDrivers(deliveryData?.drivers || []);
     } catch (err) {
       console.error("Error fetching orders:", err);
-      setError(err.message || "Impossible de charger les commandes.");
+      setError(friendlyError(err, "Impossible de charger les commandes pour le moment."));
     } finally {
       setLoading(false);
     }
@@ -94,11 +95,11 @@ export default function OrdersPage() {
   async function markStatus(order, status) {
     try {
       const token = await getSellerAccessToken();
-      await updateOrderStatus(order.id, status, token);
+      const result = await updateOrderStatus(order.id, status, token);
       await fetchOrders();
-      setSelectedOrder((current) => current ? { ...current, status } : current);
+      setSelectedOrder((current) => current ? { ...current, ...result, status: result?.status || status } : current);
     } catch (err) {
-      alert(`Impossible de changer le statut: ${err.message}`);
+      alert(friendlyError(err, "Impossible de changer le statut. Reessaie dans un instant."));
     }
   }
 
@@ -113,7 +114,7 @@ export default function OrdersPage() {
       )));
       setSelectedOrder((current) => current?.id === order.id ? { ...current, ...result, delivery_drivers: driver } : current);
     } catch (err) {
-      alert(`Impossible d'assigner le livreur: ${err.message}`);
+      alert(friendlyError(err, "Impossible d'envoyer la commande au livreur."));
     }
   }
 
@@ -131,7 +132,7 @@ export default function OrdersPage() {
 
   function getFilterCount(item) {
     if (item === "WORK") return pendingCount + readyCount;
-    if (item === "PENDING") return verifyCount + prepareCount;
+    if (item === "PENDING") return verifyCount;
     if (item === "PREPARED") return readyCount;
     if (item === "DELIVERED") return doneCount;
     if (item === "ALL") return orders.length;
@@ -153,7 +154,7 @@ export default function OrdersPage() {
         </div>
 
         <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1">
-          {["WORK", "PENDING", "PREPARED", "DELIVERED", "ALL"].map((item) => (
+          {["WORK", "PENDING", "PAID", "PREPARED", "DELIVERED", "ALL"].map((item) => (
             <button
               key={item}
               onClick={() => setFilter(item)}
@@ -173,9 +174,7 @@ export default function OrdersPage() {
       {error && (
         <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
-          <p className="mt-2 text-xs">
-            Si les champs livraison manquent, applique la migration `2026-05-03-delivery-and-order-management.sql`.
-          </p>
+          <p className="mt-2 text-xs">Actualise la page. Si le probleme continue, contacte le support Tikchop.</p>
         </div>
       )}
 

@@ -8,6 +8,7 @@ import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner, requ
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 function slugify(value) {
   return String(value || "")
@@ -166,12 +167,12 @@ export default function OnboardingPage() {
         setPairing(pairingResult);
       } catch (pairingError) {
         setPairing({
-          error: pairingError.message || "Connexion WhatsApp indisponible pour le moment.",
+          error: friendlyError(pairingError, "Connexion WhatsApp indisponible pour le moment."),
         });
       }
       setStep(5);
     } catch (err) {
-      setError(err.message || "Impossible de creer la boutique.");
+      setError(friendlyError(err, "Impossible de creer la boutique. Verifie les informations et reessaie."));
     } finally {
       setSaving(false);
     }
@@ -195,7 +196,7 @@ export default function OnboardingPage() {
 
       setStep(1);
     } catch (err) {
-      setError(err.message || "Impossible de valider le compte vendeur.");
+      setError(friendlyError(err, "Impossible de valider le compte vendeur."));
     } finally {
       setSaving(false);
     }
@@ -242,7 +243,7 @@ export default function OnboardingPage() {
 
       setResetSent(true);
     } catch (resetError) {
-      setError(resetError.message || "Impossible d'envoyer le lien de recuperation.");
+      setError(friendlyError(resetError, "Impossible d'envoyer le lien de recuperation."));
     } finally {
       setSaving(false);
     }

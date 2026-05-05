@@ -17,6 +17,7 @@ import {
 import { addDeliveryDriver, addDeliveryZone, deleteDeliveryDriver, deleteDeliveryZone, getSellerDeliverySettings, saveSellerDeliverySettings, updateDeliveryDriver, updateDeliveryZone } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -84,7 +85,7 @@ export default function DeliverySettingsPage() {
       setZones(zoneData || []);
     } catch (err) {
       console.error("Error fetching delivery settings:", err);
-      setError(err.message || "Impossible de charger les parametres.");
+      setError(friendlyError(err, "Impossible de charger la livraison pour le moment."));
     } finally {
       setLoading(false);
     }
@@ -109,7 +110,7 @@ export default function DeliverySettingsPage() {
       alert("Parametres enregistres.");
       await fetchData();
     } catch (err) {
-      setError(err.message || "Impossible d'enregistrer.");
+      setError(friendlyError(err, "Impossible d'enregistrer. Reessaie dans un instant."));
     } finally {
       setSaving(false);
     }
@@ -148,7 +149,7 @@ export default function DeliverySettingsPage() {
       ));
       closeDriverModal();
     } catch (err) {
-      setError(err.message || "Impossible d'enregistrer le livreur.");
+      setError(friendlyError(err, "Impossible d'enregistrer le livreur."));
     } finally {
       setSaving(false);
     }
@@ -191,7 +192,7 @@ export default function DeliverySettingsPage() {
       });
       closeZoneModal();
     } catch (err) {
-      setError(err.message || "Impossible d'enregistrer la zone.");
+      setError(friendlyError(err, "Impossible d'enregistrer la zone."));
     } finally {
       setSaving(false);
     }
@@ -203,7 +204,7 @@ export default function DeliverySettingsPage() {
       await deleteDeliveryZone(zoneId, token);
       setZones((current) => current.filter((zone) => zone.id !== zoneId));
     } catch (err) {
-      setError(err.message || "Impossible de supprimer la zone.");
+      setError(friendlyError(err, "Impossible de supprimer la zone."));
     }
   }
 
@@ -213,7 +214,7 @@ export default function DeliverySettingsPage() {
       await deleteDeliveryDriver(driverId, token);
       setDrivers((current) => current.filter((driver) => driver.id !== driverId));
     } catch (err) {
-      setError(err.message || "Impossible de supprimer le livreur.");
+      setError(friendlyError(err, "Impossible de supprimer le livreur."));
     }
   }
 
@@ -275,7 +276,7 @@ export default function DeliverySettingsPage() {
               />
               <ToggleRow
                 title="Partage livreur auto"
-                text="Prepare l'envoi au livreur assigne quand une commande arrive."
+                text="Quand tu marques une commande prete, Tikchop l'envoie au livreur de la zone."
                 active={settings.auto_share_to_driver}
                 onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
               />

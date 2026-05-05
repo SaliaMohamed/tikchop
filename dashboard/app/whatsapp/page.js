@@ -21,6 +21,7 @@ import {
 } from "../seller-actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 function formatPairingCode(code) {
   return String(code || "").match(/.{1,4}/g)?.join(" ") || code || "";
@@ -80,7 +81,7 @@ export default function WhatsAppPage() {
       const data = await getSellerWhatsAppConnection(seller, token);
       setConnection(data);
     } catch (err) {
-      setError(err.message || "Impossible de verifier WhatsApp.");
+      setError(friendlyError(err, "Impossible de verifier WhatsApp pour le moment."));
     } finally {
       setLoading(false);
     }
@@ -96,7 +97,7 @@ export default function WhatsAppPage() {
         if (alive) setConnection(data);
       })
       .catch((err) => {
-        if (alive) setError(err.message || "Impossible de verifier WhatsApp.");
+        if (alive) setError(friendlyError(err, "Impossible de verifier WhatsApp pour le moment."));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -133,7 +134,7 @@ export default function WhatsAppPage() {
         }
       } catch (err) {
         if (!alive) return;
-        setError(err.message || "Verification WhatsApp impossible.");
+        setError(friendlyError(err, "Verification WhatsApp impossible pour le moment."));
       }
     }, 5000);
 
@@ -162,7 +163,7 @@ export default function WhatsAppPage() {
       setWatchingConnection(true);
       setMessage("Code genere. Tikchop verifie automatiquement la connexion.");
     } catch (err) {
-      setError(err.message || "Impossible de generer le code WhatsApp.");
+      setError(friendlyError(err, "Impossible de generer le code WhatsApp. Reessaie dans un instant."));
     } finally {
       setBusy("");
     }
@@ -185,7 +186,7 @@ export default function WhatsAppPage() {
       }));
       setMessage("WhatsApp est deconnecte pour cette boutique.");
     } catch (err) {
-      setError(err.message || "Impossible de deconnecter WhatsApp.");
+      setError(friendlyError(err, "Impossible de deconnecter WhatsApp pour le moment."));
     } finally {
       setBusy("");
     }

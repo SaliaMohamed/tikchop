@@ -23,6 +23,7 @@ import {
 import { addProduct, addProductsBulk, analyzeProductImage, uploadProductImage } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -96,7 +97,7 @@ export default function AddProductPage() {
       router.push("/products");
     } catch (error) {
       console.error("Erreur lors de l'ajout du produit:", error);
-      alert(`Erreur: ${error.message}`);
+      alert(friendlyError(error, "Impossible de publier cet article. Verifie les champs et reessaie."));
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,7 @@ export default function AddProductPage() {
       }
     } catch (error) {
       console.error("Image upload error:", error);
-      setImageError(error.message || "Image impossible a envoyer.");
+      setImageError(friendlyError(error, "Photo impossible a envoyer. Essaie une autre photo ou une connexion plus stable."));
       setFormData((current) => ({ ...current, image_url: "" }));
       setImageAnalyzing(false);
     } finally {
@@ -195,7 +196,7 @@ export default function AddProductPage() {
         console.error("Bulk image upload error:", error);
         setBulkPhotoItems((current) => current.map((entry) => (
           entry.id === item.id
-            ? { ...entry, uploadError: error.message || "Erreur image", uploading: false }
+            ? { ...entry, uploadError: friendlyError(error, "Photo non envoyee."), uploading: false }
             : entry
         )));
       }

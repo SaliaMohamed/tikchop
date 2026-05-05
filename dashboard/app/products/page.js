@@ -17,6 +17,7 @@ import {
 import { getSellerProducts, updateProduct, uploadProductImage } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
+import { friendlyError } from "../../lib/user-facing-error";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -50,7 +51,7 @@ export default function ProductsPage() {
         const data = await getSellerProducts(seller.slug, token);
         setProducts(data || []);
       } catch (err) {
-        setError(err.message || "Impossible de charger le catalogue.");
+        setError(friendlyError(err, "Impossible de charger le catalogue."));
       } finally {
         setLoading(false);
       }
@@ -92,7 +93,7 @@ export default function ProductsPage() {
       const result = await uploadProductImage(payload);
       setFormData((current) => ({ ...current, image_url: result.url }));
     } catch (err) {
-      setImageError(err.message || "Image impossible a envoyer.");
+      setImageError(friendlyError(err, "Photo impossible a envoyer."));
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -110,7 +111,7 @@ export default function ProductsPage() {
       setProducts((current) => current.map((item) => (item.id === product.id ? product : item)));
       closeEditor();
     } catch (err) {
-      setError(err.message || "Impossible d'enregistrer le produit.");
+      setError(friendlyError(err, "Impossible d'enregistrer l'article."));
     } finally {
       setSaving(false);
     }

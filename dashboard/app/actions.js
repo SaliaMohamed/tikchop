@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "../lib/supabase-admin";
 import { initializeTransaction } from "../lib/paystack";
+import { sendEvolutionText } from "../lib/evolution";
 
 async function requireSellerUser(accessToken) {
   if (!supabaseAdmin) {
@@ -66,6 +67,138 @@ async function requireOrderForSeller(orderId, accessToken) {
 
   await requireSellerById(order.seller_id, accessToken);
   return order;
+}
+
+function formatCfa(value) {
+  return `${Number(value || 0).toLocaleString("fr-FR")} F`;
+}
+
+function buildDriverDeliveryMessage(order, driver) {
+  const orderRef = order.order_ref || order.id?.slice(0, 8)?.toUpperCase();
+  const items = (order.order_items || [])
+    .map((item) => `- ${item.quantity} x ${item.products?.name || "Article"}`)
+    .join("\n");
+  const deliveryFee = Number(order.delivery_fee || 0);
+  const productPaid = order.status === "PAID" || order.payment_method === "PAYSTACK";
+
+  return `Nouvelle livraison Tikchop
+
+Commande: ${orderRef}
+Boutique: ${order.sellers?.name || "Tikchop"}
+Livreur: ${driver.name}
+
+Client: ${order.customer_phone || "Non renseigne"}
+Zone: ${order.delivery_zone || "Non renseignee"}
+Adresse: ${order.delivery_address || "Non renseignee"}
+
+Articles:
+${items || "- Articles dans la commande"}
+
+Produits: ${formatCfa(order.total_amount)}
+Livraison: ${deliveryFee > 0 ? `${formatCfa(deliveryFee)} a encaisser` : "Aucun frais"}
+Paiement produit: ${productPaid ? "PAYE" : "A verifier"}
+
+Quand c'est livre, informe la boutique.`;
+}
+
+function chooseDriverForOrder(order, drivers) {
+  if (!Array.isArray(drivers) || drivers.length === 0) return null;
+
+  const zone = String(order.delivery_zone || "").trim().toLowerCase();
+  if (zone) {
+    const exact = drivers.find((driver) => String(driver.zone || "").trim().toLowerCase() === zone);
+    if (exact) return exact;
+
+    const close = drivers.find((driver) => {
+      const driverZone = String(driver.zone || "").trim().toLowerCase();
+      return driverZone && (zone.includes(driverZone) || driverZone.includes(zone));
+    });
+    if (close) return close;
+  }
+
+  return drivers.find((driver) => !driver.zone) || drivers[0];
+}
+
+async function autoSharePreparedOrderToDriver(orderId) {
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .select(`
+      id,
+      seller_id,
+      order_ref,
+      customer_phone,
+      status,
+      payment_method,
+      total_amount,
+      delivery_type,
+      delivery_zone,
+      delivery_address,
+      delivery_fee,
+      delivery_driver_id,
+      sellers (
+        id,
+        name,
+        slug,
+        auto_share_to_driver,
+        evolution_instance
+      ),
+      order_items (
+        id,
+        quantity,
+        products (id, name)
+      )
+    `)
+    .eq("id", orderId)
+    .single();
+
+  if (error || !order || order.delivery_type === "PICKUP" || !order.sellers?.auto_share_to_driver) {
+    return null;
+  }
+
+  let drivers = [];
+  if (order.delivery_driver_id) {
+    const { data } = await supabaseAdmin
+      .from("delivery_drivers")
+      .select("id, seller_id, name, phone_number, zone, is_active")
+      .eq("id", order.delivery_driver_id)
+      .eq("seller_id", order.seller_id)
+      .eq("is_active", true)
+      .maybeSingle();
+    drivers = data ? [data] : [];
+  } else {
+    const { data } = await supabaseAdmin
+      .from("delivery_drivers")
+      .select("id, seller_id, name, phone_number, zone, is_active")
+      .eq("seller_id", order.seller_id)
+      .eq("is_active", true);
+    drivers = data || [];
+  }
+
+  const driver = chooseDriverForOrder(order, drivers);
+  if (!driver?.phone_number) return null;
+
+  const messageResult = await sendEvolutionText({
+    instanceName: order.sellers.evolution_instance || order.sellers.slug,
+    number: driver.phone_number,
+    text: buildDriverDeliveryMessage(order, driver),
+  }).catch((shareError) => {
+    console.error("Driver auto-share failed:", shareError);
+    return { ok: false };
+  });
+
+  const updatePayload = {
+    delivery_driver_id: driver.id,
+    ...(messageResult?.ok ? { delivery_status: "ASSIGNED" } : {}),
+  };
+
+  const { data: updated } = await supabaseAdmin
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+    .select("id, delivery_driver_id, delivery_status")
+    .maybeSingle();
+
+  return updated ? { ...updated, delivery_drivers: driver, auto_shared_to_driver: Boolean(messageResult?.ok) } : null;
 }
 
 export async function uploadProductImage(formData) {
@@ -568,6 +701,13 @@ export async function updateOrderStatus(orderId, status, accessToken) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (status === "PREPARED") {
+    const driverShare = await autoSharePreparedOrderToDriver(orderId);
+    if (driverShare) {
+      return { ...data, ...driverShare };
+    }
   }
 
   return data;
