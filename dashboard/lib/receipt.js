@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "./supabase-admin";
+import { markOrderPaidFromPaystack } from "./order-payments";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
@@ -52,6 +53,8 @@ async function fetchOrderBy(field, value, withDelivery = true) {
     delivery_address,
     delivery_fee,
     delivery_status,
+    paystack_reference,
+    paystack_paid_at,
     created_at,
     sellers (id, name, slug),
     order_items (
@@ -107,7 +110,7 @@ export function getReceiptTotals(order) {
 
 export async function getReceiptOrder({ order, reference } = {}) {
   if (!supabaseAdmin) {
-    return { order: null, payment: null, error: "Supabase n'est pas configure." };
+    return { order: null, payment: null, error: "Recu indisponible pour le moment. Reessayez dans quelques instants." };
   }
 
   const lookup = cleanLookup(order);
@@ -125,12 +128,22 @@ export async function getReceiptOrder({ order, reference } = {}) {
   for (const [field, value] of candidates) {
     const result = await fetchOrderBy(field, value, true);
     if (result.data) {
+      if (payment?.status === "success" && result.data.status !== "PAID") {
+        await markOrderPaidFromPaystack(result.data.id, payment);
+        result.data.status = "PAID";
+      }
+
       return { order: result.data, payment, error: null };
     }
 
-    if (result.error && /delivery_|whatsapp_number/i.test(result.error.message || "")) {
+    if (result.error && /delivery_|whatsapp_number|paystack_/i.test(result.error.message || "")) {
       const fallback = await fetchOrderBy(field, value, false);
       if (fallback.data) {
+        if (payment?.status === "success" && fallback.data.status !== "PAID") {
+          await markOrderPaidFromPaystack(fallback.data.id, payment);
+          fallback.data.status = "PAID";
+        }
+
         return { order: fallback.data, payment, error: null };
       }
     } else if (result.error) {

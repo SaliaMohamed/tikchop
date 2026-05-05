@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "../lib/supabase-admin";
 import { initializeTransaction } from "../lib/paystack";
+import { savePaystackInitialization, sendOrderLifecycleMessage } from "../lib/order-payments";
 import { sendEvolutionText } from "../lib/evolution";
 
 async function requireSellerUser(accessToken) {
@@ -57,7 +58,7 @@ async function requireSellerById(sellerId, accessToken, select = "id") {
 async function requireOrderForSeller(orderId, accessToken) {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
-    .select("id, seller_id")
+    .select("id, seller_id, status")
     .eq("id", orderId)
     .single();
 
@@ -663,6 +664,8 @@ export async function initiatePayment(orderId) {
       subaccount: orderForPayment.sellers?.paystack_subaccount_code || undefined
     });
 
+    await savePaystackInitialization(orderId, paymentData);
+
     return { authorization_url: paymentData.authorization_url, reference: paymentData.reference };
   } catch (error) {
     console.error("Payment initialization error:", error);
@@ -680,7 +683,7 @@ export async function updateOrderStatus(orderId, status, accessToken) {
     throw new Error("Invalid order status.");
   }
 
-  await requireOrderForSeller(orderId, accessToken);
+  const currentOrder = await requireOrderForSeller(orderId, accessToken);
 
   const deliveryStatusByOrderStatus = {
     PREPARED: "READY",
@@ -701,6 +704,14 @@ export async function updateOrderStatus(orderId, status, accessToken) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (currentOrder.status !== status && ["PAID", "PREPARED", "DELIVERED", "CANCELLED"].includes(status)) {
+    try {
+      await sendOrderLifecycleMessage(orderId, status);
+    } catch (notificationError) {
+      console.error("Order status WhatsApp notification failed:", notificationError);
+    }
   }
 
   if (status === "PREPARED") {
@@ -748,6 +759,12 @@ export async function assignOrderDriver(orderId, driverId, accessToken) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  try {
+    await sendOrderLifecycleMessage(orderId, "ASSIGNED", { driver });
+  } catch (notificationError) {
+    console.error("Delivery WhatsApp notification failed:", notificationError);
   }
 
   return { ...data, delivery_drivers: driver };

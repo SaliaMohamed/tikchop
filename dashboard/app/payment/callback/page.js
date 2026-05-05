@@ -17,10 +17,9 @@ export default async function PaymentCallbackPage({ searchParams }) {
           <CheckCircle2 size={48} strokeWidth={2.5} />
         </div>
 
-        <h1 className="text-3xl font-extrabold text-zinc-950">Paiement reussi !</h1>
+        <h1 className="text-3xl font-extrabold text-zinc-950">Commande prise en charge</h1>
         <p className="mt-4 text-zinc-500 font-medium leading-relaxed">
-          Merci pour votre achat. Votre commande est en cours de preparation.
-          Un message de confirmation vous sera envoye sur WhatsApp.
+          Paiement confirme. La boutique prepare maintenant votre commande et vous recevrez le suivi sur WhatsApp.
         </p>
 
         <div className="mt-8 rounded-2xl bg-zinc-50 p-4">
@@ -35,7 +34,7 @@ export default async function PaymentCallbackPage({ searchParams }) {
               className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl bg-green-500 text-zinc-950 font-extrabold transition hover:scale-[1.02] active:scale-95"
             >
               <ReceiptText size={20} />
-              Telecharger le recu
+              Voir le recu PDF
             </Link>
           )}
           <Link

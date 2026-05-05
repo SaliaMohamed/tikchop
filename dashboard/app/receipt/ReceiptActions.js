@@ -2,7 +2,7 @@
 
 import { Download, Share2 } from "lucide-react";
 
-export default function ReceiptActions({ title }) {
+export default function ReceiptActions({ title, downloadUrl }) {
   function downloadReceipt() {
     window.print();
   }
@@ -26,14 +26,24 @@ export default function ReceiptActions({ title }) {
 
   return (
     <div className="no-print grid grid-cols-2 gap-2">
-      <button
-        type="button"
-        onClick={downloadReceipt}
-        className="flex min-h-[54px] items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 text-sm font-extrabold text-white shadow-sm active:scale-[0.99]"
-      >
-        <Download size={18} />
-        Telecharger
-      </button>
+      {downloadUrl ? (
+        <a
+          href={downloadUrl}
+          className="flex min-h-[54px] items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 text-sm font-extrabold text-white shadow-sm active:scale-[0.99]"
+        >
+          <Download size={18} />
+          Recu PDF
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={downloadReceipt}
+          className="flex min-h-[54px] items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 text-sm font-extrabold text-white shadow-sm active:scale-[0.99]"
+        >
+          <Download size={18} />
+          Recu PDF
+        </button>
+      )}
       <button
         type="button"
         onClick={shareReceipt}

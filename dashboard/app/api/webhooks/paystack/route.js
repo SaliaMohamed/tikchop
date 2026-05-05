@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { markOrderPaidFromPaystack, sendPaystackReceiptMessage } from "../../../../lib/order-payments";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
@@ -29,19 +29,18 @@ export async function POST(req) {
     if (event === "charge.success") {
       const orderId = data.metadata?.order_id;
 
-      if (orderId && supabaseAdmin) {
-        // Update order status in Supabase
-        const { error } = await supabaseAdmin
-          .from("orders")
-          .update({ 
-            status: "PAID",
-            // You might want to store the paystack reference too
-          })
-          .eq("id", orderId);
+      if (orderId) {
+        const { error } = await markOrderPaidFromPaystack(orderId, data);
 
         if (error) {
           console.error("Supabase update error:", error);
           return NextResponse.json({ error: "DB update failed" }, { status: 500 });
+        }
+
+        try {
+          await sendPaystackReceiptMessage(orderId, data);
+        } catch (receiptError) {
+          console.error("WhatsApp receipt message failed:", receiptError);
         }
       }
     }
