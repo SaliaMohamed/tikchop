@@ -78,7 +78,7 @@ export default function OrdersPage() {
       setDrivers(deliveryData?.drivers || []);
     } catch (err) {
       console.error("Error fetching orders:", err);
-      setError(friendlyError(err, "Impossible de charger les commandes pour le moment."));
+      setError(friendlyError(err, "Commandes non chargees. Verifie la connexion puis actualise."));
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export default function OrdersPage() {
       await fetchOrders();
       setSelectedOrder((current) => current ? { ...current, ...result, status: result?.status || status } : current);
     } catch (err) {
-      alert(friendlyError(err, "Impossible de changer le statut. Reessaie dans un instant."));
+      alert(friendlyError(err, "Statut non mis a jour. Garde la commande ouverte puis relance l'action."));
     }
   }
 
@@ -114,7 +114,7 @@ export default function OrdersPage() {
       )));
       setSelectedOrder((current) => current?.id === order.id ? { ...current, ...result, delivery_drivers: driver } : current);
     } catch (err) {
-      alert(friendlyError(err, "Impossible d'envoyer la commande au livreur."));
+      alert(friendlyError(err, "Partage livreur non fait. Verifie le numero du livreur."));
     }
   }
 
@@ -174,7 +174,7 @@ export default function OrdersPage() {
       {error && (
         <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
-          <p className="mt-2 text-xs">Actualise la page. Si le probleme continue, contacte le support Tikchop.</p>
+          <p className="mt-2 text-xs">Tes commandes restent sauvegardees. Actualise quand la connexion revient.</p>
         </div>
       )}
 

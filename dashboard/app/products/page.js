@@ -51,7 +51,7 @@ export default function ProductsPage() {
         const data = await getSellerProducts(seller.slug, token);
         setProducts(data || []);
       } catch (err) {
-        setError(friendlyError(err, "Impossible de charger le catalogue."));
+        setError(friendlyError(err, "Catalogue non charge. Actualise la page."));
       } finally {
         setLoading(false);
       }
@@ -93,7 +93,7 @@ export default function ProductsPage() {
       const result = await uploadProductImage(payload);
       setFormData((current) => ({ ...current, image_url: result.url }));
     } catch (err) {
-      setImageError(friendlyError(err, "Photo impossible a envoyer."));
+      setImageError(friendlyError(err, "Photo non envoyee. Choisis une image plus legere."));
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -111,7 +111,7 @@ export default function ProductsPage() {
       setProducts((current) => current.map((item) => (item.id === product.id ? product : item)));
       closeEditor();
     } catch (err) {
-      setError(friendlyError(err, "Impossible d'enregistrer l'article."));
+      setError(friendlyError(err, "Article non enregistre. Verifie le prix et le stock."));
     } finally {
       setSaving(false);
     }

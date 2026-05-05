@@ -85,7 +85,7 @@ export default function DeliverySettingsPage() {
       setZones(zoneData || []);
     } catch (err) {
       console.error("Error fetching delivery settings:", err);
-      setError(friendlyError(err, "Impossible de charger la livraison pour le moment."));
+      setError(friendlyError(err, "Livraison non chargee. Verifie la connexion puis actualise."));
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ export default function DeliverySettingsPage() {
       alert("Parametres enregistres.");
       await fetchData();
     } catch (err) {
-      setError(friendlyError(err, "Impossible d'enregistrer. Reessaie dans un instant."));
+      setError(friendlyError(err, "Reglages non sauvegardes. Garde la page ouverte puis relance l'enregistrement."));
     } finally {
       setSaving(false);
     }
@@ -149,7 +149,7 @@ export default function DeliverySettingsPage() {
       ));
       closeDriverModal();
     } catch (err) {
-      setError(friendlyError(err, "Impossible d'enregistrer le livreur."));
+      setError(friendlyError(err, "Livreur non enregistre. Verifie le nom et le numero WhatsApp."));
     } finally {
       setSaving(false);
     }
@@ -192,7 +192,7 @@ export default function DeliverySettingsPage() {
       });
       closeZoneModal();
     } catch (err) {
-      setError(friendlyError(err, "Impossible d'enregistrer la zone."));
+      setError(friendlyError(err, "Zone non enregistree. Verifie le nom du quartier et le tarif."));
     } finally {
       setSaving(false);
     }
@@ -204,7 +204,7 @@ export default function DeliverySettingsPage() {
       await deleteDeliveryZone(zoneId, token);
       setZones((current) => current.filter((zone) => zone.id !== zoneId));
     } catch (err) {
-      setError(friendlyError(err, "Impossible de supprimer la zone."));
+      setError(friendlyError(err, "Zone gardee pour le moment."));
     }
   }
 
@@ -214,7 +214,7 @@ export default function DeliverySettingsPage() {
       await deleteDeliveryDriver(driverId, token);
       setDrivers((current) => current.filter((driver) => driver.id !== driverId));
     } catch (err) {
-      setError(friendlyError(err, "Impossible de supprimer le livreur."));
+      setError(friendlyError(err, "Livreur garde pour le moment."));
     }
   }
 

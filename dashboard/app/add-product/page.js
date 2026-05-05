@@ -97,7 +97,7 @@ export default function AddProductPage() {
       router.push("/products");
     } catch (error) {
       console.error("Erreur lors de l'ajout du produit:", error);
-      alert(friendlyError(error, "Impossible de publier cet article. Verifie les champs et reessaie."));
+      alert(friendlyError(error, "Article non publie. Verifie surtout le prix, la taille et le stock."));
     } finally {
       setLoading(false);
     }
@@ -128,13 +128,13 @@ export default function AddProductPage() {
         setFormData((current) => applyAnalysisToProduct(current, analysis));
       } catch (analysisFailure) {
         console.warn("Image analysis unavailable:", analysisFailure);
-        setAnalysisError("IA pas encore configuree. Ajoute une cle Gemini pour remplir le nom automatiquement.");
+        setAnalysisError("Nom non propose. Complete les infos a la main.");
       } finally {
         setImageAnalyzing(false);
       }
     } catch (error) {
       console.error("Image upload error:", error);
-      setImageError(friendlyError(error, "Photo impossible a envoyer. Essaie une autre photo ou une connexion plus stable."));
+      setImageError(friendlyError(error, "Photo non envoyee. Choisis une image plus legere ou une connexion plus stable."));
       setFormData((current) => ({ ...current, image_url: "" }));
       setImageAnalyzing(false);
     } finally {
@@ -188,7 +188,7 @@ export default function AddProductPage() {
           console.warn("Bulk image analysis unavailable:", analysisFailure);
           setBulkPhotoItems((current) => current.map((entry) => (
             entry.id === item.id
-              ? { ...entry, analysisError: "IA pas encore configuree. Complete a la main.", analyzing: false }
+              ? { ...entry, analysisError: "Nom non propose. Complete a la main.", analyzing: false }
               : entry
           )));
         }

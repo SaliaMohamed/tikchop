@@ -81,7 +81,7 @@ export default function WhatsAppPage() {
       const data = await getSellerWhatsAppConnection(seller, token);
       setConnection(data);
     } catch (err) {
-      setError(friendlyError(err, "Impossible de verifier WhatsApp pour le moment."));
+      setError(friendlyError(err, "WhatsApp non verifie. Actualise dans quelques secondes."));
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function WhatsAppPage() {
         if (alive) setConnection(data);
       })
       .catch((err) => {
-        if (alive) setError(friendlyError(err, "Impossible de verifier WhatsApp pour le moment."));
+        if (alive) setError(friendlyError(err, "WhatsApp non verifie. Actualise dans quelques secondes."));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -134,7 +134,7 @@ export default function WhatsAppPage() {
         }
       } catch (err) {
         if (!alive) return;
-        setError(friendlyError(err, "Verification WhatsApp impossible pour le moment."));
+        setError(friendlyError(err, "Verification WhatsApp en attente."));
       }
     }, 5000);
 
@@ -163,7 +163,7 @@ export default function WhatsAppPage() {
       setWatchingConnection(true);
       setMessage("Code genere. Tikchop verifie automatiquement la connexion.");
     } catch (err) {
-      setError(friendlyError(err, "Impossible de generer le code WhatsApp. Reessaie dans un instant."));
+      setError(friendlyError(err, "Code WhatsApp non genere. Verifie le numero de la boutique."));
     } finally {
       setBusy("");
     }
@@ -186,7 +186,7 @@ export default function WhatsAppPage() {
       }));
       setMessage("WhatsApp est deconnecte pour cette boutique.");
     } catch (err) {
-      setError(friendlyError(err, "Impossible de deconnecter WhatsApp pour le moment."));
+      setError(friendlyError(err, "WhatsApp reste connecte pour le moment."));
     } finally {
       setBusy("");
     }
@@ -234,7 +234,7 @@ export default function WhatsAppPage() {
                 {seller.phone_number || "Numero non renseigne"}
               </p>
               <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
-                Instance Evolution: {connection?.instanceName || seller.slug || "..."}
+                Canal de reponse Tikchop
               </p>
             </div>
             <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold ${status.tone}`}>
@@ -332,17 +332,8 @@ export default function WhatsAppPage() {
         <section className="grid gap-3 min-[420px]:grid-cols-3">
           <InfoTile icon={<MessageCircle size={20} />} title="Reponses" text="Depuis le numero vendeur." />
           <InfoTile icon={<ShieldCheck size={20} />} title="Catalogue" text="Articles de cette boutique." />
-          <InfoTile icon={<Smartphone size={20} />} title="Pairing" text="Sans Evolution Manager." />
+          <InfoTile icon={<Smartphone size={20} />} title="Connexion" text="Code depuis WhatsApp." />
         </section>
-
-        {connection?.webhookUrl && (
-          <section className="rounded-lg bg-[var(--surface-soft)] p-4">
-            <p className="quiet-label">Webhook actif</p>
-            <p className="mt-1 break-all text-xs font-semibold leading-5 text-[var(--text-dim)]">
-              {connection.webhookUrl}
-            </p>
-          </section>
-        )}
 
         {(message || error || connection?.error) && (
           <div className={`rounded-lg p-4 text-sm font-bold leading-5 ${error || connection?.error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-100" : "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100"}`}>

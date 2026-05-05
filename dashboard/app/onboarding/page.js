@@ -167,12 +167,12 @@ export default function OnboardingPage() {
         setPairing(pairingResult);
       } catch (pairingError) {
         setPairing({
-          error: friendlyError(pairingError, "Connexion WhatsApp indisponible pour le moment."),
+          error: friendlyError(pairingError, "WhatsApp pourra etre connecte ensuite depuis l'onglet WhatsApp."),
         });
       }
       setStep(5);
     } catch (err) {
-      setError(friendlyError(err, "Impossible de creer la boutique. Verifie les informations et reessaie."));
+      setError(friendlyError(err, "Creation boutique non terminee. Verifie le nom et le numero WhatsApp."));
     } finally {
       setSaving(false);
     }
@@ -196,7 +196,7 @@ export default function OnboardingPage() {
 
       setStep(1);
     } catch (err) {
-      setError(friendlyError(err, "Impossible de valider le compte vendeur."));
+      setError(friendlyError(err, "Compte vendeur non valide. Verifie les informations saisies."));
     } finally {
       setSaving(false);
     }
@@ -220,7 +220,7 @@ export default function OnboardingPage() {
 
   async function handlePasswordReset() {
     if (!supabase) {
-      setError("Supabase Auth n'est pas configure.");
+      setError("Recuperation email non disponible sur cette version.");
       return;
     }
 
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
 
       setResetSent(true);
     } catch (resetError) {
-      setError(friendlyError(resetError, "Impossible d'envoyer le lien de recuperation."));
+      setError(friendlyError(resetError, "Lien non envoye. Verifie l'email saisi."));
     } finally {
       setSaving(false);
     }
@@ -463,7 +463,7 @@ export default function OnboardingPage() {
 
             <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
               {accountMethod === "EMAIL"
-                ? "Tikchop peut envoyer des messages email si RESEND_API_KEY est configure. Si l'email est deja inscrit, l'app demandera de se connecter."
+                ? "L'email sert a recuperer le compte et garder la boutique separee des autres vendeurs."
                 : "Le telephone marche avec mot de passe. Pour une verification par code SMS ou WhatsApp, il faudra brancher un fournisseur OTP."}
             </p>
           </OnboardingCard>
