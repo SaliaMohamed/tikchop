@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, Mail, MessageCircle, Store, Truck, UserRound } from "lucide-react";
-import { createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
+import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
 import { writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 
@@ -77,24 +77,18 @@ export default function OnboardingPage() {
       return data.user;
     }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const account = await createSellerAccount({
       email,
       password,
-      options: {
-        data: {
-          display_name: form.account_name.trim() || form.name.trim() || email,
-        },
-      },
+      display_name: form.account_name.trim() || form.name.trim() || email,
     });
 
-    if (signUpError) {
-      if (/already|registered|exists|existe/i.test(signUpError.message || "")) {
-        throw new Error("Ce compte existe deja. Appuie sur 'J'ai deja un compte' puis connecte-toi.");
-      }
-      throw new Error(signUpError.message || "Impossible de creer le compte vendeur.");
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) {
+      throw new Error("Compte cree, mais connexion automatique impossible. Appuie sur 'Deja inscrit' puis connecte-toi.");
     }
 
-    return data.user;
+    return data.user || account;
   }
 
   async function handleCreate() {

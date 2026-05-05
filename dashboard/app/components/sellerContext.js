@@ -6,8 +6,8 @@ export const SELLER_STORAGE_KEY = "tikchop:activeSeller";
 
 export const defaultSeller = {
   id: "",
-  name: "Salia Boutique",
-  slug: "salia",
+  name: "Ma boutique",
+  slug: "",
   phone_number: "",
 };
 
@@ -49,6 +49,15 @@ export function writeActiveSeller(seller) {
   const normalized = normalizeSeller(seller);
   window.localStorage.setItem(SELLER_STORAGE_KEY, JSON.stringify(normalized));
   window.dispatchEvent(new CustomEvent("tikchop:seller-changed", { detail: normalized }));
+}
+
+export function clearActiveSeller() {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.removeItem(SELLER_STORAGE_KEY);
+  cachedSellerValue = "";
+  cachedSeller = defaultSeller;
+  window.dispatchEvent(new CustomEvent("tikchop:seller-changed", { detail: defaultSeller }));
 }
 
 export function useActiveSeller() {

@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Camera, ClipboardList, Home, Package, SlidersHorizontal, Store } from "lucide-react";
-import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
+import { usePathname, useRouter } from "next/navigation";
+import { Camera, ClipboardList, Home, Loader2, LogOut, Package, SlidersHorizontal, Store } from "lucide-react";
+import { getSellerByOwner } from "./seller-actions";
+import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
+import { supabase } from "../lib/supabase";
 
 const dashboardRoutes = new Set([
   "/",
@@ -26,7 +29,7 @@ export default function AppChrome({ children }) {
   }
 
   return (
-    <>
+    <SellerAccountGate>
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
           <div className="flex items-center gap-2 text-[var(--primary)]">
@@ -37,7 +40,7 @@ export default function AppChrome({ children }) {
           <Link href="/" className="font-display text-xl font-bold text-[var(--primary)] no-underline">
             Tikchop
           </Link>
-          <Link href={`/${seller.slug}`} className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--outline)]/55 bg-[var(--surface-mid)] text-sm font-bold text-[var(--text-dim)] no-underline">
+          <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--outline)]/55 bg-[var(--surface-mid)] text-sm font-bold text-[var(--text-dim)] no-underline">
             {sellerInitials}
           </Link>
         </header>
@@ -50,7 +53,7 @@ export default function AppChrome({ children }) {
           <Link href="/" className="nav-link">Accueil</Link>
           <Link href="/orders" className="nav-link">Commandes</Link>
           <Link href="/products" className="nav-link">Articles</Link>
-          <Link href={`/${seller.slug}`} className="nav-link">Boutique</Link>
+          <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="nav-link">Boutique</Link>
           <Link href="/delivery-settings" className="nav-link">Livraison</Link>
           <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/onboarding" className="nav-link">Nouveau vendeur</Link>
@@ -59,6 +62,7 @@ export default function AppChrome({ children }) {
           <Store size={15} className="mr-1.5" />
           <span>{seller.name}</span>
         </div>
+        <SignOutButton />
       </nav>
       <main className={`container ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
       {showMobileTabbar && (
@@ -85,6 +89,92 @@ export default function AppChrome({ children }) {
         </Link>
       </nav>
       )}
-    </>
+    </SellerAccountGate>
+  );
+}
+
+function SellerAccountGate({ children }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [checking, setChecking] = useState(true);
+  const [message, setMessage] = useState("Verification du compte vendeur...");
+
+  useEffect(() => {
+    let alive = true;
+
+    async function syncSellerAccount() {
+      if (!supabase) {
+        setChecking(false);
+        return;
+      }
+
+      try {
+        setMessage("Verification du compte vendeur...");
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        const user = data.session?.user;
+        if (!user) {
+          clearActiveSeller();
+          router.replace("/onboarding");
+          return;
+        }
+
+        setMessage("Chargement de la boutique...");
+        const seller = await getSellerByOwner(user.id);
+        if (seller) {
+          writeActiveSeller(seller);
+          if (alive) setChecking(false);
+          return;
+        }
+
+        clearActiveSeller();
+        router.replace("/onboarding");
+      } catch (error) {
+        console.error("Seller account sync error:", error);
+        clearActiveSeller();
+        router.replace("/onboarding");
+      }
+    }
+
+    syncSellerAccount();
+
+    return () => {
+      alive = false;
+    };
+  }, [pathname, router]);
+
+  if (checking) {
+    return (
+      <main className="container">
+        <div className="flex min-h-[70vh] flex-col items-center justify-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
+            <Loader2 className="animate-spin" size={24} />
+          </div>
+          <p className="mt-4 font-display text-xl font-bold text-[var(--text-main)]">{message}</p>
+          <p className="mt-2 max-w-[18rem] text-sm font-semibold leading-5 text-[var(--text-dim)]">
+            Chaque vendeur voit uniquement son espace Tikchop.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  return children;
+}
+
+function SignOutButton() {
+  async function handleSignOut() {
+    clearActiveSeller();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    window.location.href = "/onboarding";
+  }
+
+  return (
+    <button type="button" onClick={handleSignOut} className="app-icon-button" aria-label="Se deconnecter">
+      <LogOut size={17} />
+    </button>
   );
 }

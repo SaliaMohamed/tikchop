@@ -122,6 +122,45 @@ export async function getSellerByOwner(ownerUserId) {
   return data || null;
 }
 
+export async function createSellerAccount(payload) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  const email = String(payload?.email || "").trim().toLowerCase();
+  const password = String(payload?.password || "");
+  const displayName = String(payload?.display_name || "").trim();
+
+  if (!email.includes("@")) {
+    throw new Error("Ajoute un email valide.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Le mot de passe doit avoir au moins 6 caracteres.");
+  }
+
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      display_name: displayName || email,
+    },
+  });
+
+  if (error) {
+    if (/already|registered|exists|existe|duplicate/i.test(error.message || "")) {
+      throw new Error("Ce compte existe deja. Appuie sur 'Deja inscrit' puis connecte-toi.");
+    }
+    throw new Error(error.message || "Impossible de creer le compte vendeur.");
+  }
+
+  return {
+    id: data.user?.id || "",
+    email: data.user?.email || email,
+  };
+}
+
 export async function createSellerFromOnboarding(payload) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
