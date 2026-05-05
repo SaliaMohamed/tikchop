@@ -16,6 +16,49 @@ function cleanPhone(value) {
   return String(value || "").replace(/[^\d+]/g, "");
 }
 
+function cleanEvolutionPhone(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function getEvolutionConfig() {
+  const baseUrl = process.env.EVOLUTION_API_URL || "https://evolution-tikchop.76.13.59.214.sslip.io";
+  const apiKey = process.env.EVOLUTION_API_KEY;
+  const n8nWebhookUrl = process.env.N8N_TIKCHOP_EVOLUTION_WEBHOOK_URL
+    || "https://n8n.sakamomo.tech/webhook/tikchop-evolution-whatsapp";
+
+  if (!apiKey) {
+    throw new Error("Evolution API n'est pas configuree.");
+  }
+
+  return {
+    baseUrl: baseUrl.replace(/\/+$/, ""),
+    apiKey,
+    n8nWebhookUrl,
+  };
+}
+
+async function evolutionRequest(path, options = {}) {
+  const { baseUrl, apiKey } = getEvolutionConfig();
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: {
+      apikey: apiKey,
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    cache: "no-store",
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw new Error(data?.message || data?.error || "Evolution API a refuse la demande.");
+  }
+
+  return data;
+}
+
 async function uniqueSlug(baseSlug) {
   const base = baseSlug || `boutique-${Date.now().toString(36)}`;
 
@@ -116,4 +159,59 @@ export async function createSellerFromOnboarding(payload) {
   }
 
   return data;
+}
+
+export async function requestSellerWhatsAppPairing(seller) {
+  const slug = slugify(seller?.slug);
+  const phone = cleanEvolutionPhone(seller?.phone_number);
+
+  if (!slug || phone.length < 8) {
+    throw new Error("Boutique ou numero WhatsApp invalide.");
+  }
+
+  const { n8nWebhookUrl } = getEvolutionConfig();
+  const instanceName = slug;
+  const webhookUrl = `${n8nWebhookUrl}?seller=${encodeURIComponent(slug)}`;
+  const body = {
+    instanceName,
+    qrcode: true,
+    number: phone,
+    integration: "WHATSAPP-BAILEYS",
+    webhook: {
+      enabled: true,
+      url: webhookUrl,
+      byEvents: false,
+      base64: true,
+      events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"],
+    },
+  };
+
+  let data;
+  try {
+    data = await evolutionRequest("/instance/create", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    if (!/already|exist|duplicate|unique/i.test(error.message || "")) {
+      throw error;
+    }
+
+    await evolutionRequest(`/webhook/set/${encodeURIComponent(instanceName)}`, {
+      method: "POST",
+      body: JSON.stringify({ webhook: body.webhook }),
+    });
+
+    data = await evolutionRequest(`/instance/connect/${encodeURIComponent(instanceName)}?number=${encodeURIComponent(phone)}`);
+  }
+
+  const qrcode = data?.qrcode || data;
+  const pairingCode = qrcode?.pairingCode || data?.pairingCode || "";
+
+  return {
+    instanceName,
+    phone,
+    pairingCode,
+    qrBase64: qrcode?.base64 || data?.base64 || "",
+  };
 }

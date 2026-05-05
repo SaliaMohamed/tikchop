@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Copy, Loader2, MessageCircle, Store, Truck } from "lucide-react";
-import { createSellerFromOnboarding, getSellerOptions } from "../seller-actions";
-import { getSellerInitials, useActiveSeller, writeActiveSeller } from "../components/sellerContext";
+import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, MessageCircle, Store, Truck } from "lucide-react";
+import { createSellerFromOnboarding, requestSellerWhatsAppPairing } from "../seller-actions";
+import { writeActiveSeller } from "../components/sellerContext";
 
 function slugify(value) {
   return String(value || "")
@@ -23,14 +23,11 @@ function formatPrice(value) {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const activeSeller = useActiveSeller();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [loadingSellers, setLoadingSellers] = useState(true);
   const [error, setError] = useState("");
-  const [sellerError, setSellerError] = useState("");
-  const [sellerOptions, setSellerOptions] = useState([]);
   const [createdSeller, setCreatedSeller] = useState(null);
+  const [pairing, setPairing] = useState(null);
   const [form, setForm] = useState({
     name: "",
     phone_number: "",
@@ -42,29 +39,6 @@ export default function OnboardingPage() {
 
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
-
-  useEffect(() => {
-    let alive = true;
-
-    async function loadSellers() {
-      try {
-        setSellerError("");
-        const sellers = await getSellerOptions();
-        if (alive) setSellerOptions(sellers || []);
-      } catch (err) {
-        if (alive) setSellerError(err.message || "Impossible de charger les boutiques.");
-      } finally {
-        if (alive) setLoadingSellers(false);
-      }
-    }
-
-    const timeout = setTimeout(loadSellers, 0);
-
-    return () => {
-      alive = false;
-      clearTimeout(timeout);
-    };
-  }, []);
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -88,8 +62,15 @@ export default function OnboardingPage() {
         slug: suggestedSlug,
       });
       writeActiveSeller(seller);
-      setSellerOptions((current) => [seller, ...current.filter((item) => item.id !== seller.id)]);
       setCreatedSeller(seller);
+      try {
+        const pairingResult = await requestSellerWhatsAppPairing(seller);
+        setPairing(pairingResult);
+      } catch (pairingError) {
+        setPairing({
+          error: pairingError.message || "Connexion WhatsApp indisponible pour le moment.",
+        });
+      }
       setStep(4);
     } catch (err) {
       setError(err.message || "Impossible de creer la boutique.");
@@ -102,11 +83,6 @@ export default function OnboardingPage() {
     if (!shopUrl) return;
     await navigator.clipboard.writeText(shopUrl);
     alert("Lien boutique copie.");
-  }
-
-  function activateSeller(seller) {
-    writeActiveSeller(seller);
-    router.push("/");
   }
 
   return (
@@ -129,13 +105,12 @@ export default function OnboardingPage() {
             title="Nom de la boutique"
             subtitle="Le client doit comprendre tout de suite chez qui il achete."
           >
-            <ExistingSellerList
-              activeSeller={activeSeller}
-              sellers={sellerOptions}
-              loading={loadingSellers}
-              error={sellerError}
-              onSelect={activateSeller}
-            />
+            <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4">
+              <p className="quiet-label text-[var(--primary)]">Inscription vendeur</p>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                Chaque vendeur cree uniquement sa propre boutique. Les autres boutiques ne sont pas visibles ici.
+              </p>
+            </div>
 
             <label className="block">
               <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nom boutique</span>
@@ -246,8 +221,10 @@ export default function OnboardingPage() {
           <OnboardingCard
             icon={<CheckCircle2 size={30} />}
             title="Boutique prete"
-            subtitle="Le lien est cree. Tu peux maintenant publier le premier article."
+            subtitle="Le lien est cree. Connecte WhatsApp pour activer le chatbot."
           >
+            <WhatsAppPairingBox pairing={pairing} />
+
             <div className="rounded-xl bg-[var(--surface-soft)] p-4">
               <p className="quiet-label">Lien boutique</p>
               <p className="mt-1 break-all font-display text-xl font-bold text-[var(--primary)]">{shopUrl}</p>
@@ -326,79 +303,49 @@ function OnboardingCard({ icon, title, subtitle, children }) {
   );
 }
 
-function ExistingSellerList({ activeSeller, sellers, loading, error, onSelect }) {
-  if (loading) {
+function WhatsAppPairingBox({ pairing }) {
+  if (!pairing) {
     return (
-      <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4 text-sm font-bold text-[var(--text-dim)]">
-        Chargement des boutiques...
+      <div className="mb-4 rounded-xl bg-[var(--surface-soft)] p-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="animate-spin text-[var(--primary)]" size={20} />
+          <p className="text-sm font-extrabold text-[var(--text-main)]">Generation du code WhatsApp...</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (pairing.error) {
     return (
-      <div className="mb-5 rounded-xl bg-amber-50 p-4 text-sm font-bold leading-5 text-amber-800 ring-1 ring-amber-100">
-        {error}
-      </div>
-    );
-  }
-
-  if (!sellers.length) {
-    return (
-      <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4">
-        <p className="quiet-label">Premiere boutique</p>
-        <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-          Cree la premiere boutique vendeur. Ensuite elle apparaitra ici pour changer rapidement.
-        </p>
+      <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-bold leading-5 text-amber-800 ring-1 ring-amber-100">
+        {pairing.error}
       </div>
     );
   }
 
   return (
-    <section className="mb-6">
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <p className="quiet-label">Boutiques existantes</p>
-          <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">Active celle que tu veux gerer maintenant.</p>
+    <div className="mb-4 rounded-xl border border-[var(--outline)] bg-white p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)] text-[var(--primary)]">
+          <KeyRound size={22} />
         </div>
-        <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--primary)]">
-          {sellers.length}
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="quiet-label">Code WhatsApp</p>
+          {pairing.pairingCode ? (
+            <p className="mt-1 font-display text-3xl font-bold tracking-normal text-[var(--primary)]">
+              {pairing.pairingCode.match(/.{1,4}/g)?.join(" ") || pairing.pairingCode}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm font-bold text-[var(--text-dim)]">
+              Code non retourne. Utilise le QR depuis un autre ecran.
+            </p>
+          )}
+          <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+            Ouvre WhatsApp, Appareils connectes, puis Connecter avec un numero de telephone.
+          </p>
+        </div>
       </div>
-
-      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {sellers.map((seller) => {
-          const active = seller.slug === activeSeller.slug;
-          return (
-            <button
-              type="button"
-              key={seller.id || seller.slug}
-              onClick={() => onSelect(seller)}
-              className={`min-w-[210px] rounded-xl border p-3 text-left active:scale-[0.99] ${
-                active ? "border-[var(--primary)] bg-[var(--surface-soft)]" : "border-[var(--outline)]/45 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
-                  active ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--primary)]"
-                }`}>
-                  {getSellerInitials(seller)}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-display text-base font-bold text-[var(--text-main)]">{seller.name}</span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-[var(--primary)]">/{seller.slug}</span>
-                </span>
-              </div>
-              <span className={`mt-3 flex min-h-[36px] items-center justify-center rounded-lg text-xs font-extrabold ${
-                active ? "bg-white text-[var(--primary)]" : "bg-[var(--text-main)] text-white"
-              }`}>
-                {active ? "Boutique active" : "Gerer cette boutique"}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    </div>
   );
 }
 
