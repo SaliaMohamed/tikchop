@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getDashboardData } from "./actions";
 import { getSellerInitials, useActiveSeller } from "./components/sellerContext";
+import { getSellerAccessToken } from "../lib/seller-auth-client";
 
 const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} CFA`;
 
@@ -37,7 +38,8 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const data = await getDashboardData(seller.slug);
+        const token = await getSellerAccessToken();
+        const data = await getDashboardData(seller.slug, token);
         setRecentOrders(data.recentOrders || []);
         setStats(data.stats || emptyStats);
       } catch (err) {
@@ -118,6 +120,7 @@ export default function Dashboard() {
             <SellerShortcut href="/orders" tone="blue" icon={<ClipboardList size={22} />} title="Commandes" subtitle="A preparer" />
             <SellerShortcut href={`/${seller.slug}`} tone="amber" icon={<ExternalLink size={22} />} title="Boutique" subtitle="Voir le lien" />
             <SellerShortcut href="/products" tone="green" icon={<Package size={22} />} title="Articles" subtitle="Prix et stock" />
+            <SellerShortcut href="/whatsapp" tone="green" icon={<MessageCircle size={22} />} title="WhatsApp" subtitle="Chatbot vendeur" />
             <SellerShortcut href="/delivery-settings" tone="blue" icon={<Truck size={22} />} title="Livraison" subtitle="Zones, livreurs" />
           </div>
         </section>

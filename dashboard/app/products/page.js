@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getSellerProducts, updateProduct, uploadProductImage } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -45,7 +46,8 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         setError("");
-        const data = await getSellerProducts(seller.slug);
+        const token = await getSellerAccessToken();
+        const data = await getSellerProducts(seller.slug, token);
         setProducts(data || []);
       } catch (err) {
         setError(err.message || "Impossible de charger le catalogue.");
@@ -103,7 +105,8 @@ export default function ProductsPage() {
     try {
       setSaving(true);
       setError("");
-      const product = await updateProduct(editingProduct.id, formData, seller.slug);
+      const token = await getSellerAccessToken();
+      const product = await updateProduct(editingProduct.id, formData, seller.slug, token);
       setProducts((current) => current.map((item) => (item.id === product.id ? product : item)));
       closeEditor();
     } catch (err) {

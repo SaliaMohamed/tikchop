@@ -4,6 +4,70 @@ import { createHash } from "node:crypto";
 import { supabaseAdmin } from "../lib/supabase-admin";
 import { initializeTransaction } from "../lib/paystack";
 
+async function requireSellerUser(accessToken) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  if (!accessToken) {
+    throw new Error("Session vendeur manquante.");
+  }
+
+  const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+  if (error || !data.user) {
+    throw new Error("Session vendeur invalide. Reconnecte-toi.");
+  }
+
+  return data.user;
+}
+
+async function requireSellerBySlug(slug, accessToken, select = "*") {
+  const user = await requireSellerUser(accessToken);
+  const { data: seller, error } = await supabaseAdmin
+    .from("sellers")
+    .select(select)
+    .eq("slug", slug)
+    .eq("owner_user_id", user.id)
+    .single();
+
+  if (error || !seller) {
+    throw new Error("Boutique non autorisee pour ce compte vendeur.");
+  }
+
+  return seller;
+}
+
+async function requireSellerById(sellerId, accessToken, select = "id") {
+  const user = await requireSellerUser(accessToken);
+  const { data: seller, error } = await supabaseAdmin
+    .from("sellers")
+    .select(select)
+    .eq("id", sellerId)
+    .eq("owner_user_id", user.id)
+    .single();
+
+  if (error || !seller) {
+    throw new Error("Boutique non autorisee pour ce compte vendeur.");
+  }
+
+  return seller;
+}
+
+async function requireOrderForSeller(orderId, accessToken) {
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .select("id, seller_id")
+    .eq("id", orderId)
+    .single();
+
+  if (error || !order) {
+    throw new Error("Commande introuvable.");
+  }
+
+  await requireSellerById(order.seller_id, accessToken);
+  return order;
+}
+
 export async function uploadProductImage(formData) {
   const file = formData?.get("image");
 
@@ -397,7 +461,7 @@ export async function initiatePayment(orderId) {
 
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, order_ref, total_amount, delivery_fee, sellers(name, delivery_payment_timing)")
+      .select("id, order_ref, total_amount, delivery_fee, sellers(name, delivery_payment_timing, paystack_subaccount_code)")
       .eq("id", orderId)
       .single();
 
@@ -407,7 +471,7 @@ export async function initiatePayment(orderId) {
     if (error && /delivery_fee|delivery_payment_timing/i.test(error.message || "")) {
       const fallback = await supabaseAdmin
         .from("orders")
-        .select("id, order_ref, total_amount, sellers(name)")
+        .select("id, order_ref, total_amount, sellers(name, paystack_subaccount_code)")
         .eq("id", orderId)
         .single();
 
@@ -432,7 +496,8 @@ export async function initiatePayment(orderId) {
         order_id: orderId,
         order_ref: orderForPayment.order_ref || orderId.split("-")[0].toUpperCase(),
         seller_name: orderForPayment.sellers?.name || "Tikchop"
-      }
+      },
+      subaccount: orderForPayment.sellers?.paystack_subaccount_code || undefined
     });
 
     return { authorization_url: paymentData.authorization_url, reference: paymentData.reference };
@@ -442,7 +507,7 @@ export async function initiatePayment(orderId) {
   }
 }
 
-export async function updateOrderStatus(orderId, status) {
+export async function updateOrderStatus(orderId, status, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
@@ -451,6 +516,8 @@ export async function updateOrderStatus(orderId, status) {
   if (!orderId || !allowed.has(status)) {
     throw new Error("Invalid order status.");
   }
+
+  await requireOrderForSeller(orderId, accessToken);
 
   const deliveryStatusByOrderStatus = {
     PREPARED: "READY",
@@ -476,7 +543,7 @@ export async function updateOrderStatus(orderId, status) {
   return data;
 }
 
-export async function assignOrderDriver(orderId, driverId) {
+export async function assignOrderDriver(orderId, driverId, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
@@ -485,15 +552,7 @@ export async function assignOrderDriver(orderId, driverId) {
     throw new Error("Invalid driver assignment.");
   }
 
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .select("id, seller_id")
-    .eq("id", orderId)
-    .single();
-
-  if (orderError || !order) {
-    throw new Error(orderError?.message || "Order not found.");
-  }
+  const order = await requireOrderForSeller(orderId, accessToken);
 
   const { data: driver, error: driverError } = await supabaseAdmin
     .from("delivery_drivers")
@@ -524,20 +583,12 @@ export async function assignOrderDriver(orderId, driverId) {
   return { ...data, delivery_drivers: driver };
 }
 
-export async function getSellerOrders(slug = "salia") {
+export async function getSellerOrders(slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const { data: seller, error: sellerError } = await supabaseAdmin
-    .from("sellers")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  if (sellerError) {
-    throw new Error(sellerError.message);
-  }
+  const seller = await requireSellerBySlug(slug, accessToken, "id");
 
   const { data, error } = await supabaseAdmin
     .from("orders")
@@ -567,20 +618,12 @@ export async function getSellerOrders(slug = "salia") {
   return data || [];
 }
 
-export async function getSellerDeliverySettings(slug = "salia") {
+export async function getSellerDeliverySettings(slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const { data: seller, error: sellerError } = await supabaseAdmin
-    .from("sellers")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (sellerError) {
-    throw new Error(sellerError.message);
-  }
+  const seller = await requireSellerBySlug(slug, accessToken, "*");
 
   const { data: drivers, error: driversError } = await supabaseAdmin
     .from("delivery_drivers")
@@ -629,10 +672,12 @@ export async function getSellersForProductForm() {
   return data || [];
 }
 
-export async function addProduct(product) {
+export async function addProduct(product, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  await requireSellerById(product?.seller_id, accessToken);
 
   const payload = {
     name: String(product.name || "").trim(),
@@ -660,10 +705,16 @@ export async function addProduct(product) {
   return data;
 }
 
-export async function addProductsBulk(products) {
+export async function addProductsBulk(products, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  const sellerIds = [...new Set((products || []).map((product) => product?.seller_id).filter(Boolean))];
+  if (sellerIds.length !== 1) {
+    throw new Error("Les produits doivent appartenir a une seule boutique.");
+  }
+  await requireSellerById(sellerIds[0], accessToken);
 
   const payload = (products || []).map((product) => ({
     name: String(product.name || "").trim(),
@@ -695,20 +746,12 @@ export async function addProductsBulk(products) {
   return data || [];
 }
 
-export async function getSellerProducts(slug = "salia") {
+export async function getSellerProducts(slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const { data: seller, error: sellerError } = await supabaseAdmin
-    .from("sellers")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  if (sellerError) {
-    throw new Error(sellerError.message);
-  }
+  const seller = await requireSellerBySlug(slug, accessToken, "id");
 
   const { data, error } = await supabaseAdmin
     .from("products")
@@ -723,20 +766,12 @@ export async function getSellerProducts(slug = "salia") {
   return data || [];
 }
 
-export async function updateProduct(productId, product, slug = "salia") {
+export async function updateProduct(productId, product, slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const { data: seller, error: sellerError } = await supabaseAdmin
-    .from("sellers")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  if (sellerError) {
-    throw new Error(sellerError.message);
-  }
+  const seller = await requireSellerBySlug(slug, accessToken, "id");
 
   const payload = {
     name: String(product.name || "").trim(),
@@ -765,10 +800,12 @@ export async function updateProduct(productId, product, slug = "salia") {
   return data;
 }
 
-export async function addDeliveryZone(sellerId, zone) {
+export async function addDeliveryZone(sellerId, zone, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  await requireSellerById(sellerId, accessToken);
 
   const payload = {
     seller_id: sellerId,
@@ -794,10 +831,22 @@ export async function addDeliveryZone(sellerId, zone) {
   return data;
 }
 
-export async function updateDeliveryZone(zoneId, zone) {
+export async function updateDeliveryZone(zoneId, zone, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  const { data: existingZone, error: existingZoneError } = await supabaseAdmin
+    .from("delivery_zones")
+    .select("seller_id")
+    .eq("id", zoneId)
+    .single();
+
+  if (existingZoneError || !existingZone) {
+    throw new Error("Zone introuvable.");
+  }
+
+  await requireSellerById(existingZone.seller_id, accessToken);
 
   const payload = {
     name: String(zone.name || "").trim(),
@@ -823,10 +872,22 @@ export async function updateDeliveryZone(zoneId, zone) {
   return data;
 }
 
-export async function deleteDeliveryZone(zoneId) {
+export async function deleteDeliveryZone(zoneId, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  const { data: existingZone, error: existingZoneError } = await supabaseAdmin
+    .from("delivery_zones")
+    .select("seller_id")
+    .eq("id", zoneId)
+    .single();
+
+  if (existingZoneError || !existingZone) {
+    throw new Error("Zone introuvable.");
+  }
+
+  await requireSellerById(existingZone.seller_id, accessToken);
 
   const { error } = await supabaseAdmin
     .from("delivery_zones")
@@ -840,20 +901,12 @@ export async function deleteDeliveryZone(zoneId) {
   return { ok: true };
 }
 
-export async function getDashboardData(slug = "salia") {
+export async function getDashboardData(slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const { data: seller, error: sellerError } = await supabaseAdmin
-    .from("sellers")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  if (sellerError) {
-    throw new Error(sellerError.message);
-  }
+  const seller = await requireSellerBySlug(slug, accessToken, "id");
 
   const [
     { count: productCount },
@@ -897,10 +950,12 @@ export async function getDashboardData(slug = "salia") {
   };
 }
 
-export async function saveSellerDeliverySettings(sellerId, settings) {
+export async function saveSellerDeliverySettings(sellerId, settings, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  await requireSellerById(sellerId, accessToken);
 
   const payload = {
     delivery_enabled: Boolean(settings.delivery_enabled),
@@ -924,10 +979,12 @@ export async function saveSellerDeliverySettings(sellerId, settings) {
   return data;
 }
 
-export async function addDeliveryDriver(sellerId, driver) {
+export async function addDeliveryDriver(sellerId, driver, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  await requireSellerById(sellerId, accessToken);
 
   const payload = {
     seller_id: sellerId,
@@ -954,10 +1011,22 @@ export async function addDeliveryDriver(sellerId, driver) {
   return data;
 }
 
-export async function updateDeliveryDriver(driverId, driver) {
+export async function updateDeliveryDriver(driverId, driver, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  const { data: existingDriver, error: existingDriverError } = await supabaseAdmin
+    .from("delivery_drivers")
+    .select("seller_id")
+    .eq("id", driverId)
+    .single();
+
+  if (existingDriverError || !existingDriver) {
+    throw new Error("Livreur introuvable.");
+  }
+
+  await requireSellerById(existingDriver.seller_id, accessToken);
 
   const payload = {
     name: String(driver.name || "").trim(),
@@ -984,10 +1053,22 @@ export async function updateDeliveryDriver(driverId, driver) {
   return data;
 }
 
-export async function deleteDeliveryDriver(driverId) {
+export async function deleteDeliveryDriver(driverId, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
+
+  const { data: existingDriver, error: existingDriverError } = await supabaseAdmin
+    .from("delivery_drivers")
+    .select("seller_id")
+    .eq("id", driverId)
+    .single();
+
+  if (existingDriverError || !existingDriver) {
+    throw new Error("Livreur introuvable.");
+  }
+
+  await requireSellerById(existingDriver.seller_id, accessToken);
 
   const { error } = await supabaseAdmin
     .from("delivery_drivers")

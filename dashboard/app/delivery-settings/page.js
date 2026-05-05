@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { addDeliveryDriver, addDeliveryZone, deleteDeliveryDriver, deleteDeliveryZone, getSellerDeliverySettings, saveSellerDeliverySettings, updateDeliveryDriver, updateDeliveryZone } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -68,7 +69,8 @@ export default function DeliverySettingsPage() {
       setLoading(true);
       setError("");
 
-      const { seller: sellerData, drivers: driverData, zones: zoneData } = await getSellerDeliverySettings(activeSeller.slug);
+      const token = await getSellerAccessToken();
+      const { seller: sellerData, drivers: driverData, zones: zoneData } = await getSellerDeliverySettings(activeSeller.slug, token);
       setSeller(sellerData);
       setSettings({
         delivery_enabled: sellerData.delivery_enabled ?? true,
@@ -102,7 +104,8 @@ export default function DeliverySettingsPage() {
     try {
       setSaving(true);
       setError("");
-      await saveSellerDeliverySettings(seller.id, settings);
+      const token = await getSellerAccessToken();
+      await saveSellerDeliverySettings(seller.id, settings, token);
       alert("Parametres enregistres.");
       await fetchData();
     } catch (err) {
@@ -133,9 +136,10 @@ export default function DeliverySettingsPage() {
 
     try {
       setSaving(true);
+      const token = await getSellerAccessToken();
       const driver = editingDriver
-        ? await updateDeliveryDriver(editingDriver.id, newDriver)
-        : await addDeliveryDriver(seller.id, newDriver);
+        ? await updateDeliveryDriver(editingDriver.id, newDriver, token)
+        : await addDeliveryDriver(seller.id, newDriver, token);
 
       setDrivers((current) => (
         editingDriver
@@ -173,9 +177,10 @@ export default function DeliverySettingsPage() {
 
     try {
       setSaving(true);
+      const token = await getSellerAccessToken();
       const zone = editingZone
-        ? await updateDeliveryZone(editingZone.id, newZone)
-        : await addDeliveryZone(seller.id, newZone);
+        ? await updateDeliveryZone(editingZone.id, newZone, token)
+        : await addDeliveryZone(seller.id, newZone, token);
 
       setZones((current) => {
         const next = editingZone
@@ -194,7 +199,8 @@ export default function DeliverySettingsPage() {
 
   async function handleDeleteZone(zoneId) {
     try {
-      await deleteDeliveryZone(zoneId);
+      const token = await getSellerAccessToken();
+      await deleteDeliveryZone(zoneId, token);
       setZones((current) => current.filter((zone) => zone.id !== zoneId));
     } catch (err) {
       setError(err.message || "Impossible de supprimer la zone.");
@@ -203,7 +209,8 @@ export default function DeliverySettingsPage() {
 
   async function handleDeleteDriver(driverId) {
     try {
-      await deleteDeliveryDriver(driverId);
+      const token = await getSellerAccessToken();
+      await deleteDeliveryDriver(driverId, token);
       setDrivers((current) => current.filter((driver) => driver.id !== driverId));
     } catch (err) {
       setError(err.message || "Impossible de supprimer le livreur.");

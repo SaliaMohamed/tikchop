@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { assignOrderDriver, getSellerDeliverySettings, getSellerOrders, updateOrderStatus } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -65,10 +66,11 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       setError("");
+      const token = await getSellerAccessToken();
 
       const [orderData, deliveryData] = await Promise.all([
-        getSellerOrders(seller.slug),
-        getSellerDeliverySettings(seller.slug),
+        getSellerOrders(seller.slug, token),
+        getSellerDeliverySettings(seller.slug, token),
       ]);
 
       setOrders(orderData || []);
@@ -91,7 +93,8 @@ export default function OrdersPage() {
 
   async function markStatus(order, status) {
     try {
-      await updateOrderStatus(order.id, status);
+      const token = await getSellerAccessToken();
+      await updateOrderStatus(order.id, status, token);
       await fetchOrders();
       setSelectedOrder((current) => current ? { ...current, status } : current);
     } catch (err) {
@@ -101,7 +104,8 @@ export default function OrdersPage() {
 
   async function markDriverAssigned(order, driver) {
     try {
-      const result = await assignOrderDriver(order.id, driver.id);
+      const token = await getSellerAccessToken();
+      const result = await assignOrderDriver(order.id, driver.id, token);
       setOrders((current) => current.map((item) => (
         item.id === order.id
           ? { ...item, ...result, delivery_drivers: driver }

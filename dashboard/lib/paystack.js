@@ -1,6 +1,6 @@
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
-export async function initializeTransaction({ email, amount, metadata }) {
+export async function initializeTransaction({ email, amount, metadata, subaccount }) {
   if (!PAYSTACK_SECRET) {
     throw new Error("Paystack secret key is missing");
   }
@@ -15,6 +15,7 @@ export async function initializeTransaction({ email, amount, metadata }) {
       email,
       amount: Math.round(amount * 100), // Paystack works in kobo/cents
       metadata,
+      ...(subaccount ? { subaccount } : {}),
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/callback`,
     }),
   });

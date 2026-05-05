@@ -21,8 +21,8 @@ import {
   Upload,
 } from "lucide-react";
 import { addProduct, addProductsBulk, analyzeProductImage, uploadProductImage } from "../actions";
-import { getSellerOptions } from "../seller-actions";
 import { useActiveSeller } from "../components/sellerContext";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -46,7 +46,6 @@ export default function AddProductPage() {
   const [mode, setMode] = useState("MANUAL");
   const [bulkText, setBulkText] = useState("");
   const [bulkPhotoItems, setBulkPhotoItems] = useState([]);
-  const [sellers, setSellers] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -58,27 +57,17 @@ export default function AddProductPage() {
   });
 
   useEffect(() => {
-    async function fetchSellers() {
-      try {
-        const data = await getSellerOptions();
-        setSellers(data || []);
-        const selectedSeller = data?.find((seller) => seller.slug === activeSeller.slug) || data?.[0];
-        if (selectedSeller) {
-          setFormData((current) => ({ ...current, seller_id: selectedSeller.id }));
-        }
-      } catch (error) {
-        console.error("Erreur chargement vendeurs:", error);
-      }
+    if (activeSeller.id) {
+      setFormData((current) => ({ ...current, seller_id: activeSeller.id }));
     }
-
-    fetchSellers();
-  }, [activeSeller.slug]);
+  }, [activeSeller.id]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setLoading(true);
 
     try {
+      const token = await getSellerAccessToken();
       if (mode === "BULK") {
         const photoProducts = bulkPhotoItems
           .filter((item) => item.image_url && item.name && item.price)
@@ -95,13 +84,13 @@ export default function AddProductPage() {
           seller_id: formData.seller_id,
         }));
         const products = photoProducts.length > 0 ? photoProducts : textProducts;
-        await addProductsBulk(products);
+        await addProductsBulk(products, token);
         alert(`${products.length} produits ajoutes.`);
       } else {
         await addProduct({
           ...formData,
           description: buildDescription(formData.description, formData.size),
-        });
+        }, token);
         alert("Produit ajoute.");
       }
       router.push("/products");
