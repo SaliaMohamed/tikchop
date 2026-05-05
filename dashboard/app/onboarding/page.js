@@ -3,9 +3,10 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, MessageCircle, Store, Truck } from "lucide-react";
-import { createSellerFromOnboarding, requestSellerWhatsAppPairing } from "../seller-actions";
+import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, Mail, MessageCircle, Store, Truck, UserRound } from "lucide-react";
+import { createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
 import { writeActiveSeller } from "../components/sellerContext";
+import { supabase } from "../../lib/supabase";
 
 function slugify(value) {
   return String(value || "")
@@ -25,10 +26,15 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [accountMode, setAccountMode] = useState("SIGN_UP");
+  const [sellerAccount, setSellerAccount] = useState(null);
   const [error, setError] = useState("");
   const [createdSeller, setCreatedSeller] = useState(null);
   const [pairing, setPairing] = useState(null);
   const [form, setForm] = useState({
+    account_name: "",
+    email: "",
+    password: "",
     name: "",
     phone_number: "",
     slug: "",
@@ -39,6 +45,7 @@ export default function OnboardingPage() {
 
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
+  const totalSteps = 6;
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -48,18 +55,58 @@ export default function OnboardingPage() {
   }
 
   function canContinue() {
-    if (step === 0) return form.name.trim().length >= 2;
-    if (step === 1) return form.phone_number.replace(/[^\d]/g, "").length >= 8;
+    if (step === 0) return form.email.includes("@") && form.password.length >= 6;
+    if (step === 1) return form.name.trim().length >= 2;
+    if (step === 2) return form.phone_number.replace(/[^\d]/g, "").length >= 8;
     return true;
+  }
+
+  async function ensureSellerAccount() {
+    if (!supabase) {
+      throw new Error("Supabase Auth n'est pas configure. Ajoute les variables NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+    }
+
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
+
+    if (accountMode === "SIGN_IN") {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        throw new Error("Connexion impossible. Verifie l'email et le mot de passe.");
+      }
+      return data.user;
+    }
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: form.account_name.trim() || form.name.trim() || email,
+        },
+      },
+    });
+
+    if (signUpError) {
+      if (/already|registered|exists|existe/i.test(signUpError.message || "")) {
+        throw new Error("Ce compte existe deja. Appuie sur 'J'ai deja un compte' puis connecte-toi.");
+      }
+      throw new Error(signUpError.message || "Impossible de creer le compte vendeur.");
+    }
+
+    return data.user;
   }
 
   async function handleCreate() {
     try {
       setSaving(true);
       setError("");
+      const account = sellerAccount || await ensureSellerAccount();
       const seller = await createSellerFromOnboarding({
         ...form,
         slug: suggestedSlug,
+        owner_user_id: account?.id,
+        owner_email: account?.email || form.email.trim().toLowerCase(),
       });
       writeActiveSeller(seller);
       setCreatedSeller(seller);
@@ -71,9 +118,33 @@ export default function OnboardingPage() {
           error: pairingError.message || "Connexion WhatsApp indisponible pour le moment.",
         });
       }
-      setStep(4);
+      setStep(5);
     } catch (err) {
       setError(err.message || "Impossible de creer la boutique.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAccountContinue() {
+    try {
+      setSaving(true);
+      setError("");
+      const account = await ensureSellerAccount();
+      setSellerAccount(account);
+
+      if (accountMode === "SIGN_IN") {
+        const existingSeller = await getSellerByOwner(account?.id);
+        if (existingSeller) {
+          writeActiveSeller(existingSeller);
+          router.push("/");
+          return;
+        }
+      }
+
+      setStep(1);
+    } catch (err) {
+      setError(err.message || "Impossible de valider le compte vendeur.");
     } finally {
       setSaving(false);
     }
@@ -91,15 +162,90 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-between">
           <Link href="/" className="text-sm font-extrabold text-[var(--text-dim)] no-underline">Retour</Link>
           <p className="font-display text-lg font-bold text-[var(--primary)]">Tikchop</p>
-          <span className="text-sm font-bold text-[var(--text-dim)]">{Math.min(step + 1, 5)}/5</span>
+          <span className="text-sm font-bold text-[var(--text-dim)]">{Math.min(step + 1, totalSteps)}/{totalSteps}</span>
         </div>
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-[var(--surface-mid)]">
-          <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${((Math.min(step, 4) + 1) / 5) * 100}%` }} />
+          <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${((Math.min(step, totalSteps - 1) + 1) / totalSteps) * 100}%` }} />
         </div>
       </header>
 
       <main className="mt-6 space-y-5">
         {step === 0 && (
+          <OnboardingCard
+            icon={<UserRound size={28} />}
+            title="Compte vendeur"
+            subtitle="Le vendeur se connecte a son espace. Sa boutique reste separee des autres."
+          >
+            <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-soft)] p-1">
+              <button
+                type="button"
+                onClick={() => setAccountMode("SIGN_UP")}
+                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMode === "SIGN_UP" ? "bg-white text-[var(--primary)] shadow-sm" : "text-[var(--text-dim)]"}`}
+              >
+                Nouveau compte
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccountMode("SIGN_IN")}
+                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMode === "SIGN_IN" ? "bg-white text-[var(--primary)] shadow-sm" : "text-[var(--text-dim)]"}`}
+              >
+                Deja inscrit
+              </button>
+            </div>
+
+            {accountMode === "SIGN_UP" && (
+              <label className="block">
+                <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nom du vendeur</span>
+                <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
+                  <UserRound className="shrink-0 text-[var(--text-dim)]" size={19} />
+                  <input
+                    value={form.account_name}
+                    onChange={(event) => updateField("account_name", event.target.value)}
+                    placeholder="Ex: Amina"
+                    className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
+                  />
+                </div>
+              </label>
+            )}
+
+            <label className={accountMode === "SIGN_UP" ? "mt-4 block" : "block"}>
+              <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Email</span>
+              <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
+                <Mail className="shrink-0 text-[var(--text-dim)]" size={19} />
+                <input
+                  autoFocus
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="vendeur@email.com"
+                  inputMode="email"
+                  autoComplete="email"
+                  className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
+                />
+              </div>
+            </label>
+
+            <label className="mt-4 block">
+              <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Mot de passe</span>
+              <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
+                <LockKeyhole className="shrink-0 text-[var(--text-dim)]" size={19} />
+                <input
+                  value={form.password}
+                  onChange={(event) => updateField("password", event.target.value)}
+                  placeholder="Minimum 6 caracteres"
+                  type="password"
+                  autoComplete={accountMode === "SIGN_UP" ? "new-password" : "current-password"}
+                  className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
+                />
+              </div>
+            </label>
+
+            <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+              Plus tard on pourra ajouter connexion par telephone. Pour le MVP, email + mot de passe garde chaque boutique dans son propre compte.
+            </p>
+          </OnboardingCard>
+        )}
+
+        {step === 1 && (
           <OnboardingCard
             icon={<Store size={28} />}
             title="Nom de la boutique"
@@ -137,7 +283,7 @@ export default function OnboardingPage() {
           </OnboardingCard>
         )}
 
-        {step === 1 && (
+        {step === 2 && (
           <OnboardingCard
             icon={<MessageCircle size={28} />}
             title="WhatsApp vendeur"
@@ -160,7 +306,7 @@ export default function OnboardingPage() {
           </OnboardingCard>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <OnboardingCard
             icon={<Truck size={28} />}
             title="Reception client"
@@ -174,7 +320,7 @@ export default function OnboardingPage() {
           </OnboardingCard>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <OnboardingCard
             icon={<Truck size={28} />}
             title="Frais livraison"
@@ -217,7 +363,7 @@ export default function OnboardingPage() {
           </OnboardingCard>
         )}
 
-        {step === 4 && createdSeller && (
+        {step === 5 && createdSeller && (
           <OnboardingCard
             icon={<CheckCircle2 size={30} />}
             title="Boutique prete"
@@ -248,18 +394,18 @@ export default function OnboardingPage() {
         )}
 
         <div className="fixed inset-x-0 bottom-0 z-40 bg-white/96 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_28px_rgba(22,29,25,0.08)] md:static md:bg-transparent md:p-0 md:shadow-none">
-          {step < 3 && (
+          {step < 4 && (
             <button
               type="button"
-              disabled={!canContinue()}
-              onClick={() => setStep((current) => current + 1)}
+              disabled={!canContinue() || saving}
+              onClick={step === 0 ? handleAccountContinue : () => setStep((current) => current + 1)}
               className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
             >
-              Continuer
-              <ArrowRight size={19} />
+              {saving && step === 0 ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={19} />}
+              {step === 0 ? (accountMode === "SIGN_IN" ? "Se connecter" : "Creer le compte") : "Continuer"}
             </button>
           )}
-          {step === 3 && (
+          {step === 4 && (
             <button
               type="button"
               disabled={saving}
@@ -270,7 +416,7 @@ export default function OnboardingPage() {
               {saving ? "Creation..." : "Creer ma boutique"}
             </button>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <button
               type="button"
               onClick={() => router.push("/add-product")}

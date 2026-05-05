@@ -97,6 +97,31 @@ export async function getSellerOptions() {
   return data || [];
 }
 
+export async function getSellerByOwner(ownerUserId) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  const userId = String(ownerUserId || "").trim();
+  if (!userId) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("sellers")
+    .select("id, name, slug, phone_number")
+    .eq("owner_user_id", userId)
+    .maybeSingle();
+
+  if (error && /owner_user_id/i.test(error.message || "")) {
+    return null;
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data || null;
+}
+
 export async function createSellerFromOnboarding(payload) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
@@ -108,6 +133,8 @@ export async function createSellerFromOnboarding(payload) {
   const deliveryMode = payload?.delivery_mode || "BOTH";
   const deliveryFee = Number(payload?.fixed_delivery_fee || 0);
   const deliveryPaymentTiming = payload?.delivery_payment_timing || "AT_RECEPTION";
+  const ownerUserId = String(payload?.owner_user_id || "").trim();
+  const ownerEmail = String(payload?.owner_email || "").trim().toLowerCase();
 
   if (name.length < 2) {
     throw new Error("Ajoute le nom de la boutique.");
@@ -127,6 +154,8 @@ export async function createSellerFromOnboarding(payload) {
     fixed_delivery_fee: Number.isFinite(deliveryFee) ? deliveryFee : 0,
     delivery_payment_timing: deliveryPaymentTiming,
     auto_share_to_driver: false,
+    ...(ownerUserId ? { owner_user_id: ownerUserId } : {}),
+    ...(ownerEmail ? { owner_email: ownerEmail } : {}),
   };
 
   const { data, error } = await supabaseAdmin
@@ -135,7 +164,11 @@ export async function createSellerFromOnboarding(payload) {
     .select("id, name, slug, phone_number")
     .single();
 
-  if (error && /delivery_|pickup_|fixed_delivery_fee|auto_share_to_driver/i.test(error.message || "")) {
+  if (error && ownerUserId && /idx_sellers_one_shop_per_owner|duplicate key|unique/i.test(error.message || "")) {
+    throw new Error("Ce compte possede deja une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
+  }
+
+  if (error && /delivery_|pickup_|fixed_delivery_fee|auto_share_to_driver|owner_user_id|owner_email/i.test(error.message || "")) {
     const fallbackPayload = {
       name,
       slug,
