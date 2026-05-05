@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "../lib/supabase-admin";
+import { sendSellerWelcomeEmail } from "../lib/email";
 
 function slugify(value) {
   return String(value || "")
@@ -14,6 +15,11 @@ function slugify(value) {
 
 function cleanPhone(value) {
   return String(value || "").replace(/[^\d+]/g, "");
+}
+
+function cleanAuthPhone(value) {
+  const phone = cleanPhone(value);
+  return phone.startsWith("+") ? phone : `+${phone}`;
 }
 
 function cleanEvolutionPhone(value) {
@@ -127,25 +133,46 @@ export async function createSellerAccount(payload) {
     throw new Error("Supabase admin client not initialized.");
   }
 
+  const method = payload?.method === "PHONE" ? "PHONE" : "EMAIL";
   const email = String(payload?.email || "").trim().toLowerCase();
+  const phone = cleanAuthPhone(payload?.phone);
   const password = String(payload?.password || "");
   const displayName = String(payload?.display_name || "").trim();
 
-  if (!email.includes("@")) {
+  if (method === "EMAIL" && !email.includes("@")) {
     throw new Error("Ajoute un email valide.");
+  }
+
+  if (method === "PHONE" && phone.replace(/\D/g, "").length < 8) {
+    throw new Error("Ajoute un numero de telephone valide avec indicatif pays.");
   }
 
   if (password.length < 6) {
     throw new Error("Le mot de passe doit avoir au moins 6 caracteres.");
   }
 
+  const accountPayload = method === "PHONE"
+    ? {
+      phone,
+      password,
+      phone_confirm: true,
+      user_metadata: {
+        display_name: displayName || phone,
+        signup_method: "PHONE",
+      },
+    }
+    : {
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        display_name: displayName || email,
+        signup_method: "EMAIL",
+      },
+    };
+
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: {
-      display_name: displayName || email,
-    },
+    ...accountPayload,
   });
 
   if (error) {
@@ -155,9 +182,17 @@ export async function createSellerAccount(payload) {
     throw new Error(error.message || "Impossible de creer le compte vendeur.");
   }
 
+  if (method === "EMAIL") {
+    await sendSellerWelcomeEmail({ email, name: displayName }).catch((emailError) => {
+      console.error("Welcome email failed:", emailError);
+    });
+  }
+
   return {
     id: data.user?.id || "",
     email: data.user?.email || email,
+    phone: data.user?.phone || phone,
+    method,
   };
 }
 

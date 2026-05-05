@@ -28,6 +28,7 @@ export default function OnboardingPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accountMode, setAccountMode] = useState("SIGN_UP");
+  const [accountMethod, setAccountMethod] = useState("EMAIL");
   const [sellerAccount, setSellerAccount] = useState(null);
   const [existingSeller, setExistingSeller] = useState(null);
   const [error, setError] = useState("");
@@ -36,6 +37,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState({
     account_name: "",
     email: "",
+    account_phone: "",
     password: "",
     name: "",
     phone_number: "",
@@ -93,7 +95,12 @@ export default function OnboardingPage() {
   }
 
   function canContinue() {
-    if (step === 0) return form.email.includes("@") && form.password.length >= 6;
+    if (step === 0) {
+      const hasIdentity = accountMethod === "EMAIL"
+        ? form.email.includes("@")
+        : form.account_phone.replace(/[^\d]/g, "").length >= 8;
+      return hasIdentity && form.password.length >= 6;
+    }
     if (step === 1) return form.name.trim().length >= 2;
     if (step === 2) return form.phone_number.replace(/[^\d]/g, "").length >= 8;
     return true;
@@ -105,23 +112,32 @@ export default function OnboardingPage() {
     }
 
     const email = form.email.trim().toLowerCase();
+    const phone = form.account_phone.trim();
     const password = form.password;
 
     if (accountMode === "SIGN_IN") {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const credentials = accountMethod === "EMAIL"
+        ? { email, password }
+        : { phone: phone.startsWith("+") ? phone : `+${phone.replace(/[^\d]/g, "")}`, password };
+      const { data, error: signInError } = await supabase.auth.signInWithPassword(credentials);
       if (signInError) {
-        throw new Error("Connexion impossible. Verifie l'email et le mot de passe.");
+        throw new Error("Connexion impossible. Verifie les informations et le mot de passe.");
       }
       return data.user;
     }
 
     const account = await createSellerAccount({
+      method: accountMethod,
       email,
+      phone,
       password,
-      display_name: form.account_name.trim() || form.name.trim() || email,
+      display_name: form.account_name.trim() || form.name.trim() || email || phone,
     });
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const credentials = accountMethod === "EMAIL"
+      ? { email, password }
+      : { phone: account.phone || phone, password };
+    const { data, error: signInError } = await supabase.auth.signInWithPassword(credentials);
     if (signInError) {
       throw new Error("Compte cree, mais connexion automatique impossible. Appuie sur 'Deja inscrit' puis connecte-toi.");
     }
@@ -295,6 +311,28 @@ export default function OnboardingPage() {
               </button>
             </div>
 
+            <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-white p-1 ring-1 ring-[var(--outline)]/55">
+              <button
+                type="button"
+                onClick={() => setAccountMethod("EMAIL")}
+                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMethod === "EMAIL" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-dim)]"}`}
+              >
+                Email
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountMethod("PHONE");
+                  if (!form.phone_number && form.account_phone) {
+                    updateField("phone_number", form.account_phone);
+                  }
+                }}
+                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMethod === "PHONE" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-dim)]"}`}
+              >
+                Telephone
+              </button>
+            </div>
+
             {accountMode === "SIGN_UP" && (
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nom du vendeur</span>
@@ -310,21 +348,44 @@ export default function OnboardingPage() {
               </label>
             )}
 
-            <label className={accountMode === "SIGN_UP" ? "mt-4 block" : "block"}>
-              <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Email</span>
-              <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
-                <Mail className="shrink-0 text-[var(--text-dim)]" size={19} />
-                <input
-                  autoFocus
-                  value={form.email}
-                  onChange={(event) => updateField("email", event.target.value)}
-                  placeholder="vendeur@email.com"
-                  inputMode="email"
-                  autoComplete="email"
-                  className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
-                />
-              </div>
-            </label>
+            {accountMethod === "EMAIL" ? (
+              <label className={accountMode === "SIGN_UP" ? "mt-4 block" : "block"}>
+                <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Email</span>
+                <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
+                  <Mail className="shrink-0 text-[var(--text-dim)]" size={19} />
+                  <input
+                    autoFocus
+                    value={form.email}
+                    onChange={(event) => updateField("email", event.target.value)}
+                    placeholder="vendeur@email.com"
+                    inputMode="email"
+                    autoComplete="email"
+                    className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
+                  />
+                </div>
+              </label>
+            ) : (
+              <label className={accountMode === "SIGN_UP" ? "mt-4 block" : "block"}>
+                <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Numero telephone</span>
+                <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[var(--outline)] bg-white px-4">
+                  <MessageCircle className="shrink-0 text-[var(--text-dim)]" size={19} />
+                  <input
+                    autoFocus
+                    value={form.account_phone}
+                    onChange={(event) => {
+                      updateField("account_phone", event.target.value);
+                      if (!form.phone_number || form.phone_number === form.account_phone) {
+                        updateField("phone_number", event.target.value);
+                      }
+                    }}
+                    placeholder="Ex: +2250102030405"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
+                  />
+                </div>
+              </label>
+            )}
 
             <label className="mt-4 block">
               <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Mot de passe</span>
@@ -342,7 +403,9 @@ export default function OnboardingPage() {
             </label>
 
             <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-              Plus tard on pourra ajouter connexion par telephone. Pour le MVP, email + mot de passe garde chaque boutique dans son propre compte.
+              {accountMethod === "EMAIL"
+                ? "Tikchop peut envoyer des messages email si RESEND_API_KEY est configure. Si l'email est deja inscrit, l'app demandera de se connecter."
+                : "Le telephone marche avec mot de passe. Pour une verification par code SMS ou WhatsApp, il faudra brancher un fournisseur OTP."}
             </p>
           </OnboardingCard>
         )}
