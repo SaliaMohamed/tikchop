@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, LogOut, Mail, MessageCircle, Store, Truck, UserRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, Copy, KeyRound, Loader2, LockKeyhole, LogOut, Mail, MessageCircle, ShieldCheck, Store, Truck, UserRound } from "lucide-react";
 import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner, requestSellerWhatsAppPairing } from "../seller-actions";
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
@@ -111,7 +111,7 @@ export default function OnboardingPage() {
 
   async function ensureSellerAccount() {
     if (!supabase) {
-      throw new Error("Supabase Auth n'est pas configure. Ajoute les variables NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      throw new Error("Connexion vendeur indisponible pour le moment.");
     }
 
     const email = form.email.trim().toLowerCase();
@@ -220,7 +220,7 @@ export default function OnboardingPage() {
 
   async function handlePasswordReset() {
     if (!supabase) {
-      setError("Recuperation email non disponible sur cette version.");
+      setError("Recuperation indisponible pour le moment. Reessaie plus tard.");
       return;
     }
 
@@ -323,10 +323,13 @@ export default function OnboardingPage() {
       </header>
 
       <main className="mt-6 space-y-5">
+        {step === 0 && <OnboardingLandingHero />}
+
         {step === 0 && (
           <OnboardingCard
             icon={<UserRound size={28} />}
-            title="Compte vendeur"
+            title="Creer ton acces"
+            subtitle="Deux minutes pour ouvrir ta boutique et recevoir les commandes."
           >
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-soft)] p-1">
               <button
@@ -456,14 +459,14 @@ export default function OnboardingPage() {
 
             {accountMode === "SIGN_IN" && accountMethod === "PHONE" && (
               <p className="mt-3 rounded-xl bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                Recuperation telephone par code SMS/WhatsApp a brancher avec un fournisseur OTP.
+                Utilise le meme numero et le meme mot de passe que lors de ton inscription.
               </p>
             )}
 
             <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
               {accountMethod === "EMAIL"
-                ? "L'email sert a recuperer le compte et garder la boutique separee des autres vendeurs."
-                : "Le telephone marche avec mot de passe. Pour une verification par code SMS ou WhatsApp, il faudra brancher un fournisseur OTP."}
+                ? "Utilise un email que tu peux ouvrir facilement si tu dois recuperer ton compte."
+                : "Ton numero servira a te reconnecter et a recevoir les commandes WhatsApp."}
             </p>
           </OnboardingCard>
         )}
@@ -475,9 +478,9 @@ export default function OnboardingPage() {
             subtitle="Le client doit comprendre tout de suite chez qui il achete."
           >
             <div className="mb-5 rounded-xl bg-[var(--surface-soft)] p-4">
-              <p className="quiet-label text-[var(--primary)]">Inscription vendeur</p>
+              <p className="quiet-label text-[var(--primary)]">Boutique Tikchop</p>
               <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                Chaque vendeur cree uniquement sa propre boutique. Les autres boutiques ne sont pas visibles ici.
+                Choisis un nom simple, facile a reconnaitre et a partager sur TikTok, Instagram ou WhatsApp.
               </p>
             </div>
 
@@ -617,7 +620,17 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        <div className="fixed inset-x-0 bottom-0 z-40 bg-white/96 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_28px_rgba(22,29,25,0.08)] md:static md:bg-transparent md:p-0 md:shadow-none">
+        <div className="fixed inset-x-0 bottom-0 z-[320] border-t border-[var(--outline)]/30 bg-white/96 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-[0_-16px_34px_rgba(22,29,25,0.12)] backdrop-blur-xl md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
+          {step > 0 && step < 5 && (
+            <button
+              type="button"
+              onClick={() => setStep((current) => Math.max(0, current - 1))}
+              disabled={saving}
+              className="mb-2 flex min-h-[48px] w-full items-center justify-center rounded-xl border border-[var(--outline)]/55 bg-white text-sm font-extrabold text-[var(--text-main)] disabled:text-[var(--outline)] md:hidden"
+            >
+              Retour a l&apos;etape precedente
+            </button>
+          )}
           {step < 4 && (
             <button
               type="button"
@@ -652,6 +665,93 @@ export default function OnboardingPage() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function OnboardingLandingHero() {
+  return (
+    <section className="overflow-hidden rounded-[32px] bg-[var(--text-main)] text-white shadow-[var(--shadow-lg)]">
+      <div
+        className="relative min-h-[25rem] bg-cover bg-center"
+        style={{ backgroundImage: "url('/landing/onboarding-seller-phone.jpg')" }}
+        role="img"
+        aria-label="Jeune vendeuse souriante avec son telephone"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/8 via-black/20 to-black/78" />
+        <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3">
+          <span className="rounded-full bg-white/92 px-3 py-2 text-xs font-extrabold text-[var(--text-main)] shadow-sm">
+            Tikchop vendeur
+          </span>
+          <span className="rounded-full bg-[var(--primary-bright)] px-3 py-2 text-xs font-extrabold text-[var(--text-main)] shadow-sm">
+            11 000 F / mois
+          </span>
+        </div>
+        <div className="absolute inset-x-4 bottom-4">
+          <div className="rounded-[28px] bg-white/94 p-4 text-[var(--text-main)] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <p className="quiet-label text-[var(--primary)]">Mini-boutique + WhatsApp</p>
+            <h1 className="mt-2 font-display text-3xl font-bold leading-9">
+              Vends plus vite, meme sans site complique.
+            </h1>
+            <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+              Ajoute tes articles, partage ton lien et laisse Tikchop organiser les commandes.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <HeroMetric value="2 400+" label="vendeurs interesses" />
+              <HeroMetric value="47k" label="clients traites" />
+              <HeroMetric value="3 min" label="pour demarrer" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-4">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/52">Paiements acceptes</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <PaymentLogo name="Wave" tone="wave" />
+            <PaymentLogo name="Orange Money" tone="orange" />
+            <PaymentLogo name="MTN MoMo" tone="mtn" />
+            <PaymentLogo name="Paystack" tone="paystack" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[24px] bg-white/10 p-4 ring-1 ring-white/10">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[var(--text-main)]">
+            <ShieldCheck size={21} />
+          </span>
+          <div>
+            <p className="font-display text-base font-bold text-white">Pense pour les vendeurs mobiles</p>
+            <p className="mt-1 text-sm font-semibold leading-5 text-white/62">
+              Commandes, livraison, recus et relances restent dans une interface simple a lire.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroMetric({ value, label }) {
+  return (
+    <div className="rounded-2xl bg-[var(--surface-soft)] p-2 text-center">
+      <p className="font-display text-lg font-bold leading-none text-[var(--primary)]">{value}</p>
+      <p className="mt-1 text-[0.62rem] font-bold leading-3 text-[var(--text-dim)]">{label}</p>
+    </div>
+  );
+}
+
+function PaymentLogo({ name, tone }) {
+  const classes = {
+    wave: "bg-[#dff7ff] text-[#006b8f]",
+    orange: "bg-[#fff1dc] text-[#ef7d00]",
+    mtn: "bg-[#fff5b8] text-[#111814]",
+    paystack: "bg-[#eaf1ff] text-[#1652c7]",
+  };
+
+  return (
+    <div className={`flex min-h-[48px] items-center justify-center rounded-2xl px-3 text-sm font-black shadow-sm ${classes[tone] || "bg-white text-[var(--text-main)]"}`}>
+      {name}
     </div>
   );
 }
@@ -747,7 +847,7 @@ function WhatsAppPairingBox({ pairing }) {
             </p>
           ) : (
             <p className="mt-1 text-sm font-bold text-[var(--text-dim)]">
-              Code non retourne. Utilise le QR depuis un autre ecran.
+              Code indisponible pour le moment. Tu pourras connecter WhatsApp depuis ton espace vendeur.
             </p>
           )}
           <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
