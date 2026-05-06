@@ -1154,6 +1154,9 @@ export async function getDashboardData(slug, accessToken) {
     { count: weeklyOrderCount },
     { count: confirmedOrderCount },
     { count: pendingOrderCount },
+    { count: paidOrderCount },
+    { count: preparedOrderCount },
+    { count: deliveredOrderCount },
     { data: orders, error: ordersError },
     { data: paidOrders, error: paidOrdersError },
   ] = await Promise.all([
@@ -1162,6 +1165,9 @@ export async function getDashboardData(slug, accessToken) {
     supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).gte("created_at", weekAgo),
     supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).in("status", ["PAID", "PREPARED", "DELIVERED"]),
     supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).eq("status", "PENDING"),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).eq("status", "PAID"),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).eq("status", "PREPARED"),
+    supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("seller_id", seller.id).eq("status", "DELIVERED"),
     supabaseAdmin
       .from("orders")
       .select("id, order_ref, customer_phone, total_amount, delivery_fee, status, created_at")
@@ -1186,6 +1192,21 @@ export async function getDashboardData(slug, accessToken) {
   const sales = (paidOrders || [])
     .reduce((total, order) => total + Number(order.total_amount || 0) + Number(order.delivery_fee || 0), 0);
 
+  const [{ data: sellerState }, { count: followupCount }] = await Promise.all([
+    supabaseAdmin
+      .from("sellers")
+      .select("whatsapp_status, evolution_instance")
+      .eq("id", seller.id)
+      .maybeSingle()
+      .then((result) => (/whatsapp_status|evolution_instance|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result)),
+    supabaseAdmin
+      .from("tikchop_customer_followups")
+      .select("*", { count: "exact", head: true })
+      .eq("seller_id", seller.id)
+      .gte("sent_at", weekAgo)
+      .then((result) => (/tikchop_customer_followups|schema cache|relation|table/i.test(result.error?.message || "") ? { count: 0 } : result)),
+  ]);
+
   return {
     stats: {
       sales,
@@ -1193,8 +1214,15 @@ export async function getDashboardData(slug, accessToken) {
       products: productCount || 0,
       messagesReceived: orderCount || 0,
       confirmedOrders: confirmedOrderCount || 0,
-      clientsFollowedUp: pendingOrderCount || 0,
+      clientsFollowedUp: followupCount || 0,
       weeklyClientsHandled: weeklyOrderCount || 0,
+      pendingOrders: pendingOrderCount || 0,
+      paidOrders: paidOrderCount || 0,
+      preparedOrders: preparedOrderCount || 0,
+      deliveredOrders: deliveredOrderCount || 0,
+      whatsappStatus: sellerState?.whatsapp_status || "unknown",
+      whatsappConnected: sellerState?.whatsapp_status === "connected" || sellerState?.whatsapp_status === "open",
+      evolutionInstance: sellerState?.evolution_instance || "",
     },
     recentOrders: orders || [],
   };

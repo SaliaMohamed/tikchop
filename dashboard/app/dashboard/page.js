@@ -29,6 +29,12 @@ const emptyStats = {
   confirmedOrders: 0,
   clientsFollowedUp: 0,
   weeklyClientsHandled: 0,
+  pendingOrders: 0,
+  paidOrders: 0,
+  preparedOrders: 0,
+  deliveredOrders: 0,
+  whatsappConnected: false,
+  whatsappStatus: "unknown",
 };
 
 export default function Dashboard() {
@@ -59,10 +65,10 @@ export default function Dashboard() {
 
   const summary = useMemo(
     () => [
-      { label: "Messages recus", value: stats.messagesReceived, icon: <MessageCircle size={19} /> },
-      { label: "Confirmees", value: stats.confirmedOrders, icon: <ReceiptText size={19} /> },
-      { label: "Clients relances", value: stats.clientsFollowedUp, icon: <ClipboardList size={19} /> },
-      { label: "Produits actifs", value: stats.products, icon: <Package size={19} /> },
+      { label: "A confirmer", value: stats.pendingOrders, icon: <MessageCircle size={19} /> },
+      { label: "A preparer", value: stats.paidOrders, icon: <ReceiptText size={19} /> },
+      { label: "A livrer", value: stats.preparedOrders, icon: <Truck size={19} /> },
+      { label: "WhatsApp", value: stats.whatsappConnected ? "OK" : "A connecter", icon: <MessageCircle size={19} /> },
     ],
     [stats],
   );
@@ -107,6 +113,12 @@ export default function Dashboard() {
             <MiniMetric label="Ventes" value={money(stats.sales).replace(" CFA", "")} />
             <MiniMetric label="Articles" value={stats.products || 0} />
           </div>
+        </section>
+
+        <section className="grid grid-cols-3 gap-3">
+          <WorkMetric label="A confirmer" value={stats.pendingOrders || 0} tone="amber" />
+          <WorkMetric label="A preparer" value={stats.paidOrders || 0} tone="green" />
+          <WorkMetric label="A livrer" value={stats.preparedOrders || 0} tone="blue" />
         </section>
 
         <section className="space-y-3">
@@ -212,6 +224,21 @@ function MiniMetric({ label, value }) {
       <p className="font-display text-lg font-bold leading-none text-white">{value}</p>
       <p className="mt-1 truncate text-[0.66rem] font-extrabold uppercase tracking-[0.08em] text-white/48">{label}</p>
     </div>
+  );
+}
+
+function WorkMetric({ label, value, tone }) {
+  const toneClass = {
+    amber: "bg-[var(--accent-soft)] text-[var(--accent)]",
+    green: "bg-[var(--surface-soft)] text-[var(--primary)]",
+    blue: "bg-[var(--info-soft)] text-[var(--info)]",
+  }[tone];
+
+  return (
+    <Link href="/orders" className={`rounded-xl p-3 text-center no-underline ${toneClass}`}>
+      <span className="block font-display text-2xl font-bold leading-none">{value}</span>
+      <span className="mt-1 block text-[0.68rem] font-extrabold uppercase leading-4">{label}</span>
+    </Link>
   );
 }
 

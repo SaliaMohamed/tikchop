@@ -105,5 +105,70 @@ ON public.orders(seller_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_delivery_driver_id
 ON public.orders(delivery_driver_id);
 
+-- 7. Paystack traceability for app and WhatsApp orders.
+ALTER TABLE public.orders
+ADD COLUMN IF NOT EXISTS paystack_reference text,
+ADD COLUMN IF NOT EXISTS paystack_authorization_url text,
+ADD COLUMN IF NOT EXISTS paystack_payment_status text,
+ADD COLUMN IF NOT EXISTS paystack_paid_at timestamptz,
+ADD COLUMN IF NOT EXISTS whatsapp_receipt_sent_at timestamptz;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paystack_reference_unique
+ON public.orders(paystack_reference)
+WHERE paystack_reference IS NOT NULL;
+
+-- 8. WhatsApp chatbot connection state managed through Evolution API.
+ALTER TABLE public.sellers
+ADD COLUMN IF NOT EXISTS whatsapp_provider text,
+ADD COLUMN IF NOT EXISTS evolution_instance text,
+ADD COLUMN IF NOT EXISTS whatsapp_status text DEFAULT 'disconnected',
+ADD COLUMN IF NOT EXISTS whatsapp_connected_at timestamptz,
+ADD COLUMN IF NOT EXISTS whatsapp_last_pairing_at timestamptz,
+ADD COLUMN IF NOT EXISTS whatsapp_last_error text;
+
+CREATE INDEX IF NOT EXISTS idx_sellers_evolution_instance
+ON public.sellers(evolution_instance);
+
+UPDATE public.sellers
+SET
+  whatsapp_provider = coalesce(whatsapp_provider, 'evolution'),
+  evolution_instance = coalesce(evolution_instance, slug),
+  whatsapp_status = coalesce(whatsapp_status, 'disconnected')
+WHERE slug IS NOT NULL;
+
+-- 9. Chatbot guardrails: seller handoff pause and follow-up history.
+CREATE TABLE IF NOT EXISTS public.tikchop_customer_handoffs (
+  seller_slug text NOT NULL,
+  customer_phone text NOT NULL,
+  instance_name text,
+  paused_until timestamptz NOT NULL,
+  last_from_me_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  PRIMARY KEY (seller_slug, customer_phone)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tikchop_customer_handoffs_active
+ON public.tikchop_customer_handoffs(seller_slug, customer_phone, paused_until);
+
+ALTER TABLE public.tikchop_customer_handoffs ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.tikchop_customer_followups (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  seller_id uuid REFERENCES public.sellers(id) ON DELETE CASCADE,
+  seller_slug text,
+  customer_phone text NOT NULL,
+  product_name text,
+  sent_at timestamptz DEFAULT now(),
+  PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tikchop_customer_followups_recent
+ON public.tikchop_customer_followups(seller_id, customer_phone, sent_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_tikchop_customer_followups_slug_recent
+ON public.tikchop_customer_followups(seller_slug, customer_phone, sent_at DESC);
+
+ALTER TABLE public.tikchop_customer_followups ENABLE ROW LEVEL SECURITY;
+
 -- Refresh PostgREST schema cache so Next.js and n8n see new columns quickly.
 NOTIFY pgrst, 'reload schema';

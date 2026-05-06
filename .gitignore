@@ -17,6 +17,7 @@ build/
 # generated QA screenshots
 qa-*.png
 dashboard/qa-*.png
+dashboard/output/
 
 # local design exports and scratch artifacts
 stitch-export/

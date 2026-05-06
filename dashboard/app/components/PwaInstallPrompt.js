@@ -9,14 +9,14 @@ function getDeviceHelp(isIOS) {
   if (isIOS) {
     return {
       title: "Installer sur iPhone",
-      body: "Depuis Safari, ajoute Tikchop a l'ecran d'accueil sans App Store.",
+      body: "Depuis Safari, ajoute Tikchop à l'écran d'accueil sans App Store.",
       icon: <Share size={20} />,
     };
   }
 
   return {
     title: "Installer l'app gratuitement",
-    body: "Ajoute Tikchop sur ton telephone sans passer par les stores.",
+    body: "Ajoute Tikchop sur ton téléphone sans passer par les stores.",
     icon: <Download size={20} />,
   };
 }
@@ -88,7 +88,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
           <p className="quiet-label text-white/50">Alternative gratuite aux stores</p>
           <h1 className="mt-2 font-display text-3xl font-bold leading-10">Installer Tikchop</h1>
           <p className="mt-3 text-base font-semibold leading-6 text-white/70">
-            {"Tikchop peut etre installe comme une vraie application mobile depuis le navigateur. Aucun Play Store, aucun App Store et aucun paiement ne sont necessaires pour l'installation."}
+            {"Tikchop peut être installé comme une vraie application mobile depuis le navigateur. Aucun Play Store, aucun App Store et aucun paiement ne sont nécessaires pour l'installation."}
           </p>
           <button
             type="button"
@@ -97,18 +97,18 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
             className="mt-5 flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] text-base font-extrabold text-[var(--text-main)] disabled:bg-white/14 disabled:text-white/55"
           >
             <Download size={20} />
-            {deferredPrompt ? "Installer maintenant" : isIOS ? "Ajouter depuis Safari" : "Ouvre depuis Chrome pour installer"}
+            {deferredPrompt ? "Installer maintenant" : isIOS ? "Ajouter depuis Safari" : "Ouvrir dans Chrome pour installer"}
           </button>
         </div>
 
         <div className="mt-4 grid gap-3">
-          <InstallStep icon={<Smartphone size={20} />} title="Android" body="Ouvre Tikchop avec Chrome, puis appuie sur Installer. L'app apparaitra sur l'ecran d'accueil." />
-          <InstallStep icon={<Share size={20} />} title="iPhone" body="Ouvre Tikchop avec Safari, touche Partager, puis choisis Sur l'ecran d'accueil." />
-          <InstallStep icon={<MonitorDown size={20} />} title="Ordinateur" body="Dans Chrome ou Edge, utilise l'icone Installer dans la barre d'adresse." />
+          <InstallStep icon={<Smartphone size={20} />} title="Android" body="Ouvre Tikchop avec Chrome, puis appuie sur Installer. L'app apparaîtra sur l'écran d'accueil." />
+          <InstallStep icon={<Share size={20} />} title="iPhone" body="Ouvre Tikchop avec Safari, touche Partager, puis choisis Sur l'écran d'accueil." />
+          <InstallStep icon={<MonitorDown size={20} />} title="Ordinateur" body="Dans Chrome ou Edge, utilise l'icône Installer dans la barre d'adresse." />
         </div>
 
         <Link href="/onboarding" className="mt-5 flex min-h-[56px] items-center justify-center rounded-[20px] bg-white text-sm font-extrabold text-[var(--text-main)] no-underline shadow-[var(--shadow-sm)] ring-1 ring-[var(--line)]">
-          Creer une boutique gratuite
+          Créer une boutique gratuite
         </Link>
       </section>
     );
