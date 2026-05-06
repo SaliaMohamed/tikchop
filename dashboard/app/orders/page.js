@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
+  MessageCircle,
   Package,
   Phone,
   RefreshCw,
@@ -20,6 +21,13 @@ import { assignOrderDriver, getSellerDeliverySettings, getSellerOrders, updateOr
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import {
+  buildDriverShareMessage,
+  buildWhatsappHref,
+  getBestOrderResponse,
+  getOrderCaseNotes,
+  getOrderResponseTemplates,
+} from "../../lib/customer-response-playbook";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -396,40 +404,19 @@ function getNextOrder(orders) {
 
 function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDelivered, onDriverShared }) {
   const items = order.order_items || [];
-  const itemsText = items.map((item) => `- ${item.quantity} x ${item.products?.name || "Article"}`).join("\n");
-  const deliveryAmount = Number(order.delivery_fee || 0);
-  const deliveryText = deliveryAmount > 0 ? `${formatPrice(deliveryAmount)} a encaisser` : "Aucun frais";
-  const clientPhone = cleanPhone(order.customer_phone);
   const displayClientPhone = order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Client WhatsApp";
   const availableDrivers = drivers.filter((driver) => driver.is_active !== false);
   const isPrepared = order.status === "PREPARED" || order.delivery_status === "READY";
   const isDone = order.status === "DELIVERED";
   const nextAction = getNextAction(order);
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
-  const driverMessage = encodeURIComponent(`FICHE LIVRAISON TIKCHOP
-
-Boutique: ${sellerName || "Tikchop"}
-Commande: ${order.order_ref || order.id?.slice(0, 8)}
-
-Client: ${order.customer_phone || "Non renseigne"}
-Zone: ${order.delivery_zone || "Non renseignee"}
-Adresse: ${order.delivery_address || "Non renseignee"}
-
-Articles:
-${itemsText || "- Articles dans la commande"}
-
-Livraison: ${deliveryText}
-Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTACK" ? "PAYE" : "A verifier"}
-Total commande: ${formatPrice(total)}`);
-
-const clientMessage = encodeURIComponent(`Bonjour, votre commande Tikchop ${order.order_ref || order.id?.slice(0, 8)} est prise en charge.
-
-Articles: ${items.length || 1}
-Livraison: ${order.delivery_zone || "A confirmer"}
-Total: ${formatPrice(total)}
-Recu: ${typeof window !== "undefined" ? `${window.location.origin}/receipt?order=${order.id}` : ""}
-
-Nous vous tenons informe pour la livraison.`);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const responseContext = { sellerName, origin };
+  const responseTemplates = getOrderResponseTemplates(order, responseContext);
+  const bestResponse = getBestOrderResponse(order, responseContext);
+  const caseNotes = getOrderCaseNotes(order, { hasDrivers: availableDrivers.length > 0 });
+  const driverMessage = encodeURIComponent(buildDriverShareMessage(order, { sellerName }));
+  const clientHref = buildWhatsappHref(order.customer_phone, bestResponse?.text);
   const receiptUrl = typeof window !== "undefined" ? `/receipt?order=${order.id}` : `/receipt?order=${order.id}`;
 
   function openDriverWhatsapp(driver = null) {
@@ -477,6 +464,10 @@ Nous vous tenons informe pour la livraison.`);
           </div>
 
           <OrderProgress status={order.status} />
+
+          <OrderCaseNotes notes={caseNotes} />
+
+          <ResponseTemplateRail templates={responseTemplates} phoneNumber={order.customer_phone} />
 
           <section>
             <SectionTitle step="1" title="Articles dans le sachet" />
@@ -540,7 +531,7 @@ Nous vous tenons informe pour la livraison.`);
           )}
 
           <div className="grid grid-cols-2 gap-2">
-            <a href={clientPhone ? `https://wa.me/${clientPhone}?text=${clientMessage}` : undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${clientPhone ? "bg-white text-zinc-950 ring-1 ring-zinc-200" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
+            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${clientHref ? "bg-white text-zinc-950 ring-1 ring-zinc-200" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
               <Send size={17} />
               Message client
             </a>
@@ -594,6 +585,64 @@ Nous vous tenons informe pour la livraison.`);
       </div>
     </div>
   );
+}
+
+function OrderCaseNotes({ notes }) {
+  return (
+    <section>
+      <p className="quiet-label">Cas a verifier</p>
+      <div className="mt-3 grid gap-2">
+        {notes.map((note) => (
+          <div key={note.id} className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-[var(--outline)]/20">
+            <p className="font-display text-sm font-semibold text-[var(--text-main)]">{note.title}</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-[var(--text-dim)]">{note.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ResponseTemplateRail({ templates, phoneNumber }) {
+  if (!templates.length) return null;
+
+  return (
+    <section>
+      <p className="quiet-label">Reponses pretes</p>
+      <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        {templates.map((template) => {
+          const href = buildWhatsappHref(phoneNumber, template.text);
+          return (
+            <a
+              key={template.id}
+              href={href || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`min-w-[11.5rem] rounded-[20px] p-3 text-left no-underline shadow-sm ring-1 ring-[var(--outline)]/20 ${href ? getTemplateToneClass(template.tone) : "pointer-events-none bg-zinc-100 text-zinc-400"}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80 text-current">
+                  <MessageCircle size={16} />
+                </span>
+                <span className="text-xs font-extrabold uppercase tracking-[0.12em] opacity-70">{template.shortTitle}</span>
+              </div>
+              <p className="mt-3 font-display text-sm font-semibold leading-5">{template.title}</p>
+              <p className="mt-1 line-clamp-2 text-xs font-bold leading-4 opacity-70">{template.scenario}</p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function getTemplateToneClass(tone) {
+  if (tone === "primary") return "bg-[var(--text-main)] text-white";
+  if (tone === "success") return "bg-green-50 text-green-800";
+  if (tone === "warning") return "bg-amber-50 text-amber-800";
+  if (tone === "info") return "bg-blue-50 text-blue-800";
+  if (tone === "danger") return "bg-red-50 text-red-700";
+  return "bg-[var(--surface-soft)] text-[var(--text-main)]";
 }
 
 function WorkTile({ title, value, tone = "default" }) {

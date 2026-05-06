@@ -20,6 +20,11 @@ import { getSellerOrders } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import {
+  buildWhatsappHref,
+  getBestCustomerResponse,
+  getCustomerResponseTemplates,
+} from "../../lib/customer-response-playbook";
 
 const segmentLabels = {
   ALL: "Tous",
@@ -159,27 +164,10 @@ function buildCustomers(orders) {
     .sort((a, b) => new Date(b.lastOrder?.created_at || 0) - new Date(a.lastOrder?.created_at || 0));
 }
 
-function buildFollowupMessage(customer, sellerName) {
-  const shopName = sellerName || "votre boutique Tikchop";
-  const ref = getOrderRef(customer.lastOrder);
-  const total = formatPrice(getOrderTotal(customer.lastOrder));
-  const lastStatus = customer.lastOrder?.status;
-
-  if (lastStatus === "PENDING") {
-    return `Bonjour, c'est ${shopName}. Votre commande ${ref} est bien reservee. Voulez-vous confirmer la livraison aujourd'hui ? Total: ${total}`;
-  }
-
-  if (lastStatus === "PREPARED") {
-    return `Bonjour, c'est ${shopName}. Votre commande ${ref} est prete. Confirmez votre disponibilite pour la livraison s'il vous plait.`;
-  }
-
-  return `Bonjour, c'est ${shopName}. Merci pour votre dernier achat. J'ai de nouveaux articles disponibles, voulez-vous que je vous envoie les plus beaux choix ?`;
-}
-
 function whatsappHref(customer, sellerName) {
-  const phone = cleanPhone(customer.phone);
-  if (!phone) return "";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(buildFollowupMessage(customer, sellerName))}`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const bestResponse = getBestCustomerResponse(customer, { sellerName, origin });
+  return buildWhatsappHref(customer.phone, bestResponse?.text);
 }
 
 export default function CrmPage() {
@@ -398,10 +386,12 @@ function StatTile({ label, value, tone = "soft" }) {
 }
 
 function CustomerCard({ customer, sellerName, onOpen }) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const bestResponse = getBestCustomerResponse(customer, { sellerName, origin });
   const followUrl = whatsappHref(customer, sellerName);
   const lastOrder = customer.lastOrder;
   const totalLabel = customer.totalSpent > 0 ? formatPrice(customer.totalSpent) : formatPrice(customer.totalEstimated);
-  const action = customer.shouldFollowUp ? "Relancer" : customer.isLoyal ? "Soigner" : "Voir";
+  const action = customer.shouldFollowUp ? "Relancer" : customer.isLoyal ? "VIP" : bestResponse?.shortTitle || "Voir";
 
   return (
     <div className="overflow-hidden rounded-[26px] border border-white/80 bg-white/95 shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[rgba(191,206,197,0.34)]">
@@ -475,7 +465,10 @@ function MiniMetric({ label, value, small = false }) {
 }
 
 function CustomerSheet({ customer, sellerName, onClose }) {
-  const followUrl = whatsappHref(customer, sellerName);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const responseTemplates = getCustomerResponseTemplates(customer, { sellerName, origin });
+  const bestResponse = responseTemplates[0] || null;
+  const followUrl = buildWhatsappHref(customer.phone, bestResponse?.text);
   const lastOrder = customer.lastOrder;
   const total = customer.totalSpent > 0 ? customer.totalSpent : customer.totalEstimated;
   const recommendation = getRecommendation(customer);
@@ -520,6 +513,8 @@ function CustomerSheet({ customer, sellerName, onClose }) {
               </div>
             </div>
           </div>
+
+          <CustomerResponseRail templates={responseTemplates} phoneNumber={customer.phone} />
 
           <section>
             <p className="quiet-label">Derniere commande</p>
@@ -577,7 +572,7 @@ function CustomerSheet({ customer, sellerName, onClose }) {
             }`}
           >
             <MessageCircle size={20} />
-            Envoyer une relance WhatsApp
+            {bestResponse?.title || "Envoyer une relance WhatsApp"}
           </a>
           <div className="grid grid-cols-2 gap-2">
             <a
@@ -597,6 +592,48 @@ function CustomerSheet({ customer, sellerName, onClose }) {
       </div>
     </div>
   );
+}
+
+function CustomerResponseRail({ templates, phoneNumber }) {
+  if (!templates.length) return null;
+
+  return (
+    <section>
+      <p className="quiet-label">Reponses pretes</p>
+      <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        {templates.map((template) => {
+          const href = buildWhatsappHref(phoneNumber, template.text);
+          return (
+            <a
+              key={template.id}
+              href={href || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`min-w-[11.5rem] rounded-[20px] p-3 text-left no-underline shadow-sm ring-1 ring-[var(--outline)]/20 ${href ? getTemplateToneClass(template.tone) : "pointer-events-none bg-zinc-100 text-zinc-400"}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80 text-current">
+                  <MessageCircle size={16} />
+                </span>
+                <span className="text-xs font-extrabold uppercase tracking-[0.12em] opacity-70">{template.shortTitle}</span>
+              </div>
+              <p className="mt-3 font-display text-sm font-semibold leading-5">{template.title}</p>
+              <p className="mt-1 text-xs font-bold leading-4 opacity-70">{template.scenario}</p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function getTemplateToneClass(tone) {
+  if (tone === "primary") return "bg-[var(--text-main)] text-white";
+  if (tone === "success") return "bg-green-50 text-green-800";
+  if (tone === "warning") return "bg-amber-50 text-amber-800";
+  if (tone === "info") return "bg-blue-50 text-blue-800";
+  if (tone === "danger") return "bg-red-50 text-red-700";
+  return "bg-[var(--surface-soft)] text-[var(--text-main)]";
 }
 
 function getRecommendation(customer) {
