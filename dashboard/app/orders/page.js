@@ -10,6 +10,7 @@ import {
   Package,
   Phone,
   RefreshCw,
+  ReceiptText,
   Send,
   Share2,
   Truck,
@@ -429,6 +430,7 @@ Total: ${formatPrice(total)}
 Recu: ${typeof window !== "undefined" ? `${window.location.origin}/receipt?order=${order.id}` : ""}
 
 Nous vous tenons informe pour la livraison.`);
+  const receiptUrl = typeof window !== "undefined" ? `/receipt?order=${order.id}` : `/receipt?order=${order.id}`;
 
   function openDriverWhatsapp(driver = null) {
     const phone = cleanPhone(driver?.phone_number);
@@ -542,6 +544,13 @@ Nous vous tenons informe pour la livraison.`);
               <Send size={17} />
               Message client
             </a>
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-zinc-950 ring-1 ring-zinc-200">
+              <ReceiptText size={17} />
+              Recu
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2">
             <button onClick={onDelivered} disabled={!isPrepared || isDone} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${isPrepared && !isDone ? "bg-[var(--surface-soft)] text-[var(--primary)] ring-1 ring-[var(--primary)]/15" : "bg-zinc-100 text-zinc-400"}`}>
               <CheckCircle2 size={17} />
               Livree

@@ -687,6 +687,14 @@ function CartSheet({
 }) {
   const selectedPayment = getPaymentOption(paymentMethod);
   const primaryTotal = selectedPayment.online ? onlinePaymentTotal : orderGrandTotal;
+  const checkoutReadiness = getCheckoutReadiness({
+    cartItems,
+    deliveryType,
+    deliveryZone,
+    deliveryAddress,
+    customerPhone,
+  });
+  const canCheckout = checkoutReadiness.ready && !isSubmitting;
   const deliveryNote = deliveryPaymentTiming === "AT_RECEPTION"
     ? "Livraison payable apres reception"
     : deliveryPaymentTiming === "OFFERED"
@@ -710,6 +718,8 @@ function CartSheet({
         </div>
 
         <div className="flex-1 space-y-6 overflow-y-auto p-5">
+          <CheckoutProgress steps={checkoutReadiness.steps} />
+
           {cartItems.length > 0 ? (
           <div className="rounded-[22px] bg-[var(--text-main)] p-4 text-white">
             <div className="flex items-center justify-between gap-3">
@@ -784,18 +794,36 @@ function CartSheet({
               {deliveryType === "DELIVERY" && (
                 <>
                   {deliveryZones.length > 0 ? (
-                    <select
-                      value={deliveryZone}
-                      onChange={(e) => setDeliveryZone(e.target.value)}
-                      className="mobile-input bg-white"
-                    >
-                      <option value="">Choisir commune / quartier</option>
-                      {deliveryZones.map((zone) => (
-                        <option key={zone.id} value={zone.name}>
-                          {zone.name} - {formatPrice(zone.fee)}
-                        </option>
-                      ))}
-                    </select>
+                    <>
+                      <select
+                        value={deliveryZone}
+                        onChange={(e) => setDeliveryZone(e.target.value)}
+                        className="mobile-input bg-white"
+                      >
+                        <option value="">Choisir commune / quartier</option>
+                        {deliveryZones.map((zone) => (
+                          <option key={zone.id} value={zone.name}>
+                            {zone.name} - {formatPrice(zone.fee)}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+                        {deliveryZones.slice(0, 8).map((zone) => (
+                          <button
+                            key={zone.id}
+                            type="button"
+                            onClick={() => setDeliveryZone(zone.name)}
+                            className={`min-h-[38px] shrink-0 rounded-full px-3 text-xs font-extrabold ${
+                              deliveryZone === zone.name
+                                ? "bg-[var(--text-main)] text-white"
+                                : "bg-[var(--surface-soft)] text-[var(--primary)]"
+                            }`}
+                          >
+                            {zone.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <input 
                       type="text" 
@@ -873,19 +901,58 @@ function CartSheet({
           <div className="space-y-3">
             <button
               onClick={() => onCheckout(paymentMethod)}
-              disabled={!cartItems.length || isSubmitting}
+              disabled={!canCheckout}
               className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${
-                cartItems.length && !isSubmitting
+                canCheckout
                   ? selectedPayment.online ? "bg-[var(--text-main)] text-white" : "bg-[#25D366] text-white"
                   : "pointer-events-none bg-[var(--surface-mid)] text-[var(--outline)]"
               }`}
             >
               {selectedPayment.online ? <CreditCard size={18} /> : <MessageCircle size={18} />}
-              {isSubmitting ? "Preparation..." : `${selectedPayment.online ? "Payer maintenant" : "Confirmer sur WhatsApp"} (${formatPrice(primaryTotal)})`}
+              {isSubmitting
+                ? "Preparation..."
+                : checkoutReadiness.ready
+                  ? `${selectedPayment.online ? "Payer maintenant" : "Confirmer sur WhatsApp"} (${formatPrice(primaryTotal)})`
+                  : checkoutReadiness.label}
             </button>
+            <p className="text-center text-xs font-semibold leading-4 text-[var(--text-dim)]">
+              Le recu Tikchop sera disponible juste apres la creation de la commande.
+            </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function getCheckoutReadiness({ cartItems, deliveryType, deliveryZone, deliveryAddress, customerPhone }) {
+  const hasCart = cartItems.length > 0;
+  const hasPhone = cleanPhone(customerPhone).length >= 8;
+  const hasReception = deliveryType === "PICKUP" || (deliveryZone && deliveryAddress.trim().length >= 3);
+  const steps = [
+    { label: "Panier", done: hasCart },
+    { label: "Contact", done: hasPhone },
+    { label: "Reception", done: hasReception },
+  ];
+
+  if (!hasCart) return { ready: false, label: "Ajoute un article", steps };
+  if (!hasPhone) return { ready: false, label: "Ajoute ton numero", steps };
+  if (!hasReception) return { ready: false, label: deliveryType === "PICKUP" ? "Choisis reception" : "Complete livraison", steps };
+
+  return { ready: true, label: "Pret", steps };
+}
+
+function CheckoutProgress({ steps }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-[20px] bg-[var(--surface-soft)] p-2">
+      {steps.map((step, index) => (
+        <div key={step.label} className={`rounded-2xl px-2 py-2 text-center ${step.done ? "bg-white text-[var(--primary)] shadow-sm" : "text-[var(--text-dim)]"}`}>
+          <span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-xl text-xs font-extrabold ${step.done ? "bg-[var(--primary)] text-white" : "bg-white text-[var(--text-dim)]"}`}>
+            {step.done ? <CheckCircle2 size={15} /> : index + 1}
+          </span>
+          <p className="mt-1 text-[0.68rem] font-extrabold">{step.label}</p>
+        </div>
+      ))}
     </div>
   );
 }

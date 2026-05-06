@@ -440,6 +440,7 @@ export default function AddProductPage() {
                     <span className="font-semibold text-[var(--text-dim)]">Validation rapide</span>
                     <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
                   </div>
+                  <BatchReviewSummary items={bulkPhotoItems} />
                   <div id="bulk-products" className="space-y-3">
                   {bulkPhotoItems.map((item, index) => (
                     <div key={item.id} className="rounded-[24px] border border-[var(--outline)]/35 bg-white p-3 shadow-[0_14px_30px_rgb(16_24_20_/_0.07)]">
@@ -503,7 +504,7 @@ export default function AddProductPage() {
                                 className="min-h-[46px] w-full rounded-2xl border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
                               />
                               <div className="flex min-h-[46px] items-center rounded-2xl border border-[var(--outline)]/45 bg-white p-1">
-                                {[1, 2, 3].map((quantity) => (
+                                {[1, 2, 3, 5, 10].map((quantity) => (
                                   <button
                                     key={quantity}
                                     type="button"
@@ -784,6 +785,36 @@ function buildDescription(description, size) {
 function getSizeOptions(item) {
   const defaults = ["S", "M", "L", "XL", "38", "39", "40"];
   return Array.from(new Set([...(item.suggested_sizes || []), ...defaults].filter(Boolean).map(String))).slice(0, 10);
+}
+
+function BatchReviewSummary({ items }) {
+  const missingPrice = items.filter((item) => item.image_url && !item.price).length;
+  const missingName = items.filter((item) => item.image_url && !item.name).length;
+  const analyzing = items.filter((item) => item.uploading || item.analyzing).length;
+  const ready = items.filter((item) => item.image_url && item.name && item.price).length;
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <BatchMetric label="Prets" value={ready} tone="green" />
+      <BatchMetric label="Prix" value={missingPrice} tone={missingPrice > 0 ? "amber" : "green"} />
+      <BatchMetric label="IA" value={analyzing || missingName} tone={analyzing || missingName ? "blue" : "green"} />
+    </div>
+  );
+}
+
+function BatchMetric({ label, value, tone }) {
+  const toneClass = {
+    green: "bg-[var(--surface-soft)] text-[var(--primary)]",
+    amber: "bg-[var(--accent-soft)] text-[var(--accent)]",
+    blue: "bg-[var(--info-soft)] text-[var(--info)]",
+  }[tone];
+
+  return (
+    <div className={`rounded-2xl p-3 text-center ${toneClass}`}>
+      <p className="font-display text-xl font-bold leading-none">{value}</p>
+      <p className="mt-1 text-[0.65rem] font-extrabold uppercase">{label}</p>
+    </div>
+  );
 }
 
 function parseBulkProducts(text) {

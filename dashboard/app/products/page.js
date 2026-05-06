@@ -3,7 +3,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   Camera,
+  CheckCircle2,
   ImagePlus,
   Loader2,
   Package,
@@ -28,6 +30,7 @@ export default function ProductsPage() {
   const editFileInputRef = useRef(null);
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
+  const [stockFilter, setStockFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -143,13 +146,30 @@ export default function ProductsPage() {
 
   const filteredProducts = useMemo(() => {
     const value = query.trim().toLowerCase();
-    if (!value) return products;
+    return products.filter((product) => {
+      const stock = Number(product.stock_quantity || 0);
+      const matchesQuery = !value
+        || product.name?.toLowerCase().includes(value)
+        || product.description?.toLowerCase().includes(value);
+      const matchesStock = stockFilter === "ALL"
+        || (stockFilter === "LOW" && stock > 0 && stock <= 2)
+        || (stockFilter === "OUT" && stock === 0)
+        || (stockFilter === "IN_STOCK" && stock > 0);
 
-    return products.filter((product) => (
-      product.name?.toLowerCase().includes(value)
-      || product.description?.toLowerCase().includes(value)
-    ));
-  }, [products, query]);
+      return matchesQuery && matchesStock;
+    });
+  }, [products, query, stockFilter]);
+
+  const stockStats = useMemo(() => {
+    const inStock = products.filter((product) => Number(product.stock_quantity || 0) > 0).length;
+    const lowStock = products.filter((product) => {
+      const stock = Number(product.stock_quantity || 0);
+      return stock > 0 && stock <= 2;
+    }).length;
+    const outStock = products.filter((product) => Number(product.stock_quantity || 0) === 0).length;
+
+    return { total: products.length, inStock, lowStock, outStock };
+  }, [products]);
 
   return (
     <div className="app-shell">
@@ -176,6 +196,10 @@ export default function ProductsPage() {
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
             />
           </div>
+
+          {!loading && products.length > 0 && (
+            <CatalogueHealth stats={stockStats} filter={stockFilter} onFilter={setStockFilter} />
+          )}
         </div>
       </header>
 
@@ -270,6 +294,51 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CatalogueHealth({ stats, filter, onFilter }) {
+  const filters = [
+    { value: "ALL", label: "Tout", count: stats.total },
+    { value: "IN_STOCK", label: "En stock", count: stats.inStock },
+    { value: "LOW", label: "Stock bas", count: stats.lowStock },
+    { value: "OUT", label: "Rupture", count: stats.outStock },
+  ];
+
+  return (
+    <section className="rounded-[22px] bg-[var(--text-main)] p-3 text-white shadow-[var(--shadow-md)]">
+      <div className="grid grid-cols-3 gap-2">
+        <HealthMini icon={<CheckCircle2 size={16} />} label="En stock" value={stats.inStock} />
+        <HealthMini icon={<AlertTriangle size={16} />} label="Bas" value={stats.lowStock} />
+        <HealthMini icon={<Package size={16} />} label="Total" value={stats.total} />
+      </div>
+      <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-0.5">
+        {filters.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            onClick={() => onFilter(item.value)}
+            className={`min-h-[36px] shrink-0 rounded-full px-3 text-xs font-extrabold ${
+              filter === item.value ? "bg-[var(--primary-bright)] text-[var(--text-main)]" : "bg-white/10 text-white/72"
+            }`}
+          >
+            {item.label} {item.count}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HealthMini({ icon, label, value }) {
+  return (
+    <div className="rounded-2xl bg-white/10 p-2 text-center ring-1 ring-white/10">
+      <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-[var(--primary-bright)]">
+        {icon}
+      </span>
+      <p className="mt-1 font-display text-lg font-bold leading-none">{value}</p>
+      <p className="mt-0.5 text-[0.62rem] font-extrabold uppercase text-white/48">{label}</p>
     </div>
   );
 }
