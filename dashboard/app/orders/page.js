@@ -30,18 +30,18 @@ function cleanPhone(phoneNumber) {
 
 const statusLabels = {
   ALL: "Toutes",
-  WORK: "A faire",
-  PENDING: "A confirmer",
-  PAID: "Paquet a faire",
+  WORK: "Actives",
+  PENDING: "Nouvelles",
+  PAID: "A preparer",
   PREPARED: "A livrer",
   DELIVERED: "Livrees",
   CANCELLED: "Annulees",
 };
 
 const statusHints = {
-  PENDING: "Verifier client et paiement",
-  PAID: "Mettre les articles dans le sachet",
-  PREPARED: "Envoyer au livreur ou livrer",
+  PENDING: "Nouvelle commande. Verifie client, adresse et paiement",
+  PAID: "Commande confirmee. Mets les articles dans le sachet",
+  PREPARED: "Paquet pret. Envoie au livreur ou marque livree",
   DELIVERED: "Terminee",
   CANCELLED: "Annule",
 };
@@ -146,7 +146,7 @@ export default function OrdersPage() {
           <div>
             <p className="quiet-label text-[var(--primary)]">Commandes</p>
             <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Travail du jour</h1>
-            <p className="mt-1 text-base font-semibold leading-6 text-[var(--text-dim)]">Une commande avance simplement: confirmer, preparer, livrer.</p>
+            <p className="mt-1 text-base font-semibold leading-6 text-[var(--text-dim)]">Une commande avance simplement: nouvelle, paquet pret, livree.</p>
           </div>
           <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
             <RefreshCw size={19} strokeWidth={2.5} />
@@ -367,7 +367,7 @@ function getQuickAction(order, onPrepared, onDelivered) {
 
   if (order.status === "PENDING" || order.status === "PAID") {
     return {
-      label: order.status === "PENDING" ? "Verifier et marquer pret" : "Paquet pret",
+      label: order.status === "PENDING" ? "Confirmer paquet pret" : "Paquet pret",
       icon: <Package size={18} />,
       className: "bg-[var(--text-main)] text-white",
       onClick: onPrepared,
@@ -421,11 +421,12 @@ Livraison: ${deliveryText}
 Paiement produit: ${order.status === "PAID" || order.payment_method === "PAYSTACK" ? "PAYE" : "A verifier"}
 Total commande: ${formatPrice(total)}`);
 
-  const clientMessage = encodeURIComponent(`Bonjour, votre commande Tikchop ${order.order_ref || order.id?.slice(0, 8)} est prise en charge.
+const clientMessage = encodeURIComponent(`Bonjour, votre commande Tikchop ${order.order_ref || order.id?.slice(0, 8)} est prise en charge.
 
 Articles: ${items.length || 1}
 Livraison: ${order.delivery_zone || "A confirmer"}
 Total: ${formatPrice(total)}
+Recu: ${typeof window !== "undefined" ? `${window.location.origin}/receipt?order=${order.id}` : ""}
 
 Nous vous tenons informe pour la livraison.`);
 
@@ -476,7 +477,7 @@ Nous vous tenons informe pour la livraison.`);
           <OrderProgress status={order.status} />
 
           <section>
-            <SectionTitle step="1" title="Articles a preparer" />
+            <SectionTitle step="1" title="Articles dans le sachet" />
             <div className="mt-3 space-y-2">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-soft)] p-3">
@@ -493,7 +494,7 @@ Nous vous tenons informe pour la livraison.`);
           </section>
 
           <section>
-            <SectionTitle step="2" title="Client et livraison" />
+            <SectionTitle step="2" title="Client, adresse, livreur" />
             <div className="mt-3 grid gap-2">
               <InfoBlock icon={<Phone size={18} />} label="Client" value={displayClientPhone} />
               <InfoBlock icon={<MapPin size={18} />} label="Adresse" value={`${order.delivery_zone || "Zone non renseignee"} - ${order.delivery_address || "Adresse non renseignee"}`} />
@@ -522,7 +523,7 @@ Nous vous tenons informe pour la livraison.`);
           {!isPrepared && !isDone ? (
             <button onClick={onPrepared} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] text-base font-extrabold text-zinc-950 shadow-[0_14px_34px_rgba(0,108,73,0.20)] active:scale-[0.99]">
               <Package size={20} />
-              {order.status === "PENDING" ? "Verifier et marquer pret" : "Paquet pret"}
+              {order.status === "PENDING" ? "Confirmer paquet pret" : "Paquet pret"}
             </button>
           ) : isDone ? (
             <div className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm font-extrabold text-zinc-500">
@@ -577,7 +578,7 @@ Nous vous tenons informe pour la livraison.`);
             </>
           ) : (
             <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 ring-1 ring-zinc-100">
-              Le livreur vient apres le bouton Commande prete.
+              Le partage livreur apparait apres le bouton Paquet pret.
             </div>
           )}
         </div>
@@ -603,8 +604,8 @@ function WorkTile({ title, value, tone = "default" }) {
 
 function OrderProgress({ status }) {
   const steps = [
-    { key: "CHECK", label: "Verifier", active: ["PENDING", "PAID", "PREPARED", "DELIVERED"].includes(status) },
-    { key: "READY", label: "Pret", active: ["PREPARED", "DELIVERED"].includes(status) },
+    { key: "CHECK", label: "Nouvelle", active: ["PENDING", "PAID", "PREPARED", "DELIVERED"].includes(status) },
+    { key: "READY", label: "Paquet", active: ["PREPARED", "DELIVERED"].includes(status) },
     { key: "DONE", label: "Livre", active: status === "DELIVERED" },
   ];
 
@@ -625,7 +626,7 @@ function OrderProgress({ status }) {
 function getNextAction(order) {
   if (order.status === "PREPARED" || order.delivery_status === "READY") {
     return {
-      title: "Envoyer au livreur",
+      title: "Paquet pret",
       subtitle: "Le paquet est pret. Partage la fiche ou marque livree apres reception.",
       icon: <Truck size={17} />,
       iconTone: "bg-blue-100 text-blue-700",
@@ -644,7 +645,7 @@ function getNextAction(order) {
   }
 
   return {
-    title: order.status === "PAID" ? "Faire le paquet" : "Confirmer la commande",
+    title: order.status === "PAID" ? "Preparer le paquet" : "Nouvelle commande",
     subtitle: order.status === "PAID"
       ? "Paiement recu. Mets les articles dans le sachet."
       : "Verifie client, paiement et adresse avant preparation.",

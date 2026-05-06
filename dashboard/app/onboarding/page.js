@@ -593,6 +593,7 @@ export default function OnboardingPage() {
             subtitle="Le lien est cree. Connecte WhatsApp pour activer le chatbot."
           >
             <WhatsAppPairingBox pairing={pairing} />
+            <LaunchChecklist seller={createdSeller} />
 
             <div className="rounded-xl bg-[var(--surface-soft)] p-4">
               <p className="quiet-label">Lien boutique</p>
@@ -669,6 +670,46 @@ function OnboardingCard({ icon, title, subtitle, children }) {
       </div>
       {children}
     </section>
+  );
+}
+
+function LaunchChecklist({ seller }) {
+  const items = [
+    {
+      title: "Publier le premier article",
+      text: "Photo depuis galerie, prix, stock. Tikchop aide avec IA.",
+      href: "/add-product",
+    },
+    {
+      title: "Regler la livraison",
+      text: "Ajoute communes, frais et numeros livreurs.",
+      href: "/delivery-settings",
+    },
+    {
+      title: "Partager la boutique",
+      text: `Le lien public est /${seller.slug}.`,
+      href: `/${seller.slug}`,
+    },
+  ];
+
+  return (
+    <div className="mb-4 rounded-[22px] border border-[var(--outline)]/55 bg-white p-4">
+      <p className="quiet-label text-[var(--primary)]">Pour commencer vite</p>
+      <div className="mt-3 space-y-2">
+        {items.map((item, index) => (
+          <Link key={item.title} href={item.href} className="flex min-h-[68px] items-center gap-3 rounded-2xl bg-[var(--surface-soft)] p-3 text-left no-underline">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--text-main)] text-sm font-extrabold text-white">
+              {index + 1}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-extrabold text-[var(--text-main)]">{item.title}</span>
+              <span className="mt-0.5 block text-xs font-semibold leading-4 text-[var(--text-dim)]">{item.text}</span>
+            </span>
+            <ArrowRight className="shrink-0 text-[var(--primary)]" size={17} />
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

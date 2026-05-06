@@ -52,6 +52,7 @@ export default function AddProductPage() {
     price: "",
     stock_quantity: "1",
     size: "",
+    suggested_sizes: [],
     description: "",
     image_url: "",
     seller_id: "",
@@ -157,6 +158,7 @@ export default function AddProductPage() {
       name: "",
       price: "",
       size: "",
+      suggested_sizes: [],
       description: "",
       stock_quantity: 1,
       uploading: true,
@@ -489,7 +491,7 @@ export default function AddProductPage() {
                           />
                           <div className="space-y-2">
                             <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
-                              {["S", "M", "L", "XL", "38", "39", "40"].map((size) => (
+                              {getSizeOptions(item).map((size) => (
                                 <QuickValueButton key={size} active={item.size === size} label={size} onClick={() => updateBulkPhotoItem(item.id, "size", size)} />
                               ))}
                             </div>
@@ -650,6 +652,16 @@ export default function AddProductPage() {
                       <input type="number" name="stock_quantity" placeholder="1" value={formData.stock_quantity} onChange={handleChange} required min="0" className="mobile-input" />
                     </Field>
                   </div>
+                  {formData.suggested_sizes?.length > 0 && (
+                    <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
+                      <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--text-dim)]">Tailles proposees par IA</p>
+                      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
+                        {getSizeOptions(formData).map((size) => (
+                          <QuickValueButton key={size} active={formData.size === size} label={size} onClick={() => setFormData((current) => ({ ...current, size }))} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -749,10 +761,16 @@ function canSingleProductSubmit(formData, imageUploading, imageAnalyzing) {
 }
 
 function applyAnalysisToProduct(product, analysis) {
+  const suggestedSizes = Array.isArray(analysis?.suggested_sizes)
+    ? analysis.suggested_sizes.filter(Boolean).map(String).slice(0, 8)
+    : [];
+
   return {
     ...product,
     name: analysis?.name || product.name,
     description: analysis?.description || product.description,
+    size: product.size || analysis?.size || suggestedSizes[0] || "",
+    suggested_sizes: suggestedSizes,
   };
 }
 
@@ -761,6 +779,11 @@ function buildDescription(description, size) {
   if (size) parts.push(`Taille: ${size}`);
   if (description) parts.push(description);
   return parts.join("\n");
+}
+
+function getSizeOptions(item) {
+  const defaults = ["S", "M", "L", "XL", "38", "39", "40"];
+  return Array.from(new Set([...(item.suggested_sizes || []), ...defaults].filter(Boolean).map(String))).slice(0, 10);
 }
 
 function parseBulkProducts(text) {
