@@ -44,7 +44,7 @@ export default function AddProductPage() {
   const [analysisError, setAnalysisError] = useState("");
   const [listening, setListening] = useState(false);
   const [bulkListeningId, setBulkListeningId] = useState("");
-  const [mode, setMode] = useState("MANUAL");
+  const [mode, setMode] = useState("BULK");
   const [bulkText, setBulkText] = useState("");
   const [bulkPhotoItems, setBulkPhotoItems] = useState([]);
   const [formData, setFormData] = useState({
@@ -286,8 +286,14 @@ export default function AddProductPage() {
     recognition.start();
   }
 
+  const sellers = activeSeller.id ? [activeSeller] : [];
   const bulkProducts = parseBulkProducts(bulkText);
   const readyBulkPhotos = bulkPhotoItems.filter((item) => item.image_url && item.name && item.price);
+  const publishCount = mode === "BULK" ? readyBulkPhotos.length || bulkProducts.length : canSingleProductSubmit(formData, imageUploading, imageAnalyzing) ? 1 : 0;
+  const selectedCount = mode === "BULK" ? bulkPhotoItems.length || bulkProducts.length : formData.image_url ? 1 : 0;
+  const progressLabel = mode === "BULK"
+    ? `${readyBulkPhotos.length}/${bulkPhotoItems.length || bulkProducts.length || 0} pret${readyBulkPhotos.length > 1 ? "s" : ""}`
+    : formData.price ? "Prix pret" : formData.image_url ? "Photo prete" : "Photo attendue";
   const canSubmit = mode === "BULK"
     ? formData.seller_id && !bulkUploading && (readyBulkPhotos.length > 0 || bulkProducts.length > 0)
     : formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing;
@@ -312,30 +318,38 @@ export default function AddProductPage() {
   });
 
   return (
-    <div className="app-shell pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">
+    <div className="app-shell pb-[calc(10rem+env(safe-area-inset-bottom,0px))]">
       <main className="space-y-5">
-        <section className="app-dashboard-hero">
+        <section className="relative overflow-hidden rounded-[30px] bg-[var(--text-main)] p-5 text-white shadow-[var(--shadow-lg)]">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[var(--info)]" />
           <div className="relative z-10">
-            <p className="quiet-label text-white/55">Publication rapide</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-white">Nouvel article</h1>
-            <p className="mt-2 max-w-sm text-base leading-6 text-white/72">
-              Prends une photo. Tikchop aide pour le nom. Le vendeur valide seulement le prix, la taille et le stock.
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="quiet-label text-white/55">Assistant article</p>
+                <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-white">Publier sans taper</h1>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[var(--primary-bright)]">
+                <Sparkles size={23} />
+              </span>
+            </div>
+            <p className="mt-3 max-w-sm text-base font-semibold leading-6 text-white/72">
+              Selectionne les photos. Tikchop propose le nom. Le vendeur valide surtout le prix, la taille et la quantite.
             </p>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <HeroMiniStat icon={<Camera size={16} />} label="Photo" />
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <HeroMiniStat icon={<ImagePlus size={16} />} label={`${selectedCount} photo${selectedCount > 1 ? "s" : ""}`} />
               <HeroMiniStat icon={<Sparkles size={16} />} label="IA" />
-              <HeroMiniStat icon={<BadgeCheck size={16} />} label="Prix" />
+              <HeroMiniStat icon={<BadgeCheck size={16} />} label={progressLabel} />
             </div>
           </div>
         </section>
 
         <section className="grid grid-cols-3 gap-2" aria-label="Choisir une methode">
-          <ModeButton active={mode === "MANUAL"} icon={<Camera size={19} />} label="1 photo" hint="Le plus simple" onClick={() => setMode("MANUAL")} />
-          <ModeButton active={mode === "BULK"} icon={<Layers3 size={19} />} label="Lot" hint="Plusieurs" onClick={() => setMode("BULK")} />
+          <ModeButton active={mode === "BULK"} icon={<Layers3 size={19} />} label="Photos" hint="Recommande" onClick={() => setMode("BULK")} />
+          <ModeButton active={mode === "MANUAL"} icon={<Camera size={19} />} label="1 article" hint="Simple" onClick={() => setMode("MANUAL")} />
           <ModeButton active={mode === "VOICE"} icon={<Mic size={19} />} label="Vocal" hint="Option" onClick={() => setMode("VOICE")} />
         </section>
 
-        <section className="rounded-[18px] border border-[var(--line)] bg-white p-3 shadow-[var(--shadow-sm)]">
+        <section className="rounded-[24px] border border-white/80 bg-white/95 p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.34)]">
           <div className="grid grid-cols-3 gap-2 text-center">
             <StepChip done={mode === "BULK" ? bulkPhotoItems.length > 0 || bulkProducts.length > 0 : Boolean(formData.image_url)} step="1" label={mode === "BULK" ? "Photos" : "Photo"} />
             <StepChip done={mode === "BULK" ? readyBulkPhotos.length > 0 || bulkProducts.length > 0 : Boolean(formData.name)} step="2" label="Nom" />
@@ -384,14 +398,14 @@ export default function AddProductPage() {
 
           {mode === "BULK" && (
             <section className="space-y-4">
-            <div className="rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
+            <div className="rounded-[26px] border border-white/80 bg-white/95 p-4 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.34)]">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--text-main)] text-white">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--text-main)] text-[var(--primary-bright)]">
                   <PackagePlus size={20} />
                 </div>
                 <div>
-                  <p className="font-display text-lg font-bold text-[var(--text-main)]">Mettre plusieurs articles</p>
-                  <p className="text-sm leading-5 text-[var(--text-dim)]">Selectionne les photos. L&apos;IA propose les noms. Le vendeur valide les prix un par un.</p>
+                  <p className="font-display text-lg font-bold text-[var(--text-main)]">Galerie du telephone</p>
+                  <p className="text-sm leading-5 text-[var(--text-dim)]">Choisis plusieurs photos, puis complete seulement ce qui manque.</p>
                 </div>
               </div>
               <input
@@ -405,30 +419,30 @@ export default function AddProductPage() {
               <button
                 type="button"
                 onClick={() => bulkFileInputRef.current?.click()}
-                className="mt-4 flex min-h-[82px] w-full items-center justify-between gap-3 rounded-2xl bg-[var(--text-main)] px-4 text-left text-base font-bold text-white shadow-sm active:scale-[0.99]"
+                className="mt-4 flex min-h-[92px] w-full items-center justify-between gap-3 rounded-[24px] bg-[var(--text-main)] px-4 text-left text-base font-bold text-white shadow-[var(--shadow-md)] active:scale-[0.99]"
               >
                 <span className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/12">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12">
                     {bulkUploading ? <Loader2 className="animate-spin" size={21} /> : <ImagePlus size={22} />}
                   </span>
                   <span>
-                    <span className="block">{bulkUploading ? "Envoi des photos..." : "Ouvrir la galerie"}</span>
-                    <span className="block text-xs font-semibold text-white/55">Selection multiple si le telephone le permet</span>
+                    <span className="block">{bulkUploading ? "Envoi des photos..." : "Choisir les photos"}</span>
+                    <span className="block text-xs font-semibold text-white/58">Selection multiple depuis la galerie</span>
                   </span>
                 </span>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[var(--text-main)]">Photos</span>
+                <span className="rounded-full bg-[var(--primary-bright)] px-3 py-1 text-xs font-extrabold text-[var(--text-main)]">Recommande</span>
               </button>
               {bulkPhotoItems.length > 0 && (
                 <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between rounded-lg bg-[var(--surface-soft)] px-3 py-2 text-sm">
-                    <span className="font-semibold text-[var(--text-dim)]">Articles prets</span>
+                  <div className="flex items-center justify-between rounded-2xl bg-[var(--surface-soft)] px-3 py-2 text-sm">
+                    <span className="font-semibold text-[var(--text-dim)]">Validation rapide</span>
                     <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
                   </div>
                   <div id="bulk-products" className="space-y-3">
                   {bulkPhotoItems.map((item, index) => (
-                    <div key={item.id} className="rounded-2xl border border-[var(--outline)]/35 bg-white p-3 shadow-[0_10px_24px_rgb(16_24_20_/_0.05)]">
+                    <div key={item.id} className="rounded-[24px] border border-[var(--outline)]/35 bg-white p-3 shadow-[0_14px_30px_rgb(16_24_20_/_0.07)]">
                       <div className="flex gap-3">
-                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[var(--surface-mid)]">
+                        <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-[20px] bg-[var(--surface-mid)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={item.preview} alt="" className="h-full w-full object-cover" />
                           {item.uploading && (
@@ -458,35 +472,47 @@ export default function AddProductPage() {
                             </div>
                           </div>
                           <p className="rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--text-dim)]">
-                            Priorite: prix. Taille et quantite peuvent etre dites au micro.
+                            Prix obligatoire. Le micro peut remplir taille et quantite.
                           </p>
                           <input
                             value={item.name}
                             onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
                             placeholder={item.analyzing ? "Nom propose par l'IA..." : "Nom"}
-                            className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
+                            className="min-h-[46px] w-full rounded-2xl border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
                           />
                           <input
                             value={item.price}
                             onChange={(event) => updateBulkPhotoItem(item.id, "price", event.target.value)}
-                            placeholder="Prix obligatoire"
+                            placeholder="Prix"
                             inputMode="numeric"
-                            className="min-h-[52px] w-full rounded-xl border border-[var(--primary)]/45 bg-white px-3 text-lg font-extrabold text-[var(--primary)] outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_4px_rgb(5_122_85_/_0.13)]"
+                            className="min-h-[58px] w-full rounded-[20px] border border-[var(--primary)]/45 bg-[#fbfff9] px-4 font-display text-2xl font-extrabold text-[var(--primary)] outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_4px_rgb(5_122_85_/_0.13)]"
                           />
-                          <div className="grid grid-cols-2 gap-2">
-                            <input
-                              value={item.size}
-                              onChange={(event) => updateBulkPhotoItem(item.id, "size", event.target.value)}
-                              placeholder="Taille"
-                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
-                            />
-                            <input
-                              value={item.stock_quantity}
-                              onChange={(event) => updateBulkPhotoItem(item.id, "stock_quantity", event.target.value)}
-                              placeholder="Quantite"
-                              inputMode="numeric"
-                              className="min-h-[44px] w-full rounded-lg border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none"
-                            />
+                          <div className="space-y-2">
+                            <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
+                              {["S", "M", "L", "XL", "38", "39", "40"].map((size) => (
+                                <QuickValueButton key={size} active={item.size === size} label={size} onClick={() => updateBulkPhotoItem(item.id, "size", size)} />
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-[1fr_auto] gap-2">
+                              <input
+                                value={item.size}
+                                onChange={(event) => updateBulkPhotoItem(item.id, "size", event.target.value)}
+                                placeholder="Taille autre"
+                                className="min-h-[46px] w-full rounded-2xl border border-[var(--outline)]/45 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
+                              />
+                              <div className="flex min-h-[46px] items-center rounded-2xl border border-[var(--outline)]/45 bg-white p-1">
+                                {[1, 2, 3].map((quantity) => (
+                                  <button
+                                    key={quantity}
+                                    type="button"
+                                    onClick={() => updateBulkPhotoItem(item.id, "stock_quantity", quantity)}
+                                    className={`h-9 min-w-9 rounded-xl text-sm font-extrabold ${Number(item.stock_quantity) === quantity ? "bg-[var(--text-main)] text-white" : "text-[var(--text-dim)]"}`}
+                                  >
+                                    {quantity}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -675,16 +701,12 @@ export default function AddProductPage() {
             </section>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || !canSubmit}
-            className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-xl text-base font-semibold text-white shadow-[0_12px_30px_rgba(0,108,73,0.20)] transition ${
-              loading || !canSubmit ? "bg-[var(--outline)]" : "bg-[var(--primary)] active:scale-[0.98]"
-            }`}
-          >
-            <Upload size={19} />
-            {loading ? "Enregistrement..." : mode === "BULK" ? `Publier ${readyBulkPhotos.length || bulkProducts.length || ""} articles` : "Mettre en ligne"}
-          </button>
+          <PublishDock
+            loading={loading}
+            canSubmit={canSubmit}
+            mode={mode}
+            count={publishCount}
+          />
         </form>
       </main>
     </div>
@@ -720,6 +742,10 @@ function parseVoiceProduct(text) {
     size: sizeMatch?.[1]?.toUpperCase() || "",
     stock_quantity: quantityMatch?.[1] || "1",
   };
+}
+
+function canSingleProductSubmit(formData, imageUploading, imageAnalyzing) {
+  return Boolean(formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing);
 }
 
 function applyAnalysisToProduct(product, analysis) {
@@ -939,5 +965,51 @@ function HeroMiniStat({ icon, label }) {
       {icon}
       {label}
     </span>
+  );
+}
+
+function QuickValueButton({ active, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 min-w-10 shrink-0 rounded-xl px-3 text-sm font-extrabold ${
+        active ? "bg-[var(--text-main)] text-white" : "bg-[var(--surface-soft)] text-[var(--text-dim)]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PublishDock({ loading, canSubmit, mode, count }) {
+  const label = loading
+    ? "Publication..."
+    : mode === "BULK"
+      ? count > 0 ? `Publier ${count} article${count > 1 ? "s" : ""}` : "Ajoute les prix"
+      : "Mettre en ligne";
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[120] border-t border-white/70 bg-white/92 px-4 pb-[calc(0.85rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_44px_rgb(13_23_18_/_0.13)] backdrop-blur-2xl md:left-1/2 md:max-w-[480px] md:-translate-x-1/2 md:rounded-t-[28px] md:border-x">
+      <div className="mx-auto max-w-[460px]">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--text-dim)]">Mise en vente</span>
+          <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${canSubmit ? "bg-[var(--surface-soft)] text-[var(--primary)]" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+            {canSubmit ? "Pret" : "A completer"}
+          </span>
+        </div>
+        <button
+          type="submit"
+          disabled={loading || !canSubmit}
+          className={`flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-extrabold shadow-[0_14px_34px_rgba(0,108,73,0.22)] transition ${
+            loading || !canSubmit ? "bg-[var(--outline)] text-white" : "bg-[var(--primary)] text-white active:scale-[0.98]"
+          }`}
+        >
+          <Upload size={20} />
+          {label}
+          {!loading && canSubmit && <ArrowRight size={19} />}
+        </button>
+      </div>
+    </div>
   );
 }
