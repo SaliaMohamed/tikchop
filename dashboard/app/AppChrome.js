@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Store } from "lucide-react";
+import { Camera, ClipboardList, Home, Loader2, LogOut, Package, Store, UsersRound } from "lucide-react";
 import { getSellerByOwner } from "./seller-actions";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 const dashboardRoutes = new Set([
   "/dashboard",
   "/orders",
+  "/crm",
   "/products",
   "/add-product",
   "/delivery-settings",
@@ -59,6 +60,7 @@ export default function AppChrome({ children }) {
         <div className="nav-links">
           <Link href="/dashboard" className="nav-link">Accueil</Link>
           <Link href="/orders" className="nav-link">Commandes</Link>
+          <Link href="/crm" className="nav-link">CRM</Link>
           <Link href="/products" className="nav-link">Articles</Link>
           <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="nav-link">Boutique</Link>
           <Link href="/whatsapp" className="nav-link">Assistant</Link>
@@ -91,9 +93,9 @@ export default function AppChrome({ children }) {
           <ClipboardList size={20} strokeWidth={2.2} />
           <span>Commandes</span>
         </Link>
-        <Link href="/whatsapp" className={`mobile-tabbar-item ${pathname === "/whatsapp" ? "is-active" : ""}`}>
-          <MessageCircle size={20} strokeWidth={2.2} />
-          <span>Aide</span>
+        <Link href="/crm" className={`mobile-tabbar-item ${pathname === "/crm" ? "is-active" : ""}`}>
+          <UsersRound size={20} strokeWidth={2.2} />
+          <span>Clients</span>
         </Link>
       </nav>
       )}
