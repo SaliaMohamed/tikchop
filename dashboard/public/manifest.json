@@ -1,13 +1,16 @@
 {
   "name": "Tikchop",
   "short_name": "Tikchop",
+  "id": "/dashboard",
   "description": "Mini-boutiques mobiles pour vendre sur WhatsApp.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f8f5",
-  "theme_color": "#f7f8f5",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#f4f8f2",
+  "theme_color": "#067a55",
   "orientation": "portrait-primary",
+  "categories": ["business", "shopping", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
@@ -19,6 +22,20 @@
       "src": "/apple-icon.svg",
       "sizes": "180x180",
       "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Publier un article",
+      "short_name": "Publier",
+      "url": "/add-product",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Voir les commandes",
+      "short_name": "Commandes",
+      "url": "/orders",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
 }

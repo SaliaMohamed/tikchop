@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Store } from "lucide-react";
 import { getSellerByOwner } from "./seller-actions";
+import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
 import { supabase } from "../lib/supabase";
 
@@ -26,7 +27,12 @@ export default function AppChrome({ children }) {
   const showMobileTabbar = showSellerChrome && pathname !== "/add-product" && pathname !== "/onboarding";
 
   if (!showSellerChrome) {
-    return <main className="container public-chrome">{children}</main>;
+    return (
+      <>
+        <main className="container public-chrome">{children}</main>
+        {pathname !== "/" && <PwaInstallPrompt />}
+      </>
+    );
   }
 
   return (
@@ -91,6 +97,7 @@ export default function AppChrome({ children }) {
         </Link>
       </nav>
       )}
+      <PwaInstallPrompt />
     </SellerAccountGate>
   );
 }
