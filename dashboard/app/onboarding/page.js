@@ -24,6 +24,17 @@ function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
 }
 
+function extractAccountProfile(user) {
+  const metadata = user?.user_metadata || {};
+  return {
+    account_name: metadata.display_name || metadata.full_name || metadata.name || "",
+    email: user?.email || "",
+    account_phone: user?.phone || "",
+    name: metadata.store_name || metadata.shop_name || "",
+    phone_number: user?.phone || "",
+  };
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -79,6 +90,18 @@ export default function OnboardingPage() {
         if (seller) {
           writeActiveSeller(seller);
           if (active) setExistingSeller(seller);
+        } else if (active) {
+          setSellerAccount(user);
+          const profile = extractAccountProfile(user);
+          setForm((current) => ({
+            ...current,
+            account_name: current.account_name || profile.account_name,
+            email: current.email || profile.email,
+            account_phone: current.account_phone || profile.account_phone,
+            name: current.name || profile.name,
+            phone_number: current.phone_number || profile.phone_number,
+          }));
+          setStep(1);
         }
       } catch (sessionError) {
         console.error("Onboarding session check error:", sessionError);
@@ -110,6 +133,7 @@ export default function OnboardingPage() {
 
   function canContinue() {
     if (step === 0) {
+      if (sellerAccount?.id) return true;
       const hasIdentity = accountMethod === "EMAIL"
         ? form.email.includes("@")
         : form.account_phone.replace(/[^\d]/g, "").length >= 8;
@@ -190,6 +214,11 @@ export default function OnboardingPage() {
   }
 
   async function handleAccountContinue() {
+    if (sellerAccount?.id) {
+      setStep(1);
+      return;
+    }
+
     try {
       setSaving(true);
       setError("");
@@ -210,6 +239,31 @@ export default function OnboardingPage() {
       setError(friendlyError(err, "Compte vendeur non valide. Verifie les informations saisies."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleGoogleAuth() {
+    if (!supabase) {
+      setError("Connexion Google indisponible pour le moment.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/onboarding`,
+        },
+      });
+
+      if (oauthError) {
+        throw oauthError;
+      }
+    } catch (oauthError) {
+      setSaving(false);
+      setError(friendlyError(oauthError, "Connexion Google impossible pour le moment."));
     }
   }
 
@@ -342,6 +396,20 @@ export default function OnboardingPage() {
             title="Creer ton acces"
             subtitle="Le plus rapide ici: ton numero, un mot de passe, puis ta boutique."
           >
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={saving}
+              className="mb-4 flex min-h-[58px] w-full items-center justify-center gap-3 rounded-[20px] border border-[var(--outline)]/55 bg-white px-4 text-sm font-extrabold text-[var(--text-main)] shadow-[var(--shadow-sm)] disabled:text-[var(--outline)]"
+            >
+              <GoogleMark />
+              Continuer avec Google
+            </button>
+
+            <p className="mb-5 text-center text-[0.72rem] font-bold uppercase tracking-[0.12em] text-[var(--text-dim)]">
+              ou avec ton numero
+            </p>
+
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-soft)] p-1">
               <button
                 type="button"
@@ -770,6 +838,19 @@ function PaymentLogo({ name, tone }) {
     <div className={`flex min-h-[48px] items-center justify-center rounded-2xl px-3 text-sm font-black shadow-sm ${classes[tone] || "bg-white text-[var(--text-main)]"}`}>
       {name}
     </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-[var(--outline)]/35">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.244 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.955 3.045l5.657-5.657C34.053 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 12 24 12c3.059 0 5.842 1.154 7.955 3.045l5.657-5.657C34.053 6.053 29.277 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+        <path fill="#4CAF50" d="M24 44c5.176 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.152 35.091 26.676 36 24 36c-5.223 0-9.618-3.316-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.048 12.048 0 0 1-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+      </svg>
+    </span>
   );
 }
 
