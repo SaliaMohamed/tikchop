@@ -53,6 +53,10 @@ export default function OnboardingPage() {
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
   const totalSteps = 6;
+  const hasSecondaryAction = step > 0 && step < 5;
+  const footerSpacerClass = hasSecondaryAction
+    ? "pb-[calc(11.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
+    : "pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-0";
 
   useEffect(() => {
     let active = true;
@@ -322,7 +326,7 @@ export default function OnboardingPage() {
         </div>
       </header>
 
-      <main className="mt-6 space-y-5">
+      <main className={`mt-6 space-y-5 ${footerSpacerClass}`}>
         {step === 0 && <OnboardingLandingHero />}
 
         {step === 0 && (
@@ -621,7 +625,7 @@ export default function OnboardingPage() {
         )}
 
         <div className="fixed inset-x-0 bottom-0 z-[320] border-t border-[var(--outline)]/30 bg-white/96 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-[0_-16px_34px_rgba(22,29,25,0.12)] backdrop-blur-xl md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
-          {step > 0 && step < 5 && (
+          {hasSecondaryAction && (
             <button
               type="button"
               onClick={() => setStep((current) => Math.max(0, current - 1))}
