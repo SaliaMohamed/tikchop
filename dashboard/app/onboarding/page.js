@@ -708,11 +708,10 @@ function OnboardingLandingHero() {
       <div className="space-y-4 p-4">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/52">Paiements acceptes</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
             <PaymentLogo name="Wave" tone="wave" />
             <PaymentLogo name="Orange Money" tone="orange" />
             <PaymentLogo name="MTN MoMo" tone="mtn" />
-            <PaymentLogo name="Paystack" tone="paystack" />
           </div>
         </div>
 
@@ -746,7 +745,6 @@ function PaymentLogo({ name, tone }) {
     wave: "bg-[#dff7ff] text-[#006b8f]",
     orange: "bg-[#fff1dc] text-[#ef7d00]",
     mtn: "bg-[#fff5b8] text-[#111814]",
-    paystack: "bg-[#eaf1ff] text-[#1652c7]",
   };
 
   return (
