@@ -32,6 +32,35 @@ function getTotals(order) {
   };
 }
 
+function getSeller(order) {
+  return Array.isArray(order?.sellers) ? order.sellers[0] : order?.sellers;
+}
+
+function getPaymentStatus(order, payment = {}) {
+  if (["PAID", "PREPARED", "DELIVERED"].includes(order?.status) || payment?.status === "success") {
+    return "confirme";
+  }
+
+  return "a confirmer";
+}
+
+function getOrderStatus(order, payment = {}) {
+  if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "livree";
+  if (order?.delivery_status === "ASSIGNED") return "chez le livreur";
+  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "colis pret";
+  if (getPaymentStatus(order, payment) === "confirme") return "payee";
+  if (order?.status === "CANCELLED") return "annulee";
+  return "en attente";
+}
+
+function getDeliveryLine(order) {
+  if (order?.delivery_type === "PICKUP") return "Retrait boutique";
+
+  const zone = order?.delivery_zone || "Zone a confirmer";
+  const address = order?.delivery_address || "Adresse a confirmer";
+  return `${zone} - ${address}`;
+}
+
 function wrapLine(text, maxLength = 76) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
   const lines = [];
@@ -53,20 +82,34 @@ function wrapLine(text, maxLength = 76) {
 
 function buildReceiptLines(order, payment = {}) {
   payment = payment || {};
-  const seller = Array.isArray(order.sellers) ? order.sellers[0] : order.sellers;
+  const seller = getSeller(order);
   const totals = getTotals(order);
   const items = order.order_items || [];
   const paidAt = payment.paid_at || payment.transaction_date || order.paystack_paid_at || order.created_at;
   const date = paidAt ? new Date(paidAt).toLocaleString("fr-FR") : "Non renseignee";
-  const paymentStatus = ["PAID", "PREPARED", "DELIVERED"].includes(order.status) ? "confirme" : "a confirmer";
+  const generatedAt = new Date().toLocaleString("fr-FR");
+  const paymentStatus = getPaymentStatus(order, payment);
+  const orderStatus = getOrderStatus(order, payment);
+  const paymentOption = getPaymentOption(order.payment_method);
+  const client = order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Non renseigne";
+  const sellerPhone = seller?.phone_number || "Via WhatsApp boutique";
 
   const lines = [
-    { text: "RECU TIKCHOP", size: 20, gap: 24 },
-    { text: `Commande: ${getOrderRef(order)}`, size: 14, gap: 18 },
+    { text: "RECU DE COMMANDE TIKCHOP", size: 20, gap: 22 },
+    { text: `Reference: ${getOrderRef(order)}`, size: 14 },
+    { text: `Statut: ${orderStatus}`, size: 11 },
+    { text: `Genere le: ${generatedAt}`, size: 10, gap: 16 },
+    { text: "BOUTIQUE ET CLIENT", size: 13, gap: 14 },
     { text: `Boutique: ${seller?.name || "Tikchop"}`, size: 11 },
-    { text: `Client: ${order.customer_phone || "Non renseigne"}`, size: 11 },
-    { text: `Date: ${date}`, size: 11 },
-    { text: `Paiement: ${getPaymentOption(order.payment_method).label} - ${paymentStatus}`, size: 11, gap: 18 },
+    { text: `Contact vendeur: ${sellerPhone}`, size: 11 },
+    { text: `Client: ${client}`, size: 11 },
+    { text: `Date commande: ${date}`, size: 11, gap: 16 },
+    { text: "LIVRAISON", size: 13, gap: 14 },
+    { text: getDeliveryLine(order), size: 11 },
+    { text: `Frais livraison: ${formatCfa(totals.deliveryFee)}`, size: 11, gap: 16 },
+    { text: "PAIEMENT", size: 13, gap: 14 },
+    { text: `Methode: ${paymentOption.label}`, size: 11 },
+    { text: `Statut paiement: ${paymentStatus}`, size: 11, gap: 16 },
     { text: "ARTICLES", size: 13, gap: 15 },
   ];
 
@@ -76,7 +119,8 @@ function buildReceiptLines(order, payment = {}) {
       const quantity = Number(item.quantity || 0);
       const price = Number(item.price_at_time || 0);
       const total = quantity * price;
-      lines.push({ text: `${quantity} x ${name} - ${formatCfa(total)}`, size: 10 });
+      lines.push({ text: `${quantity} x ${name}`, size: 10 });
+      lines.push({ text: `Prix unitaire: ${formatCfa(price)} | Ligne: ${formatCfa(total)}`, size: 9 });
     }
   } else {
     lines.push({ text: "Articles non detailles dans le recu.", size: 10 });
@@ -86,8 +130,9 @@ function buildReceiptLines(order, payment = {}) {
     { text: "", size: 10, gap: 12 },
     { text: `Sous-total: ${formatCfa(totals.productsTotal)}`, size: 11 },
     { text: `Livraison: ${formatCfa(totals.deliveryFee)}`, size: 11 },
-    { text: `TOTAL: ${formatCfa(totals.total)}`, size: 15, gap: 20 },
-    { text: "Commande prise en charge. Gardez ce recu pour le vendeur ou le livreur.", size: 10 },
+    { text: `TOTAL A PAYER: ${formatCfa(totals.total)}`, size: 15, gap: 18 },
+    { text: "A presenter si besoin au vendeur ou au livreur.", size: 10 },
+    { text: "Ce recu ne remplace pas une facture fiscale.", size: 10 },
   );
 
   return lines.flatMap((line) => {

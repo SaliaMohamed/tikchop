@@ -9,6 +9,7 @@ import {
   PackageCheck,
   Phone,
   ReceiptText,
+  ShieldCheck,
   ShoppingBag,
   Store,
   Truck,
@@ -111,6 +112,24 @@ function getCurrentStep(order, paid) {
   return 0;
 }
 
+function getStatusLabel(order, paid) {
+  if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "Livree";
+  if (order?.delivery_status === "ASSIGNED") return "Chez le livreur";
+  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "Colis pret";
+  if (paid) return "Payee";
+  if (order?.status === "CANCELLED") return "Annulee";
+  return "En attente";
+}
+
+function getDeliveryModeLabel(order) {
+  if (order?.delivery_type === "PICKUP") return "Retrait boutique";
+  return "Livraison locale";
+}
+
+function getItemQuantityTotal(items) {
+  return (items || []).reduce((total, item) => total + Number(item.quantity || 0), 0);
+}
+
 export default async function ReceiptPage({ searchParams }) {
   const params = await searchParams;
   const { order, payment, error } = await getReceiptOrder({
@@ -148,9 +167,13 @@ export default async function ReceiptPage({ searchParams }) {
   const currentStep = getCurrentStep(order, paid);
   const sellerName = order.sellers?.name || "Tikchop";
   const sellerSlug = order.sellers?.slug || "salia";
+  const sellerPhone = order.sellers?.phone_number || "";
   const items = order.order_items || [];
   const deliveryLabel = order.delivery_type === "PICKUP" ? "Retrait boutique" : (order.delivery_zone || "A confirmer");
   const downloadUrl = `/api/receipt/pdf?${getReceiptQuery(order, params)}`;
+  const paymentLabel = order.payment_method ? getPaymentOption(order.payment_method).label : "A confirmer";
+  const statusLabel = getStatusLabel(order, paid);
+  const quantityTotal = getItemQuantityTotal(items);
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-4 py-5 md:py-10">
@@ -172,17 +195,37 @@ export default async function ReceiptPage({ searchParams }) {
             paid ? "bg-green-400 text-zinc-950" : "bg-amber-300 text-zinc-950"
           }`}>
             {paid ? <CheckCircle2 size={15} /> : <Clock3 size={15} />}
-            {paid ? "Paiement confirme" : "Paiement a confirmer"}
+            {paid ? "Paiement confirme" : "Paiement a confirmer"} - {statusLabel}
           </div>
 
-          <div className="mt-5 rounded-2xl bg-white/9 p-4 ring-1 ring-white/10">
-            <p className="font-display text-xl font-bold leading-7">{progress.title}</p>
-            <p className="mt-1 text-sm font-semibold leading-6 text-white/68">{progress.text}</p>
+          <div className="mt-5 grid grid-cols-[1fr_auto] gap-3 rounded-2xl bg-white/9 p-4 ring-1 ring-white/10">
+            <div>
+              <p className="font-display text-xl font-bold leading-7">{progress.title}</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-white/68">{progress.text}</p>
+            </div>
+            <div className="flex min-w-[5.8rem] flex-col items-end justify-center rounded-2xl bg-white/10 px-3 py-2 text-right">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-white/48">Total</span>
+              <span className="font-display text-lg font-bold text-[var(--primary-bright)]">{formatPrice(totals.total)}</span>
+            </div>
           </div>
         </div>
 
         <div className="space-y-5 p-5">
           <ReceiptActions title={`Recu Tikchop ${receiptRef}`} downloadUrl={downloadUrl} />
+
+          <div className="rounded-2xl border border-[var(--surface-mid)] bg-white p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)] text-[var(--primary)]">
+                <ShieldCheck size={21} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-display text-base font-bold text-[var(--text-main)]">Preuve de commande Tikchop</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-[var(--text-dim)]">
+                  Reference #{receiptRef}. Recu genere le {formatDate(new Date().toISOString())}.
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="rounded-2xl border border-[var(--surface-mid)] bg-[var(--surface-soft)] p-4">
             <div className="grid grid-cols-4 gap-2">
@@ -205,32 +248,41 @@ export default async function ReceiptPage({ searchParams }) {
           <div className="grid grid-cols-2 gap-2">
             <InfoBox icon={CalendarDays} label="Date" value={formatDate(order.created_at)} />
             <InfoBox icon={Phone} label="Client" value={order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Non renseigne"} />
-            <InfoBox icon={Truck} label="Livraison" value={deliveryLabel} />
-            <InfoBox icon={CreditCard} label="Paiement" value={order.payment_method ? getPaymentOption(order.payment_method).label : "A confirmer"} />
+            <InfoBox icon={Store} label="Boutique" value={sellerName} />
+            <InfoBox icon={Phone} label="Contact vendeur" value={sellerPhone || "Via WhatsApp boutique"} />
+            <InfoBox icon={Truck} label={getDeliveryModeLabel(order)} value={deliveryLabel} />
+            <InfoBox icon={CreditCard} label="Paiement" value={paymentLabel} />
           </div>
 
-          {order.delivery_address && (
-            <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
-              <div className="flex items-center gap-2 text-[var(--text-dim)]">
-                <MapPin size={16} />
-                <p className="quiet-label">Adresse</p>
-              </div>
-              <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">{order.delivery_address}</p>
+          <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
+            <div className="flex items-center gap-2 text-[var(--text-dim)]">
+              <MapPin size={16} />
+              <p className="quiet-label">Adresse et reception</p>
             </div>
-          )}
+            <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">
+              {order.delivery_type === "PICKUP"
+                ? "Retrait en boutique. Confirmez l'heure avec le vendeur."
+                : `${order.delivery_zone || "Zone a confirmer"} - ${order.delivery_address || "Adresse a confirmer"}`}
+            </p>
+          </div>
 
           <div>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-lg font-bold text-[var(--text-main)]">Articles</h2>
-              <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--text-dim)]">{items.length} article{items.length > 1 ? "s" : ""}</span>
+              <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--text-dim)]">
+                {quantityTotal || items.length} article{(quantityTotal || items.length) > 1 ? "s" : ""}
+              </span>
             </div>
             <div className="mt-3 divide-y divide-[var(--surface-mid)] rounded-2xl border border-[var(--surface-mid)]">
               {items.length > 0 ? items.map((item) => {
                 const lineTotal = Number(item.price_at_time || 0) * Number(item.quantity || 0);
                 return (
                   <div key={item.id} className="flex items-start justify-between gap-3 p-3">
-                    <div className="min-w-0">
+                  <div className="min-w-0">
                       <p className="font-bold leading-5 text-[var(--text-main)]">{item.products?.name || "Article"}</p>
+                      {item.products?.description && (
+                        <p className="mt-1 line-clamp-2 text-xs font-semibold leading-4 text-[var(--text-dim)]">{item.products.description}</p>
+                      )}
                       <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
                         {item.quantity} x {formatPrice(item.price_at_time)}
                       </p>
@@ -245,6 +297,10 @@ export default async function ReceiptPage({ searchParams }) {
           </div>
 
           <div className="rounded-2xl bg-zinc-950 p-4 text-white">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="font-display text-lg font-bold">Resume paiement</p>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white/80">{paymentLabel}</span>
+            </div>
             <div className="flex justify-between text-sm font-bold text-white/60">
               <span>Produits</span>
               <span>{formatPrice(totals.productsTotal)}</span>
@@ -267,7 +323,7 @@ export default async function ReceiptPage({ searchParams }) {
               <div>
                 <p className="font-display text-sm font-bold text-[var(--text-main)]">A presenter si besoin</p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-[var(--text-dim)]">
-                  Ce recu aide la boutique ou le livreur a retrouver rapidement votre commande.
+                  Ce recu aide la boutique ou le livreur a retrouver rapidement votre commande. Il ne remplace pas une facture fiscale.
                 </p>
               </div>
             </div>

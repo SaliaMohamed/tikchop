@@ -56,7 +56,7 @@ async function fetchOrderBy(field, value, withDelivery = true) {
     paystack_reference,
     paystack_paid_at,
     created_at,
-    sellers (id, name, slug),
+    sellers (id, name, slug, phone_number),
     order_items (
       id,
       quantity,
@@ -73,7 +73,7 @@ async function fetchOrderBy(field, value, withDelivery = true) {
     payment_method,
     total_amount,
     created_at,
-    sellers (id, name, slug),
+    sellers (id, name, slug, phone_number),
     order_items (
       id,
       quantity,
