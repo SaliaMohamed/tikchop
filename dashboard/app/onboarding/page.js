@@ -30,7 +30,7 @@ export default function OnboardingPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accountMode, setAccountMode] = useState("SIGN_UP");
-  const [accountMethod, setAccountMethod] = useState("EMAIL");
+  const [accountMethod, setAccountMethod] = useState("PHONE");
   const [sellerAccount, setSellerAccount] = useState(null);
   const [existingSeller, setExistingSeller] = useState(null);
   const [resetSent, setResetSent] = useState(false);
@@ -99,6 +99,13 @@ export default function OnboardingPage() {
       ...current,
       [field]: field === "slug" ? slugify(value) : value,
     }));
+  }
+
+  function switchAccountMethod(method) {
+    setAccountMethod(method);
+    if (method === "PHONE" && !form.phone_number && form.account_phone) {
+      updateField("phone_number", form.account_phone);
+    }
   }
 
   function canContinue() {
@@ -333,7 +340,7 @@ export default function OnboardingPage() {
           <OnboardingCard
             icon={<UserRound size={28} />}
             title="Creer ton acces"
-            subtitle="Deux minutes pour ouvrir ta boutique et recevoir les commandes."
+            subtitle="Le plus rapide ici: ton numero, un mot de passe, puis ta boutique."
           >
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-soft)] p-1">
               <button
@@ -352,26 +359,32 @@ export default function OnboardingPage() {
               </button>
             </div>
 
-            <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-white p-1 ring-1 ring-[var(--outline)]/55">
+            <div className="mb-5 rounded-[22px] border border-[var(--outline)]/55 bg-white p-2 shadow-[var(--shadow-sm)]">
+              <p className="px-2 pb-2 text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-[var(--text-dim)]">
+                Connexion recommandee
+              </p>
+              <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setAccountMethod("EMAIL")}
-                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMethod === "EMAIL" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-dim)]"}`}
+                onClick={() => switchAccountMethod("PHONE")}
+                className={`min-h-[58px] rounded-xl px-3 text-left text-sm font-extrabold ${accountMethod === "PHONE" ? "bg-[var(--primary)] text-white shadow-sm" : "bg-[var(--surface-soft)] text-[var(--text-main)]"}`}
               >
-                Email
+                <span className="block">Telephone</span>
+                <span className={`mt-1 block text-[0.68rem] font-bold leading-4 ${accountMethod === "PHONE" ? "text-white/72" : "text-[var(--text-dim)]"}`}>
+                  Le plus utilise a Abidjan
+                </span>
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setAccountMethod("PHONE");
-                  if (!form.phone_number && form.account_phone) {
-                    updateField("phone_number", form.account_phone);
-                  }
-                }}
-                className={`min-h-[46px] rounded-lg text-sm font-extrabold ${accountMethod === "PHONE" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-dim)]"}`}
+                onClick={() => switchAccountMethod("EMAIL")}
+                className={`min-h-[58px] rounded-xl px-3 text-left text-sm font-extrabold ${accountMethod === "EMAIL" ? "bg-[var(--primary)] text-white shadow-sm" : "bg-[var(--surface-soft)] text-[var(--text-main)]"}`}
               >
-                Telephone
+                <span className="block">Email</span>
+                <span className={`mt-1 block text-[0.68rem] font-bold leading-4 ${accountMethod === "EMAIL" ? "text-white/72" : "text-[var(--text-dim)]"}`}>
+                  Option utile pour recuperer le compte
+                </span>
               </button>
+              </div>
             </div>
 
             {accountMode === "SIGN_UP" && (
@@ -419,7 +432,7 @@ export default function OnboardingPage() {
                         updateField("phone_number", event.target.value);
                       }
                     }}
-                    placeholder="Ex: +2250102030405"
+                    placeholder="Ex: +225 07 00 00 00 00"
                     inputMode="tel"
                     autoComplete="tel"
                     className="min-w-0 flex-1 bg-transparent text-base font-bold text-[var(--text-main)] outline-none"
@@ -470,7 +483,7 @@ export default function OnboardingPage() {
             <p className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3 text-sm font-semibold leading-5 text-[var(--text-dim)]">
               {accountMethod === "EMAIL"
                 ? "Utilise un email que tu peux ouvrir facilement si tu dois recuperer ton compte."
-                : "Ton numero servira a te reconnecter et a recevoir les commandes WhatsApp."}
+                : "Ton numero servira a te reconnecter, recevoir les commandes WhatsApp et rassurer tes clients plus vite."}
             </p>
           </OnboardingCard>
         )}
