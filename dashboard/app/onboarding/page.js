@@ -766,25 +766,22 @@ function OnboardingLandingHero() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/8 via-black/20 to-black/78" />
         <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3">
           <span className="rounded-full bg-white/92 px-3 py-2 text-xs font-extrabold text-[var(--text-main)] shadow-sm">
-            Tikchop vendeur
-          </span>
-          <span className="rounded-full bg-[var(--primary-bright)] px-3 py-2 text-xs font-extrabold text-[var(--text-main)] shadow-sm">
-            11 000 F / mois
+            Tikchop
           </span>
         </div>
         <div className="absolute inset-x-4 bottom-4">
           <div className="rounded-[28px] bg-white/94 p-4 text-[var(--text-main)] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-            <p className="quiet-label text-[var(--primary)]">Mini-boutique + WhatsApp</p>
+            <p className="quiet-label text-[var(--primary)]">Boutique en ligne + vendeur WhatsApp automatique</p>
             <h1 className="mt-2 font-display text-3xl font-bold leading-9">
-              Vends plus vite, meme sans site complique.
+              Ta boutique Tikchop, prete a vendre.
             </h1>
             <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-              Ajoute tes articles, partage ton lien et laisse Tikchop organiser les commandes.
+              Publie tes articles, partage ton lien et recois les commandes dans un parcours simple pour toi et pour tes clients.
             </p>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <HeroMetric value="2 400+" label="vendeurs interesses" />
-              <HeroMetric value="47k" label="clients traites" />
-              <HeroMetric value="3 min" label="pour demarrer" />
+              <HeroMetric value="37" label="vendeurs actifs" />
+              <HeroMetric value="3 000+" label="articles vendus" />
+              <HeroMetric value="3 min" label="pour lancer la boutique" />
             </div>
           </div>
         </div>
@@ -792,7 +789,7 @@ function OnboardingLandingHero() {
 
       <div className="space-y-4 p-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/52">Paiements acceptes</p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/52">Paiement direct</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <PaymentLogo name="Wave" tone="wave" />
             <PaymentLogo name="Orange Money" tone="orange" />
@@ -835,10 +832,43 @@ function PaymentLogo({ name, tone }) {
   };
 
   return (
-    <div className={`flex min-h-[48px] items-center justify-center rounded-2xl px-3 text-sm font-black shadow-sm ${classes[tone] || "bg-white text-[var(--text-main)]"}`}>
-      {name}
+    <div className={`flex min-h-[52px] items-center gap-2 rounded-2xl px-3 text-sm font-black shadow-sm ${classes[tone] || "bg-white text-[var(--text-main)]"}`}>
+      <PaymentLogoMark tone={tone} />
+      <span className="truncate">{name}</span>
     </div>
   );
+}
+
+function PaymentLogoMark({ tone }) {
+  if (tone === "wave") {
+    return (
+      <span className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#19c7ff]">
+        <span className="absolute inset-x-0 bottom-0 h-3 rounded-t-full bg-white/88" />
+      </span>
+    );
+  }
+
+  if (tone === "orange") {
+    return <span className="h-5 w-5 shrink-0 rounded-sm bg-[#ff7a00]" />;
+  }
+
+  if (tone === "mtn") {
+    return (
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-[#111814] bg-[#ffcb05] text-[0.58rem] font-black text-[#111814]">
+        MTN
+      </span>
+    );
+  }
+
+  if (tone === "djamo") {
+    return (
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0b8b62] text-[0.72rem] font-black text-white">
+        d
+      </span>
+    );
+  }
+
+  return <span className="h-6 w-6 shrink-0 rounded-full bg-white/70" />;
 }
 
 function GoogleMark() {
