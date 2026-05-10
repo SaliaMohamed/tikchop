@@ -36,6 +36,7 @@ export default function ProductsPage() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,10 +44,19 @@ export default function ProductsPage() {
     stock_quantity: "",
     image_url: "",
     description: "",
+    variants_text: "",
+    product_keywords: "",
   });
 
   useEffect(() => {
     async function loadProducts() {
+      if (!seller.slug) {
+        setProducts([]);
+        setLoading(false);
+        setError("Aucune boutique active. Reconnectez-vous pour voir vos articles.");
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
@@ -54,7 +64,10 @@ export default function ProductsPage() {
         const data = await getSellerProducts(seller.slug, token);
         setProducts(data || []);
       } catch (err) {
-        setError(friendlyError(err, "Catalogue non charge. Actualise la page."));
+        const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
+        setError(sessionExpired
+          ? "Session vendeur expiree. Reconnectez-vous pour voir vos articles."
+          : friendlyError(err, "Articles non charges. Verifiez la connexion puis reessayez."));
       } finally {
         setLoading(false);
       }
@@ -72,13 +85,15 @@ export default function ProductsPage() {
       stock_quantity: String(product.stock_quantity ?? ""),
       image_url: product.image_url || "",
       description: product.description || "",
+      variants_text: formatVariantsText(product.product_variants),
+      product_keywords: product.product_keywords || "",
     });
   }
 
   function closeEditor() {
     setEditingProduct(null);
     setImageError("");
-    setFormData({ name: "", price: "", stock_quantity: "", image_url: "", description: "" });
+    setFormData({ name: "", price: "", stock_quantity: "", image_url: "", description: "", variants_text: "", product_keywords: "" });
   }
 
   async function handleEditImageSelection(event) {
@@ -96,7 +111,7 @@ export default function ProductsPage() {
       const result = await uploadProductImage(payload);
       setFormData((current) => ({ ...current, image_url: result.url }));
     } catch (err) {
-      setImageError(friendlyError(err, "Photo non envoyee. Choisis une image plus legere."));
+      setImageError(friendlyError(err, "Photo non envoyee. Choisissez une image plus legere."));
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -114,7 +129,7 @@ export default function ProductsPage() {
       setProducts((current) => current.map((item) => (item.id === product.id ? product : item)));
       closeEditor();
     } catch (err) {
-      setError(friendlyError(err, "Article non enregistre. Verifie le prix et le stock."));
+      setError(friendlyError(err, "Article non enregistre. Verifiez le prix et le stock."));
     } finally {
       setSaving(false);
     }
@@ -135,11 +150,11 @@ export default function ProductsPage() {
       }
 
       await navigator.clipboard.writeText(url);
-      alert("Lien produit copie.");
+      setNotice("Lien produit copie.");
     } catch (err) {
       if (err.name !== "AbortError") {
         await navigator.clipboard.writeText(url);
-        alert("Lien produit copie.");
+        setNotice("Lien produit copie.");
       }
     }
   }
@@ -170,6 +185,7 @@ export default function ProductsPage() {
 
     return { total: products.length, inStock, lowStock, outStock };
   }, [products]);
+  const sessionExpired = /Session vendeur expiree|Aucune boutique active/i.test(error);
 
   return (
     <div className="app-shell">
@@ -177,9 +193,9 @@ export default function ProductsPage() {
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="quiet-label text-[var(--primary)]">Boutique</p>
-              <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Catalogue</h1>
-              <p className="mt-1 text-sm text-[var(--text-dim)]">Prix, stock, lien de partage. Tout est ici.</p>
+              <p className="quiet-label text-[var(--primary)]">Articles</p>
+              <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Mes articles</h1>
+              <p className="mt-1 text-sm text-[var(--text-dim)]">Corrigez les prix, les photos et le stock quand il faut.</p>
             </div>
             <Link href="/add-product" className="flex min-h-[52px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--text-main)] px-4 text-sm font-extrabold text-white no-underline shadow-[var(--shadow-sm)]" aria-label="Ajouter">
               <Plus size={20} strokeWidth={2.6} />
@@ -206,6 +222,26 @@ export default function ProductsPage() {
       {error && (
         <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sessionExpired && (
+              <Link href="/login" className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[var(--text-main)] px-4 text-sm font-extrabold text-white no-underline">
+                Se reconnecter
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-white px-4 text-sm font-extrabold text-amber-900 ring-1 ring-amber-200"
+            >
+              Reessayer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {notice && (
+        <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 ring-1 ring-emerald-200">
+          {notice}
         </div>
       )}
 
@@ -215,17 +251,17 @@ export default function ProductsPage() {
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
             <p className="mt-4 font-extrabold text-zinc-400">Chargement...</p>
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="app-card p-8 text-center md:py-16">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+        ) : error ? null : filteredProducts.length === 0 ? (
+          <div className="djassa-command p-8 text-center md:py-16">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/12 text-[var(--primary-bright)]">
               <Package size={32} />
             </div>
-            <h2 className="mt-4 text-xl font-black text-zinc-950">Aucun produit</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-5 text-zinc-500">
-              Ajoute les articles que les clients verront dans la boutique.
+            <h2 className="mt-4 font-display text-2xl font-bold text-white">Aucun article en ligne</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-5 text-white/72">
+              Ajoutez vos photos, vos prix et vos stocks. Tikchop pourra ensuite vendre ces articles sur WhatsApp.
             </p>
-            <Link href="/add-product" className="mt-5 inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[var(--primary-bright)] px-6 text-sm font-semibold text-[#042719] no-underline">
-              Ajouter un produit
+            <Link href="/add-product" className="mt-5 inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[var(--primary-bright)] px-6 text-sm font-extrabold text-[#042719] no-underline">
+              Ajouter mes photos
             </Link>
           </div>
         ) : (
@@ -241,7 +277,7 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
           <div className="mx-auto max-h-[92vh] w-full max-w-[430px] overflow-y-auto rounded-lg bg-white p-5 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-extrabold text-zinc-950">Modifier produit</h2>
+              <h2 className="text-2xl font-extrabold text-zinc-950">Corriger l&apos;article</h2>
               <button onClick={closeEditor} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
                 <X size={18} />
               </button>
@@ -284,12 +320,14 @@ export default function ProductsPage() {
               {imageError && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{imageError}</p>
               )}
-              <textarea className="mobile-input min-h-[96px] resize-none bg-zinc-50" placeholder="Description" value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} />
+              <textarea className="mobile-input min-h-[96px] resize-none bg-zinc-50" placeholder="Detail utile: couleur, matiere, etat..." value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} />
+              <textarea className="mobile-input min-h-[76px] resize-none bg-zinc-50" placeholder="Tailles/couleurs: M rouge stock 2, L noir stock 1" value={formData.variants_text} onChange={(event) => setFormData({ ...formData, variants_text: event.target.value })} />
+              <input className="mobile-input bg-zinc-50" placeholder="Infos pour retrouver l'article: chaussure, talon, noir..." value={formData.product_keywords} onChange={(event) => setFormData({ ...formData, product_keywords: event.target.value })} />
             </div>
 
             <button onClick={saveProduct} disabled={saving || imageUploading} className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
               <Save size={18} />
-              {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer"}
+              {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer les changements"}
             </button>
           </div>
         </div>
@@ -345,6 +383,7 @@ function HealthMini({ icon, label, value }) {
 
 function ProductCard({ product, onEdit, onShare }) {
   const stock = Number(product.stock_quantity || 0);
+  const variants = Array.isArray(product.product_variants) ? product.product_variants.filter(Boolean).slice(0, 3) : [];
 
   return (
     <div className="flex flex-col overflow-hidden rounded-[18px] border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
@@ -365,6 +404,15 @@ function ProductCard({ product, onEdit, onShare }) {
             <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm leading-5 text-[var(--text-dim)]">
               {product.description || "Article visible dans la boutique Tikchop."}
             </p>
+            {variants.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {variants.map((variant, index) => (
+                  <span key={`${variant.label || variant.size || index}`} className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--primary)]">
+                    {variant.label || variant.size || variant.color} {Number(variant.stock || 0) > 0 ? `(${variant.stock})` : ""}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -382,6 +430,17 @@ function ProductCard({ product, onEdit, onShare }) {
       </div>
     </div>
   );
+}
+
+function formatVariantsText(variants) {
+  if (!Array.isArray(variants)) return "";
+  return variants
+    .map((variant) => {
+      const label = variant.label || [variant.size, variant.color].filter(Boolean).join(" ");
+      return [label, Number(variant.stock || 0) > 0 ? `stock ${variant.stock}` : ""].filter(Boolean).join(" ");
+    })
+    .filter(Boolean)
+    .join(", ");
 }
 
 function ProductImage({ src }) {

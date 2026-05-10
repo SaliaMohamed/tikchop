@@ -39,67 +39,8 @@ const OneTap = () => {
       }
     };
 
-    // const initializeGoogleOneTap = async () => {
-    //   console.log('Initializing Google One Tap')
-
-    //   const [nonce, hashedNonce] = await generateNonce()
-    //   console.log('Nonce: ', nonce, hashedNonce)
-
-    //   // Check if there's already an existing session before initializing the One Tap UI
-    //   const { data, error } = await supabase.auth.getSession()
-    //   if (error) {
-    //     console.error('Error getting session', error)
-    //   }
-    //   if (data.session) {
-    //     router.push('/')
-    //     return
-    //   }
-
-    //   // Ensure `google.accounts` is available
-    //   if (window.google && window.google.accounts) {
-    //     window.google.accounts.id.initialize({
-    //       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-    //       callback: async (response: CredentialResponse) => {
-    //         try {
-    //           // Send ID token returned in response.credential to Supabase
-    //           const { data, error } = await supabase.auth.signInWithIdToken({
-    //             provider: 'google',
-    //             token: response.credential,
-    //             nonce,
-    //           })
-
-    //           if (error) throw error
-    //           console.log('Session data: ', data)
-    //           console.log('Successfully logged in with Google One Tap')
-
-    //           // Redirect to protected page
-    //           router.push('/')
-    //         } catch (error) {
-    //           console.error('Error logging in with Google One Tap', error)
-    //         }
-    //       },
-    //       nonce: hashedNonce,
-    //       // Use FedCM for prompt (https://developers.google.com/identity/gsi/web/guides/fedcm-migration)
-    //       use_fedcm_for_prompt: true,
-    //     })
-
-    //     // Handle notifications (e.g., retry on `tap_outside`)
-    //     window.google.accounts.id.prompt((notification) => {
-    //       if (notification.getSkippedReason() === 'tap_outside') {
-    //         console.log('Prompt was dismissed. Retrying...')
-    //         window.google.accounts.id.prompt()
-    //       }
-    //     })
-    //   } else {
-    //     console.error('Google Identity Services script failed to load.')
-    //   }
-    // }
-
     const initializeGoogleOneTap = async () => {
-      console.log("Initializing Google One Tap");
-
       const [nonce, hashedNonce] = await generateNonce();
-      console.log("Nonce: ", nonce, hashedNonce);
 
       // Check if there's already an existing session before initializing the One Tap UI
       const { data, error } = await supabase.auth.getSession();
@@ -125,8 +66,6 @@ const OneTap = () => {
               });
 
               if (error) throw error;
-              console.log("Session data: ", data);
-              console.log("Successfully logged in with Google One Tap");
 
               // Redirect to protected page
               router.push("/");

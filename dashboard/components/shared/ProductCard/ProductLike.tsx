@@ -19,10 +19,7 @@ const ProductLike: React.FC<ProductLikeProps> = ({ productId }) => {
     setLiked(newLikedStatus);
     // Simulate an API call and update the state
     if (!dummyUser.isVerified) {
-      console.error("User is not verified");
       setLiked(liked); // Revert to the previous state if not verified
-    } else {
-      console.log("Liked/unliked product:", productId);
     }
   };
 

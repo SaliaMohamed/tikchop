@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Camera, ClipboardList, Home, Loader2, LogOut, Package, Store, UsersRound } from "lucide-react";
+import { Camera, ClipboardList, Home, Loader2, LogOut, Store } from "lucide-react";
 import { getSellerByOwner } from "./seller-actions";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
-import { clearActiveSeller, getSellerInitials, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
+import { clearActiveSeller, getSellerInitials, readActiveSeller, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
 import { supabase } from "../lib/supabase";
 
 const dashboardRoutes = new Set([
@@ -19,6 +19,17 @@ const dashboardRoutes = new Set([
   "/whatsapp",
 ]);
 
+const ACCOUNT_SYNC_TIMEOUT_MS = 10000;
+
+function accountSyncTimeout(promise, message = "Verification du compte trop longue.") {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ACCOUNT_SYNC_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export default function AppChrome({ children }) {
   const pathname = usePathname();
   const seller = useActiveSeller();
@@ -26,12 +37,14 @@ export default function AppChrome({ children }) {
   const showSellerChrome = dashboardRoutes.has(pathname);
   const showMobileTopbar = showSellerChrome && pathname !== "/dashboard";
   const showMobileTabbar = showSellerChrome && pathname !== "/add-product" && pathname !== "/onboarding";
+  const sellerWorkspaceClass = showSellerChrome ? "seller-workspace" : "";
 
   if (!showSellerChrome) {
     return (
       <>
         <main className="container public-chrome">{children}</main>
-        {pathname !== "/" && <PwaInstallPrompt />}
+        <PublicLegalFooter />
+        <PwaInstallPrompt />
       </>
     );
   }
@@ -40,11 +53,11 @@ export default function AppChrome({ children }) {
     <SellerAccountGate>
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
-          <div className="flex items-center gap-2 text-[var(--primary)]">
+          <Link href="/dashboard" className="flex items-center gap-2 text-[var(--primary)]" aria-label="Retour espace vendeur">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
               <Home size={19} strokeWidth={2.2} />
             </span>
-          </div>
+          </Link>
           <Link href="/dashboard" className="font-display text-xl font-bold text-[var(--primary)] no-underline">
             Tikchop
           </Link>
@@ -59,14 +72,10 @@ export default function AppChrome({ children }) {
         </Link>
         <div className="nav-links">
           <Link href="/dashboard" className="nav-link">Accueil</Link>
+          <Link href="/add-product" className="nav-link">Ajouter articles</Link>
           <Link href="/orders" className="nav-link">Commandes</Link>
-          <Link href="/crm" className="nav-link">CRM</Link>
-          <Link href="/products" className="nav-link">Articles</Link>
+          <Link href="/whatsapp" className="nav-link">WhatsApp</Link>
           <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="nav-link">Boutique</Link>
-          <Link href="/whatsapp" className="nav-link">Assistant</Link>
-          <Link href="/delivery-settings" className="nav-link">Livraison</Link>
-          <Link href="/add-product" className="nav-link">Publier</Link>
-          <Link href="/onboarding" className="nav-link">Nouveau vendeur</Link>
         </div>
         <div className="seller-chip">
           <Store size={15} className="mr-1.5" />
@@ -74,16 +83,12 @@ export default function AppChrome({ children }) {
         </div>
         <SignOutButton />
       </nav>
-      <main className={`container ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
+      <main className={`container ${sellerWorkspaceClass} ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
         <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
           <Home size={20} strokeWidth={2.2} />
           <span>Accueil</span>
-        </Link>
-        <Link href="/products" className={`mobile-tabbar-item ${pathname === "/products" ? "is-active" : ""}`}>
-          <Package size={20} strokeWidth={2.2} />
-          <span>Articles</span>
         </Link>
         <Link href="/add-product" className="mobile-tabbar-action" aria-label="Publier un article">
           <Camera size={24} strokeWidth={2.3} />
@@ -93,9 +98,9 @@ export default function AppChrome({ children }) {
           <ClipboardList size={20} strokeWidth={2.2} />
           <span>Commandes</span>
         </Link>
-        <Link href="/crm" className={`mobile-tabbar-item ${pathname === "/crm" ? "is-active" : ""}`}>
-          <UsersRound size={20} strokeWidth={2.2} />
-          <span>Clients</span>
+        <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="mobile-tabbar-item">
+          <Store size={20} strokeWidth={2.2} />
+          <span>Boutique</span>
         </Link>
       </nav>
       )}
@@ -104,47 +109,107 @@ export default function AppChrome({ children }) {
   );
 }
 
+function PublicLegalFooter() {
+  return (
+    <footer className="container mt-10 pb-8 text-center text-xs font-bold text-zinc-500">
+      <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-3 rounded-full bg-white/70 px-4 py-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.45)]">
+        <Link href="/mentions-legales" className="text-zinc-600 no-underline hover:text-[var(--primary)]">
+          Mentions legales
+        </Link>
+        <span className="text-zinc-300">|</span>
+        <Link href="/confidentialite" className="text-zinc-600 no-underline hover:text-[var(--primary)]">
+          Confidentialite
+        </Link>
+        <span className="text-zinc-300">|</span>
+        <Link href="/conditions" className="text-zinc-600 no-underline hover:text-[var(--primary)]">
+          Conditions
+        </Link>
+      </div>
+    </footer>
+  );
+}
+
 function SellerAccountGate({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checking, setChecking] = useState(true);
-  const [message, setMessage] = useState("Verification du compte vendeur...");
+  const activeSeller = useActiveSeller();
+  const hasLocalSeller = Boolean(activeSeller.slug);
+  const [checking, setChecking] = useState(!hasLocalSeller);
+  const [message, setMessage] = useState("Verification de votre compte...");
 
   useEffect(() => {
     let alive = true;
 
     async function syncSellerAccount() {
+      function keepStoredSellerIfAvailable() {
+        const storedSeller = readActiveSeller();
+        if (!storedSeller.slug) return false;
+
+        writeActiveSeller(storedSeller);
+        if (alive) setChecking(false);
+        return true;
+      }
+
+      if (!hasLocalSeller && keepStoredSellerIfAvailable()) {
+        return;
+      }
+
       if (!supabase) {
         setChecking(false);
         return;
       }
 
       try {
-        setMessage("Verification du compte vendeur...");
-        const { data, error } = await supabase.auth.getSession();
+        if (!hasLocalSeller) {
+          setChecking(true);
+        }
+        setMessage("Verification de votre compte...");
+        const { data, error } = await accountSyncTimeout(
+          supabase.auth.getSession(),
+          "Session vendeur trop lente a verifier.",
+        );
         if (error) throw error;
 
         const user = data.session?.user;
         if (!user) {
-          clearActiveSeller();
-          router.replace("/onboarding");
+          if (hasLocalSeller) {
+            if (alive) setChecking(false);
+          } else {
+            if (keepStoredSellerIfAvailable()) return;
+            clearActiveSeller();
+            router.replace("/onboarding");
+          }
           return;
         }
 
         setMessage("Chargement de la boutique...");
-        const seller = await getSellerByOwner(user.id);
+        const seller = await accountSyncTimeout(
+          getSellerByOwner(user.id),
+          "Boutique trop longue a charger.",
+        );
         if (seller) {
           writeActiveSeller(seller);
           if (alive) setChecking(false);
           return;
         }
 
+        if (hasLocalSeller) {
+          if (alive) setChecking(false);
+          return;
+        }
+
+        if (keepStoredSellerIfAvailable()) return;
         clearActiveSeller();
         router.replace("/onboarding");
       } catch (error) {
         console.error("Seller account sync error:", error);
-        clearActiveSeller();
-        router.replace("/onboarding");
+        if (!hasLocalSeller) {
+          if (keepStoredSellerIfAvailable()) return;
+          clearActiveSeller();
+          router.replace("/onboarding");
+        } else if (alive) {
+          setChecking(false);
+        }
       }
     }
 
@@ -153,7 +218,7 @@ function SellerAccountGate({ children }) {
     return () => {
       alive = false;
     };
-  }, [pathname, router]);
+  }, [hasLocalSeller, pathname, router]);
 
   if (checking) {
     return (
@@ -164,7 +229,7 @@ function SellerAccountGate({ children }) {
           </div>
           <p className="mt-4 font-display text-xl font-bold text-[var(--text-main)]">{message}</p>
           <p className="mt-2 max-w-[18rem] text-sm font-semibold leading-5 text-[var(--text-dim)]">
-            Chaque vendeur voit uniquement son espace Tikchop.
+            Chaque boutique garde son propre espace Tikchop.
           </p>
         </div>
       </main>

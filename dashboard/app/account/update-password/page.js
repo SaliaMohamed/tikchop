@@ -68,7 +68,7 @@ export default function UpdatePasswordPage() {
                 {success ? "Mot de passe change" : "Nouveau mot de passe"}
               </h1>
               <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                {success ? "Tu peux maintenant te reconnecter a ton espace vendeur." : "Choisis un nouveau mot de passe pour ton compte vendeur."}
+                {success ? "Vous pouvez maintenant vous reconnecter a votre espace vendeur." : "Choisissez un nouveau mot de passe pour votre compte vendeur."}
               </p>
             </div>
           </div>

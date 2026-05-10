@@ -36,8 +36,8 @@ const segmentLabels = {
 const statusLabels = {
   PENDING: "A confirmer",
   PAID: "Payee",
-  PREPARED: "Prete",
-  DELIVERED: "Livree",
+  PREPARED: "A terminer",
+  DELIVERED: "Terminee",
   CANCELLED: "Annulee",
 };
 
@@ -190,7 +190,7 @@ export default function CrmPage() {
       setOrders(orderData || []);
     } catch (err) {
       console.error("CRM fetch error:", err);
-      setError(friendlyError(err, "CRM non charge. Verifie la connexion puis actualise."));
+      setError(friendlyError(err, "Les clients ne se chargent pas. Verifiez la connexion puis actualisez."));
     } finally {
       setLoading(false);
     }
@@ -249,13 +249,13 @@ export default function CrmPage() {
       <header className="mobile-top">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[var(--primary)]">CRM vendeur</p>
+            <p className="quiet-label text-[var(--primary)]">Clients Tikchop</p>
             <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Tes clients</h1>
             <p className="mt-1 text-base font-semibold leading-6 text-[var(--text-dim)]">
-              Retrouve les acheteurs, relance les commandes et repere les meilleurs clients.
+              Retrouve les acheteurs, relance les paniers et garde tes bons clients proches.
             </p>
           </div>
-          <button onClick={fetchCrm} className="app-icon-button" aria-label="Actualiser le CRM">
+          <button onClick={fetchCrm} className="app-icon-button" aria-label="Actualiser les clients">
             <RefreshCw size={19} strokeWidth={2.5} />
           </button>
         </div>
@@ -306,7 +306,7 @@ export default function CrmPage() {
       {error && (
         <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
-          <p className="mt-2 text-xs">Le CRM se mettra a jour des que les commandes seront rechargees.</p>
+          <p className="mt-2 text-xs">La liste se remettra a jour des que les commandes seront rechargees.</p>
         </div>
       )}
 
@@ -362,7 +362,7 @@ function CrmHero({ stats, totalCustomers }) {
       <div className="relative z-10 mt-5 rounded-[24px] bg-white/10 p-4 ring-1 ring-white/10">
         <div className="flex items-center gap-2 text-sm font-bold text-white/60">
           <Sparkles size={16} className="text-[var(--primary-bright)]" />
-          <span>Ventes confirmees</span>
+          <span>Ventes client confirmees</span>
         </div>
         <p className="mt-2 font-display text-2xl font-bold text-[var(--primary-bright)]">{formatPrice(stats.estimatedSales)}</p>
       </div>
@@ -649,7 +649,7 @@ function getRecommendation(customer) {
     return {
       icon: <ShoppingBag size={20} />,
       title: "Finalise la livraison",
-      body: "Le paquet semble pret. Confirme le passage du livreur et marque la commande livree apres reception.",
+      body: "Le paquet semble pret. Confirme le passage du livreur et marque la commande terminee apres reception.",
     };
   }
 
@@ -684,7 +684,7 @@ function EmptyCrm({ query }) {
       </div>
       <h2 className="mt-4 text-xl font-black text-zinc-950">{query ? "Aucun client trouve" : "Pas encore de clients"}</h2>
       <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-5 text-zinc-500">
-        Les clients apparaitront ici automatiquement apres les commandes boutique ou WhatsApp.
+        Les clients apparaitront ici automatiquement apres les commandes. Commence par partager ton lien boutique ou ton WhatsApp.
       </p>
     </div>
   );

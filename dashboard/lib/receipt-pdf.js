@@ -61,6 +61,26 @@ function getDeliveryLine(order) {
   return `${zone} - ${address}`;
 }
 
+function getHandlingLine(order) {
+  if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") {
+    return "Commande terminee. Merci de garder ce recu en cas de verification.";
+  }
+
+  if (order?.delivery_status === "ASSIGNED") {
+    return "Livraison prise en charge. Le vendeur ou le livreur peut appeler le client.";
+  }
+
+  if (order?.status === "PREPARED" || order?.delivery_status === "READY") {
+    return "Colis pret. La commande peut etre remise au livreur ou retiree en boutique.";
+  }
+
+  if (["PAID", "PREPARED", "DELIVERED"].includes(order?.status)) {
+    return "Paiement confirme. La boutique prepare les articles.";
+  }
+
+  return "Commande recue. Le paiement, l'adresse ou la disponibilite peuvent encore etre confirmes.";
+}
+
 function wrapLine(text, maxLength = 76) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
   const lines = [];
@@ -99,6 +119,8 @@ function buildReceiptLines(order, payment = {}) {
     { text: `Reference: ${getOrderRef(order)}`, size: 14 },
     { text: `Statut: ${orderStatus}`, size: 11 },
     { text: `Genere le: ${generatedAt}`, size: 10, gap: 16 },
+    { text: "PRISE EN CHARGE", size: 13, gap: 14 },
+    { text: getHandlingLine(order), size: 11, gap: 16 },
     { text: "BOUTIQUE ET CLIENT", size: 13, gap: 14 },
     { text: `Boutique: ${seller?.name || "Tikchop"}`, size: 11 },
     { text: `Contact vendeur: ${sellerPhone}`, size: 11 },
@@ -130,8 +152,8 @@ function buildReceiptLines(order, payment = {}) {
     { text: "", size: 10, gap: 12 },
     { text: `Sous-total: ${formatCfa(totals.productsTotal)}`, size: 11 },
     { text: `Livraison: ${formatCfa(totals.deliveryFee)}`, size: 11 },
-    { text: `TOTAL A PAYER: ${formatCfa(totals.total)}`, size: 15, gap: 18 },
-    { text: "A presenter si besoin au vendeur ou au livreur.", size: 10 },
+    { text: `${paymentStatus === "confirme" ? "TOTAL COMMANDE" : "TOTAL A PREVOIR"}: ${formatCfa(totals.total)}`, size: 15, gap: 18 },
+    { text: "A presenter si besoin a la boutique ou au livreur.", size: 10 },
     { text: "Ce recu ne remplace pas une facture fiscale.", size: 10 },
   );
 

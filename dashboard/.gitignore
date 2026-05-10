@@ -29,6 +29,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+dev-*.log
+qa-*.png
+tikchop-whatsapp-qr-*.png
+artifacts/
+output/
+onboarding-local.html
 
 # env files (can opt-in for committing if needed)
 .env*

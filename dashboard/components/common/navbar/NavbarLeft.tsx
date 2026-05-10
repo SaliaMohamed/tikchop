@@ -20,7 +20,6 @@ const supabase = createClient();
 const {
   data: { user },
 } = await supabase.auth.getUser();
-console.log(user);
 const NavbarLeft: React.FC<NavbarLeftProps> = ({
   isMobile,
   setSearching,

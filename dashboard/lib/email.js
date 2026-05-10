@@ -6,8 +6,12 @@ export async function sendTransactionalEmail({ to, subject, html, text }) {
     return { skipped: true };
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: controller.signal,
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -19,7 +23,7 @@ export async function sendTransactionalEmail({ to, subject, html, text }) {
       html,
       text,
     }),
-  });
+  }).finally(() => clearTimeout(timeout));
 
   const body = await response.json().catch(() => ({}));
 
@@ -39,12 +43,12 @@ export async function sendSellerWelcomeEmail({ email, name }) {
   return sendTransactionalEmail({
     to: email,
     subject: "Bienvenue sur Tikchop",
-    text: `Bienvenue ${displayName}. Ton compte vendeur Tikchop est pret. Connecte-toi pour creer ou gerer ta boutique.`,
+    text: `Bienvenue ${displayName}. Votre compte vendeur Tikchop est pret. Connectez-vous pour creer ou gerer votre boutique.`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#101814">
         <h1 style="margin:0 0 12px">Bienvenue sur Tikchop</h1>
-        <p>Bonjour ${displayName}, ton compte vendeur est pret.</p>
-        <p>Tu peux maintenant creer ta mini-boutique, publier tes articles et recevoir les commandes.</p>
+        <p>Bonjour ${displayName}, votre compte vendeur est pret.</p>
+        <p>Vous pouvez maintenant creer votre boutique en ligne, publier vos articles et recevoir les commandes.</p>
       </div>
     `,
   });

@@ -17,13 +17,9 @@ const NavbarTop:React.FC<NavbarTopProps> = ({stickToTop = false}) => {
   const languageRef = useRef<HTMLSelectElement>(null);
 
 
-  const handleLanguageChange = () => {
-    console.log(languageRef.current?.value);
-  };
+  const handleLanguageChange = () => {};
 
-  const handleCurrencyChange = () => {
-    console.log(currencyRef.current?.value);
-  };
+  const handleCurrencyChange = () => {};
 
 
 

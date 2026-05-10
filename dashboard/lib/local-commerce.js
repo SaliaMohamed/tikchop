@@ -37,8 +37,8 @@ export const LOCAL_PAYMENT_OPTIONS = [
   },
   {
     value: "MTN_MONEY",
-    label: "MTN Money",
-    shortLabel: "MTN",
+    label: "MTN MoMo",
+    shortLabel: "MTN MoMo",
     hint: "Le vendeur confirme les instructions",
     online: false,
   },
@@ -51,9 +51,9 @@ export const LOCAL_PAYMENT_OPTIONS = [
   },
   {
     value: "PAYSTACK",
-    label: "Mobile money / carte",
-    shortLabel: "Mobile money",
-    hint: "Mobile money ou carte via lien securise",
+    label: "Carte / Djamo",
+    shortLabel: "Djamo",
+    hint: "Carte bancaire ou carte prepaye via lien securise",
     online: true,
   },
 ];

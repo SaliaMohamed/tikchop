@@ -68,7 +68,6 @@ export default function ScalableFilters() {
 
   const onSubmit = (data: FilterFormValues) => {
     setSelectedFilters(data);
-    console.log("Applied Filters:", data);
   };
 
   const clearFilters = () => {

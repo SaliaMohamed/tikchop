@@ -6,6 +6,13 @@ CREATE TABLE public.sellers (
     phone_number text NOT NULL UNIQUE,
     name text NOT NULL,
     slug text NOT NULL UNIQUE,
+    waha_session text UNIQUE,
+    paystack_subaccount_code text,
+    bot_tone text DEFAULT 'Francais ivoirien simple, poli, direct.',
+    bot_greeting text,
+    bot_payment_preferences text DEFAULT 'Wave, Orange Money, MTN MoMo, Djamo, paiement a la livraison selon la zone.',
+    bot_delivery_notes text,
+    bot_special_rules text,
     created_at timestamp with time zone DEFAULT now(),
     PRIMARY KEY (id)
 );
@@ -13,6 +20,7 @@ CREATE TABLE public.sellers (
 -- Index pour la recherche par slug (très fréquent)
 CREATE INDEX idx_sellers_slug ON public.sellers(slug);
 CREATE INDEX idx_sellers_phone ON public.sellers(phone_number);
+CREATE INDEX idx_sellers_waha_session ON public.sellers(waha_session);
 
 -- 2. Table: Produits (products)
 CREATE TABLE public.products (
@@ -23,6 +31,8 @@ CREATE TABLE public.products (
     stock_quantity integer DEFAULT 0,
     image_url text,
     description text,
+    product_variants jsonb DEFAULT '[]'::jsonb,
+    product_keywords text,
     created_at timestamp with time zone DEFAULT now(),
     PRIMARY KEY (id)
 );
@@ -41,6 +51,11 @@ CREATE TABLE public.orders (
     status order_status DEFAULT 'PENDING',
     total_amount numeric NOT NULL,
     payment_method text CHECK (payment_method IN ('WAVE', 'PAYSTACK')),
+    paystack_reference text UNIQUE,
+    paystack_authorization_url text,
+    paystack_payment_status text,
+    paystack_paid_at timestamp with time zone,
+    whatsapp_receipt_sent_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     PRIMARY KEY (id)
 );
@@ -48,6 +63,50 @@ CREATE TABLE public.orders (
 -- Index pour rechercher les commandes par vendeur
 CREATE INDEX idx_orders_seller_id ON public.orders(seller_id);
 CREATE INDEX idx_orders_order_ref ON public.orders(order_ref);
+CREATE INDEX idx_orders_paystack_reference ON public.orders(paystack_reference);
+
+-- Chatbot guardrails: pause bot when seller replies manually, avoid repeated follow-ups.
+CREATE TABLE public.tikchop_customer_handoffs (
+    seller_slug text NOT NULL,
+    customer_phone text NOT NULL,
+    instance_name text,
+    paused_until timestamp with time zone NOT NULL,
+    last_from_me_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    PRIMARY KEY (seller_slug, customer_phone)
+);
+
+CREATE INDEX idx_tikchop_customer_handoffs_active
+ON public.tikchop_customer_handoffs(seller_slug, customer_phone, paused_until);
+
+CREATE TABLE public.tikchop_customer_followups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    seller_id uuid REFERENCES public.sellers(id) ON DELETE CASCADE,
+    seller_slug text,
+    customer_phone text NOT NULL,
+    product_name text,
+    sent_at timestamp with time zone DEFAULT now(),
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX idx_tikchop_customer_followups_recent
+ON public.tikchop_customer_followups(seller_id, customer_phone, sent_at DESC);
+
+CREATE INDEX idx_tikchop_customer_followups_slug_recent
+ON public.tikchop_customer_followups(seller_slug, customer_phone, sent_at DESC);
+
+-- Chatbot message buffer and deduplication metadata.
+ALTER TABLE public.messages
+ADD COLUMN IF NOT EXISTS external_message_id text,
+ADD COLUMN IF NOT EXISTS seller_slug text,
+ADD COLUMN IF NOT EXISTS customer_phone text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_external_message_id
+ON public.messages(external_message_id)
+WHERE external_message_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_messages_client_status_created
+ON public.messages(client, statut, created_at DESC);
 
 -- 4. Table: Lignes de commande (order_items)
 CREATE TABLE public.order_items (

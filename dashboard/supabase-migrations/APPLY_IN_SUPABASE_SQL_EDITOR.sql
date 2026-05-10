@@ -113,6 +113,9 @@ ADD COLUMN IF NOT EXISTS paystack_payment_status text,
 ADD COLUMN IF NOT EXISTS paystack_paid_at timestamptz,
 ADD COLUMN IF NOT EXISTS whatsapp_receipt_sent_at timestamptz;
 
+ALTER TABLE public.sellers
+ADD COLUMN IF NOT EXISTS paystack_subaccount_code text;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paystack_reference_unique
 ON public.orders(paystack_reference)
 WHERE paystack_reference IS NOT NULL;
@@ -169,6 +172,34 @@ CREATE INDEX IF NOT EXISTS idx_tikchop_customer_followups_slug_recent
 ON public.tikchop_customer_followups(seller_slug, customer_phone, sent_at DESC);
 
 ALTER TABLE public.tikchop_customer_followups ENABLE ROW LEVEL SECURITY;
+
+-- 10. Per-boutique chatbot settings and product variants.
+ALTER TABLE public.sellers
+ADD COLUMN IF NOT EXISTS bot_tone text DEFAULT 'Francais ivoirien simple, poli, direct.',
+ADD COLUMN IF NOT EXISTS bot_greeting text,
+ADD COLUMN IF NOT EXISTS bot_payment_preferences text DEFAULT 'Wave, Orange Money, MTN MoMo, Djamo, paiement a la livraison selon la zone.',
+ADD COLUMN IF NOT EXISTS bot_delivery_notes text,
+ADD COLUMN IF NOT EXISTS bot_special_rules text;
+
+ALTER TABLE public.products
+ADD COLUMN IF NOT EXISTS product_variants jsonb DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS product_keywords text;
+
+CREATE INDEX IF NOT EXISTS idx_products_variants_gin
+ON public.products USING gin(product_variants);
+
+-- 11. WhatsApp message deduplication and faster batch lookups.
+ALTER TABLE public.messages
+ADD COLUMN IF NOT EXISTS external_message_id text,
+ADD COLUMN IF NOT EXISTS seller_slug text,
+ADD COLUMN IF NOT EXISTS customer_phone text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_external_message_id
+ON public.messages(external_message_id)
+WHERE external_message_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_messages_client_status_created
+ON public.messages(client, statut, created_at DESC);
 
 -- Refresh PostgREST schema cache so Next.js and n8n see new columns quickly.
 NOTIFY pgrst, 'reload schema';

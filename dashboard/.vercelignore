@@ -1,6 +1,9 @@
-.env
-.env.*
-
+.env*
+.next
+node_modules
+*.log
+onboarding-local.html
 qa-*.png
-.next/
-node_modules/
+tikchop-whatsapp-qr-*.png
+artifacts
+output

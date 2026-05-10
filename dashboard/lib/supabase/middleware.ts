@@ -1,20 +1,8 @@
-import { createServerClient } from "@supabase/ssr";
+﻿import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { PROTECTED_ROUTES } from "../constants";
 
-// Define types for better code organization
-type RedirectCounter = {
-  count: number;
-  paths: string[];
-};
-
 export async function updateSession(request: NextRequest) {
-  // Initialize redirect counter for debugging
-  const redirectStats: RedirectCounter = {
-    count: 0,
-    paths: [],
-  };
-
   // Create base response
   const response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
@@ -39,18 +27,8 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const emailVerified = user?.identities?.[0]?.identity_data?.email_verified;
 
-  // Helper function for redirection with tracking
+  // Helper function for redirection
   const redirect = (path: string): NextResponse => {
-    redirectStats.count++;
-    redirectStats.paths.push(`${pathname} → ${path}`);
-
-    // Log redirect information for debugging
-    console.log(`Redirect #${redirectStats.count}: ${pathname} → ${path}`);
-    console.log('User status:', {
-      isLoggedIn: !!user,
-      emailVerified: !!emailVerified,
-    });
-
     const url = request.nextUrl.clone();
     url.pathname = path;
     return NextResponse.redirect(url);
@@ -92,10 +70,6 @@ export async function updateSession(request: NextRequest) {
     });
     return redirect("/auth/sign-in");
   }
-
-  // Add redirect statistics to response headers for debugging
-  response.headers.set("X-Redirect-Count", redirectStats.count.toString());
-  response.headers.set("X-Redirect-Paths", JSON.stringify(redirectStats.paths));
 
   return response;
 }

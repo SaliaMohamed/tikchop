@@ -1,10 +1,13 @@
-"use client";
+﻿"use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
   BarChart3,
+  Camera,
   Check,
   ChevronRight,
   Clock3,
@@ -13,8 +16,10 @@ import {
   ReceiptText,
   ShieldCheck,
   Sparkles,
+  ShoppingBag,
   Truck,
   Wallet,
+  Zap,
 } from "lucide-react";
 
 const products = [
@@ -52,42 +57,153 @@ const products = [
 
 const proof = [
   { label: "essai offert", value: "7 jours" },
-  { label: "offre 1 boutique", value: "11 000 F" },
-  { label: "réponse client", value: "instantanée" },
+  { label: "fait pour le mobile", value: "100%" },
+  { label: "commandes plus claires", value: "moins de stress" },
+];
+
+const whatsappTrialMessage = "Bonjour, je veux tester Tikchop gratuitement pendant 7 jours pour ma boutique.";
+const whatsappContactNumber = process.env.NEXT_PUBLIC_TIKCHOP_WHATSAPP || "";
+const whatsappTrialHref = whatsappContactNumber
+  ? `https://wa.me/${whatsappContactNumber}?text=${encodeURIComponent(whatsappTrialMessage)}`
+  : `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappTrialMessage)}`;
+
+const clarityCards = [
+  {
+    icon: MessageCircle,
+    title: "Répondre vite, même quand vous êtes occupé",
+    text: "Prix, tailles, disponibilité, livraison et paiement restent clairs, même quand plusieurs messages arrivent en même temps.",
+  },
+  {
+    icon: ReceiptText,
+    title: "Ne plus perdre les vraies commandes",
+    text: "Chaque client intéressé devient une commande claire avec article, téléphone, commune, montant et statut.",
+  },
+  {
+    icon: Wallet,
+    title: "Donner les bons moyens de paiement",
+    text: "Wave, Orange Money, MTN Money, Djamo ou paiement à la livraison sont présentés simplement selon vos choix.",
+  },
+  {
+    icon: Truck,
+    title: "Préparer la livraison sans tout recopier",
+    text: "Les informations utiles sont prêtes à être envoyées au livreur : article, client, téléphone, commune et montant.",
+  },
+];
+
+const outcomeCards = [
+  "Vous répondez plus vite aux clients qui veulent acheter maintenant.",
+  "Vous arrêtez de chercher les captures dans la galerie.",
+  "Vous voyez mieux quel article est disponible et quelle commande est confirmée.",
+  "Vous gardez plus de temps pour les lives, les colis et l'encaissement.",
 ];
 
 const features = [
   {
     icon: MessageCircle,
-    title: "Réponses WhatsApp rapides",
-    text: "Prix, disponibilité, livraison et paiement sont envoyés sans laisser le client attendre.",
+    title: "Réponses WhatsApp plus rapides",
+    text: "Le client reçoit les informations essentielles sans attendre que vous soyez disponible.",
   },
   {
     icon: ReceiptText,
-    title: "Commandes bien rangées",
-    text: "Chaque commande arrive avec produit, commune, téléphone, total et statut de paiement.",
+    title: "Commandes faciles à préparer",
+    text: "Produit, commune, téléphone, total et statut sont regroupés au même endroit.",
   },
   {
-    icon: Truck,
-    title: "Livraison locale plus simple",
-    text: "Cocody, Marcory, Yopougon, Abobo ou Koumassi peuvent être préparés comme zones de livraison.",
+    icon: Wallet,
+    title: "Paiements locaux bien expliqués",
+    text: "Vous choisissez les moyens acceptés, Tikchop les présente clairement au client.",
   },
 ];
 
 const localSignals = [
   "Pagne, sacs, beauté, accessoires",
-  "Wave, Orange Money, MTN Money",
-  "Paiement à la livraison",
+  "Paiement Wave, Orange Money, MTN Money",
+  "Djamo et paiement à la livraison",
   "Relance des clients hésitants",
   "Catalogue avec vraies photos",
-  "Multi-boutiques sur demande",
+  "Commandes prêtes à partager au livreur",
+];
+
+const paymentSignals = [
+  { icon: Wallet, title: "Paiement direct", text: "Wave, Orange Money, MTN Money, Djamo ou paiement à la livraison sont affichés selon ce que vous acceptez." },
+  { icon: MessageCircle, title: "Confirmation plus propre", text: "Le client confirme son choix, sa commune et son numéro avant que la commande parte en préparation." },
+  { icon: ShieldCheck, title: "Moins d'aller-retour", text: "Vous répétez moins les mêmes consignes et vous gardez votre énergie pour encaisser, préparer et livrer." },
+];
+
+const fatimPain = [
+  { icon: Clock3, label: "Réponses trop tardives", text: "Le client a déjà acheté ailleurs quand elle revient sur WhatsApp." },
+  { icon: Camera, label: "Galerie saturée", text: "Captures de lives, captures de commandes, captures de conversations partout." },
+  { icon: ShoppingBag, label: "Même article demandé 8 fois", text: "Sans stock clair, elle doit vérifier à la main qui a confirmé en premier." },
+  { icon: MessageCircle, label: "Questions répétées", text: "Prix, taille, livraison, disponibilité : les mêmes réponses reviennent toute la journée." },
+];
+
+const tikchopHelp = [
+  "Garder les demandes importantes même quand Fatim prépare un live ou des colis.",
+  "Transformer les discussions WhatsApp en commandes avec nom, article, commune et paiement.",
+  "Réduire les doubles ventes quand un article existe en une seule pièce.",
+  "Préparer un message clair pour le livreur, sans tout recopier à la main.",
+  "Relancer les clients intéressés pendant qu'ils sont encore chauds.",
+];
+
+const automationSteps = [
+  { icon: MessageCircle, title: "1. Le client écrit", text: "Il demande le prix, la taille, la disponibilité ou la livraison d'un vêtement vu en live." },
+  { icon: PackageCheck, title: "2. Tikchop note la demande", text: "Article, taille, nom, téléphone, commune et moyen de paiement sont regroupés proprement." },
+  { icon: Wallet, title: "3. Paiement guidé", text: "Le client reçoit les consignes Wave, Orange Money, MTN Money ou paiement à la livraison, selon la boutique." },
+  { icon: Truck, title: "4. Livraison préparée", text: "Vous pouvez partager au livreur un résumé clair : produit, adresse, téléphone, montant et statut." },
+];
+
+const boutiqueSetupSteps = [
+  { title: "Identité boutique", text: "Nom, logo, WhatsApp, communes de livraison et horaires : la boutique devient claire dès l'ouverture." },
+  { title: "Catalogue vêtements", text: "Photos, prix, tailles, stock et description courte pour éviter les mêmes questions toute la journée." },
+  { title: "Paiements locaux", text: "Wave, Orange Money, MTN Money, Djamo ou paiement à la livraison selon les habitudes de la boutique." },
+  { title: "Livreurs habituels", text: "Numéros WhatsApp, zones et frais par commune pour préparer vite l'envoi de chaque commande." },
+  { title: "Lien de vente", text: "Le lien se partage en bio TikTok, statut WhatsApp ou message privé. Les clients commandent sans attendre." },
+  { title: "Suivi simple", text: "Chaque commande reste visible avec son statut : à confirmer, à préparer, en livraison ou terminée." },
+];
+
+const desktopFlow = [
+  { icon: Clock3, label: "Live TikTok", text: "Le client repère un article" },
+  { icon: MessageCircle, label: "WhatsApp", text: "Tikchop répond et confirme" },
+  { icon: PackageCheck, label: "Commandes", text: "Tout arrive proprement" },
+];
+
+const orders = [
+  { name: "Sac raphia", zone: "Cocody", status: "Payé Wave", amount: "10 000 F" },
+  { name: "Pagne wax", zone: "Yopougon", status: "À livrer", amount: "15 000 F" },
+  { name: "Beurre de karité", zone: "Marcory", status: "Confirmé", amount: "4 500 F" },
+];
+
+const demoProcess = [
+  { icon: MessageCircle, label: "1. Demande", text: "Le client pose sa question sur WhatsApp." },
+  { icon: Wallet, label: "2. Paiement", text: "Tikchop confirme le prix et propose Wave, OM ou MTN." },
+  { icon: PackageCheck, label: "3. Commande", text: "La commande est créée avec l'article, la zone et le statut." },
+  { icon: Truck, label: "4. Livraison", text: "Le livreur reçoit les infos utiles et le client reçoit son reçu." },
 ];
 
 export default function TikchopLanding() {
   return (
     <div className="tk-page">
+      <MobileHomeRedirect />
       <DesktopLanding />
-      <MobileLanding />
+    </div>
+  );
+}
+
+function MobileHomeRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      router.replace("/onboarding?new=1");
+    }
+  }, [router]);
+
+  return (
+    <div className="tk-mobile-redirect" aria-live="polite">
+      <div>
+        <span>T</span>
+        <strong>Tikchop</strong>
+      </div>
     </div>
   );
 }
@@ -101,19 +217,16 @@ function DesktopLanding() {
           <div className="tk-hero-copy">
             <p className="tk-eyebrow">
               <Sparkles size={16} />
-              Commerce WhatsApp pour boutiques d&apos;Abidjan
+              Pour vendeuses et vendeurs WhatsApp
             </p>
-            <h1>Une boutique qui vend sur WhatsApp, même aux heures chargées.</h1>
+            <h1>Votre boutique en ligne, avec un assistant WhatsApp qui vend avec vous.</h1>
             <p className="tk-hero-lead">
-              Tikchop transforme les messages clients en commandes propres : catalogue, réponses WhatsApp, paiements locaux, livraison et suivi vendeur dans une seule expérience.
+              Vous vendez sur TikTok, Instagram ou WhatsApp ? Tikchop vous aide à présenter vos articles, répondre plus vite, recevoir des commandes claires et préparer la livraison sans vous noyer dans les messages.
             </p>
             <div className="tk-hero-actions">
-              <Link href="/onboarding" className="tk-dark-button tk-big-button">
-                Lancer l&apos;essai gratuit
-                <ArrowRight size={18} />
-              </Link>
+              <WhatsappTrialButton label="Tester avec ma boutique" />
               <a href="#demo" className="tk-light-button">
-                Voir la démo boutique
+                Voir une boutique exemple
               </a>
             </div>
             <div className="tk-win-row">
@@ -131,8 +244,10 @@ function DesktopLanding() {
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
+            <DesktopOpsPanel />
             <IphoneShopMockup />
             <FloatingPhotoCards />
+            <DesktopFlowPills />
             <motion.div className="tk-live-chip" animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
               <span />
               Catalogue réel + assistant WhatsApp + commandes suivies
@@ -140,35 +255,39 @@ function DesktopLanding() {
           </motion.div>
         </section>
 
+        <ClaritySection />
+
         <section className="tk-product-section" id="demo">
-          <div className="tk-section-copy">
+          <motion.div className="tk-section-copy" initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55 }}>
             <p className="tk-eyebrow">Démo boutique</p>
-            <h2>Des produits réalistes, pas des dessins.</h2>
+            <h2>Une vitrine simple que vos clientes comprennent vite.</h2>
             <p>
-              La landing page montre une boutique fictive avec des articles proches du marché local : wax, tissus, sacs, beauté et accessoires populaires.
+              Photos propres, prix visibles, bouton WhatsApp et commande guidée. Le client voit l&apos;article, choisit, puis envoie sa demande sans chercher dans vos anciens statuts.
             </p>
-          </div>
+          </motion.div>
           <div>
             <ProductPhotoMarquee />
             <div className="tk-feature-grid">
               {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <article className="tk-feature-card" key={feature.title}>
+                  <motion.article className="tk-feature-card" key={feature.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45 }}>
                     <Icon size={24} />
                     <h3>{feature.title}</h3>
                     <p>{feature.text}</p>
-                  </article>
+                  </motion.article>
                 );
               })}
             </div>
           </div>
         </section>
 
+        <CaseStudySection id="fatim" />
+
         <section className="tk-abidjan-section" id="abidjan">
           <div className="tk-abidjan-panel">
             <p className="tk-eyebrow">Pensé pour vendre localement</p>
-            <h2>Le message commercial parle à une boutique, pas à un technicien.</h2>
+            <h2>Les habitudes d&apos;Abidjan, avec des commandes mieux rangées.</h2>
             <div className="tk-local-grid">
               {localSignals.map((signal) => (
                 <span key={signal}>
@@ -183,42 +302,81 @@ function DesktopLanding() {
               <span>Salia Boutique</span>
               <span>En ligne</span>
             </div>
-            <div className="tk-chat client">Bonjour, le sac raphia est disponible ?</div>
-            <div className="tk-chat bot">Oui disponible. Prix 10 000 F. Livraison possible aujourd&apos;hui à Cocody, Marcory ou Yopougon.</div>
+            <div className="tk-chat client">Bonjour, le sac raphia est-il disponible ?</div>
+            <div className="tk-chat bot">Oui, il est disponible. Le prix est de 10 000 F. Vous pouvez payer par Wave, Orange Money ou MTN Money. Livraison possible aujourd&apos;hui à Cocody, Marcory ou Yopougon.</div>
+            <div className="tk-process-label">
+              <Sparkles size={14} />
+              Le processus Tikchop
+            </div>
+            <div className="tk-process-track" aria-label="Processus Tikchop">
+              {demoProcess.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div className="tk-process-step" key={item.label}>
+                    <span>
+                      <Icon size={15} />
+                    </span>
+                    <strong>{item.label}</strong>
+                    <small>{item.text}</small>
+                  </div>
+                );
+              })}
+            </div>
             <div className="tk-order-summary">
               <PackageCheck size={20} />
               <div>
                 <strong>Commande prête</strong>
-                <span>Sac raphia, Cocody, paiement Wave</span>
+                <span>Sac raphia, Cocody, paiement Wave confirmé, reçu envoyé</span>
               </div>
             </div>
           </div>
         </section>
 
+        <section className="tk-payment-section">
+          <div className="tk-payment-copy">
+            <p className="tk-eyebrow">Encaissement local</p>
+            <h2>Vous expliquez moins, le client comprend mieux.</h2>
+            <p>
+              Les moyens de paiement que vous acceptez sont visibles et faciles à choisir. Le client sait quoi faire, et la commande garde le bon montant, la bonne commune et le bon statut.
+            </p>
+          </div>
+          <div className="tk-payment-grid">
+            {paymentSignals.map((item) => {
+              const Icon = item.icon;
+              return (
+                <motion.article className="tk-payment-card" key={item.title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45 }}>
+                  <Icon size={22} />
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </motion.article>
+              );
+            })}
+          </div>
+        </section>
+
         <section className="tk-pricing-section" id="prix">
           <div>
-            <p className="tk-eyebrow">Offre simple</p>
-            <h2>Une semaine gratuite pour prouver la valeur.</h2>
+            <p className="tk-eyebrow">Deux offres</p>
+            <h2>Commencez simple, ajoutez plus d&apos;accompagnement quand la boutique grandit.</h2>
           </div>
           <div className="tk-price-card">
-            <span className="tk-price-label">1 boutique</span>
-            <strong>11 000 FCFA</strong>
-            <p>Par mois après l&apos;essai. Application boutique + assistant WhatsApp dans la même offre.</p>
-            <Link href="/onboarding" className="tk-dark-button tk-big-button">
-              Tester Tikchop
-              <ChevronRight size={18} />
-            </Link>
+            <span className="tk-price-label">Simple</span>
+            <strong>À partir de 5K / mois</strong>
+            <p>La formule la plus simple pour démarrer : aucun branchement compliqué. Les clients passent par le numéro Tikchop et les commandes arrivent dans votre espace vendeur.</p>
+            <WhatsappTrialButton label="Demander mon essai" />
           </div>
           <div className="tk-price-card tk-price-card-dark">
-            <span className="tk-price-label">Plusieurs boutiques</span>
-            <strong>Prix pro</strong>
-            <p>Pour boutiques avec plusieurs pages, vendeurs, catalogues ou numéros WhatsApp.</p>
+            <span className="tk-price-label">Accompagné</span>
+            <strong>Sur devis</strong>
+            <p>Pour les boutiques qui veulent une mise en place plus personnalisée : Tikchop peut répondre depuis votre propre numéro WhatsApp avec notre aide.</p>
             <Link href="/onboarding" className="tk-light-button">
-              Créer une boutique
+              Créer ma boutique
               <ChevronRight size={18} />
             </Link>
           </div>
         </section>
+
+        <TrialWhatsappSection />
       </main>
     </div>
   );
@@ -239,17 +397,16 @@ function MobileLanding() {
         <section className="tk-mobile-hero">
           <p className="tk-eyebrow">
             <Sparkles size={15} />
-            Boutiques d&apos;Abidjan
+            Vendre mieux sur WhatsApp
           </p>
-          <h1>Les messages WhatsApp deviennent des commandes propres.</h1>
+          <h1>Votre boutique en ligne, prête pour vos clients WhatsApp.</h1>
           <p>
-            Une boutique mobile, un assistant de vente et un tableau de bord pour suivre les clients.
+            Montrez vos articles, recevez les commandes proprement et préparez la livraison sans perdre les messages importants.
           </p>
-          <Link href="/onboarding" className="tk-dark-button tk-big-button">
-            Lancer l&apos;essai gratuit
-            <ArrowRight size={18} />
-          </Link>
+          <WhatsappTrialButton label="Tester ma boutique" />
         </section>
+
+        <MobileClaritySection />
 
         <section className="tk-mobile-screen">
           <IphoneShopMockup compact />
@@ -270,28 +427,30 @@ function MobileLanding() {
           </div>
           <div>
             <span>3</span>
-            <p>La commande apparaît dans le dashboard vendeur.</p>
+            <p>La commande apparaît dans votre espace vendeur.</p>
           </div>
         </section>
 
+        <CaseStudySection id="fatim-mobile" />
+
         <section className="tk-mobile-local">
-          <h2>Une offre adaptée au commerce local.</h2>
+          <h2>Adapté aux ventes d&apos;Abidjan.</h2>
           <div>
             <span><Truck size={17} /> Livraison par commune</span>
-            <span><Wallet size={17} /> Paiements mobiles</span>
+            <span><Wallet size={17} /> Paiements locaux</span>
             <span><Clock3 size={17} /> Relances clients</span>
-            <span><ShieldCheck size={17} /> Commandes structurées</span>
+            <span><ShieldCheck size={17} /> Commandes plus claires</span>
           </div>
         </section>
 
         <section className="tk-mobile-price">
-          <span>1 boutique</span>
-          <strong>11 000 FCFA/mois</strong>
-          <p>La première semaine est offerte. Application + assistant WhatsApp.</p>
-          <Link href="/onboarding" className="tk-dark-button tk-big-button">
-            Tester Tikchop
-          </Link>
+          <span>Simple recommandé</span>
+          <strong>À partir de 5K / mois</strong>
+          <p>Les clients écrivent au numéro Tikchop, l&apos;assistant aide à vendre, et les commandes arrivent dans votre espace sans installation compliquée.</p>
+          <WhatsappTrialButton label="Demander mon essai" />
         </section>
+
+        <TrialWhatsappSection mobile />
       </main>
     </div>
   );
@@ -306,17 +465,109 @@ function Header() {
       </Link>
       <nav aria-label="Navigation Tikchop">
         <a href="#demo">Démo</a>
+        <a href="#fatim">Cas Fatim</a>
         <a href="#abidjan">Abidjan</a>
         <a href="#prix">Prix</a>
       </nav>
       <div className="tk-nav-actions">
         <Link href="/install">Installer</Link>
-        <Link href="/dashboard">Dashboard</Link>
-        <Link href="/onboarding" className="tk-dark-button">
-          Essai gratuit
-        </Link>
+        <Link href="/dashboard">Espace vendeur</Link>
+        <WhatsappTrialButton className="tk-dark-button tk-nav-whatsapp" label="Essai WhatsApp" showArrow={false} />
       </div>
     </header>
+  );
+}
+
+function WhatsappTrialButton({ className = "tk-dark-button tk-big-button", label = "Demander l'essai sur WhatsApp", showArrow = true }) {
+  if (!whatsappContactNumber) {
+    return (
+      <Link href="/onboarding?new=1" className={`tk-whatsapp-button ${className}`}>
+        <MessageCircle size={18} />
+        {label}
+        {showArrow ? <ArrowRight size={18} /> : null}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={whatsappTrialHref} className={`tk-whatsapp-button ${className}`} target="_blank" rel="noreferrer">
+      <MessageCircle size={18} />
+      {label}
+      {showArrow ? <ArrowRight size={18} /> : null}
+    </a>
+  );
+}
+
+function ClaritySection() {
+  return (
+    <section className="tk-clarity-section" id="utilite">
+      <motion.div className="tk-clarity-copy" initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55 }}>
+        <p className="tk-eyebrow">À quoi ça sert ?</p>
+        <h2>Vous gardez WhatsApp, mais vous arrêtez de tout gérer dans le désordre.</h2>
+        <p>
+          Quand les demandes arrivent de TikTok, des statuts, des lives et des messages privés, tout se mélange vite. Tikchop vous aide à répondre, ranger, confirmer le paiement et préparer la livraison.
+        </p>
+      </motion.div>
+      <div className="tk-clarity-grid">
+        {clarityCards.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <motion.article className="tk-clarity-card" key={item.title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
+              <Icon size={22} />
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </motion.article>
+          );
+        })}
+      </div>
+      <div className="tk-outcome-panel">
+        <span>Ce que vous gagnez</span>
+        <div>
+          {outcomeCards.map((item) => (
+            <p key={item}>
+              <Check size={16} />
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileClaritySection() {
+  return (
+    <section className="tk-mobile-value" id="utilite-mobile">
+      <p className="tk-eyebrow">À quoi ça sert ?</p>
+      <h2>À ne plus perdre les clients quand WhatsApp déborde.</h2>
+      <div>
+        {clarityCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article key={item.title}>
+              <Icon size={18} />
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function TrialWhatsappSection({ mobile = false }) {
+  return (
+    <section className={mobile ? "tk-mobile-whatsapp-cta" : "tk-whatsapp-cta"}>
+      <div>
+        <p className="tk-eyebrow">Essai gratuit</p>
+        <h2>Testez avec votre vraie boutique, pas avec une démo vide.</h2>
+        <p>
+          Envoyez simplement la demande. Vous pourrez tester Tikchop avec vos articles, votre numéro WhatsApp et vos habitudes de livraison.
+        </p>
+      </div>
+      <WhatsappTrialButton label="Envoyer la demande d'essai" />
+    </section>
   );
 }
 
@@ -337,11 +588,11 @@ function IphoneShopMockup({ compact = false }) {
         </header>
 
         <div className="tk-shop-tabs" aria-label="Catégories boutique">
-          <span>Tous</span>
-          <span>Wax</span>
-          <span>Sacs</span>
-          <span>Beauté</span>
-        </div>
+        <span>Tous</span>
+        <span>Wax</span>
+        <span>Sacs</span>
+        <span>Beauté</span>
+      </div>
 
         <article className="tk-featured-product">
           <ProductPhoto product={products[0]} priority />
@@ -367,6 +618,135 @@ function IphoneShopMockup({ compact = false }) {
   );
 }
 
+function CaseStudySection({ id }) {
+  return (
+    <>
+      <section className="fatim-section" id={id}>
+        <div className="fatim-photo-card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/landing/fatim-jeune-friperie.jpg" alt="Fatim, jeune vendeuse de friperie et textiles" />
+          <div className="fatim-photo-overlay">
+            <span>Fatim</span>
+            <strong>Friperie, lives TikTok, commandes WhatsApp</strong>
+          </div>
+        </div>
+
+        <div className="fatim-story">
+          <p className="install-eyebrow">Exemple vendeur</p>
+          <h2>Fatim savait déjà vendre. Le problème, c&apos;était le désordre après le live.</h2>
+          <p>
+            Fatim vendait des vêtements de friperie. Le soir, elle faisait ses lives TikTok pour montrer les arrivages. La journée, elle devait reprendre les commandes arrivées sur WhatsApp, vérifier les captures, répondre aux tailles, confirmer les prix et retrouver qui avait demandé quoi.
+          </p>
+          <p>
+            Quand elle répondait trop tard, le client n&apos;était plus toujours intéressé. Et quand huit personnes voulaient le même article, il fallait fouiller conversation par conversation. Sa galerie devenait un stock de captures d&apos;écran, mais pas un vrai système de vente.
+          </p>
+
+          <div className="fatim-pain-grid">
+            {fatimPain.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.label}>
+                  <Icon size={19} />
+                  <strong>{item.label}</strong>
+                  <span>{item.text}</span>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="fatim-after">
+        <div>
+          <p className="install-eyebrow">Après Tikchop</p>
+          <h2>Fatim garde son énergie pour vendre, pas pour fouiller WhatsApp.</h2>
+        </div>
+        <div className="fatim-after-grid">
+          <article className="fatim-result-card">
+            <Zap size={22} />
+            <strong>Avant la fin de la semaine de test</strong>
+            <p>
+              Le but n&apos;est pas de changer sa façon de vendre. Tikchop enlève surtout les captures perdues, les réponses répétées et les commandes difficiles à suivre.
+            </p>
+          </article>
+          <article className="fatim-whatsapp-card" aria-label="Simulation WhatsApp Tikchop">
+            <div className="fatim-chat-head">
+              <span>TC</span>
+              <div>
+                <strong>Tikchop Assistant</strong>
+                <small>Réponse automatique</small>
+              </div>
+            </div>
+            <div className="fatim-chat client">Le jean du live est encore disponible ?</div>
+            <div className="fatim-chat bot">Oui. Taille 40, 7 500 FCFA. Paiement possible par Wave, Orange Money ou MTN Money.</div>
+            <div className="fatim-order">
+              <PackageCheck size={18} />
+              <span>Commande enregistrée : jean friperie, Yopougon, paiement Wave confirmé</span>
+            </div>
+          </article>
+        </div>
+        <div className="fatim-help-list">
+          {tikchopHelp.map((item) => (
+            <span key={item}>
+              <Check size={16} />
+              {item}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="fatim-automation-section" id={`${id}-automation`}>
+        <div className="fatim-automation-copy">
+          <p className="install-eyebrow">Prise en charge automatique</p>
+          <h2>La commande ne reste plus bloquée dans WhatsApp.</h2>
+          <p>
+            Dans une boutique de vêtements, le client peut passer de la question à la commande sans que tout reste bloqué dans une discussion. Vous récupérez les bonnes informations et vous préparez la suite plus vite.
+          </p>
+        </div>
+        <div className="fatim-automation-grid">
+          {automationSteps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <article key={step.title}>
+                <Icon size={22} />
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </article>
+            );
+          })}
+        </div>
+        <div className="fatim-delivery-note">
+          <Truck size={22} />
+          <div>
+            <strong>Vos livreurs habituels restent dans votre organisation</strong>
+            <p>
+              Vous pouvez garder les numéros WhatsApp des livreurs, leurs zones, leurs frais et leurs disponibilités. Quand une commande arrive à Yopougon ou Cocody, Tikchop prépare les informations à envoyer.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="fatim-setup-section" id={`${id}-creation`}>
+        <div>
+          <p className="install-eyebrow">Création de boutique</p>
+          <h2>Lancer une boutique de vêtements sans vous compliquer la vie.</h2>
+        </div>
+        <div className="fatim-setup-timeline">
+          {boutiqueSetupSteps.map((step, index) => (
+            <article key={step.title}>
+              <span>{index + 1}</span>
+              <div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 function FloatingPhotoCards() {
   return (
     <div className="tk-floating-products" aria-hidden="true">
@@ -382,6 +762,69 @@ function FloatingPhotoCards() {
           <span>{product.price}</span>
         </motion.div>
       ))}
+    </div>
+  );
+}
+
+function DesktopOpsPanel() {
+  return (
+    <motion.aside
+      className="tk-ops-panel"
+      initial={{ opacity: 0, x: 42, rotate: 2 }}
+      animate={{ opacity: 1, x: 0, rotate: 0 }}
+      transition={{ duration: 0.7, delay: 0.18, ease: "easeOut" }}
+      aria-label="Aperçu espace vendeur Tikchop"
+    >
+      <div className="tk-ops-top">
+        <div>
+          <span>Espace vendeur</span>
+          <strong>Commandes du live</strong>
+        </div>
+        <BarChart3 size={20} />
+      </div>
+      <div className="tk-ops-metrics">
+        <div>
+          <strong>24</strong>
+          <span>messages</span>
+        </div>
+        <div>
+          <strong>9</strong>
+          <span>commandes</span>
+        </div>
+      </div>
+      <div className="tk-ops-orders">
+        {orders.map((order) => (
+          <div key={`${order.name}-${order.zone}`}>
+            <span>{order.name}</span>
+            <strong>{order.amount}</strong>
+            <small>{order.zone} - {order.status}</small>
+          </div>
+        ))}
+      </div>
+    </motion.aside>
+  );
+}
+
+function DesktopFlowPills() {
+  return (
+    <div className="tk-flow-pills" aria-label="Flux de vente Tikchop">
+      {desktopFlow.map((item, index) => {
+        const Icon = item.icon;
+        return (
+          <motion.div
+            className="tk-flow-pill"
+            key={item.label}
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3.8, delay: index * 0.35, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Icon size={18} />
+            <div>
+              <strong>{item.label}</strong>
+              <span>{item.text}</span>
+            </div>
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

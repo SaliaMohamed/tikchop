@@ -130,7 +130,7 @@ export function getOrderCaseNotes(order, { hasDrivers = true } = {}) {
     notes.push({
       id: "driver-needed",
       title: "Livreur a assigner",
-      body: hasDrivers ? "Choisis un livreur ou partage la fiche manuellement." : "Ajoute un livreur dans Livraison pour accelerer les prochaines commandes.",
+      body: hasDrivers ? "Choisissez un livreur ou partagez la fiche manuellement." : "Ajoutez un livreur dans Livraison pour accelerer les prochaines commandes.",
     });
   }
 

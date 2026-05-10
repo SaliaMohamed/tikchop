@@ -158,7 +158,6 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   brand = false,
   animate = false,
 }) => {
-  console.log(animate);
   return (
     <Link
       href={`/shop?${brand ? "brand" : "category"}=${name.toLowerCase()}`}

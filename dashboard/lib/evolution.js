@@ -35,7 +35,7 @@ export async function sendEvolutionText({ instanceName, number, text }) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = Array.isArray(payload?.message) ? payload.message.join(" ") : payload?.message;
-    throw new Error(message || payload?.error || "Evolution API refused the message.");
+    throw new Error(message || payload?.error || "Le message WhatsApp n'a pas pu etre envoye.");
   }
 
   return { ok: true, payload };
@@ -77,7 +77,7 @@ export async function sendEvolutionMedia({
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = Array.isArray(payload?.message) ? payload.message.join(" ") : payload?.message;
-    throw new Error(message || payload?.error || "Evolution API refused the media.");
+    throw new Error(message || payload?.error || "La photo ou le recu WhatsApp n'a pas pu etre envoye.");
   }
 
   return { ok: true, payload };

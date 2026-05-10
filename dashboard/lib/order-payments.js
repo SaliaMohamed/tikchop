@@ -141,7 +141,7 @@ async function getOrderForWhatsAppMessage(orderId) {
     return result.data;
   }
 
-  if (result.error && /whatsapp_receipt_sent_at|evolution_instance|schema cache|column/i.test(result.error.message || "")) {
+  if (result.error && /whatsapp_receipt_sent_at|evolution_instance|paystack_|schema cache|column/i.test(result.error.message || "")) {
     const fallback = await supabaseAdmin
       .from("orders")
       .select(basicSelect)

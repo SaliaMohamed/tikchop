@@ -75,6 +75,38 @@ function formatCfa(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
 }
 
+function normalizeProductVariants(input) {
+  if (Array.isArray(input)) {
+    return input
+      .map((variant) => ({
+        label: String(variant.label || variant.size || variant.color || "").trim(),
+        size: String(variant.size || "").trim(),
+        color: String(variant.color || "").trim(),
+        stock: Number.parseInt(variant.stock ?? variant.stock_quantity ?? 0, 10),
+      }))
+      .filter((variant) => variant.label || variant.size || variant.color);
+  }
+
+  return String(input || "")
+    .split(/[\n,;]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const stockMatch = entry.match(/(?:stock|qt[eé]|x)\s*[:=]?\s*(\d{1,4})|\b(\d{1,4})\s*(?:pcs?|pieces?)\b/i);
+      const stock = Number.parseInt(stockMatch?.[1] || stockMatch?.[2] || 0, 10);
+      const cleanLabel = entry
+        .replace(/(?:stock|qt[eé]|x)\s*[:=]?\s*\d{1,4}/ig, "")
+        .replace(/\b\d{1,4}\s*(?:pcs?|pieces?)\b/ig, "")
+        .trim();
+      return {
+        label: cleanLabel || entry,
+        size: "",
+        color: "",
+        stock: Number.isFinite(stock) ? stock : 0,
+      };
+    });
+}
+
 function buildDriverDeliveryMessage(order, driver) {
   const orderRef = order.order_ref || order.id?.slice(0, 8)?.toUpperCase();
   const items = (order.order_items || [])
@@ -612,6 +644,49 @@ export async function createOrder(sellerId, cartItems, options = {}) {
     throw new Error("Failed to create order items");
   }
 
+  const decrementedProducts = [];
+
+  try {
+    for (const item of orderItemsData) {
+      const currentStock = Number(item.product.stock_quantity || 0);
+      const nextStock = Math.max(0, currentStock - item.quantity);
+      const { data: updatedProduct, error: stockError } = await supabaseAdmin
+        .from("products")
+        .update({ stock_quantity: nextStock })
+        .eq("id", item.product.id)
+        .eq("seller_id", sellerId)
+        .eq("stock_quantity", currentStock)
+        .select("id")
+        .maybeSingle();
+
+      if (stockError) {
+        throw stockError;
+      }
+
+      if (!updatedProduct) {
+        throw new Error(`${item.product.name} vient d'etre commande. Verifiez le stock puis recommencez.`);
+      }
+
+      decrementedProducts.push({
+        id: item.product.id,
+        previousStock: currentStock,
+      });
+    }
+  } catch (stockError) {
+    console.error("Error updating product stock:", stockError);
+    await supabaseAdmin.from("order_items").delete().eq("order_id", order.id);
+    await supabaseAdmin.from("orders").delete().eq("id", order.id);
+
+    for (const product of decrementedProducts.reverse()) {
+      await supabaseAdmin
+        .from("products")
+        .update({ stock_quantity: product.previousStock })
+        .eq("id", product.id);
+    }
+
+    throw new Error(stockError.message || "Stock non mis a jour. Reessayez la commande.");
+  }
+
   return {
     orderId: order.id,
     orderRef: order.order_ref || order.id.split("-")[0].toUpperCase(),
@@ -627,7 +702,7 @@ export async function initiatePayment(orderId) {
       throw new Error("Supabase admin client not initialized.");
     }
 
-    const { data: order, error } = await supabaseAdmin
+    let { data: order, error } = await supabaseAdmin
       .from("orders")
       .select("id, order_ref, total_amount, delivery_fee, sellers(name, delivery_payment_timing, paystack_subaccount_code)")
       .eq("id", orderId)
@@ -636,18 +711,30 @@ export async function initiatePayment(orderId) {
     let payableAmount = 0;
     let orderForPayment = order;
 
-    if (error && /delivery_fee|delivery_payment_timing/i.test(error.message || "")) {
+    if (error && /delivery_fee|delivery_payment_timing|paystack_subaccount_code/i.test(error.message || "")) {
       const fallback = await supabaseAdmin
         .from("orders")
-        .select("id, order_ref, total_amount, sellers(name, paystack_subaccount_code)")
+        .select("id, order_ref, total_amount, delivery_fee, sellers(name, delivery_payment_timing)")
         .eq("id", orderId)
         .single();
 
-      if (fallback.error || !fallback.data) {
-        throw new Error("Order not found.");
-      }
+      if (!fallback.error && fallback.data) {
+        order = fallback.data;
+        orderForPayment = { ...fallback.data, delivery_fee: Number(fallback.data.delivery_fee || 0) };
+      } else {
+        const basicFallback = await supabaseAdmin
+          .from("orders")
+          .select("id, order_ref, total_amount, sellers(name)")
+          .eq("id", orderId)
+          .single();
 
-      orderForPayment = { ...fallback.data, delivery_fee: 0 };
+        if (basicFallback.error || !basicFallback.data) {
+          throw new Error("Order not found.");
+        }
+
+        order = basicFallback.data;
+        orderForPayment = { ...basicFallback.data, delivery_fee: 0 };
+      }
     } else if (error || !order) {
       throw new Error("Order not found.");
     }
@@ -809,6 +896,131 @@ export async function getSellerOrders(slug, accessToken) {
   return data || [];
 }
 
+export async function createDemoOrder(slug, accessToken) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  const seller = await requireSellerBySlug(slug, accessToken, "id, fixed_delivery_fee");
+
+  const { data: products, error: productsError } = await supabaseAdmin
+    .from("products")
+    .select("id, name, price, stock_quantity")
+    .eq("seller_id", seller.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (productsError) {
+    throw new Error(productsError.message);
+  }
+
+  let product = products?.[0] || null;
+
+  if (!product) {
+    const demoProduct = {
+      seller_id: seller.id,
+      name: "Robe demo Tikchop",
+      price: 17500,
+      stock_quantity: 12,
+      description: "Article exemple pour tester le cycle commande WhatsApp.",
+    };
+
+    const { data: createdProduct, error: createProductError } = await supabaseAdmin
+      .from("products")
+      .insert([demoProduct])
+      .select("id, name, price, stock_quantity")
+      .single();
+
+    if (createProductError) {
+      throw new Error(createProductError.message);
+    }
+
+    product = createdProduct;
+  }
+
+  const productPrice = Number(product.price || 0) || 17500;
+  const deliveryFee = Number(seller.fixed_delivery_fee || 1000) || 1000;
+  const orderRef = `DEMO${crypto.randomUUID().replaceAll("-", "").slice(0, 4).toUpperCase()}`;
+  let { data: order, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .insert([{
+      seller_id: seller.id,
+      order_ref: orderRef,
+      customer_phone: "DEMO_CLIENT",
+      status: "PAID",
+      total_amount: productPrice,
+      payment_method: "WAVE",
+      delivery_type: "DELIVERY",
+      delivery_zone: "Cocody Angre",
+      delivery_address: "Carrefour Gestoci, immeuble bleu, appel avant depart",
+      delivery_fee: deliveryFee,
+      delivery_status: "PENDING",
+    }])
+    .select("id")
+    .single();
+
+  if (orderError && /(order_ref|delivery_|payment_method|schema cache|column)/i.test(orderError.message || "")) {
+    const fallback = await supabaseAdmin
+      .from("orders")
+      .insert([{
+        seller_id: seller.id,
+        customer_phone: "DEMO_CLIENT",
+        status: "PAID",
+        total_amount: productPrice,
+        payment_method: "WAVE",
+      }])
+      .select("id")
+      .single();
+
+    order = fallback.data;
+    orderError = fallback.error;
+  }
+
+  if (orderError || !order) {
+    throw new Error(orderError?.message || "Commande demo non creee.");
+  }
+
+  const { error: itemError } = await supabaseAdmin
+    .from("order_items")
+    .insert([{
+      order_id: order.id,
+      product_id: product.id,
+      quantity: 1,
+      price_at_time: productPrice,
+    }]);
+
+  if (itemError) {
+    await supabaseAdmin.from("orders").delete().eq("id", order.id);
+    throw new Error(itemError.message);
+  }
+
+  const { data: fullOrder, error: loadError } = await supabaseAdmin
+    .from("orders")
+    .select(`
+      *,
+      order_items (
+        id,
+        quantity,
+        price_at_time,
+        products (id, name, image_url)
+      ),
+      delivery_drivers (
+        id,
+        name,
+        phone_number,
+        zone
+      )
+    `)
+    .eq("id", order.id)
+    .single();
+
+  if (loadError) {
+    return { id: order.id };
+  }
+
+  return fullOrder;
+}
+
 export async function getSellerDeliverySettings(slug, accessToken) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
@@ -876,6 +1088,8 @@ export async function addProduct(product, accessToken) {
     stock_quantity: Number.parseInt(product.stock_quantity || 0, 10),
     description: String(product.description || "").trim() || null,
     image_url: String(product.image_url || "").trim() || null,
+    product_variants: normalizeProductVariants(product.product_variants || product.variants_text),
+    product_keywords: String(product.product_keywords || "").trim() || null,
     seller_id: product.seller_id,
   };
 
@@ -883,11 +1097,22 @@ export async function addProduct(product, accessToken) {
     throw new Error("Invalid product payload.");
   }
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from("products")
     .insert([payload])
     .select("id")
     .single();
+
+  if (error && /product_variants|product_keywords|schema cache|column/i.test(error.message || "")) {
+    const { product_variants, product_keywords, ...fallbackPayload } = payload;
+    const fallback = await supabaseAdmin
+      .from("products")
+      .insert([fallbackPayload])
+      .select("id")
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -913,6 +1138,8 @@ export async function addProductsBulk(products, accessToken) {
     stock_quantity: Number.parseInt(product.stock_quantity || 1, 10),
     description: String(product.description || "").trim() || null,
     image_url: String(product.image_url || "").trim() || null,
+    product_variants: normalizeProductVariants(product.product_variants || product.variants_text),
+    product_keywords: String(product.product_keywords || "").trim() || null,
     seller_id: product.seller_id,
   })).filter((product) => (
     product.seller_id
@@ -925,10 +1152,20 @@ export async function addProductsBulk(products, accessToken) {
     throw new Error("Aucun produit valide a ajouter.");
   }
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from("products")
     .insert(payload)
     .select("id");
+
+  if (error && /product_variants|product_keywords|schema cache|column/i.test(error.message || "")) {
+    const fallbackPayload = payload.map(({ product_variants, product_keywords, ...product }) => product);
+    const fallback = await supabaseAdmin
+      .from("products")
+      .insert(fallbackPayload)
+      .select("id");
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -946,9 +1183,19 @@ export async function getSellerProducts(slug, accessToken) {
 
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select("id, name, price, stock_quantity, image_url, description, created_at")
+    .select("id, name, price, stock_quantity, image_url, description, product_variants, product_keywords, created_at")
     .eq("seller_id", seller.id)
     .order("created_at", { ascending: false });
+
+  if (error && /product_variants|product_keywords|schema cache|column/i.test(error.message || "")) {
+    const fallback = await supabaseAdmin
+      .from("products")
+      .select("id, name, price, stock_quantity, image_url, description, created_at")
+      .eq("seller_id", seller.id)
+      .order("created_at", { ascending: false });
+    if (fallback.error) throw new Error(fallback.error.message);
+    return fallback.data || [];
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -970,19 +1217,34 @@ export async function updateProduct(productId, product, slug, accessToken) {
     stock_quantity: Number.parseInt(product.stock_quantity || 0, 10),
     description: String(product.description || "").trim() || null,
     image_url: String(product.image_url || "").trim() || null,
+    product_variants: normalizeProductVariants(product.product_variants || product.variants_text),
+    product_keywords: String(product.product_keywords || "").trim() || null,
   };
 
   if (!productId || !payload.name || payload.price < 0 || payload.stock_quantity < 0) {
     throw new Error("Invalid product payload.");
   }
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from("products")
     .update(payload)
     .eq("id", productId)
     .eq("seller_id", seller.id)
-    .select("id, name, price, stock_quantity, image_url, description, created_at")
+    .select("id, name, price, stock_quantity, image_url, description, product_variants, product_keywords, created_at")
     .single();
+
+  if (error && /product_variants|product_keywords|schema cache|column/i.test(error.message || "")) {
+    const { product_variants, product_keywords, ...fallbackPayload } = payload;
+    const fallback = await supabaseAdmin
+      .from("products")
+      .update(fallbackPayload)
+      .eq("id", productId)
+      .eq("seller_id", seller.id)
+      .select("id, name, price, stock_quantity, image_url, description, created_at")
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -1195,16 +1457,17 @@ export async function getDashboardData(slug, accessToken) {
   const [{ data: sellerState }, { count: followupCount }] = await Promise.all([
     supabaseAdmin
       .from("sellers")
-      .select("whatsapp_status, evolution_instance")
+      .select("whatsapp_provider, whatsapp_status, evolution_instance")
       .eq("id", seller.id)
       .maybeSingle()
       .then((result) => (/whatsapp_status|evolution_instance|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result)),
     supabaseAdmin
-      .from("tikchop_customer_followups")
+      .from("messages")
       .select("*", { count: "exact", head: true })
-      .eq("seller_id", seller.id)
-      .gte("sent_at", weekAgo)
-      .then((result) => (/tikchop_customer_followups|schema cache|relation|table/i.test(result.error?.message || "") ? { count: 0 } : result)),
+      .eq("seller_slug", seller.slug)
+      .eq("statut", "followup")
+      .gte("created_at", weekAgo)
+      .then((result) => (/messages|seller_slug|schema cache|column/i.test(result.error?.message || "") ? { count: 0 } : result)),
   ]);
 
   return {
@@ -1221,7 +1484,10 @@ export async function getDashboardData(slug, accessToken) {
       preparedOrders: preparedOrderCount || 0,
       deliveredOrders: deliveredOrderCount || 0,
       whatsappStatus: sellerState?.whatsapp_status || "unknown",
-      whatsappConnected: sellerState?.whatsapp_status === "connected" || sellerState?.whatsapp_status === "open",
+      whatsappConnected: sellerState?.whatsapp_provider === "tikchop_standard"
+        || sellerState?.whatsapp_status === "standard_active"
+        || sellerState?.whatsapp_status === "connected"
+        || sellerState?.whatsapp_status === "open",
       evolutionInstance: sellerState?.evolution_instance || "",
     },
     recentOrders: orders || [],

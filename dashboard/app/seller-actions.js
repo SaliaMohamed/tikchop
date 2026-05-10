@@ -22,6 +22,11 @@ function cleanAuthPhone(value) {
   return phone.startsWith("+") ? phone : `+${phone}`;
 }
 
+function getPhoneAliasEmail(value) {
+  const digits = cleanAuthPhone(value).replace(/\D/g, "");
+  return digits ? `seller-${digits}@phone.tikchop.local` : "";
+}
+
 function cleanEvolutionPhone(value) {
   return String(value || "").replace(/\D/g, "");
 }
@@ -33,7 +38,7 @@ function getEvolutionConfig() {
     || "https://n8n.sakamomo.tech/webhook/tikchop-evolution-whatsapp";
 
   if (!apiKey) {
-    throw new Error("Evolution API n'est pas configuree.");
+    throw new Error("La connexion WhatsApp automatique n'est pas encore activee cote serveur.");
   }
 
   return {
@@ -41,6 +46,10 @@ function getEvolutionConfig() {
     apiKey,
     n8nWebhookUrl,
   };
+}
+
+function getStandardWhatsAppNumber() {
+  return cleanEvolutionPhone(process.env.NEXT_PUBLIC_TIKCHOP_WHATSAPP || process.env.TIKCHOP_WHATSAPP_NUMBER || "");
 }
 
 async function evolutionRequest(path, options = {}) {
@@ -66,10 +75,23 @@ async function evolutionRequest(path, options = {}) {
 
   if (!response.ok) {
     const message = Array.isArray(data?.message) ? data.message.join(" ") : data?.message;
-    throw new Error(message || data?.error || "Evolution API a refuse la demande.");
+    throw new Error(message || data?.error || "Le service WhatsApp a refuse la demande.");
   }
 
   return data;
+}
+
+function asEvolutionInstanceRow(data) {
+  if (Array.isArray(data)) return data[0] || null;
+  return data || null;
+}
+
+function isUnauthorizedEvolutionInstance(instance) {
+  const reason = String(instance?.disconnectionReasonCode || "");
+  const detail = String(instance?.disconnectionObject || "");
+  const status = String(instance?.connectionStatus || "").toLowerCase();
+
+  return status === "close" && (reason === "401" || /unauthorized|connection failure/i.test(detail));
 }
 
 function normalizeEvolutionState(data) {
@@ -135,10 +157,20 @@ async function requireOwnedSeller(seller, accessToken) {
   }
 
   if (!data) {
-    throw new Error("Cette boutique n'est pas liee a ton compte vendeur.");
+    throw new Error("Cette boutique n'est pas liee a votre compte vendeur.");
   }
 
   return data;
+}
+
+function normalizeChatbotSettings(input = {}) {
+  return {
+    bot_tone: String(input.bot_tone || "Francais ivoirien simple, poli, direct.").trim(),
+    bot_greeting: String(input.bot_greeting || "").trim(),
+    bot_payment_preferences: String(input.bot_payment_preferences || "Wave, Orange Money, MTN MoMo, Djamo, paiement a la livraison selon la zone.").trim(),
+    bot_delivery_notes: String(input.bot_delivery_notes || "").trim(),
+    bot_special_rules: String(input.bot_special_rules || "").trim(),
+  };
 }
 
 async function uniqueSlug(baseSlug) {
@@ -184,18 +216,48 @@ export async function getSellerWhatsAppConnection(seller, accessToken) {
   const slug = slugify(ownedSeller.slug);
   const phone = cleanEvolutionPhone(ownedSeller.phone_number);
 
+  const sellerState = await supabaseAdmin
+    .from("sellers")
+    .select("whatsapp_provider, whatsapp_status, evolution_instance, whatsapp_last_error")
+    .eq("id", ownedSeller.id)
+    .maybeSingle()
+    .then((result) => (/whatsapp_provider|whatsapp_status|evolution_instance|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result));
+
+  if (sellerState.data?.whatsapp_provider === "tikchop_standard") {
+    return {
+      provider: "tikchop_standard",
+      instanceName: sellerState.data.evolution_instance || "",
+      phone,
+      state: sellerState.data.whatsapp_status || "standard_active",
+      isConnected: true,
+      standardNumber: getStandardWhatsAppNumber(),
+      webhookUrl: "",
+      webhookEnabled: true,
+      webhookBase64: true,
+      webhookEvents: ["MESSAGES_UPSERT"],
+      error: sellerState.data.whatsapp_last_error || "",
+    };
+  }
+
   const { n8nWebhookUrl } = getEvolutionConfig();
-  const instanceName = slug;
+  let instanceName = slug;
   const webhookUrl = `${n8nWebhookUrl}?seller=${encodeURIComponent(slug)}`;
   let state = "disconnected";
   let webhook = null;
   let errorMessage = "";
+  const candidates = [slug, `${slug}-test`].filter(Boolean);
 
-  try {
-    const data = await evolutionRequest(`/instance/connectionState/${encodeURIComponent(instanceName)}`);
-    state = normalizeEvolutionState(data);
-  } catch (error) {
-    errorMessage = error.message || "Instance Evolution introuvable.";
+  for (const candidate of candidates) {
+    try {
+      const data = await evolutionRequest(`/instance/connectionState/${encodeURIComponent(candidate)}`);
+      instanceName = candidate;
+      state = normalizeEvolutionState(data);
+      errorMessage = "";
+      break;
+    } catch (error) {
+      const message = error.message || "";
+      errorMessage = /not found|404|introuvable/i.test(message) ? "" : (message || "Connexion WhatsApp introuvable.");
+    }
   }
 
   try {
@@ -222,9 +284,119 @@ export async function getSellerWhatsAppConnection(seller, accessToken) {
     isConnected,
     webhookUrl,
     webhookEnabled: Boolean(webhook?.enabled ?? webhook?.webhook?.enabled),
+    webhookBase64: Boolean(webhook?.webhookBase64 ?? webhook?.base64 ?? webhook?.webhook?.base64),
     webhookEvents: webhook?.events || webhook?.webhook?.events || [],
     error: errorMessage,
   };
+}
+
+export async function activateSellerStandardAssistant(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const standardNumber = getStandardWhatsAppNumber();
+
+  await saveSellerWhatsAppFields(ownedSeller, {
+    whatsapp_provider: "tikchop_standard",
+    evolution_instance: null,
+    whatsapp_status: "standard_active",
+    whatsapp_connected_at: new Date().toISOString(),
+    whatsapp_last_error: null,
+  });
+
+  return {
+    provider: "tikchop_standard",
+    state: "standard_active",
+    isConnected: true,
+    standardNumber,
+    message: standardNumber
+      ? "Assistant Standard active. Les clients peuvent passer par le numero Tikchop."
+      : "Assistant Standard active. Le support Tikchop ajoutera le numero central pour afficher le lien WhatsApp.",
+  };
+}
+
+export async function getSellerChatbotSettings(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+
+  const { data, error } = await supabaseAdmin
+    .from("sellers")
+    .select("bot_tone, bot_greeting, bot_payment_preferences, bot_delivery_notes, bot_special_rules")
+    .eq("id", ownedSeller.id)
+    .maybeSingle();
+
+  if (error && /bot_|schema cache|column/i.test(error.message || "")) {
+    return normalizeChatbotSettings();
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return normalizeChatbotSettings(data || {});
+}
+
+export async function saveSellerChatbotSettings(seller, settings, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const payload = normalizeChatbotSettings(settings);
+
+  const { data, error } = await supabaseAdmin
+    .from("sellers")
+    .update(payload)
+    .eq("id", ownedSeller.id)
+    .select("bot_tone, bot_greeting, bot_payment_preferences, bot_delivery_notes, bot_special_rules")
+    .maybeSingle();
+
+  if (error && /bot_|schema cache|column/i.test(error.message || "")) {
+    throw new Error("Applique la migration des reglages chatbot dans Supabase.");
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return normalizeChatbotSettings(data || payload);
+}
+
+export async function repairSellerWhatsAppWebhook(seller, accessToken) {
+  const ownedSeller = await requireOwnedSeller(seller, accessToken);
+  const slug = slugify(ownedSeller.slug);
+  const { n8nWebhookUrl } = getEvolutionConfig();
+  const webhookUrl = `${n8nWebhookUrl}?seller=${encodeURIComponent(slug)}`;
+  const webhook = {
+    enabled: true,
+    url: webhookUrl,
+    byEvents: false,
+    base64: true,
+    events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"],
+  };
+
+  const candidates = [slug, `${slug}-test`].filter(Boolean);
+  let lastError = null;
+
+  for (const instanceName of candidates) {
+    try {
+      await evolutionRequest(`/webhook/set/${encodeURIComponent(instanceName)}`, {
+        method: "POST",
+        body: JSON.stringify({ webhook }),
+      });
+
+      await saveSellerWhatsAppFields(ownedSeller, {
+        whatsapp_provider: "evolution",
+        evolution_instance: instanceName,
+        whatsapp_last_error: null,
+      });
+
+      return {
+        instanceName,
+        webhookUrl,
+        webhookEnabled: true,
+        webhookBase64: true,
+        webhookEvents: webhook.events,
+      };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(lastError?.message || "Connexion WhatsApp non reparee.");
 }
 
 export async function getSellerByOwner(ownerUserId) {
@@ -277,11 +449,12 @@ export async function createSellerAccount(payload) {
 
   const accountPayload = method === "PHONE"
     ? {
-      phone,
+      email: getPhoneAliasEmail(phone),
       password,
-      phone_confirm: true,
+      email_confirm: true,
       user_metadata: {
         display_name: displayName || phone,
+        account_phone: phone,
         signup_method: "PHONE",
       },
     }
@@ -301,20 +474,20 @@ export async function createSellerAccount(payload) {
 
   if (error) {
     if (/already|registered|exists|existe|duplicate/i.test(error.message || "")) {
-      throw new Error("Ce compte existe deja. Appuie sur 'Deja inscrit' puis connecte-toi.");
+      throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
     }
     throw new Error(error.message || "Impossible de creer le compte vendeur.");
   }
 
   if (method === "EMAIL") {
-    await sendSellerWelcomeEmail({ email, name: displayName }).catch((emailError) => {
+    sendSellerWelcomeEmail({ email, name: displayName }).catch((emailError) => {
       console.error("Welcome email failed:", emailError);
     });
   }
 
   return {
     id: data.user?.id || "",
-    email: data.user?.email || email,
+    email: data.user?.email || (method === "PHONE" ? getPhoneAliasEmail(phone) : email),
     phone: data.user?.phone || phone,
     method,
   };
@@ -342,6 +515,13 @@ export async function createSellerFromOnboarding(payload) {
     throw new Error("Ajoute un numero WhatsApp valide.");
   }
 
+  if (ownerUserId) {
+    const existingSeller = await getSellerByOwner(ownerUserId);
+    if (existingSeller) {
+      return existingSeller;
+    }
+  }
+
   const slug = await uniqueSlug(requestedSlug);
   const sellerPayload = {
     name,
@@ -363,6 +543,11 @@ export async function createSellerFromOnboarding(payload) {
     .single();
 
   if (error && ownerUserId && /idx_sellers_one_shop_per_owner|duplicate key|unique/i.test(error.message || "")) {
+    const existingSeller = await getSellerByOwner(ownerUserId);
+    if (existingSeller) {
+      return existingSeller;
+    }
+
     throw new Error("Ce compte possede deja une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
   }
 
@@ -425,8 +610,23 @@ export async function requestSellerWhatsAppPairing(seller, accessToken) {
       body: JSON.stringify(body),
     });
   } catch (error) {
-    if (!/already|exist|duplicate|unique/i.test(error.message || "")) {
+    if (!/already|exist|duplicate|unique|forbidden/i.test(error.message || "")) {
       throw error;
+    }
+
+    const existing = asEvolutionInstanceRow(
+      await evolutionRequest(`/instance/fetchInstances?instanceName=${encodeURIComponent(instanceName)}`),
+    );
+
+    if (isUnauthorizedEvolutionInstance(existing)) {
+      await evolutionRequest(`/instance/delete/${encodeURIComponent(instanceName)}`, {
+        method: "DELETE",
+      });
+
+      data = await evolutionRequest("/instance/create", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     }
 
     await evolutionRequest(`/webhook/set/${encodeURIComponent(instanceName)}`, {

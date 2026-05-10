@@ -1,8 +1,18 @@
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
+function getAppBaseUrl() {
+  const explicitUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+  const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "";
+  const deploymentUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+
+  return (explicitUrl || productionUrl || deploymentUrl || "http://localhost:3000").replace(/\/+$/, "");
+}
+
 export async function initializeTransaction({ email, amount, metadata, subaccount }) {
   if (!PAYSTACK_SECRET) {
-    throw new Error("Paystack secret key is missing");
+    throw new Error("Paiement en ligne indisponible pour le moment.");
   }
 
   const response = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -13,16 +23,16 @@ export async function initializeTransaction({ email, amount, metadata, subaccoun
     },
     body: JSON.stringify({
       email,
-      amount: Math.round(amount * 100), // Paystack works in kobo/cents
+      amount: Math.round(amount * 100),
       metadata,
       ...(subaccount ? { subaccount } : {}),
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/callback`,
+      callback_url: `${getAppBaseUrl()}/payment/callback`,
     }),
   });
 
   const data = await response.json();
   if (!data.status) {
-    throw new Error(data.message || "Failed to initialize Paystack transaction");
+    throw new Error(data.message || "Paiement en ligne indisponible. Reessayez ou choisissez WhatsApp.");
   }
 
   return data.data;

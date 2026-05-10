@@ -48,7 +48,7 @@ export default async function SellerShopPage({ params, searchParams }) {
       <ShopClient seller={seller} products={products} deliveryZones={deliveryZones} initialProductId={query?.product || ""} />
 
       <footer className="mt-8 text-center text-xs font-bold text-zinc-400">
-        Propulse par <span className="text-zinc-700">Tikchop</span>
+        Boutique publique propulsee par <span className="text-zinc-700">Tikchop</span>
       </footer>
     </div>
   );

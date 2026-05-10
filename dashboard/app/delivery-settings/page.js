@@ -39,6 +39,7 @@ export default function DeliverySettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [showAddZone, setShowAddZone] = useState(false);
   const [newDriver, setNewDriver] = useState({ name: "", phone_number: "", zone: "" });
@@ -74,7 +75,7 @@ export default function DeliverySettingsPage() {
       setZones(zoneData || []);
     } catch (err) {
       console.error("Error fetching delivery settings:", err);
-      setError(friendlyError(err, "Livraison non chargee. Verifie la connexion puis actualise."));
+      setError(friendlyError(err, "Livraison non chargee. Verifiez la connexion puis actualisez."));
     } finally {
       setLoading(false);
     }
@@ -94,12 +95,13 @@ export default function DeliverySettingsPage() {
     try {
       setSaving(true);
       setError("");
+      setNotice("");
       const token = await getSellerAccessToken();
       await saveSellerDeliverySettings(seller.id, settings, token);
-      alert("Parametres enregistres.");
+      setNotice("Parametres enregistres.");
       await fetchData();
     } catch (err) {
-      setError(friendlyError(err, "Reglages non sauvegardes. Garde la page ouverte puis relance l'enregistrement."));
+      setError(friendlyError(err, "Reglages non sauvegardes. Gardez la page ouverte puis relancez l'enregistrement."));
     } finally {
       setSaving(false);
     }
@@ -138,7 +140,7 @@ export default function DeliverySettingsPage() {
       ));
       closeDriverModal();
     } catch (err) {
-      setError(friendlyError(err, "Livreur non enregistre. Verifie le nom et le numero WhatsApp."));
+      setError(friendlyError(err, "Livreur non enregistre. Verifiez le nom et le numero WhatsApp."));
     } finally {
       setSaving(false);
     }
@@ -181,7 +183,7 @@ export default function DeliverySettingsPage() {
       });
       closeZoneModal();
     } catch (err) {
-      setError(friendlyError(err, "Zone non enregistree. Verifie le nom du quartier et le tarif."));
+      setError(friendlyError(err, "Zone non enregistree. Verifiez le nom du quartier et le tarif."));
     } finally {
       setSaving(false);
     }
@@ -202,13 +204,13 @@ export default function DeliverySettingsPage() {
       );
 
       if (inserted.length === 0) {
-        setError("Les communes Abidjan sont deja dans ta liste. Tu peux modifier les frais une par une.");
+      setError("Les communes Abidjan sont deja dans votre liste. Vous pouvez modifier les frais une par une.");
         return;
       }
 
       setZones((current) => [...current, ...inserted].sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
-      setError(friendlyError(err, "Communes non ajoutees. Reessaie avec une bonne connexion."));
+      setError(friendlyError(err, "Communes non ajoutees. Reessayez avec une bonne connexion."));
     } finally {
       setSaving(false);
     }
@@ -241,7 +243,7 @@ export default function DeliverySettingsPage() {
           <div>
             <p className="quiet-label text-[var(--primary)]">Livraison</p>
             <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Reglages livraison</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Choisis retrait, livraison, frais par zone et livreurs WhatsApp.</p>
+            <p className="mt-1 text-base text-[var(--text-dim)]">Choisissez retrait, livraison, frais par zone et livreurs WhatsApp.</p>
           </div>
           <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[var(--primary-bright)] text-white disabled:bg-[var(--surface-mid)]" aria-label="Enregistrer">
             <Save size={19} strokeWidth={2.5} />
@@ -252,6 +254,12 @@ export default function DeliverySettingsPage() {
       {error && (
         <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
+        </div>
+      )}
+
+      {notice && (
+        <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 ring-1 ring-emerald-200">
+          {notice}
         </div>
       )}
 
@@ -292,7 +300,7 @@ export default function DeliverySettingsPage() {
               />
               <ToggleRow
                 title="Partage livreur auto"
-                text="Quand tu marques une commande prete, Tikchop l'envoie au livreur de la zone."
+                text="Quand vous marquez une commande prete, Tikchop l'envoie au livreur de la zone."
                 active={settings.auto_share_to_driver}
                 onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
               />
@@ -420,7 +428,7 @@ export default function DeliverySettingsPage() {
               <div className="rounded-[18px] border border-[var(--line)] bg-white p-7 text-center shadow-[var(--shadow-sm)]">
                 <Truck className="mx-auto text-zinc-300" size={34} />
                 <p className="mt-3 font-extrabold text-zinc-950">Aucun livreur</p>
-                <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute les numeros WhatsApp de ta panoplie.</p>
+                <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoutez les numeros WhatsApp de votre equipe.</p>
               </div>
             ) : (
               <div className="space-y-3">

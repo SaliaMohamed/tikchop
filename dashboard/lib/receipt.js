@@ -36,12 +36,12 @@ async function verifyPaystackReference(reference) {
   }
 }
 
-async function fetchOrderBy(field, value, withDelivery = true) {
+async function fetchOrderBy(field, value, mode = "full") {
   if (!supabaseAdmin || !value) {
     return { data: null, error: null };
   }
 
-  const selectWithDelivery = `
+  const selectFull = `
     id,
     order_ref,
     customer_phone,
@@ -55,6 +55,28 @@ async function fetchOrderBy(field, value, withDelivery = true) {
     delivery_status,
     paystack_reference,
     paystack_paid_at,
+    created_at,
+    sellers (id, name, slug, phone_number),
+    order_items (
+      id,
+      quantity,
+      price_at_time,
+      products (id, name, image_url, description)
+    )
+  `;
+
+  const selectDelivery = `
+    id,
+    order_ref,
+    customer_phone,
+    status,
+    payment_method,
+    total_amount,
+    delivery_type,
+    delivery_zone,
+    delivery_address,
+    delivery_fee,
+    delivery_status,
     created_at,
     sellers (id, name, slug, phone_number),
     order_items (
@@ -82,9 +104,11 @@ async function fetchOrderBy(field, value, withDelivery = true) {
     )
   `;
 
+  const selectQuery = mode === "full" ? selectFull : mode === "delivery" ? selectDelivery : selectBasic;
+
   return supabaseAdmin
     .from("orders")
-    .select(withDelivery ? selectWithDelivery : selectBasic)
+    .select(selectQuery)
     .eq(field, value)
     .maybeSingle();
 }
@@ -126,7 +150,7 @@ export async function getReceiptOrder({ order, reference } = {}) {
   ].filter(Boolean);
 
   for (const [field, value] of candidates) {
-    const result = await fetchOrderBy(field, value, true);
+    const result = await fetchOrderBy(field, value, "full");
     if (result.data) {
       if (payment?.status === "success" && result.data.status !== "PAID") {
         await markOrderPaidFromPaystack(result.data.id, payment);
@@ -137,7 +161,7 @@ export async function getReceiptOrder({ order, reference } = {}) {
     }
 
     if (result.error && /delivery_|whatsapp_number|paystack_/i.test(result.error.message || "")) {
-      const fallback = await fetchOrderBy(field, value, false);
+      const fallback = await fetchOrderBy(field, value, "delivery");
       if (fallback.data) {
         if (payment?.status === "success" && fallback.data.status !== "PAID") {
           await markOrderPaidFromPaystack(fallback.data.id, payment);
@@ -145,6 +169,18 @@ export async function getReceiptOrder({ order, reference } = {}) {
         }
 
         return { order: fallback.data, payment, error: null };
+      }
+
+      if (fallback.error && /delivery_|whatsapp_number/i.test(fallback.error.message || "")) {
+        const basicFallback = await fetchOrderBy(field, value, "basic");
+        if (basicFallback.data) {
+          if (payment?.status === "success" && basicFallback.data.status !== "PAID") {
+            await markOrderPaidFromPaystack(basicFallback.data.id, payment);
+            basicFallback.data.status = "PAID";
+          }
+
+          return { order: basicFallback.data, payment, error: null };
+        }
       }
     } else if (result.error) {
       console.error("Receipt order lookup failed:", result.error);

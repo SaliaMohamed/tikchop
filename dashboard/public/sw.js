@@ -1,9 +1,82 @@
+const SHELL_CACHE = "tikchop-shell-v3";
+const ASSET_CACHE = "tikchop-assets-v3";
+const LEGACY_CACHES = ["tikchop-shell-v1", "tikchop-runtime-v1", "tikchop-shell-v2", "tikchop-runtime-v2"];
+
+const SHELL_FILES = [
+  "/install",
+  "/manifest.json",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/maskable-512.png",
+  "/apple-touch-icon.png",
+];
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches.open(SHELL_CACHE)
+      .then((cache) => cache.addAll(SHELL_FILES))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys
+        .filter((key) => LEGACY_CACHES.includes(key) || ![SHELL_CACHE, ASSET_CACHE].includes(key))
+        .map((key) => caches.delete(key))))
+      .then(() => self.clients.claim()),
+  );
 });
 
-self.addEventListener("fetch", () => {});
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("/install")),
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  const shouldCacheAsset = [
+    "/landing/",
+    "/payment-logos/",
+    "/icon-",
+    "/maskable-",
+    "/apple-touch-icon",
+    "/manifest.json",
+  ].some((prefix) => url.pathname.startsWith(prefix));
+
+  if (!shouldCacheAsset) return;
+
+  event.respondWith(
+    caches.open(ASSET_CACHE).then(async (cache) => {
+      const cached = await cache.match(event.request);
+      const network = fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            cache.put(event.request, response.clone()).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => cached);
+
+      return cached || network;
+    }),
+  );
+});
