@@ -6,21 +6,14 @@ import { initializeTransaction } from "../lib/paystack";
 import { savePaystackInitialization, sendOrderLifecycleMessage } from "../lib/order-payments";
 import { sendEvolutionText } from "../lib/evolution";
 import { getPaymentOption } from "../lib/local-commerce";
+import { createClient } from "../lib/supabase/server";
 
 async function requireSellerUser(accessToken) {
-  if (!supabaseAdmin) {
-    throw new Error("Supabase admin client not initialized.");
-  }
-
-  if (!accessToken) {
-    throw new Error("Session vendeur manquante.");
-  }
-
-  const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
-  if (error || !data.user) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user) {
     throw new Error("Session vendeur invalide. Reconnecte-toi.");
   }
-
   return data.user;
 }
 
@@ -138,14 +131,16 @@ Quand c'est livre, informe la boutique.`;
 function chooseDriverForOrder(order, drivers) {
   if (!Array.isArray(drivers) || drivers.length === 0) return null;
 
-  const zone = String(order.delivery_zone || "").trim().toLowerCase();
-  if (zone) {
-    const exact = drivers.find((driver) => String(driver.zone || "").trim().toLowerCase() === zone);
+  const normalizeStr = (str) => String(str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  const normalizedZone = normalizeStr(order.delivery_zone);
+
+  if (normalizedZone) {
+    const exact = drivers.find((driver) => normalizeStr(driver.zone) === normalizedZone);
     if (exact) return exact;
 
     const close = drivers.find((driver) => {
-      const driverZone = String(driver.zone || "").trim().toLowerCase();
-      return driverZone && (zone.includes(driverZone) || driverZone.includes(zone));
+      const driverZone = normalizeStr(driver.zone);
+      return driverZone && (normalizedZone.includes(driverZone) || driverZone.includes(normalizedZone));
     });
     if (close) return close;
   }
@@ -323,15 +318,28 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
     throw new Error("Image manquante.");
   }
 
+  let lastError = null;
+
   if (process.env.GEMINI_API_KEY) {
-    return analyzeProductImageWithGemini(imageUrl, voiceHint);
+    try {
+      return await analyzeProductImageWithGemini(imageUrl, voiceHint);
+    } catch (err) {
+      console.error("Gemini failed:", err);
+      lastError = err;
+    }
   }
 
   if (process.env.OPENAI_API_KEY) {
-    return analyzeProductImageWithOpenAI(imageUrl, voiceHint);
+    try {
+      return await analyzeProductImageWithOpenAI(imageUrl, voiceHint);
+    } catch (err) {
+      console.error("OpenAI failed:", err);
+      lastError = err;
+    }
   }
 
-  throw new Error("IA non configuree. Ajoute GEMINI_API_KEY ou OPENAI_API_KEY.");
+  console.warn("AI analysis failed or not configured. Returning empty product data. Last error:", lastError);
+  return normalizeProductAnalysis({});
 }
 
 async function analyzeProductImageWithGemini(imageUrl, voiceHint = "") {

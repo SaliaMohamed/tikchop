@@ -1,12 +1,12 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import ShopClient from "./ShopClient";
-import { supabase } from "../../lib/supabase";
+import { supabaseAdmin } from "../../lib/supabase-admin";
 
 export const revalidate = 60;
 
 async function getSellerData(slug) {
-  if (!supabase) return null;
+  const supabase = supabaseAdmin;
 
   const { data: seller, error } = await supabase
     .from("sellers")

@@ -1,4 +1,4 @@
-import { jsonError, updateMobileProductStock } from "../../../../../../lib/mobile-api";
+import { jsonError, mobileErrorStatus, updateMobileProductStock } from "../../../../../../lib/mobile-api";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,6 @@ export async function PATCH(request, context) {
     const product = await updateMobileProductStock(request, id);
     return Response.json({ product });
   } catch (error) {
-    return jsonError(error.message || "Stock non mis a jour.", 400);
+    return jsonError(error.message || "Stock non mis a jour.", mobileErrorStatus(error));
   }
 }

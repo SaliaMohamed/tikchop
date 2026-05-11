@@ -1,0 +1,112 @@
+{
+  "info": {
+    "name": "Tikchop API QA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dashboard-l3negw2oa-saliamohamed05-8715s-projects.vercel.app"
+    },
+    {
+      "key": "seller_token",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Mobile overview requires auth",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/mobile/overview"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 401 without token', function () {",
+              "  pm.expect(pm.response.code).to.equal(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mobile products require auth",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Test\",\"price\":1000}"
+        },
+        "url": "{{base_url}}/api/mobile/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 401 without token', function () {",
+              "  pm.expect(pm.response.code).to.equal(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legal pages are public",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/conditions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('conditions loads', function () {",
+              "  pm.expect(pm.response.code).to.equal(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Receipt PDF rejects missing order",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/receipt/pdf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('missing order is rejected', function () {",
+              "  pm.expect([400, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

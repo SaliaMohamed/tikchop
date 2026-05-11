@@ -8,9 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "check:readiness": "node scripts/check-readiness.mjs",
-    "smoke:beta": "node scripts/run-beta-smoke.mjs"
+    "smoke:beta": "node scripts/run-beta-smoke.mjs",
+    "qa:ui": "node scripts/qa-ui-playwright.mjs",
+    "qa:api": "npx newman run qa/postman/tikchop-api.postman_collection.json",
+    "qa:load": "k6 run qa/k6/public-smoke.js",
+    "qa:all": "npm run lint && npm run build && npm run check:readiness && npm run smoke:beta && npm run qa:ui"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
@@ -20,9 +25,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/node": "25.6.2",
     "@types/react": "19.2.14",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "playwright": "^1.59.1",
     "postcss": "8.5.13",
     "tailwindcss": "^4.2.4"
   },

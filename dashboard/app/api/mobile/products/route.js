@@ -1,4 +1,4 @@
-import { createMobileProduct, jsonError } from "../../../../lib/mobile-api";
+import { createMobileProduct, jsonError, mobileErrorStatus } from "../../../../lib/mobile-api";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +7,6 @@ export async function POST(request) {
     const product = await createMobileProduct(request);
     return Response.json({ product });
   } catch (error) {
-    return jsonError(error.message || "Article non publie.", 400);
+    return jsonError(error.message || "Article non publie.", mobileErrorStatus(error));
   }
 }

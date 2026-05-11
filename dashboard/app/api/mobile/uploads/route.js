@@ -1,4 +1,4 @@
-import { jsonError, uploadMobileProductImage } from "../../../../lib/mobile-api";
+import { jsonError, mobileErrorStatus, uploadMobileProductImage } from "../../../../lib/mobile-api";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +7,6 @@ export async function POST(request) {
     const image = await uploadMobileProductImage(request);
     return Response.json(image);
   } catch (error) {
-    return jsonError(error.message || "Photo non envoyee.", 400);
+    return jsonError(error.message || "Photo non envoyee.", mobileErrorStatus(error));
   }
 }

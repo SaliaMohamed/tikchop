@@ -3,8 +3,20 @@ import { createHash } from "node:crypto";
 
 const ALLOWED_ORDER_STATUS = new Set(["PENDING", "PAID", "PREPARED", "DELIVERED", "CANCELLED"]);
 
+class MobileApiError extends Error {
+  constructor(message, status = 400) {
+    super(message);
+    this.name = "MobileApiError";
+    this.status = status;
+  }
+}
+
 export function jsonError(message, status = 400) {
   return Response.json({ error: message }, { status });
+}
+
+export function mobileErrorStatus(error, fallback = 400) {
+  return Number.isInteger(error?.status) ? error.status : fallback;
 }
 
 export async function requireMobileSeller(request) {
@@ -15,12 +27,12 @@ export async function requireMobileSeller(request) {
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.replace(/^Bearer\s+/i, "").trim();
   if (!token) {
-    throw new Error("Session vendeur manquante.");
+    throw new MobileApiError("Session vendeur manquante.", 401);
   }
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
   if (authError || !authData.user) {
-    throw new Error("Session vendeur invalide.");
+    throw new MobileApiError("Session vendeur invalide.", 401);
   }
 
   const { data: seller, error } = await supabaseAdmin
@@ -30,7 +42,7 @@ export async function requireMobileSeller(request) {
     .maybeSingle();
 
   if (error || !seller) {
-    throw new Error(error?.message || "Aucune boutique liee a ce compte vendeur.");
+    throw new MobileApiError(error?.message || "Aucune boutique liee a ce compte vendeur.", 403);
   }
 
   return { user: authData.user, seller };
