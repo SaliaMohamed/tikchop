@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Tikchop",
+    "slug": "tikchop-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#101114"
+    },
+    "ios": {
+      "bundleIdentifier": "com.tikchop.mobile",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.tikchop.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#101114"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tikchop utilise vos photos pour publier les articles de votre boutique."
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dff303d1-1997-4b05-89e6-a4442c95b015"
+      }
+    },
+    "owner": "saka05"
+  }
+}

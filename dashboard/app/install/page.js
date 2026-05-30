@@ -3,18 +3,16 @@ import {
   Check,
   Download,
   Home,
-  MonitorDown,
   MoreVertical,
-  PackageCheck,
   Share,
   Smartphone,
-  Zap,
 } from "lucide-react";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
+import BrandLogo from "../components/BrandLogo";
 
 export const metadata = {
-  title: "Installer Tikchop sur mobile",
-  description: "Guide simple pour installer Tikchop comme une application mobile depuis le navigateur.",
+  title: "Installer la PWA Tikchop",
+  description: "Installer Tikchop sur mobile depuis Chrome ou Safari.",
 };
 
 const steps = [
@@ -32,20 +30,12 @@ const steps = [
     steps: ["Ouvrez Tikchop dans Safari", "Touchez le bouton Partager", "Choisissez Ajouter a l'ecran d'accueil"],
     tone: "gold",
   },
-  {
-    title: "Ordinateur",
-    subtitle: "Chrome ou Edge",
-    icon: MonitorDown,
-    steps: ["Ouvrez Tikchop dans le navigateur", "Cliquez sur l'icone Installer", "Lancez Tikchop comme une app"],
-    tone: "blue",
-  },
 ];
 
 const benefits = [
-  "Ouvrir Tikchop depuis l'ecran d'accueil",
-  "Ajouter des articles plus vite",
-  "Voir les commandes sans chercher le lien",
-  "Garder l'espace vendeur separe du site public",
+  "Tikchop reste sur l'ecran d'accueil",
+  "Les vendeuses ouvrent commandes et articles plus vite",
+  "Fonctionne deja sur Android, iPhone et ordinateur",
 ];
 
 export default function InstallPage() {
@@ -53,18 +43,19 @@ export default function InstallPage() {
     <main className="install-page">
       <section className="install-hero">
         <div className="install-copy">
-          <p className="install-eyebrow">Installation mobile</p>
-          <h1>Tikchop s&apos;installe comme une vraie app, sans Play Store.</h1>
+          <BrandLogo href="/" subtitle="App vendeur" className="mb-5" />
+          <p className="install-eyebrow">PWA mobile</p>
+          <h1>Installez Tikchop comme une vraie app.</h1>
           <p>
-            Pour les vendeuses, le plus simple est d&apos;avoir Tikchop directement sur l&apos;ecran du telephone:
-            photos, commandes, WhatsApp et boutique restent a portee de main.
+            Ajoutez Tikchop sur l&apos;ecran d&apos;accueil. Les articles, commandes, WhatsApp et livraisons restent
+            accessibles en un geste.
           </p>
           <div className="install-actions">
             <a href="#installer" className="install-primary">
               Installer maintenant
               <Download size={18} />
             </a>
-            <Link href="/onboarding" className="install-secondary">
+            <Link href="/signup" className="install-secondary">
               Creer ma boutique
             </Link>
           </div>
@@ -74,7 +65,7 @@ export default function InstallPage() {
           <div className="install-phone">
             <div className="install-island" />
             <div className="install-app-card">
-              <span className="install-logo-mini">T</span>
+              <span className="install-logo-mini tk-logo-mark" aria-hidden="true" />
               <strong>Tikchop</strong>
               <small>Assistant vendeur</small>
             </div>
@@ -103,7 +94,7 @@ export default function InstallPage() {
       <section className="install-explain">
         <div>
           <p className="install-eyebrow">Pourquoi l&apos;installer ?</p>
-          <h2>La vendeuse ne doit pas chercher Tikchop. Tikchop doit etre dans sa poche.</h2>
+          <h2>Plus simple pour vendre tous les jours.</h2>
         </div>
         <div className="install-benefits">
           {benefits.map((item) => (
@@ -112,38 +103,6 @@ export default function InstallPage() {
               {item}
             </span>
           ))}
-        </div>
-      </section>
-
-      <section className="fatim-after">
-        <div>
-          <p className="install-eyebrow">Apres installation</p>
-          <h2>Le parcours reste simple: photos, validation, commandes.</h2>
-        </div>
-        <div className="fatim-after-grid">
-          <article className="fatim-result-card">
-            <Zap size={22} />
-            <strong>Un raccourci clair sur le telephone</strong>
-            <p>
-              La vendeuse appuie sur Tikchop, ajoute les photos des articles, met les prix, puis laisse l&apos;assistant
-              repondre et organiser les commandes.
-            </p>
-          </article>
-          <article className="fatim-whatsapp-card" aria-label="Simulation Tikchop">
-            <div className="fatim-chat-head">
-              <span>TC</span>
-              <div>
-                <strong>Tikchop</strong>
-                <small>Vente WhatsApp</small>
-              </div>
-            </div>
-            <div className="fatim-chat client">Le sac raphia est encore disponible ?</div>
-            <div className="fatim-chat bot">Oui. Prix 10 000 F. Paiement Wave possible. Livraison a Cocody aujourd&apos;hui.</div>
-            <div className="fatim-order">
-              <PackageCheck size={18} />
-              <span>Commande prete: sac raphia, Cocody, paiement Wave</span>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -177,8 +136,7 @@ export default function InstallPage() {
           <p className="install-eyebrow">Action</p>
           <h2>Installer Tikchop sur cet appareil.</h2>
           <p>
-            Si le bouton automatique n&apos;apparait pas, ouvrez cette page avec Chrome sur Android ou Safari sur iPhone,
-            puis utilisez le menu du navigateur.
+            Sur Android, Chrome peut afficher un bouton installer. Sur iPhone, utilisez Safari puis Partager.
           </p>
         </div>
         <PwaInstallPrompt variant="page" />

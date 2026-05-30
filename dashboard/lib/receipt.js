@@ -45,6 +45,7 @@ async function fetchOrderBy(field, value, mode = "full") {
     id,
     order_ref,
     customer_phone,
+    customer_note,
     status,
     payment_method,
     total_amount,
@@ -56,7 +57,7 @@ async function fetchOrderBy(field, value, mode = "full") {
     paystack_reference,
     paystack_paid_at,
     created_at,
-    sellers (id, name, slug, phone_number),
+    sellers (id, name, slug, phone_number, logo_url, brand_color, physical_address),
     order_items (
       id,
       quantity,
@@ -78,7 +79,7 @@ async function fetchOrderBy(field, value, mode = "full") {
     delivery_fee,
     delivery_status,
     created_at,
-    sellers (id, name, slug, phone_number),
+    sellers (id, name, slug, phone_number, logo_url, brand_color, physical_address),
     order_items (
       id,
       quantity,
@@ -95,7 +96,7 @@ async function fetchOrderBy(field, value, mode = "full") {
     payment_method,
     total_amount,
     created_at,
-    sellers (id, name, slug, phone_number),
+    sellers (id, name, slug, phone_number, logo_url, brand_color, physical_address),
     order_items (
       id,
       quantity,
@@ -160,7 +161,7 @@ export async function getReceiptOrder({ order, reference } = {}) {
       return { order: result.data, payment, error: null };
     }
 
-    if (result.error && /delivery_|whatsapp_number|paystack_/i.test(result.error.message || "")) {
+    if (result.error && /delivery_|whatsapp_number|paystack_|customer_note/i.test(result.error.message || "")) {
       const fallback = await fetchOrderBy(field, value, "delivery");
       if (fallback.data) {
         if (payment?.status === "success" && fallback.data.status !== "PAID") {
@@ -171,7 +172,7 @@ export async function getReceiptOrder({ order, reference } = {}) {
         return { order: fallback.data, payment, error: null };
       }
 
-      if (fallback.error && /delivery_|whatsapp_number/i.test(fallback.error.message || "")) {
+      if (fallback.error && /delivery_|whatsapp_number|customer_note/i.test(fallback.error.message || "")) {
         const basicFallback = await fetchOrderBy(field, value, "basic");
         if (basicFallback.data) {
           if (payment?.status === "success" && basicFallback.data.status !== "PAID") {

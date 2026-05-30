@@ -8,11 +8,22 @@
     "start": "next start",
     "lint": "eslint",
     "check:readiness": "node scripts/check-readiness.mjs",
+    "check:seller-isolation": "node scripts/check-seller-isolation.mjs",
+    "check:whatsapp-stack": "node scripts/check-whatsapp-stack.mjs",
+    "test:whatsapp-code": "node scripts/test-whatsapp-pairing-code.mjs",
+    "test:seller-auth": "node scripts/test-seller-auth-flow.mjs",
+    "test:field-order": "node scripts/create-field-test-order.mjs",
+    "cleanup:field-orders": "node scripts/cleanup-field-test-orders.mjs",
     "smoke:beta": "node scripts/run-beta-smoke.mjs",
     "qa:ui": "node scripts/qa-ui-playwright.mjs",
+    "qa:seller-pwa": "node scripts/qa-seller-pwa-flow.mjs",
+    "test:onboarding-ui": "node scripts/test-onboarding-ui.mjs",
     "qa:api": "npx newman run qa/postman/tikchop-api.postman_collection.json",
     "qa:load": "k6 run qa/k6/public-smoke.js",
-    "qa:all": "npm run lint && npm run build && npm run check:readiness && npm run smoke:beta && npm run qa:ui"
+    "qa:all": "npm run lint && npm run build && npm run check:readiness && npm run check:seller-isolation && npm run check:whatsapp-stack && npm run smoke:beta && npm run qa:ui",
+    "test:paystack": "node scripts/test-paystack-webhook.js",
+    "test:vision": "node scripts/test-vision-provider.mjs",
+    "test:background-clean": "node scripts/test-background-clean-flow.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

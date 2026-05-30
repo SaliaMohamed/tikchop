@@ -1,6 +1,8 @@
-# Architecture des Workflows n8n - TikTok Sellers
-
-Ce document détaille la configuration exacte des nœuds pour les 3 flows principaux de l'automatisation. Vous pourrez recréer ces workflows dans votre instance n8n.
+6. **HTTP Request (Send WhatsApp via Waha/Evolution)**
+   - **Texte :** confirmation courte avec la reference, le total, la commune a confirmer et le moyen de paiement choisi par le vendeur.
+   - **Regle :** ne jamais proposer Wave, Orange Money, MTN, paiement a la livraison ou lien securise si ce moyen n'est pas present dans `sellers.accepted_payment_methods`.
+   - **Role :** confirmation immediate, puis collecte des infos livraison.
+   - **Role :** confirmation immediate, puis collecte des infos livraison.
 
 ---
 
@@ -87,11 +89,37 @@ Ce document détaille la configuration exacte des nœuds pour les 3 flows princi
    - **Données :** Met à jour `customer_phone` avec le numéro WhatsApp de l'expéditeur.
    - **Rôle :** "Lier" officiellement la commande au client.
 
-6. **HTTP Request (Send WhatsApp via Waha)**
-   - **Texte :** "Merci ! Votre commande {{ref}} a bien été reçue. Souhaitez-vous payer par Wave ou Paystack pour valider l'envoi ?"
-   - **Rôle :** Confirmation immédiate et appel à l'action pour le paiement.
+6. **HTTP Request (Send WhatsApp via Waha/Evolution)**
+   - **Texte :** confirmation courte avec la reference, le total, la commune a confirmer et le moyen de paiement choisi par le vendeur.
+   - **Regle :** ne jamais proposer Wave, Orange Money, MTN, paiement a la livraison ou lien securise si ce moyen n'est pas present dans `sellers.accepted_payment_methods`.
+   - **Role :** confirmation immediate, puis collecte des infos livraison.
 
 ---
+
+### Contrat paiement vendeur
+
+Le workflow conversationnel ne doit plus proposer les moyens de paiement en dur. Il doit lire dans `sellers`:
+
+```text
+accepted_payment_methods
+default_payment_method
+payout_phone
+payout_network
+payout_status
+paystack_subaccount_code
+delivery_payment_timing
+fixed_delivery_fee
+```
+
+Il doit lire les frais par commune/quartier dans `delivery_zones`.
+
+Regles:
+
+- `CASH_ON_DELIVERY`: paiement apres reception.
+- `WAVE`, `ORANGE_MONEY`, `MTN_MONEY`: paiement direct au numero vendeur si renseigne.
+- `PAYSTACK`: dire "lien securise", jamais le nom Paystack au client.
+- Le moyen par defaut du vendeur est propose en premier.
+- La commune/quartier est demandee avant de confirmer les frais de livraison.
 
 ## Workflow 3 : Webhook Paystack (Validation paiement)
 

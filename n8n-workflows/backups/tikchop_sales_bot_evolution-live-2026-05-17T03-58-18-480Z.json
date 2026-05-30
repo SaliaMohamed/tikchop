@@ -1,0 +1,4728 @@
+{
+  "updatedAt": "2026-05-16T13:31:49.462Z",
+  "createdAt": "2026-05-05T03:50:56.515Z",
+  "id": "tkchopEvobd8516ea",
+  "name": "Tikchop Sales Bot V2 - Evolution API",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c2b0b69c-7967-48e9-b1b7-7d4022a35e4f",
+                    "leftValue": "={{ $json.payload.hasMedia === false }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texte"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ecfc5d42-a148-4efa-930d-c874775ed1b0",
+      "name": "Switch Texte",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -3088,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "evolution-image-without-caption-only",
+              "leftValue": "={{ $json.payload.hasMedia === true && ($json.payload.media.mimetype || \"\").includes(\"image\") ? \"yes\" : \"no\" }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d740b1c5-6b84-45d4-ace5-cc85865a2fe8",
+      "name": "If media is image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -3088,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "f827f7f8-d40c-4d97-9677-9e62d99c7e7a",
+              "leftValue": "={{ $json.payload.media.mimetype }}",
+              "rightValue": "audio",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "215dac5f-0b3b-4306-829a-04476bd9500b",
+      "name": "If media is Audio",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -3088,
+        2160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst payload = item.json.payload || item.json.body?.payload || {};\nconst media = payload.media || {};\nconst base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, '');\nconst mimetype = media.mimetype || 'image/jpeg';\nif (!base64) {\n  throw new Error('Image Evolution sans base64. Activez webhook.base64 sur l instance Evolution.');\n}\nreturn [{\n  json: item.json,\n  binary: {\n    data: {\n      data: base64,\n      mimeType: mimetype,\n      fileName: 'whatsapp-image.' + (mimetype.includes('png') ? 'png' : 'jpg'),\n      fileExtension: mimetype.includes('png') ? 'png' : 'jpg',\n    },\n  },\n}];"
+      },
+      "id": "143ea6aa-e956-4a42-aa49-54f4919e3f60",
+      "name": "Get Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2880,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst payload = item.json.payload || item.json.body?.payload || {};\nconst media = payload.media || {};\nconst base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, '');\nconst mimetype = media.mimetype || 'audio/ogg';\nconst extension = mimetype.includes('mpeg') || mimetype.includes('mp3') ? 'mp3'\n  : mimetype.includes('wav') ? 'wav'\n  : mimetype.includes('webm') ? 'webm'\n  : mimetype.includes('m4a') || mimetype.includes('mp4') ? 'm4a'\n  : 'ogg';\nif (!base64) {\n  throw new Error('Audio Evolution sans base64. Activez webhook.base64 sur l instance Evolution.');\n}\nreturn [{\n  json: item.json,\n  binary: {\n    data: {\n      data: base64,\n      mimeType: mimetype,\n      fileName: 'whatsapp-audio.' + extension,\n      fileExtension: extension,\n    },\n  },\n}];"
+      },
+      "id": "caad9b7d-fdfd-425b-998c-9d353e39da45",
+      "name": "Get Audio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2880,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/audio/transcriptions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://dashboard-mu-blue-xduynfs3jo.vercel.app"
+            },
+            {
+              "name": "X-OpenRouter-Title",
+              "value": "Tikchop"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload.media || {}; const mimetype = String(media.mimetype || 'audio/ogg').toLowerCase(); const base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, ''); const format = mimetype.includes('mpeg') || mimetype.includes('mp3') ? 'mp3' : mimetype.includes('wav') ? 'wav' : mimetype.includes('webm') ? 'webm' : mimetype.includes('m4a') || mimetype.includes('mp4') ? 'm4a' : mimetype.includes('aac') ? 'aac' : 'ogg'; return { model: 'openai/gpt-4o-mini-transcribe', input_audio: { data: base64, format }, language: 'fr', temperature: 0 }; })() }}",
+        "options": {}
+      },
+      "id": "752d9f39-3b0f-42a5-9efc-de5cd78c8dc5",
+      "name": "Transcribe Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2704,
+        2144
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JGZixJG6EhXALJTX",
+          "name": "OpenRouter Tikchop Bearer"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d729675-89d1-4bdc-b3fa-0dc2bc5ee9c5",
+              "name": "Texte",
+              "value": "={{ $('Normalize Evolution Payload').item.json.body.payload.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7710757b-a943-4a37-9c92-7f3558e02019",
+      "name": "Edit Fields Texte",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2160,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8dfc9675-52b0-4115-aefc-1a5dadffb366",
+              "name": "Texte",
+              "value": "={{ $json.text || 'Le client a envoye un vocal, mais la transcription a echoue. Demandez-lui d ecrire sa demande en quelques mots.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "030333d2-d465-4e89-9498-4e60439dcd70",
+      "name": "Edit Fields Audio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2160,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://dashboard-mu-blue-xduynfs3jo.vercel.app"
+            },
+            {
+              "name": "X-OpenRouter-Title",
+              "value": "Tikchop"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload.media || {}; const base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, ''); const mimetype = String(media.mimetype || 'image/jpeg').split(';')[0]; return { model: 'google/gemini-2.5-flash-lite-preview-09-2025', temperature: 0.2, max_tokens: 240, messages: [{ role: 'user', content: [{ type: 'text', text: \"Analyser cette image pour Tikchop.\\n1. Si c'est un recu Wave, Orange Money, MTN ou Moov : extraire montant, date et reference.\\n2. Si c'est un produit : decrire l'article simplement avec type, couleur, style et details visibles.\\n3. Si l'image n'est pas claire : le dire et demander une precision.\\nRepondre en francais simple, structure, sans inventer.\" }, { type: 'image_url', image_url: { url: 'data:' + mimetype + ';base64,' + base64 } }] }] }; })() }}",
+        "options": {}
+      },
+      "id": "238df5fb-e2a2-4347-a2e3-c71850d9066c",
+      "name": "Analyze image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2704,
+        2336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JGZixJG6EhXALJTX",
+          "name": "OpenRouter Tikchop Bearer"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9445a2c7-b690-46bd-8370-121c4fa07a38",
+              "name": "Texte",
+              "value": "={{ [$('Normalize Evolution Payload').first().json.payload.media.caption ? 'Message client: ' + $('Normalize Evolution Payload').first().json.payload.media.caption : '', 'Analyse image: ' + ($json.choices?.[0]?.message?.content || 'Image recue. Pouvez-vous preciser ce que vous cherchez ?')].filter(Boolean).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f415e763-d87a-4927-af7b-ebc3086b5cc9",
+      "name": "Edit Fields Image",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2160,
+        2336
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f57256f1-6684-4f2f-b90a-dc50233e55d4",
+      "name": "Start Typing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2368,
+        1984
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6f7227c3-5b33-4028-a4c6-ffa59d9b0de6",
+      "name": "Send Seen",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2592,
+        1984
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "799c80ca-641a-4156-8b38-c34ce83447c7",
+      "name": "Send Seen1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        2144
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "8fbaccaf-c256-4240-bd8f-4a23480243f3",
+      "name": "Start Typing2",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2368,
+        2336
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2e432887-6fbc-4a53-bf1f-191358d889f9",
+      "name": "Send Seen2",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "contenu",
+              "fieldValue": "={{ $json.Texte }}"
+            },
+            {
+              "fieldId": "client",
+              "fieldValue": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) }} : {{ $('Normalize Evolution Payload').item.json.body.payload._data?.notifyName || 'Client' }} : {{ $('Normalize Evolution Payload').item.json.body.payload.from }}"
+            },
+            {
+              "fieldId": "statut",
+              "fieldValue": "batch"
+            },
+            {
+              "fieldId": "external_message_id",
+              "fieldValue": "={{ ($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + ':' + ($('Normalize Evolution Payload').first().json.payload?.id || $('Normalize Evolution Payload').first().json.raw?.data?.key?.id || Date.now()) }}"
+            },
+            {
+              "fieldId": "seller_slug",
+              "fieldValue": "={{ $('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown' }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $('Normalize Evolution Payload').first().json.customerPhone || String($('Normalize Evolution Payload').first().json.payload?.from || '').replace(/\\D/g, '') }}"
+            }
+          ]
+        }
+      },
+      "id": "cb0053e3-3d24-4fdb-8102-9fd4c15b8998",
+      "name": "Create Batch Row",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        2144
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "id": "51061a87-2a32-4ee3-bb8f-e6f6f25fc20e",
+      "webhookId": "552ab1c5-e175-4d9b-a4bb-8383b04900f5",
+      "name": "Wait for Buffer",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1664,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "messages",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "client",
+              "condition": "eq",
+              "keyValue": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) }} : {{ $('Normalize Evolution Payload').item.json.body.payload._data?.notifyName || 'Client' }} : {{ $('Normalize Evolution Payload').item.json.body.payload.from }}"
+            },
+            {
+              "keyName": "statut",
+              "condition": "eq",
+              "keyValue": "batch"
+            }
+          ]
+        }
+      },
+      "id": "856b4de4-30ef-447d-aa43-9011fa78d575",
+      "name": "Get Batch Rows",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        2144
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c2777cca-ff78-4564-91ec-52da9db97ca4",
+              "leftValue": "={{ Math.max(...$('Get Batch Rows').all().map(i => i.json.id)) }}",
+              "rightValue": "={{ $json.id }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "feb18ada-ee6b-45cc-89b9-6e768a7b8532",
+      "name": "Is Chosen One?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1232,
+        2144
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a928619f-5575-4390-b169-681999264cc5",
+      "name": "Stop Duplicate",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// 1. Fusionner les textes\nconst contenus = items\n  .map(i => i.json.contenu)\n  .filter(Boolean);\n\nlet messageFusionne = contenus.join(' [SUITE] ');\n\n// 2. RÃ©cupÃ©rer les IDs pour la mise Ã  jour\nconst idsToUpdate = items.map(i => i.json.id);\n\n// 3. Infos client\nconst client = items[0].json.client;\n// Extract phone: \"Name : 225... @c.us\" -> \"225...\"\nconst phone = client.split(' : ').pop().replace('@c.us', '').replace('@s.whatsapp.net', '');\n\nreturn [\n  {\n    json: {\n      message: messageFusionne,\n      client: client,\n      phone: phone,\n      batchIds: idsToUpdate\n    }\n  }\n];"
+      },
+      "id": "23541e90-2614-40f3-82d5-1c46fcafce53",
+      "name": "Fusion Pro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $json.message || '';\nconst match = message.match(/Ref Commande:\\s*([A-F0-9]+)/i);\nreturn {\n  ref: match ? match[1] : null,\n  phone: $json.phone\n};"
+      },
+      "id": "extract-order-ref-node",
+      "name": "Extract Order Ref",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        2150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?order_ref=eq.' + $node[\"Extract Order Ref\"].json[\"ref\"] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"customer_phone\": $node[\"Extract Order Ref\"].json[\"phone\"] } }}",
+        "options": {}
+      },
+      "id": "update-order-link-node",
+      "name": "Update Order Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -700,
+        2150
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sellers",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ $('Normalize Evolution Payload').first().json.query?.seller ? 'slug' : 'evolution_instance' }}",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Evolution Payload').first().json.query?.seller || $('Normalize Evolution Payload').first().json.instanceName }}"
+            }
+          ]
+        }
+      },
+      "id": "identify-seller-node",
+      "name": "Identify Seller",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        2032
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').item.json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: String($('Normalize Evolution Payload').item.json.body.payload.from || '').replace(/\\D/g, ''), text: ($json.output || '').replace('[SEND_BROCHURE]', '').trim() } }}",
+        "options": {}
+      },
+      "id": "fb8122ec-37b6-446c-8ea8-4f9ca26dce7f",
+      "name": "Envoyer RÃ©ponse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        2016
+      ],
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/rpc/mark_processed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"ids\": {{ JSON.stringify($json.batchIds) }} }",
+        "options": {}
+      },
+      "id": "c98f0521-a886-434e-a52a-679fe6fbac67",
+      "name": "Mark as Processed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -800,
+        2032
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Fusion Pro').item.json.message }}",
+        "options": {
+          "systemMessage": "= IDENTITE :\nVous etes l'assistant de vente WhatsApp de la boutique {{ $('Identify Seller').first().json.name }} sur Tikchop.\n\nMISSION :\n1. Vendre les produits de la boutique avec des reponses courtes, utiles et naturelles.\n2. Quand le client demande le stock, les articles disponibles, le catalogue ou les prix, utilisez uniquement CONTEXTE PRODUITS.\n3. Si CONTEXTE PRODUITS contient des articles, ne dites jamais que vous n'avez pas acces au stock ou au catalogue.\n4. Presentez d'abord 3 articles maximum avec nom, prix et une description tres courte. Ne donnez pas de lien produit au premier message de catalogue. Ne dites pas \"photo disponible\".\n5. Apres la liste, demandez simplement quel article l'interesse et dites que vous pouvez envoyer les photos ou mettre de cote l'article.\n6. Si le client veut payer, parlez de Wave, Orange Money, MTN/Moov, carte ou paiement a la livraison selon la boutique. Presentez le lien comme le paiement securise de la boutique, avec Wave, Orange Money ou carte selon les options affichees. Ne mentionnez jamais Paystack au client.\n7. Bot V1: priorite a disponibilite produit, support simple, et redirection boutique quand le client veut voir plus d articles ou commander sur le site.\n\nSTYLE LOCAL :\n- Francais ivoirien simple, clair, poli, direct.\n- Reponse courte, comme un vendeur WhatsApp, pas comme un assistant de site. 6 lignes maximum quand c'est possible.\n- Pas de formule robotique comme \"faites-le moi savoir\", \"n'hesitez pas\", \"je reste a votre disposition\".\n- Utilisez plutot : \"Oui c'est disponible\", \"Lequel vous interesse ?\", \"Je peux vous le mettre de cote\", \"Vous etes dans quelle zone ?\".\n- Si INFOS BOUTIQUE / STYLE VENDEUR contient un ton, un message d'accueil, des paiements preferes ou des regles boutique, suivez ces consignes en priorite.\n- Vouvoiement obligatoire.\n\nFORMAT SI LE CLIENT DEMANDE STOCK / PRIX / CATALOGUE :\nCommencez par : \"Oui, voici les articles disponibles chez {{ $('Identify Seller').first().json.name }} :\"\nPuis listez 3 articles maximum :\n1. Nom - prix CFA. Petite description.\nFinissez par : \"Lequel vous interesse ? Je peux vous envoyer la photo et le mettre de cote. Paiement possible par Wave, Orange Money, MTN/Moov, carte ou livraison selon la zone.\"\n\nSUPPORT ET REDIRECTION BOUTIQUE :\n- Si le client demande comment commander, donnez les etapes simples: choisir article, confirmer taille/couleur, donner commune/quartier, puis paiement/livraison.\n- Si le client veut voir la boutique ou plus d articles, donnez ce lien: https://tikchop.app/{{ $('Identify Seller').first().json.slug }}\n- Si la demande sort de la vente (probleme, reclamation, livraison, paiement confus), repondez calmement, demandez la reference ou le detail manquant, puis dites que la boutique va verifier.\n- Si vous ne savez pas, n inventez pas. Demandez une precision ou proposez de transferer au vendeur.\n\nREGLES :\n- Si le client demande une photo sans pr?ciser l'article, demandez simplement lequel il veut voir. Ne choisissez pas un produit au hasard.\n- Vous parlez au nom de {{ $('Identify Seller').first().json.name }}.\n- Pas de gras, pas d'asterisques.\n- Ne mentionnez pas Supabase, n8n, Evolution API, Paystack ou les outils internes.\n- Si le catalogue est vide, dites que la boutique n'a pas encore publie d'article et proposez de revenir plus tard.\n\nCONTEXTE PRODUITS :\n{{ $json.productsText }}\n\nINFOS BOUTIQUE / STYLE VENDEUR :\n{{ $json.shopText }}\n\nDERNIERES COMMANDES CLIENT :\n{{ $json.ordersText }}\n\nINFOS BOUTIQUE :\nNom: {{ $('Identify Seller').first().json.name }}\nSlug: {{ $('Identify Seller').first().json.slug }}"
+        }
+      },
+      "id": "3842e0ca-4bc6-4665-bb51-7ce65b3009c4",
+      "name": "Router Ai",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.4,
+      "position": [
+        -256,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ `SELECT name, slug, fixed_delivery_fee, delivery_payment_timing, row_to_json(s)->>'bot_tone' AS bot_tone, row_to_json(s)->>'bot_greeting' AS bot_greeting, row_to_json(s)->>'bot_payment_preferences' AS bot_payment_preferences, row_to_json(s)->>'bot_delivery_notes' AS bot_delivery_notes, row_to_json(s)->>'bot_special_rules' AS bot_special_rules FROM sellers s WHERE id = '${$('Identify Seller').first().json.id}';` }}",
+        "options": {}
+      },
+      "id": "8e8dd170-85b7-4f73-a911-ba635c30d45a",
+      "name": "Get Shop Info",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        2032
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3nOsdzFArVQH863B",
+          "name": "Supabase PLA PostgreSQL"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "limit": 20,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "seller_id",
+              "condition": "eq",
+              "keyValue": "={{$node[\"Identify Seller\"].json[\"id\"]}}"
+            }
+          ]
+        }
+      },
+      "id": "tikchop-products-tool",
+      "name": "Get Products",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        2150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "tikchop-evolution-whatsapp",
+        "options": {},
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        240
+      ],
+      "id": "global-waha-webhook",
+      "name": "Evolution Webhook",
+      "webhookId": "tikchop-evolution-webhook"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "google/gemini-2.5-flash-lite-preview-09-2025",
+          "cachedResultName": "Google: Gemini 2.5 Flash Lite Preview 09-2025"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.25
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        2272
+      ],
+      "id": "ffd0ebcf-c042-4890-923c-6e2c7d343c1d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "eR8H7JaxRaMIdF2j",
+          "name": "OpenRouter Tikchop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) + '_' + $('Normalize Evolution Payload').item.json.body.payload.from + '_tikchop' }}",
+        "contextWindowLength": 8
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        2272
+      ],
+      "id": "dfe4aa28-0f9c-4c38-8217-833ec944ba9f",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "3nOsdzFArVQH863B",
+          "name": "Supabase PLA PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "592df8d5-526c-414b-9b51-1040cea7b271",
+      "name": "Start Typing1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2368,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "orders",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_phone",
+              "condition": "eq",
+              "keyValue": "={{$node[\"Fusion Pro\"].json[\"phone\"]}}"
+            },
+            {
+              "keyName": "seller_id",
+              "condition": "eq",
+              "keyValue": "={{$node[\"Identify Seller\"].json[\"id\"]}}"
+            }
+          ]
+        }
+      },
+      "id": "get-customer-orders-node",
+      "name": "Suivi Commande Tool",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        2270
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "id": "a209a1b9-6ffe-427a-8d37-2f7c162e4da9",
+      "webhookId": "71c44d7e-3b1d-4651-bc35-12f1698c2aad",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2784,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || input;\nconst query = input.query || {};\nconst data = body.data || body.message || {};\nconst key = data.key || {};\nconst event = String(body.event || '').trim();\nconst eventKey = event.toLowerCase();\nconst instanceName = body.instance || body.instanceName || query.seller || 'unknown';\n\nconst isMessageEvent = !event || ['messages_upsert', 'messages.upsert'].includes(eventKey);\nconst isConnectionUpdate = ['connection_update', 'connection.update'].includes(eventKey);\n\nif (isConnectionUpdate) {\n  const rawState = String(data.state || data.status || data.connectionStatus || body.state || body.status || body.connectionStatus || '').toLowerCase();\n  let whatsappStatus = 'pending';\n  if (['open', 'connected', 'online'].includes(rawState)) whatsappStatus = 'connected';\n  else if (['close', 'closed', 'disconnected', 'logout', 'loggedout', 'offline'].includes(rawState)) whatsappStatus = 'disconnected';\n  else if (['connecting', 'pairing', 'qrcode', 'qr', 'pending'].includes(rawState)) whatsappStatus = 'pending';\n  else if (rawState.includes('error') || rawState.includes('fail')) whatsappStatus = 'error';\n\n  return [{\n    json: {\n      source: 'evolution',\n      event,\n      eventType: 'connection_update',\n      instanceName,\n      seller: query.seller || instanceName,\n      sellerSlug: query.seller || instanceName,\n      query,\n      isFromMe: false,\n      connectionState: rawState || 'unknown',\n      whatsappStatus,\n      raw: body,\n    }\n  }];\n}\n\nif (!isMessageEvent) {\n  return [];\n}\n\nconst msg = data.message || data;\nconst remoteJid = key.remoteJid || data.remoteJid || data.chatId || body.remoteJid || body.chatId || '';\nconst messageId = key.id || data.id || body.id || String(Date.now());\nconst pushName = data.pushName || body.pushName || 'Client';\nconst isFromMe = Boolean(key.fromMe || data.fromMe || body.fromMe);\n\nlet text =\n  msg.conversation ||\n  msg.extendedTextMessage?.text ||\n  msg.imageMessage?.caption ||\n  msg.videoMessage?.caption ||\n  data.messageText ||\n  body.text ||\n  '';\n\nconst mimetype =\n  msg.imageMessage?.mimetype ||\n  msg.audioMessage?.mimetype ||\n  msg.videoMessage?.mimetype ||\n  msg.documentMessage?.mimetype ||\n  '';\n\nconst mediaBase64 =\n  msg.base64 ||\n  data.base64 ||\n  body.base64 ||\n  msg.imageMessage?.base64 ||\n  msg.audioMessage?.base64 ||\n  msg.documentMessage?.base64 ||\n  msg.imageMessage?.jpegThumbnail ||\n  '';\n\nconst isImage = mimetype.includes('image');\nconst isAudio = mimetype.includes('audio');\nconst hasMedia = Boolean(mimetype && mediaBase64);\n\nif (!text && isImage && !hasMedia) {\n  text = 'Le client a envoye une image, mais le fichier image n est pas disponible. Repondez simplement que la photo est recue et demandez quel modele ou detail il cherche.';\n}\n\nif (!text && isAudio && !hasMedia) {\n  text = 'Le client a envoye un vocal, mais le fichier audio n est pas disponible. Demandez lui d ecrire sa demande en quelques mots.';\n}\n\nif (!text && !hasMedia) {\n  return [];\n}\n\nconst payload = {\n  id: messageId,\n  from: remoteJid,\n  body: text,\n  hasMedia,\n  media: { mimetype, url: '', caption: text, base64: mediaBase64 },\n  _data: { notifyName: pushName },\n};\nconst customerPhone = String(remoteJid || '').replace(/\\D/g, '');\n\nreturn [{\n  json: {\n    source: 'evolution',\n    event,\n    eventType: 'message',\n    instanceName,\n    seller: query.seller || instanceName,\n    sellerSlug: query.seller || instanceName,\n    query,\n    isFromMe,\n    customerPhone,\n    payload,\n    body: {\n      session: instanceName,\n      payload,\n      event: body.event,\n      instance: instanceName,\n      isFromMe,\n      customerPhone,\n    },\n    raw: body,\n  }\n}];"
+      },
+      "id": "265ca4c5-1b57-4865-8330-c2f92436a8e7",
+      "name": "Normalize Evolution Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -740,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const seller = $('Identify Seller').first().json;\nconst nl = String.fromCharCode(10);\nconst orders = $input.all().map(item => item.json).filter(order => Object.keys(order).length > 0);\nconst products = $('Get Products').all().map(item => item.json).map(product => ({\n  id: product.id,\n  name: product.name,\n  price: product.price,\n  stock_quantity: product.stock_quantity,\n  image_url: product.image_url,\n  description: product.description,\n  product_variants: product.product_variants || [],\n  product_keywords: product.product_keywords || '',\n  product_url: 'https://tikchop.app/' + seller.slug + '?product=' + product.id,\n}));\nconst shop = $('Get Shop Info').all().map(item => item.json)[0] || {};\nconst productsText = products.length\n  ? products.filter(product => Number(product.stock_quantity || 0) > 0).slice(0, 3).map((product, index) => {\n      const stock = Number(product.stock_quantity || 0);\n      const availability = stock > 0 ? 'DISPO (' + stock + ')' : 'INDISPONIBLE';\n      const variants = Array.isArray(product.product_variants) && product.product_variants.length ? ' - Variantes: ' + product.product_variants.slice(0, 4).map(v => [v.label || v.size || v.color, v.stock ? ('stock ' + v.stock) : ''].filter(Boolean).join(' ')).join(', ') : '';\n      const keywords = product.product_keywords ? ' - Mots cles: ' + product.product_keywords : '';\n      return (index + 1) + '. ' + product.name + ' - ' + Number(product.price || 0).toLocaleString('fr-FR') + ' CFA - ' + (product.description || 'Description a confirmer') + variants + keywords;\n    }).join(nl)\n  : 'Aucun produit publie.';\nconst ordersText = orders.length\n  ? orders.map(order => 'Commande ' + (order.order_ref || order.id) + ' - ' + order.status + ' - ' + Number(order.total_amount || 0).toLocaleString('fr-FR') + ' CFA').join(nl)\n  : 'Aucune commande connue pour ce client.';\nconst shopText = Object.keys(shop).length ? [\n  'Boutique: ' + (shop.name || seller.name || ''),\n  'Livraison: ' + (shop.delivery_payment_timing || 'non renseignee'),\n  'Frais: ' + Number(shop.fixed_delivery_fee || 0).toLocaleString('fr-FR') + ' CFA',\n  shop.bot_tone ? 'Ton boutique: ' + shop.bot_tone : '',\n  shop.bot_greeting ? 'Accueil boutique: ' + shop.bot_greeting : '',\n  shop.bot_payment_preferences ? 'Paiements preferes: ' + shop.bot_payment_preferences : '',\n  shop.bot_delivery_notes ? 'Notes livraison: ' + shop.bot_delivery_notes : '',\n  shop.bot_special_rules ? 'Regles boutique: ' + shop.bot_special_rules : '',\n].filter(Boolean).join(nl) : 'Infos livraison non renseignees.';\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst message = $('Fusion Pro').first().json.message || '';\nconst normalizedMessage = normalize(message);\nconst wantsCatalog = /\\b(stock|catalogue|article|articles|produit|produits|disponible|disponibles|photo|photos|image|images|prix|combien|cout|coute|modeles|modele|voir|montre|envoie|envoyer|envoi)\\b/i.test(normalizedMessage);\nconst orderIntent = /\\b(je prends|je prend|j achete|jachete|acheter|commande|commander|je veux commander|je vais prendre|c est bon pour|interesse|interessee|preneur|garde moi|reserve|reserver|mettre de cote|mets de cote)\\b/i.test(normalizedMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|mod?le|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst quantityMatch = normalizedMessage.match(/(?:quantite|qte|qty|nombre|prends en|prendre en|x)\\s*(\\d{1,2})|(?:\\b(\\d{1,2})\\s*(?:pieces?|pcs?|articles?)\\b)/);\nconst quantity = Math.max(1, Math.min(20, Number(quantityMatch?.[1] || quantityMatch?.[2] || 1)));\nconst stopWords = new Set(['avec','pour','dans','vous','nous','veux','prendre','commande','commander','article','produit','taille','prix','stock','celui','celle','bonjour','salut','bonsoir']);\nconst messageTokens = new Set(normalizedMessage.split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token)));\n\nconst scoredProducts = products.map((product, index) => {\n  const productName = normalize(product.name);\n  const productExtra = normalize((product.description || '') + ' ' + (product.product_keywords || '') + ' ' + (Array.isArray(product.product_variants) ? product.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''));\n  const productTokens = (productName + ' ' + productExtra).split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token));\n  let score = 0;\n  if (productName && normalizedMessage.includes(productName)) score += 20;\n  if (indexMatch && Number(indexMatch[1]) === index + 1) score += 15;\n  for (const token of productTokens) {\n    if (messageTokens.has(token)) score += 4;\n    else if (normalizedMessage.includes(token)) score += 2;\n  }\n  return { product, index, score };\n}).sort((a, b) => b.score - a.score);\n\nconst best = scoredProducts[0];\nconst second = scoredProducts[1];\nconst matchedProduct = best && best.score > 0 ? best.product : null;\nconst ready = Boolean(orderIntent && best && best.score > 0 && (!second || best.score >= second.score + 2) && Number(best.product.stock_quantity || 0) >= quantity);\nconst orderDraft = ready ? {\n  ready: true,\n  quantity,\n  product: best.product,\n  total_amount: Number(best.product.price || 0) * quantity,\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: orderIntent,\n  reason: orderIntent ? 'product_unclear_or_stock_missing' : 'no_order_intent',\n};\n\nconst paymentIntent = /\\b(wave|orange money|orange|om|mtn|moov|mobile money|mobile|payer|paiement|paye|payement|carte|visa|mastercard|lien de paiement|paiement en ligne)\\b/i.test(normalizedMessage);\nconst pendingOrders = orders\n  .filter(order => order.status === 'PENDING' && Number(order.total_amount || 0) > 0 && String(order.customer_phone || '') === String($('Fusion Pro').first().json.phone || ''))\n  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));\nconst paymentDraft = paymentIntent && pendingOrders.length ? {\n  ready: true,\n  order: pendingOrders[0],\n  amount: Number(pendingOrders[0].total_amount || 0) + Number(pendingOrders[0].delivery_fee || 0),\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: paymentIntent,\n  reason: paymentIntent ? 'no_pending_order' : 'no_payment_intent',\n};\n\nconst inStockProducts = products.filter(product => Number(product.stock_quantity || 0) > 0);\nconst followProduct = (best && best.score > 0 && Number(best.product.stock_quantity || 0) > 0) ? best.product : inStockProducts[0];\nconst followUpDraft = wantsCatalog && !orderIntent && !paymentIntent && followProduct && !pendingOrders.length ? {\n  ready: true,\n  started_at: new Date().toISOString(),\n  seller_id: seller.id,\n  seller_name: seller.name,\n  customer_phone: $('Fusion Pro').first().json.phone,\n  product_name: followProduct.name,\n  product_price: Number(followProduct.price || 0),\n} : {\n  ready: false,\n  reason: wantsCatalog ? 'order_or_payment_or_pending_exists' : 'no_catalog_interest',\n};\n\nreturn [{ json: { orders, products, shop, productsText, ordersText, shopText, wantsCatalog, orderIntent, paymentIntent, matchedProduct, orderDraft, paymentDraft, followUpDraft } }];"
+      },
+      "id": "prepare-ai-context-node",
+      "name": "Prepare AI Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        2270
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst first = items.find(item => (item.json.output || '').trim()) || items[0];\nif (!first) return [];\nconst context = $('Prepare AI Context').first().json || {};\nlet output = String(first.json.output || '').replace('[SEND_BROCHURE]', '').trim();\nif (context.wantsCatalog && output && !/Wave|Orange Money|MTN|Moov|mobile money/i.test(output)) {\n  output += String.fromCharCode(10) + 'Paiement possible par Wave, Orange Money, MTN/Moov ou carte.';\n}\nreturn [{ json: { ...first.json, output } }];"
+      },
+      "id": "limit-one-reply-node",
+      "name": "Limit One Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Prepare AI Context').first().json;\nconst rawMessage = String($('Fusion Pro').first().json.message || '');\nconst message = rawMessage.toLowerCase();\nconst explicitPhotoRequest = /(photo|photos|image|images|voir|montre|montrer|envoie|envoyer|envoi|montrez)/i.test(message);\nif (!explicitPhotoRequest) return [];\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst normalizedMessage = normalize(rawMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst products = (context.products || []).filter(product => product.image_url && Number(product.stock_quantity || 0) > 0);\nlet product = null;\nlet tokenMatchScore = 0;\n\nif (indexMatch) product = products[Number(indexMatch[1]) - 1] || null;\nif (!product && context.matchedProduct?.image_url) product = products.find(item => item.id === context.matchedProduct.id) || null;\nif (!product) {\n  const tokens = new Set(normalizedMessage.split(' ').filter(token => token.length > 2));\n  const scored = products\n    .map(item => ({\n      item,\n      score: normalize([item.name, item.description, item.product_keywords, Array.isArray(item.product_variants) ? item.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''].filter(Boolean).join(' ')).split(' ').filter(token => tokens.has(token)).length,\n    }))\n    .sort((a, b) => b.score - a.score)[0];\n  if (scored?.score > 0) {\n    product = scored.item;\n    tokenMatchScore = scored.score;\n  }\n}\n\nif (!product) return [];\n\nconst nl = String.fromCharCode(10);\nconst number = String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, '');\nconst caption = [\n  product.name,\n  Number(product.price || 0).toLocaleString('fr-FR') + ' CFA',\n  'Disponible. Si ca vous plait, je peux le mettre de cote pour vous.'\n].join(nl);\n\nreturn [{ json: {\n  number,\n  mediatype: 'image',\n  mimetype: 'image/jpeg',\n  media: product.image_url,\n  fileName: (product.name || 'produit').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase() + '.jpg',\n  caption,\n  matchedBy: indexMatch ? 'index' : context.matchedProduct?.id === product.id ? 'product' : 'tokens',\n  tokenMatchScore,\n} }];"
+      },
+      "id": "prepare-product-images-node",
+      "name": "Prepare Product Images",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        2260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendMedia/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "send-product-images-node",
+      "name": "Send Product Images",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        2260
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "has-order-draft-condition",
+              "leftValue": "={{ $json.orderDraft?.ready ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-order-draft-node",
+      "name": "Has Order Draft?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "seller_id",
+              "fieldValue": "={{ $('Identify Seller').first().json.id }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.customer_phone }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "PENDING"
+            },
+            {
+              "fieldId": "total_amount",
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.total_amount }}"
+            },
+            {
+              "fieldId": "payment_method",
+              "fieldValue": "WAVE"
+            },
+            {
+              "fieldId": "delivery_status",
+              "fieldValue": "PENDING"
+            }
+          ]
+        }
+      },
+      "id": "create-whatsapp-order-node",
+      "name": "Create WhatsApp Order",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        208,
+        1888
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "order_items",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "order_id",
+              "fieldValue": "={{ $('Create WhatsApp Order').first().json.id }}"
+            },
+            {
+              "fieldId": "product_id",
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.product.id }}"
+            },
+            {
+              "fieldId": "quantity",
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.quantity }}"
+            },
+            {
+              "fieldId": "price_at_time",
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.product.price }}"
+            }
+          ]
+        }
+      },
+      "id": "create-whatsapp-order-item-node",
+      "name": "Create WhatsApp Order Item",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        1888
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "tikchopSupabase01",
+          "name": "Tikchop Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['C est note, votre commande est prise.', 'Reference: ' + $('Create WhatsApp Order').first().json.order_ref, 'Total: ' + Number($('Prepare AI Context').first().json.orderDraft.total_amount).toLocaleString('fr-FR') + ' CFA', 'Paiement possible par Wave, Orange Money, MTN/Moov, carte ou a la livraison selon votre zone.', 'Vous etes dans quelle commune/quartier pour la livraison ?'].join(String.fromCharCode(10)) } }}",
+        "options": {}
+      },
+      "id": "send-order-confirmation-node",
+      "name": "Send Order Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "has-payment-draft-condition",
+              "leftValue": "={{ $json.paymentDraft?.ready ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-payment-draft-node",
+      "name": "Has Payment Draft?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.paystack.co/transaction/initialize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.PAYSTACK_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { email: 'customer-' + $('Prepare AI Context').first().json.paymentDraft.order.id + '@tikchop.app', amount: Math.round(Number($('Prepare AI Context').first().json.paymentDraft.amount || 0) * 100), metadata: { order_id: $('Prepare AI Context').first().json.paymentDraft.order.id, order_ref: $('Prepare AI Context').first().json.paymentDraft.order.order_ref, seller_name: $('Identify Seller').first().json.name }, callback_url: 'https://dashboard-mu-blue-xduynfs3jo.vercel.app/payment/callback' } }}",
+        "options": {}
+      },
+      "id": "initialize-paystack-node",
+      "name": "Initialize Paystack Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['Pour finaliser la commande ' + $('Prepare AI Context').first().json.paymentDraft.order.order_ref + ', vous pouvez payer ici :', $('Initialize Paystack Payment').first().json.data.authorization_url, 'Choisissez Wave, Orange Money ou carte selon ce qui s affiche.', 'Apres paiement, vous recevez le recu PDF ici meme.'].join(String.fromCharCode(10)) } }}",
+        "options": {}
+      },
+      "id": "send-paystack-link-node",
+      "name": "Send Paystack Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "has-follow-up-draft-condition",
+              "leftValue": "={{ $json.followUpDraft?.ready ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-follow-up-draft-node",
+      "name": "Has Follow-up Draft?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "hours"
+      },
+      "id": "wait-follow-up-node",
+      "webhookId": "tikchop-follow-up-wait",
+      "name": "Wait Follow-up Window",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?select=id&seller_id=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.seller_id) + '&customer_phone=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.customer_phone) + '&created_at=gte.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.started_at) + '&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-follow-up-orders-node",
+      "name": "Check Follow-up Orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        688,
+        2336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const orderRaw = $('Check Follow-up Orders').all().map(item => item.json);\nconst orders = orderRaw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.id);\nif (orders.length) return [];\nconst followRaw = $input.all().map(item => item.json);\nconst recentFollowups = followRaw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && (item.id || item.created_at));\nif (recentFollowups.length) return [];\nconst draft = $('Prepare AI Context').first().json.followUpDraft || {};\nif (!draft.ready) return [];\nconst hour = new Date().getHours();\nconst salutation = hour >= 18 ? 'Bonsoir' : 'Bonjour';\nconst price = Number(draft.product_price || 0).toLocaleString('fr-FR') + ' CFA';\nconst text = [\n  salutation + \", c'est \" + (draft.seller_name || 'la boutique') + '.',\n  draft.product_name + ' est toujours dispo a ' + price + '.',\n  'Je peux vous le reserver si vous confirmez.'\n].join(String.fromCharCode(10));\nreturn [{ json: { number: draft.customer_phone, text } }];"
+      },
+      "id": "prepare-follow-up-message-node",
+      "name": "Prepare Follow-up Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "send-follow-up-message-node",
+      "name": "Send Follow-up Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        2336
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 25,
+        "unit": "seconds"
+      },
+      "id": "wait-before-product-image-node",
+      "name": "Wait Before Product Image",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2460,
+        980
+      ],
+      "webhookId": "wait-before-product-image"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-human-seller-message-condition",
+              "leftValue": "={{ $json.isFromMe ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-human-seller-message-node",
+      "name": "Is Human Seller Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -280,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const n = $('Normalize Evolution Payload').first().json; const sellerSlug = n.sellerSlug || n.instanceName || 'unknown'; const phone = n.customerPhone || String(n.payload?.from || '').replace(/\\D/g, ''); const until = new Date(Date.now() + 90 * 60 * 1000).toISOString(); return { contenu: 'human_pause_until:' + until, client: sellerSlug + ' : Pause vendeur : ' + phone, statut: 'human_pause', external_message_id: 'human_pause:' + sellerSlug + ':' + phone + ':' + Date.now(), seller_slug: sellerSlug, customer_phone: phone }; })() }}",
+        "options": {}
+      },
+      "id": "record-human-pause-node",
+      "name": "Record Human Pause",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -40,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages?select=id,contenu,created_at&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + '&customer_phone=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.customerPhone || '') + '&statut=eq.human_pause&created_at=gte.' + encodeURIComponent(new Date(Date.now() - 90 * 60 * 1000).toISOString()) + '&order=created_at.desc&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-human-pause-node",
+      "name": "Check Human Pause",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -40,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.all().map(item => item.json);\nconst records = raw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.id);\nconst active = records.some((record) => {\n  const text = String(record.contenu || '');\n  const match = text.match(/human_pause_until:(\\\\S+)/);\n  if (match) return new Date(match[1]).getTime() > Date.now();\n  return new Date(record.created_at || 0).getTime() > Date.now() - 90 * 60 * 1000;\n});\nif (active) return [];\nreturn [{ json: $('Normalize Evolution Payload').first().json }];"
+      },
+      "id": "gate-human-pause-node",
+      "name": "Gate Human Pause",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages?select=id,created_at&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + '&customer_phone=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.customer_phone) + '&statut=eq.followup&created_at=gte.' + encodeURIComponent(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) + '&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-recent-follow-up-node",
+      "name": "Check Recent Follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        920,
+        2336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const draft = $('Prepare AI Context').first().json.followUpDraft; const sellerSlug = $('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown'; const phone = draft.customer_phone; const day = new Date().toISOString().slice(0, 10); return { contenu: $('Prepare Follow-up Message').first().json.text, client: sellerSlug + ' : Relance : ' + phone, statut: 'followup', external_message_id: 'followup:' + sellerSlug + ':' + phone + ':' + day, seller_slug: sellerSlug, customer_phone: phone }; })() }}",
+        "options": {}
+      },
+      "id": "save-follow-up-record-node",
+      "name": "Save Follow-up Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1400,
+        2336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-evolution-connection-update",
+              "leftValue": "={{ $json.eventType }}",
+              "rightValue": "connection_update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-connection-update-node",
+      "name": "Is Connection Update?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -520,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/sellers?slug=eq.' + encodeURIComponent($json.sellerSlug) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const status = $json.whatsappStatus || 'pending'; return { whatsapp_provider: 'evolution', evolution_instance: $json.instanceName, whatsapp_status: status, whatsapp_last_error: status === 'disconnected' ? 'WhatsApp deconnecte. Reconnectez le numero pour relancer le bot.' : (status === 'error' ? 'Erreur de connexion WhatsApp Evolution. Reessayez la connexion.' : null), ...(status === 'connected' ? { whatsapp_connected_at: new Date().toISOString(), whatsapp_last_error: null } : {}) }; })() }}",
+        "options": {}
+      },
+      "id": "update-seller-whatsapp-status-node",
+      "name": "Update Seller WhatsApp Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -280,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ `SELECT d.id, d.name, d.phone_number, d.zone FROM sellers s JOIN delivery_drivers d ON d.seller_id = s.id AND d.is_active = true WHERE s.id = '${$('Identify Seller').first().json.id}' AND coalesce(s.auto_share_to_driver, false) = true ORDER BY CASE WHEN coalesce(d.zone, '') = '' THEN 1 ELSE 0 END, d.created_at ASC LIMIT 1;` }}",
+        "options": {}
+      },
+      "id": "get-driver-for-whatsapp-order-node",
+      "name": "Get Driver For WhatsApp Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        1888
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3nOsdzFArVQH863B",
+          "name": "Supabase PLA PostgreSQL"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const driver = $input.first().json || {};\nconst order = $('Create WhatsApp Order').first().json || {};\nconst context = $('Prepare AI Context').first().json || {};\nconst draft = context.orderDraft || {};\nconst product = draft.product || {};\nconst number = String(driver.phone_number || '').replace(/\\D/g, '');\nif (!number) return [];\nconst nl = String.fromCharCode(10);\nconst orderRef = order.order_ref || String(order.id || '').slice(0, 8).toUpperCase();\nconst total = Number(draft.total_amount || order.total_amount || 0).toLocaleString('fr-FR') + ' CFA';\nconst qty = Number(draft.quantity || 1);\nconst text = [\n  'Nouvelle commande Tikchop',\n  'Commande: ' + orderRef,\n  'Boutique: ' + ($('Identify Seller').first().json.name || 'Boutique'),\n  'Client: ' + (draft.customer_phone || order.customer_phone || 'a confirmer'),\n  'Article: ' + qty + ' x ' + (product.name || 'Article'),\n  'Total: ' + total,\n  'Zone client: a confirmer',\n  'Quand vous prenez ca, confirmez a la boutique.'\n].join(nl);\nreturn [{ json: { number, text, driverId: driver.id } }];"
+      },
+      "id": "prepare-driver-notification-node",
+      "name": "Prepare Driver Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: $json.number, text: $json.text } }}",
+        "options": {}
+      },
+      "id": "send-driver-notification-node",
+      "name": "Send Driver Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1408,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?id=eq.' + encodeURIComponent($('Create WhatsApp Order').first().json.id) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { delivery_driver_id: $('Prepare Driver Notification').first().json.driverId, delivery_status: 'ASSIGNED' } }}",
+        "options": {}
+      },
+      "id": "mark-driver-assigned-node",
+      "name": "Mark Driver Assigned",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1648,
+        1888
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Switch Texte": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If media is image": {
+      "main": [
+        [
+          {
+            "node": "Get Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If media is Audio": {
+      "main": [
+        [
+          {
+            "node": "Get Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Send Seen1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Texte": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Audio": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Send Seen2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Image": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Texte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen": {
+      "main": [
+        [
+          {
+            "node": "Start Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen1": {
+      "main": [
+        [
+          {
+            "node": "Start Typing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen2": {
+      "main": [
+        [
+          {
+            "node": "Start Typing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Batch Row": {
+      "main": [
+        [
+          {
+            "node": "Wait for Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Buffer": {
+      "main": [
+        [
+          {
+            "node": "Get Batch Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Batch Rows": {
+      "main": [
+        [
+          {
+            "node": "Is Chosen One?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Chosen One?": {
+      "main": [
+        [
+          {
+            "node": "Fusion Pro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fusion Pro": {
+      "main": [
+        [
+          {
+            "node": "Mark as Processed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Order Ref",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Seller": {
+      "main": [
+        [
+          {
+            "node": "Get Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Processed": {
+      "main": [
+        [
+          {
+            "node": "Identify Seller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Order Ref": {
+      "main": [
+        [
+          {
+            "node": "Update Order Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Order Link": {
+      "main": [
+        []
+      ]
+    },
+    "Router Ai": {
+      "main": [
+        [
+          {
+            "node": "Limit One Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shop Info": {
+      "main": [
+        [
+          {
+            "node": "Suivi Commande Tool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suivi Commande Tool": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Products": {
+      "main": [
+        [
+          {
+            "node": "Get Shop Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Router Ai",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Router Ai",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send Seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Evolution Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Evolution Payload": {
+      "main": [
+        [
+          {
+            "node": "Is Connection Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Context": {
+      "main": [
+        [
+          {
+            "node": "Has Payment Draft?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit One Reply": {
+      "main": [
+        [
+          {
+            "node": "Envoyer RÃ©ponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Product Images": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Product Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Order Draft?": {
+      "main": [
+        [
+          {
+            "node": "Create WhatsApp Order",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Router Ai",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Product Images",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has Follow-up Draft?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create WhatsApp Order": {
+      "main": [
+        [
+          {
+            "node": "Create WhatsApp Order Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create WhatsApp Order Item": {
+      "main": [
+        [
+          {
+            "node": "Send Order Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Payment Draft?": {
+      "main": [
+        [
+          {
+            "node": "Initialize Paystack Payment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Order Draft?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Paystack Payment": {
+      "main": [
+        [
+          {
+            "node": "Send Paystack Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Follow-up Draft?": {
+      "main": [
+        [
+          {
+            "node": "Wait Follow-up Window",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Wait Follow-up Window": {
+      "main": [
+        [
+          {
+            "node": "Check Follow-up Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Follow-up Orders": {
+      "main": [
+        [
+          {
+            "node": "Check Recent Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Follow-up Message": {
+      "main": [
+        [
+          {
+            "node": "Send Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up Message": {
+      "main": [
+        [
+          {
+            "node": "Save Follow-up Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Product Image": {
+      "main": [
+        [
+          {
+            "node": "Send Product Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Human Seller Message?": {
+      "main": [
+        [
+          {
+            "node": "Record Human Pause",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Human Pause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Human Pause": {
+      "main": [
+        []
+      ]
+    },
+    "Check Human Pause": {
+      "main": [
+        [
+          {
+            "node": "Gate Human Pause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Human Pause": {
+      "main": [
+        [
+          {
+            "node": "Switch Texte",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If media is Audio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If media is image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Recent Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Prepare Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Follow-up Record": {
+      "main": [
+        []
+      ]
+    },
+    "Is Connection Update?": {
+      "main": [
+        [
+          {
+            "node": "Update Seller WhatsApp Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Human Seller Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Seller WhatsApp Status": {
+      "main": [
+        []
+      ]
+    },
+    "Send Order Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Get Driver For WhatsApp Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Driver For WhatsApp Order": {
+      "main": [
+        [
+          {
+            "node": "Prepare Driver Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Driver Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Driver Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Driver Notification": {
+      "main": [
+        [
+          {
+            "node": "Mark Driver Assigned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Driver Assigned": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bf05b757-f95d-4fe0-967e-2348d1c31abd",
+  "activeVersionId": "bf05b757-f95d-4fe0-967e-2348d1c31abd",
+  "versionCounter": 146,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-05T03:50:56.518Z",
+      "createdAt": "2026-05-05T03:50:56.518Z",
+      "role": "workflow:owner",
+      "workflowId": "tkchopEvobd8516ea",
+      "projectId": "ug0sUdrQqxOUb1kC",
+      "project": {
+        "updatedAt": "2026-02-26T03:15:41.702Z",
+        "createdAt": "2026-02-26T02:51:31.412Z",
+        "id": "ug0sUdrQqxOUb1kC",
+        "name": "Salia Koffi Mohamed <saliamohamed05@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "4a40f9c4-48d0-4b0b-8528-31d3c1875fd9"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-16T13:31:49.464Z",
+    "createdAt": "2026-05-16T13:31:49.464Z",
+    "versionId": "bf05b757-f95d-4fe0-967e-2348d1c31abd",
+    "workflowId": "tkchopEvobd8516ea",
+    "nodes": [
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "c2b0b69c-7967-48e9-b1b7-7d4022a35e4f",
+                      "leftValue": "={{ $json.payload.hasMedia === false }}",
+                      "rightValue": true,
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Texte"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ecfc5d42-a148-4efa-930d-c874775ed1b0",
+        "name": "Switch Texte",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.3,
+        "position": [
+          -3088,
+          1984
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "evolution-image-without-caption-only",
+                "leftValue": "={{ $json.payload.hasMedia === true && ($json.payload.media.mimetype || \"\").includes(\"image\") ? \"yes\" : \"no\" }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "d740b1c5-6b84-45d4-ace5-cc85865a2fe8",
+        "name": "If media is image",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.1,
+        "position": [
+          -3088,
+          2368
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "f827f7f8-d40c-4d97-9677-9e62d99c7e7a",
+                "leftValue": "={{ $json.payload.media.mimetype }}",
+                "rightValue": "audio",
+                "operator": {
+                  "type": "string",
+                  "operation": "contains"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "215dac5f-0b3b-4306-829a-04476bd9500b",
+        "name": "If media is Audio",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.1,
+        "position": [
+          -3088,
+          2160
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first();\nconst payload = item.json.payload || item.json.body?.payload || {};\nconst media = payload.media || {};\nconst base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, '');\nconst mimetype = media.mimetype || 'image/jpeg';\nif (!base64) {\n  throw new Error('Image Evolution sans base64. Activez webhook.base64 sur l instance Evolution.');\n}\nreturn [{\n  json: item.json,\n  binary: {\n    data: {\n      data: base64,\n      mimeType: mimetype,\n      fileName: 'whatsapp-image.' + (mimetype.includes('png') ? 'png' : 'jpg'),\n      fileExtension: mimetype.includes('png') ? 'png' : 'jpg',\n    },\n  },\n}];"
+        },
+        "id": "143ea6aa-e956-4a42-aa49-54f4919e3f60",
+        "name": "Get Image",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2880,
+          2336
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first();\nconst payload = item.json.payload || item.json.body?.payload || {};\nconst media = payload.media || {};\nconst base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, '');\nconst mimetype = media.mimetype || 'audio/ogg';\nconst extension = mimetype.includes('mpeg') || mimetype.includes('mp3') ? 'mp3'\n  : mimetype.includes('wav') ? 'wav'\n  : mimetype.includes('webm') ? 'webm'\n  : mimetype.includes('m4a') || mimetype.includes('mp4') ? 'm4a'\n  : 'ogg';\nif (!base64) {\n  throw new Error('Audio Evolution sans base64. Activez webhook.base64 sur l instance Evolution.');\n}\nreturn [{\n  json: item.json,\n  binary: {\n    data: {\n      data: base64,\n      mimeType: mimetype,\n      fileName: 'whatsapp-audio.' + extension,\n      fileExtension: extension,\n    },\n  },\n}];"
+        },
+        "id": "caad9b7d-fdfd-425b-998c-9d353e39da45",
+        "name": "Get Audio",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2880,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://openrouter.ai/api/v1/audio/transcriptions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "HTTP-Referer",
+                "value": "https://dashboard-mu-blue-xduynfs3jo.vercel.app"
+              },
+              {
+                "name": "X-OpenRouter-Title",
+                "value": "Tikchop"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload.media || {}; const mimetype = String(media.mimetype || 'audio/ogg').toLowerCase(); const base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, ''); const format = mimetype.includes('mpeg') || mimetype.includes('mp3') ? 'mp3' : mimetype.includes('wav') ? 'wav' : mimetype.includes('webm') ? 'webm' : mimetype.includes('m4a') || mimetype.includes('mp4') ? 'm4a' : mimetype.includes('aac') ? 'aac' : 'ogg'; return { model: 'openai/gpt-4o-mini-transcribe', input_audio: { data: base64, format }, language: 'fr', temperature: 0 }; })() }}",
+          "options": {}
+        },
+        "id": "752d9f39-3b0f-42a5-9efc-de5cd78c8dc5",
+        "name": "Transcribe Audio",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -2704,
+          2144
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "JGZixJG6EhXALJTX",
+            "name": "OpenRouter Tikchop Bearer"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3d729675-89d1-4bdc-b3fa-0dc2bc5ee9c5",
+                "name": "Texte",
+                "value": "={{ $('Normalize Evolution Payload').item.json.body.payload.body }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "7710757b-a943-4a37-9c92-7f3558e02019",
+        "name": "Edit Fields Texte",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -2160,
+          1984
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "8dfc9675-52b0-4115-aefc-1a5dadffb366",
+                "name": "Texte",
+                "value": "={{ $json.text || 'Le client a envoye un vocal, mais la transcription a echoue. Demandez-lui d ecrire sa demande en quelques mots.' }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "030333d2-d465-4e89-9498-4e60439dcd70",
+        "name": "Edit Fields Audio",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -2160,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://openrouter.ai/api/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "HTTP-Referer",
+                "value": "https://dashboard-mu-blue-xduynfs3jo.vercel.app"
+              },
+              {
+                "name": "X-OpenRouter-Title",
+                "value": "Tikchop"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload.media || {}; const base64 = String(media.base64 || '').replace(/^data:[^;]+;base64,/, ''); const mimetype = String(media.mimetype || 'image/jpeg').split(';')[0]; return { model: 'google/gemini-2.5-flash-lite-preview-09-2025', temperature: 0.2, max_tokens: 240, messages: [{ role: 'user', content: [{ type: 'text', text: \"Analyser cette image pour Tikchop.\\n1. Si c'est un recu Wave, Orange Money, MTN ou Moov : extraire montant, date et reference.\\n2. Si c'est un produit : decrire l'article simplement avec type, couleur, style et details visibles.\\n3. Si l'image n'est pas claire : le dire et demander une precision.\\nRepondre en francais simple, structure, sans inventer.\" }, { type: 'image_url', image_url: { url: 'data:' + mimetype + ';base64,' + base64 } }] }] }; })() }}",
+          "options": {}
+        },
+        "id": "238df5fb-e2a2-4347-a2e3-c71850d9066c",
+        "name": "Analyze image",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -2704,
+          2336
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "JGZixJG6EhXALJTX",
+            "name": "OpenRouter Tikchop Bearer"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "9445a2c7-b690-46bd-8370-121c4fa07a38",
+                "name": "Texte",
+                "value": "={{ [$('Normalize Evolution Payload').first().json.payload.media.caption ? 'Message client: ' + $('Normalize Evolution Payload').first().json.payload.media.caption : '', 'Analyse image: ' + ($json.choices?.[0]?.message?.content || 'Image recue. Pouvez-vous preciser ce que vous cherchez ?')].filter(Boolean).join('\\n') }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "f415e763-d87a-4927-af7b-ebc3086b5cc9",
+        "name": "Edit Fields Image",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -2160,
+          2336
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "f57256f1-6684-4f2f-b90a-dc50233e55d4",
+        "name": "Start Typing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2368,
+          1984
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "6f7227c3-5b33-4028-a4c6-ffa59d9b0de6",
+        "name": "Send Seen",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2592,
+          1984
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "799c80ca-641a-4156-8b38-c34ce83447c7",
+        "name": "Send Seen1",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2560,
+          2144
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "8fbaccaf-c256-4240-bd8f-4a23480243f3",
+        "name": "Start Typing2",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2368,
+          2336
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "2e432887-6fbc-4a53-bf1f-191358d889f9",
+        "name": "Send Seen2",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2544,
+          2336
+        ]
+      },
+      {
+        "parameters": {
+          "tableId": "messages",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "contenu",
+                "fieldValue": "={{ $json.Texte }}"
+              },
+              {
+                "fieldId": "client",
+                "fieldValue": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) }} : {{ $('Normalize Evolution Payload').item.json.body.payload._data?.notifyName || 'Client' }} : {{ $('Normalize Evolution Payload').item.json.body.payload.from }}"
+              },
+              {
+                "fieldId": "statut",
+                "fieldValue": "batch"
+              },
+              {
+                "fieldId": "external_message_id",
+                "fieldValue": "={{ ($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + ':' + ($('Normalize Evolution Payload').first().json.payload?.id || $('Normalize Evolution Payload').first().json.raw?.data?.key?.id || Date.now()) }}"
+              },
+              {
+                "fieldId": "seller_slug",
+                "fieldValue": "={{ $('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown' }}"
+              },
+              {
+                "fieldId": "customer_phone",
+                "fieldValue": "={{ $('Normalize Evolution Payload').first().json.customerPhone || String($('Normalize Evolution Payload').first().json.payload?.from || '').replace(/\\D/g, '') }}"
+              }
+            ]
+          }
+        },
+        "id": "cb0053e3-3d24-4fdb-8102-9fd4c15b8998",
+        "name": "Create Batch Row",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          -1888,
+          2144
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 1
+        },
+        "id": "51061a87-2a32-4ee3-bb8f-e6f6f25fc20e",
+        "webhookId": "552ab1c5-e175-4d9b-a4bb-8383b04900f5",
+        "name": "Wait for Buffer",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -1664,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "tableId": "messages",
+          "returnAll": true,
+          "matchType": "allFilters",
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "client",
+                "condition": "eq",
+                "keyValue": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) }} : {{ $('Normalize Evolution Payload').item.json.body.payload._data?.notifyName || 'Client' }} : {{ $('Normalize Evolution Payload').item.json.body.payload.from }}"
+              },
+              {
+                "keyName": "statut",
+                "condition": "eq",
+                "keyValue": "batch"
+              }
+            ]
+          }
+        },
+        "id": "856b4de4-30ef-447d-aa43-9011fa78d575",
+        "name": "Get Batch Rows",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          -1440,
+          2144
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "c2777cca-ff78-4564-91ec-52da9db97ca4",
+                "leftValue": "={{ Math.max(...$('Get Batch Rows').all().map(i => i.json.id)) }}",
+                "rightValue": "={{ $json.id }}",
+                "operator": {
+                  "type": "number",
+                  "operation": "equals",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "feb18ada-ee6b-45cc-89b9-6e768a7b8532",
+        "name": "Is Chosen One?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          -1232,
+          2144
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "a928619f-5575-4390-b169-681999264cc5",
+        "name": "Stop Duplicate",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -1072,
+          2320
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\n\n// 1. Fusionner les textes\nconst contenus = items\n  .map(i => i.json.contenu)\n  .filter(Boolean);\n\nlet messageFusionne = contenus.join(' [SUITE] ');\n\n// 2. RÃ©cupÃ©rer les IDs pour la mise Ã  jour\nconst idsToUpdate = items.map(i => i.json.id);\n\n// 3. Infos client\nconst client = items[0].json.client;\n// Extract phone: \"Name : 225... @c.us\" -> \"225...\"\nconst phone = client.split(' : ').pop().replace('@c.us', '').replace('@s.whatsapp.net', '');\n\nreturn [\n  {\n    json: {\n      message: messageFusionne,\n      client: client,\n      phone: phone,\n      batchIds: idsToUpdate\n    }\n  }\n];"
+        },
+        "id": "23541e90-2614-40f3-82d5-1c46fcafce53",
+        "name": "Fusion Pro",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1008,
+          2032
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const message = $json.message || '';\nconst match = message.match(/Ref Commande:\\s*([A-F0-9]+)/i);\nreturn {\n  ref: match ? match[1] : null,\n  phone: $json.phone\n};"
+        },
+        "id": "extract-order-ref-node",
+        "name": "Extract Order Ref",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -900,
+          2150
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?order_ref=eq.' + $node[\"Extract Order Ref\"].json[\"ref\"] }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { \"customer_phone\": $node[\"Extract Order Ref\"].json[\"phone\"] } }}",
+          "options": {}
+        },
+        "id": "update-order-link-node",
+        "name": "Update Order Link",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -700,
+          2150
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "tableId": "sellers",
+          "limit": 1,
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "={{ $('Normalize Evolution Payload').first().json.query?.seller ? 'slug' : 'evolution_instance' }}",
+                "condition": "eq",
+                "keyValue": "={{ $('Normalize Evolution Payload').first().json.query?.seller || $('Normalize Evolution Payload').first().json.instanceName }}"
+              }
+            ]
+          }
+        },
+        "id": "identify-seller-node",
+        "name": "Identify Seller",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          -700,
+          2032
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').item.json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { number: String($('Normalize Evolution Payload').item.json.body.payload.from || '').replace(/\\D/g, ''), text: ($json.output || '').replace('[SEND_BROCHURE]', '').trim() } }}",
+          "options": {}
+        },
+        "id": "fb8122ec-37b6-446c-8ea8-4f9ca26dce7f",
+        "name": "Envoyer RÃ©ponse",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          208,
+          2016
+        ],
+        "executeOnce": false
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/rpc/mark_processed",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={ \"ids\": {{ JSON.stringify($json.batchIds) }} }",
+          "options": {}
+        },
+        "id": "c98f0521-a886-434e-a52a-679fe6fbac67",
+        "name": "Mark as Processed",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          -800,
+          2032
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('Fusion Pro').item.json.message }}",
+          "options": {
+            "systemMessage": "= IDENTITE :\nVous etes l'assistant de vente WhatsApp de la boutique {{ $('Identify Seller').first().json.name }} sur Tikchop.\n\nMISSION :\n1. Vendre les produits de la boutique avec des reponses courtes, utiles et naturelles.\n2. Quand le client demande le stock, les articles disponibles, le catalogue ou les prix, utilisez uniquement CONTEXTE PRODUITS.\n3. Si CONTEXTE PRODUITS contient des articles, ne dites jamais que vous n'avez pas acces au stock ou au catalogue.\n4. Presentez d'abord 3 articles maximum avec nom, prix et une description tres courte. Ne donnez pas de lien produit au premier message de catalogue. Ne dites pas \"photo disponible\".\n5. Apres la liste, demandez simplement quel article l'interesse et dites que vous pouvez envoyer les photos ou mettre de cote l'article.\n6. Si le client veut payer, parlez de Wave, Orange Money, MTN/Moov, carte ou paiement a la livraison selon la boutique. Presentez le lien comme le paiement securise de la boutique, avec Wave, Orange Money ou carte selon les options affichees. Ne mentionnez jamais Paystack au client.\n7. Bot V1: priorite a disponibilite produit, support simple, et redirection boutique quand le client veut voir plus d articles ou commander sur le site.\n\nSTYLE LOCAL :\n- Francais ivoirien simple, clair, poli, direct.\n- Reponse courte, comme un vendeur WhatsApp, pas comme un assistant de site. 6 lignes maximum quand c'est possible.\n- Pas de formule robotique comme \"faites-le moi savoir\", \"n'hesitez pas\", \"je reste a votre disposition\".\n- Utilisez plutot : \"Oui c'est disponible\", \"Lequel vous interesse ?\", \"Je peux vous le mettre de cote\", \"Vous etes dans quelle zone ?\".\n- Si INFOS BOUTIQUE / STYLE VENDEUR contient un ton, un message d'accueil, des paiements preferes ou des regles boutique, suivez ces consignes en priorite.\n- Vouvoiement obligatoire.\n\nFORMAT SI LE CLIENT DEMANDE STOCK / PRIX / CATALOGUE :\nCommencez par : \"Oui, voici les articles disponibles chez {{ $('Identify Seller').first().json.name }} :\"\nPuis listez 3 articles maximum :\n1. Nom - prix CFA. Petite description.\nFinissez par : \"Lequel vous interesse ? Je peux vous envoyer la photo et le mettre de cote. Paiement possible par Wave, Orange Money, MTN/Moov, carte ou livraison selon la zone.\"\n\nSUPPORT ET REDIRECTION BOUTIQUE :\n- Si le client demande comment commander, donnez les etapes simples: choisir article, confirmer taille/couleur, donner commune/quartier, puis paiement/livraison.\n- Si le client veut voir la boutique ou plus d articles, donnez ce lien: https://tikchop.app/{{ $('Identify Seller').first().json.slug }}\n- Si la demande sort de la vente (probleme, reclamation, livraison, paiement confus), repondez calmement, demandez la reference ou le detail manquant, puis dites que la boutique va verifier.\n- Si vous ne savez pas, n inventez pas. Demandez une precision ou proposez de transferer au vendeur.\n\nREGLES :\n- Si le client demande une photo sans pr?ciser l'article, demandez simplement lequel il veut voir. Ne choisissez pas un produit au hasard.\n- Vous parlez au nom de {{ $('Identify Seller').first().json.name }}.\n- Pas de gras, pas d'asterisques.\n- Ne mentionnez pas Supabase, n8n, Evolution API, Paystack ou les outils internes.\n- Si le catalogue est vide, dites que la boutique n'a pas encore publie d'article et proposez de revenir plus tard.\n\nCONTEXTE PRODUITS :\n{{ $json.productsText }}\n\nINFOS BOUTIQUE / STYLE VENDEUR :\n{{ $json.shopText }}\n\nDERNIERES COMMANDES CLIENT :\n{{ $json.ordersText }}\n\nINFOS BOUTIQUE :\nNom: {{ $('Identify Seller').first().json.name }}\nSlug: {{ $('Identify Seller').first().json.slug }}"
+          }
+        },
+        "id": "3842e0ca-4bc6-4665-bb51-7ce65b3009c4",
+        "name": "Router Ai",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.4,
+        "position": [
+          -256,
+          2032
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ `SELECT name, slug, fixed_delivery_fee, delivery_payment_timing, row_to_json(s)->>'bot_tone' AS bot_tone, row_to_json(s)->>'bot_greeting' AS bot_greeting, row_to_json(s)->>'bot_payment_preferences' AS bot_payment_preferences, row_to_json(s)->>'bot_delivery_notes' AS bot_delivery_notes, row_to_json(s)->>'bot_special_rules' AS bot_special_rules FROM sellers s WHERE id = '${$('Identify Seller').first().json.id}';` }}",
+          "options": {}
+        },
+        "id": "8e8dd170-85b7-4f73-a911-ba635c30d45a",
+        "name": "Get Shop Info",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.2,
+        "position": [
+          -480,
+          2032
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "3nOsdzFArVQH863B",
+            "name": "Supabase PLA PostgreSQL"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "tableId": "products",
+          "limit": 20,
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "seller_id",
+                "condition": "eq",
+                "keyValue": "={{$node[\"Identify Seller\"].json[\"id\"]}}"
+              }
+            ]
+          }
+        },
+        "id": "tikchop-products-tool",
+        "name": "Get Products",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          -480,
+          2150
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "path": "tikchop-evolution-whatsapp",
+          "options": {},
+          "httpMethod": "POST",
+          "responseMode": "onReceived"
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -960,
+          240
+        ],
+        "id": "global-waha-webhook",
+        "name": "Evolution Webhook",
+        "webhookId": "tikchop-evolution-webhook"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "google/gemini-2.5-flash-lite-preview-09-2025",
+            "cachedResultName": "Google: Gemini 2.5 Flash Lite Preview 09-2025"
+          },
+          "builtInTools": {},
+          "options": {
+            "temperature": 0.25
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          -320,
+          2272
+        ],
+        "id": "ffd0ebcf-c042-4890-923c-6e2c7d343c1d",
+        "name": "OpenAI Chat Model",
+        "credentials": {
+          "openAiApi": {
+            "id": "eR8H7JaxRaMIdF2j",
+            "name": "OpenRouter Tikchop account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ ($('Normalize Evolution Payload').item.json.query?.seller || $('Normalize Evolution Payload').item.json.body.session) + '_' + $('Normalize Evolution Payload').item.json.body.payload.from + '_tikchop' }}",
+          "contextWindowLength": 8
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+        "typeVersion": 1.3,
+        "position": [
+          -176,
+          2272
+        ],
+        "id": "dfe4aa28-0f9c-4c38-8217-833ec944ba9f",
+        "name": "Postgres Chat Memory",
+        "credentials": {
+          "postgres": {
+            "id": "3nOsdzFArVQH863B",
+            "name": "Supabase PLA PostgreSQL"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "592df8d5-526c-414b-9b51-1040cea7b271",
+        "name": "Start Typing1",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -2368,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "tableId": "orders",
+          "returnAll": true,
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "customer_phone",
+                "condition": "eq",
+                "keyValue": "={{$node[\"Fusion Pro\"].json[\"phone\"]}}"
+              },
+              {
+                "keyName": "seller_id",
+                "condition": "eq",
+                "keyValue": "={{$node[\"Identify Seller\"].json[\"id\"]}}"
+              }
+            ]
+          }
+        },
+        "id": "get-customer-orders-node",
+        "name": "Suivi Commande Tool",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          -480,
+          2270
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "amount": 1
+        },
+        "id": "a209a1b9-6ffe-427a-8d37-2f7c162e4da9",
+        "webhookId": "71c44d7e-3b1d-4651-bc35-12f1698c2aad",
+        "name": "Wait",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -2784,
+          1984
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || input;\nconst query = input.query || {};\nconst data = body.data || body.message || {};\nconst key = data.key || {};\nconst event = String(body.event || '').trim();\nconst eventKey = event.toLowerCase();\nconst instanceName = body.instance || body.instanceName || query.seller || 'unknown';\n\nconst isMessageEvent = !event || ['messages_upsert', 'messages.upsert'].includes(eventKey);\nconst isConnectionUpdate = ['connection_update', 'connection.update'].includes(eventKey);\n\nif (isConnectionUpdate) {\n  const rawState = String(data.state || data.status || data.connectionStatus || body.state || body.status || body.connectionStatus || '').toLowerCase();\n  let whatsappStatus = 'pending';\n  if (['open', 'connected', 'online'].includes(rawState)) whatsappStatus = 'connected';\n  else if (['close', 'closed', 'disconnected', 'logout', 'loggedout', 'offline'].includes(rawState)) whatsappStatus = 'disconnected';\n  else if (['connecting', 'pairing', 'qrcode', 'qr', 'pending'].includes(rawState)) whatsappStatus = 'pending';\n  else if (rawState.includes('error') || rawState.includes('fail')) whatsappStatus = 'error';\n\n  return [{\n    json: {\n      source: 'evolution',\n      event,\n      eventType: 'connection_update',\n      instanceName,\n      seller: query.seller || instanceName,\n      sellerSlug: query.seller || instanceName,\n      query,\n      isFromMe: false,\n      connectionState: rawState || 'unknown',\n      whatsappStatus,\n      raw: body,\n    }\n  }];\n}\n\nif (!isMessageEvent) {\n  return [];\n}\n\nconst msg = data.message || data;\nconst remoteJid = key.remoteJid || data.remoteJid || data.chatId || body.remoteJid || body.chatId || '';\nconst messageId = key.id || data.id || body.id || String(Date.now());\nconst pushName = data.pushName || body.pushName || 'Client';\nconst isFromMe = Boolean(key.fromMe || data.fromMe || body.fromMe);\n\nlet text =\n  msg.conversation ||\n  msg.extendedTextMessage?.text ||\n  msg.imageMessage?.caption ||\n  msg.videoMessage?.caption ||\n  data.messageText ||\n  body.text ||\n  '';\n\nconst mimetype =\n  msg.imageMessage?.mimetype ||\n  msg.audioMessage?.mimetype ||\n  msg.videoMessage?.mimetype ||\n  msg.documentMessage?.mimetype ||\n  '';\n\nconst mediaBase64 =\n  msg.base64 ||\n  data.base64 ||\n  body.base64 ||\n  msg.imageMessage?.base64 ||\n  msg.audioMessage?.base64 ||\n  msg.documentMessage?.base64 ||\n  msg.imageMessage?.jpegThumbnail ||\n  '';\n\nconst isImage = mimetype.includes('image');\nconst isAudio = mimetype.includes('audio');\nconst hasMedia = Boolean(mimetype && mediaBase64);\n\nif (!text && isImage && !hasMedia) {\n  text = 'Le client a envoye une image, mais le fichier image n est pas disponible. Repondez simplement que la photo est recue et demandez quel modele ou detail il cherche.';\n}\n\nif (!text && isAudio && !hasMedia) {\n  text = 'Le client a envoye un vocal, mais le fichier audio n est pas disponible. Demandez lui d ecrire sa demande en quelques mots.';\n}\n\nif (!text && !hasMedia) {\n  return [];\n}\n\nconst payload = {\n  id: messageId,\n  from: remoteJid,\n  body: text,\n  hasMedia,\n  media: { mimetype, url: '', caption: text, base64: mediaBase64 },\n  _data: { notifyName: pushName },\n};\nconst customerPhone = String(remoteJid || '').replace(/\\D/g, '');\n\nreturn [{\n  json: {\n    source: 'evolution',\n    event,\n    eventType: 'message',\n    instanceName,\n    seller: query.seller || instanceName,\n    sellerSlug: query.seller || instanceName,\n    query,\n    isFromMe,\n    customerPhone,\n    payload,\n    body: {\n      session: instanceName,\n      payload,\n      event: body.event,\n      instance: instanceName,\n      isFromMe,\n      customerPhone,\n    },\n    raw: body,\n  }\n}];"
+        },
+        "id": "265ca4c5-1b57-4865-8330-c2f92436a8e7",
+        "name": "Normalize Evolution Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -740,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const seller = $('Identify Seller').first().json;\nconst nl = String.fromCharCode(10);\nconst orders = $input.all().map(item => item.json).filter(order => Object.keys(order).length > 0);\nconst products = $('Get Products').all().map(item => item.json).map(product => ({\n  id: product.id,\n  name: product.name,\n  price: product.price,\n  stock_quantity: product.stock_quantity,\n  image_url: product.image_url,\n  description: product.description,\n  product_variants: product.product_variants || [],\n  product_keywords: product.product_keywords || '',\n  product_url: 'https://tikchop.app/' + seller.slug + '?product=' + product.id,\n}));\nconst shop = $('Get Shop Info').all().map(item => item.json)[0] || {};\nconst productsText = products.length\n  ? products.filter(product => Number(product.stock_quantity || 0) > 0).slice(0, 3).map((product, index) => {\n      const stock = Number(product.stock_quantity || 0);\n      const availability = stock > 0 ? 'DISPO (' + stock + ')' : 'INDISPONIBLE';\n      const variants = Array.isArray(product.product_variants) && product.product_variants.length ? ' - Variantes: ' + product.product_variants.slice(0, 4).map(v => [v.label || v.size || v.color, v.stock ? ('stock ' + v.stock) : ''].filter(Boolean).join(' ')).join(', ') : '';\n      const keywords = product.product_keywords ? ' - Mots cles: ' + product.product_keywords : '';\n      return (index + 1) + '. ' + product.name + ' - ' + Number(product.price || 0).toLocaleString('fr-FR') + ' CFA - ' + (product.description || 'Description a confirmer') + variants + keywords;\n    }).join(nl)\n  : 'Aucun produit publie.';\nconst ordersText = orders.length\n  ? orders.map(order => 'Commande ' + (order.order_ref || order.id) + ' - ' + order.status + ' - ' + Number(order.total_amount || 0).toLocaleString('fr-FR') + ' CFA').join(nl)\n  : 'Aucune commande connue pour ce client.';\nconst shopText = Object.keys(shop).length ? [\n  'Boutique: ' + (shop.name || seller.name || ''),\n  'Livraison: ' + (shop.delivery_payment_timing || 'non renseignee'),\n  'Frais: ' + Number(shop.fixed_delivery_fee || 0).toLocaleString('fr-FR') + ' CFA',\n  shop.bot_tone ? 'Ton boutique: ' + shop.bot_tone : '',\n  shop.bot_greeting ? 'Accueil boutique: ' + shop.bot_greeting : '',\n  shop.bot_payment_preferences ? 'Paiements preferes: ' + shop.bot_payment_preferences : '',\n  shop.bot_delivery_notes ? 'Notes livraison: ' + shop.bot_delivery_notes : '',\n  shop.bot_special_rules ? 'Regles boutique: ' + shop.bot_special_rules : '',\n].filter(Boolean).join(nl) : 'Infos livraison non renseignees.';\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst message = $('Fusion Pro').first().json.message || '';\nconst normalizedMessage = normalize(message);\nconst wantsCatalog = /\\b(stock|catalogue|article|articles|produit|produits|disponible|disponibles|photo|photos|image|images|prix|combien|cout|coute|modeles|modele|voir|montre|envoie|envoyer|envoi)\\b/i.test(normalizedMessage);\nconst orderIntent = /\\b(je prends|je prend|j achete|jachete|acheter|commande|commander|je veux commander|je vais prendre|c est bon pour|interesse|interessee|preneur|garde moi|reserve|reserver|mettre de cote|mets de cote)\\b/i.test(normalizedMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|mod?le|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst quantityMatch = normalizedMessage.match(/(?:quantite|qte|qty|nombre|prends en|prendre en|x)\\s*(\\d{1,2})|(?:\\b(\\d{1,2})\\s*(?:pieces?|pcs?|articles?)\\b)/);\nconst quantity = Math.max(1, Math.min(20, Number(quantityMatch?.[1] || quantityMatch?.[2] || 1)));\nconst stopWords = new Set(['avec','pour','dans','vous','nous','veux','prendre','commande','commander','article','produit','taille','prix','stock','celui','celle','bonjour','salut','bonsoir']);\nconst messageTokens = new Set(normalizedMessage.split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token)));\n\nconst scoredProducts = products.map((product, index) => {\n  const productName = normalize(product.name);\n  const productExtra = normalize((product.description || '') + ' ' + (product.product_keywords || '') + ' ' + (Array.isArray(product.product_variants) ? product.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''));\n  const productTokens = (productName + ' ' + productExtra).split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token));\n  let score = 0;\n  if (productName && normalizedMessage.includes(productName)) score += 20;\n  if (indexMatch && Number(indexMatch[1]) === index + 1) score += 15;\n  for (const token of productTokens) {\n    if (messageTokens.has(token)) score += 4;\n    else if (normalizedMessage.includes(token)) score += 2;\n  }\n  return { product, index, score };\n}).sort((a, b) => b.score - a.score);\n\nconst best = scoredProducts[0];\nconst second = scoredProducts[1];\nconst matchedProduct = best && best.score > 0 ? best.product : null;\nconst ready = Boolean(orderIntent && best && best.score > 0 && (!second || best.score >= second.score + 2) && Number(best.product.stock_quantity || 0) >= quantity);\nconst orderDraft = ready ? {\n  ready: true,\n  quantity,\n  product: best.product,\n  total_amount: Number(best.product.price || 0) * quantity,\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: orderIntent,\n  reason: orderIntent ? 'product_unclear_or_stock_missing' : 'no_order_intent',\n};\n\nconst paymentIntent = /\\b(wave|orange money|orange|om|mtn|moov|mobile money|mobile|payer|paiement|paye|payement|carte|visa|mastercard|lien de paiement|paiement en ligne)\\b/i.test(normalizedMessage);\nconst pendingOrders = orders\n  .filter(order => order.status === 'PENDING' && Number(order.total_amount || 0) > 0 && String(order.customer_phone || '') === String($('Fusion Pro').first().json.phone || ''))\n  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));\nconst paymentDraft = paymentIntent && pendingOrders.length ? {\n  ready: true,\n  order: pendingOrders[0],\n  amount: Number(pendingOrders[0].total_amount || 0) + Number(pendingOrders[0].delivery_fee || 0),\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: paymentIntent,\n  reason: paymentIntent ? 'no_pending_order' : 'no_payment_intent',\n};\n\nconst inStockProducts = products.filter(product => Number(product.stock_quantity || 0) > 0);\nconst followProduct = (best && best.score > 0 && Number(best.product.stock_quantity || 0) > 0) ? best.product : inStockProducts[0];\nconst followUpDraft = wantsCatalog && !orderIntent && !paymentIntent && followProduct && !pendingOrders.length ? {\n  ready: true,\n  started_at: new Date().toISOString(),\n  seller_id: seller.id,\n  seller_name: seller.name,\n  customer_phone: $('Fusion Pro').first().json.phone,\n  product_name: followProduct.name,\n  product_price: Number(followProduct.price || 0),\n} : {\n  ready: false,\n  reason: wantsCatalog ? 'order_or_payment_or_pending_exists' : 'no_catalog_interest',\n};\n\nreturn [{ json: { orders, products, shop, productsText, ordersText, shopText, wantsCatalog, orderIntent, paymentIntent, matchedProduct, orderDraft, paymentDraft, followUpDraft } }];"
+        },
+        "id": "prepare-ai-context-node",
+        "name": "Prepare AI Context",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -256,
+          2270
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst first = items.find(item => (item.json.output || '').trim()) || items[0];\nif (!first) return [];\nconst context = $('Prepare AI Context').first().json || {};\nlet output = String(first.json.output || '').replace('[SEND_BROCHURE]', '').trim();\nif (context.wantsCatalog && output && !/Wave|Orange Money|MTN|Moov|mobile money/i.test(output)) {\n  output += String.fromCharCode(10) + 'Paiement possible par Wave, Orange Money, MTN/Moov ou carte.';\n}\nreturn [{ json: { ...first.json, output } }];"
+        },
+        "id": "limit-one-reply-node",
+        "name": "Limit One Reply",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          2032
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const context = $('Prepare AI Context').first().json;\nconst rawMessage = String($('Fusion Pro').first().json.message || '');\nconst message = rawMessage.toLowerCase();\nconst explicitPhotoRequest = /(photo|photos|image|images|voir|montre|montrer|envoie|envoyer|envoi|montrez)/i.test(message);\nif (!explicitPhotoRequest) return [];\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst normalizedMessage = normalize(rawMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst products = (context.products || []).filter(product => product.image_url && Number(product.stock_quantity || 0) > 0);\nlet product = null;\nlet tokenMatchScore = 0;\n\nif (indexMatch) product = products[Number(indexMatch[1]) - 1] || null;\nif (!product && context.matchedProduct?.image_url) product = products.find(item => item.id === context.matchedProduct.id) || null;\nif (!product) {\n  const tokens = new Set(normalizedMessage.split(' ').filter(token => token.length > 2));\n  const scored = products\n    .map(item => ({\n      item,\n      score: normalize([item.name, item.description, item.product_keywords, Array.isArray(item.product_variants) ? item.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''].filter(Boolean).join(' ')).split(' ').filter(token => tokens.has(token)).length,\n    }))\n    .sort((a, b) => b.score - a.score)[0];\n  if (scored?.score > 0) {\n    product = scored.item;\n    tokenMatchScore = scored.score;\n  }\n}\n\nif (!product) return [];\n\nconst nl = String.fromCharCode(10);\nconst number = String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, '');\nconst caption = [\n  product.name,\n  Number(product.price || 0).toLocaleString('fr-FR') + ' CFA',\n  'Disponible. Si ca vous plait, je peux le mettre de cote pour vous.'\n].join(nl);\n\nreturn [{ json: {\n  number,\n  mediatype: 'image',\n  mimetype: 'image/jpeg',\n  media: product.image_url,\n  fileName: (product.name || 'produit').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase() + '.jpg',\n  caption,\n  matchedBy: indexMatch ? 'index' : context.matchedProduct?.id === product.id ? 'product' : 'tokens',\n  tokenMatchScore,\n} }];"
+        },
+        "id": "prepare-product-images-node",
+        "name": "Prepare Product Images",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          2260
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendMedia/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        },
+        "id": "send-product-images-node",
+        "name": "Send Product Images",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          208,
+          2260
+        ],
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "has-order-draft-condition",
+                "leftValue": "={{ $json.orderDraft?.ready ? 'yes' : 'no' }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "has-order-draft-node",
+        "name": "Has Order Draft?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          -32,
+          2032
+        ]
+      },
+      {
+        "parameters": {
+          "tableId": "orders",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "seller_id",
+                "fieldValue": "={{ $('Identify Seller').first().json.id }}"
+              },
+              {
+                "fieldId": "customer_phone",
+                "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.customer_phone }}"
+              },
+              {
+                "fieldId": "status",
+                "fieldValue": "PENDING"
+              },
+              {
+                "fieldId": "total_amount",
+                "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.total_amount }}"
+              },
+              {
+                "fieldId": "payment_method",
+                "fieldValue": "WAVE"
+              },
+              {
+                "fieldId": "delivery_status",
+                "fieldValue": "PENDING"
+              }
+            ]
+          }
+        },
+        "id": "create-whatsapp-order-node",
+        "name": "Create WhatsApp Order",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          208,
+          1888
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "tableId": "order_items",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "order_id",
+                "fieldValue": "={{ $('Create WhatsApp Order').first().json.id }}"
+              },
+              {
+                "fieldId": "product_id",
+                "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.product.id }}"
+              },
+              {
+                "fieldId": "quantity",
+                "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.quantity }}"
+              },
+              {
+                "fieldId": "price_at_time",
+                "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.product.price }}"
+              }
+            ]
+          }
+        },
+        "id": "create-whatsapp-order-item-node",
+        "name": "Create WhatsApp Order Item",
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          448,
+          1888
+        ],
+        "credentials": {
+          "supabaseApi": {
+            "id": "tikchopSupabase01",
+            "name": "Tikchop Supabase account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['C est note, votre commande est prise.', 'Reference: ' + $('Create WhatsApp Order').first().json.order_ref, 'Total: ' + Number($('Prepare AI Context').first().json.orderDraft.total_amount).toLocaleString('fr-FR') + ' CFA', 'Paiement possible par Wave, Orange Money, MTN/Moov, carte ou a la livraison selon votre zone.', 'Vous etes dans quelle commune/quartier pour la livraison ?'].join(String.fromCharCode(10)) } }}",
+          "options": {}
+        },
+        "id": "send-order-confirmation-node",
+        "name": "Send Order Confirmation",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          688,
+          1888
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "has-payment-draft-condition",
+                "leftValue": "={{ $json.paymentDraft?.ready ? 'yes' : 'no' }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "has-payment-draft-node",
+        "name": "Has Payment Draft?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          -32,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.paystack.co/transaction/initialize",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $vars.PAYSTACK_SECRET_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { email: 'customer-' + $('Prepare AI Context').first().json.paymentDraft.order.id + '@tikchop.app', amount: Math.round(Number($('Prepare AI Context').first().json.paymentDraft.amount || 0) * 100), metadata: { order_id: $('Prepare AI Context').first().json.paymentDraft.order.id, order_ref: $('Prepare AI Context').first().json.paymentDraft.order.order_ref, seller_name: $('Identify Seller').first().json.name }, callback_url: 'https://dashboard-mu-blue-xduynfs3jo.vercel.app/payment/callback' } }}",
+          "options": {}
+        },
+        "id": "initialize-paystack-node",
+        "name": "Initialize Paystack Payment",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          208,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['Pour finaliser la commande ' + $('Prepare AI Context').first().json.paymentDraft.order.order_ref + ', vous pouvez payer ici :', $('Initialize Paystack Payment').first().json.data.authorization_url, 'Choisissez Wave, Orange Money ou carte selon ce qui s affiche.', 'Apres paiement, vous recevez le recu PDF ici meme.'].join(String.fromCharCode(10)) } }}",
+          "options": {}
+        },
+        "id": "send-paystack-link-node",
+        "name": "Send Paystack Link",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          2144
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "has-follow-up-draft-condition",
+                "leftValue": "={{ $json.followUpDraft?.ready ? 'yes' : 'no' }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "has-follow-up-draft-node",
+        "name": "Has Follow-up Draft?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          208,
+          2336
+        ]
+      },
+      {
+        "parameters": {
+          "amount": 6,
+          "unit": "hours"
+        },
+        "id": "wait-follow-up-node",
+        "webhookId": "tikchop-follow-up-wait",
+        "name": "Wait Follow-up Window",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          448,
+          2336
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?select=id&seller_id=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.seller_id) + '&customer_phone=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.customer_phone) + '&created_at=gte.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.started_at) + '&limit=1' }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "check-follow-up-orders-node",
+        "name": "Check Follow-up Orders",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          688,
+          2336
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const orderRaw = $('Check Follow-up Orders').all().map(item => item.json);\nconst orders = orderRaw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.id);\nif (orders.length) return [];\nconst followRaw = $input.all().map(item => item.json);\nconst recentFollowups = followRaw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && (item.id || item.created_at));\nif (recentFollowups.length) return [];\nconst draft = $('Prepare AI Context').first().json.followUpDraft || {};\nif (!draft.ready) return [];\nconst hour = new Date().getHours();\nconst salutation = hour >= 18 ? 'Bonsoir' : 'Bonjour';\nconst price = Number(draft.product_price || 0).toLocaleString('fr-FR') + ' CFA';\nconst text = [\n  salutation + \", c'est \" + (draft.seller_name || 'la boutique') + '.',\n  draft.product_name + ' est toujours dispo a ' + price + '.',\n  'Je peux vous le reserver si vous confirmez.'\n].join(String.fromCharCode(10));\nreturn [{ json: { number: draft.customer_phone, text } }];"
+        },
+        "id": "prepare-follow-up-message-node",
+        "name": "Prepare Follow-up Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          928,
+          2336
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        },
+        "id": "send-follow-up-message-node",
+        "name": "Send Follow-up Message",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1168,
+          2336
+        ],
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "amount": 25,
+          "unit": "seconds"
+        },
+        "id": "wait-before-product-image-node",
+        "name": "Wait Before Product Image",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2460,
+          980
+        ],
+        "webhookId": "wait-before-product-image"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "is-human-seller-message-condition",
+                "leftValue": "={{ $json.isFromMe ? 'yes' : 'no' }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "is-human-seller-message-node",
+        "name": "Is Human Seller Message?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -280,
+          360
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => { const n = $('Normalize Evolution Payload').first().json; const sellerSlug = n.sellerSlug || n.instanceName || 'unknown'; const phone = n.customerPhone || String(n.payload?.from || '').replace(/\\D/g, ''); const until = new Date(Date.now() + 90 * 60 * 1000).toISOString(); return { contenu: 'human_pause_until:' + until, client: sellerSlug + ' : Pause vendeur : ' + phone, statut: 'human_pause', external_message_id: 'human_pause:' + sellerSlug + ':' + phone + ':' + Date.now(), seller_slug: sellerSlug, customer_phone: phone }; })() }}",
+          "options": {}
+        },
+        "id": "record-human-pause-node",
+        "name": "Record Human Pause",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -40,
+          120
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages?select=id,contenu,created_at&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + '&customer_phone=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.customerPhone || '') + '&statut=eq.human_pause&created_at=gte.' + encodeURIComponent(new Date(Date.now() - 90 * 60 * 1000).toISOString()) + '&order=created_at.desc&limit=1' }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "check-human-pause-node",
+        "name": "Check Human Pause",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -40,
+          360
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const raw = $input.all().map(item => item.json);\nconst records = raw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.id);\nconst active = records.some((record) => {\n  const text = String(record.contenu || '');\n  const match = text.match(/human_pause_until:(\\\\S+)/);\n  if (match) return new Date(match[1]).getTime() > Date.now();\n  return new Date(record.created_at || 0).getTime() > Date.now() - 90 * 60 * 1000;\n});\nif (active) return [];\nreturn [{ json: $('Normalize Evolution Payload').first().json }];"
+        },
+        "id": "gate-human-pause-node",
+        "name": "Gate Human Pause",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          180,
+          360
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages?select=id,created_at&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + '&customer_phone=eq.' + encodeURIComponent($('Prepare AI Context').first().json.followUpDraft.customer_phone) + '&statut=eq.followup&created_at=gte.' + encodeURIComponent(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) + '&limit=1' }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "check-recent-follow-up-node",
+        "name": "Check Recent Follow-up",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          920,
+          2336
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => { const draft = $('Prepare AI Context').first().json.followUpDraft; const sellerSlug = $('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown'; const phone = draft.customer_phone; const day = new Date().toISOString().slice(0, 10); return { contenu: $('Prepare Follow-up Message').first().json.text, client: sellerSlug + ' : Relance : ' + phone, statut: 'followup', external_message_id: 'followup:' + sellerSlug + ':' + phone + ':' + day, seller_slug: sellerSlug, customer_phone: phone }; })() }}",
+          "options": {}
+        },
+        "id": "save-follow-up-record-node",
+        "name": "Save Follow-up Record",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1400,
+          2336
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "is-evolution-connection-update",
+                "leftValue": "={{ $json.eventType }}",
+                "rightValue": "connection_update",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "is-connection-update-node",
+        "name": "Is Connection Update?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          -520,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/sellers?slug=eq.' + encodeURIComponent($json.sellerSlug) }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => { const status = $json.whatsappStatus || 'pending'; return { whatsapp_provider: 'evolution', evolution_instance: $json.instanceName, whatsapp_status: status, whatsapp_last_error: status === 'disconnected' ? 'WhatsApp deconnecte. Reconnectez le numero pour relancer le bot.' : (status === 'error' ? 'Erreur de connexion WhatsApp Evolution. Reessayez la connexion.' : null), ...(status === 'connected' ? { whatsapp_connected_at: new Date().toISOString(), whatsapp_last_error: null } : {}) }; })() }}",
+          "options": {}
+        },
+        "id": "update-seller-whatsapp-status-node",
+        "name": "Update Seller WhatsApp Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -280,
+          120
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ `SELECT d.id, d.name, d.phone_number, d.zone FROM sellers s JOIN delivery_drivers d ON d.seller_id = s.id AND d.is_active = true WHERE s.id = '${$('Identify Seller').first().json.id}' AND coalesce(s.auto_share_to_driver, false) = true ORDER BY CASE WHEN coalesce(d.zone, '') = '' THEN 1 ELSE 0 END, d.created_at ASC LIMIT 1;` }}",
+          "options": {}
+        },
+        "id": "get-driver-for-whatsapp-order-node",
+        "name": "Get Driver For WhatsApp Order",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.2,
+        "position": [
+          928,
+          1888
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3nOsdzFArVQH863B",
+            "name": "Supabase PLA PostgreSQL"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const driver = $input.first().json || {};\nconst order = $('Create WhatsApp Order').first().json || {};\nconst context = $('Prepare AI Context').first().json || {};\nconst draft = context.orderDraft || {};\nconst product = draft.product || {};\nconst number = String(driver.phone_number || '').replace(/\\D/g, '');\nif (!number) return [];\nconst nl = String.fromCharCode(10);\nconst orderRef = order.order_ref || String(order.id || '').slice(0, 8).toUpperCase();\nconst total = Number(draft.total_amount || order.total_amount || 0).toLocaleString('fr-FR') + ' CFA';\nconst qty = Number(draft.quantity || 1);\nconst text = [\n  'Nouvelle commande Tikchop',\n  'Commande: ' + orderRef,\n  'Boutique: ' + ($('Identify Seller').first().json.name || 'Boutique'),\n  'Client: ' + (draft.customer_phone || order.customer_phone || 'a confirmer'),\n  'Article: ' + qty + ' x ' + (product.name || 'Article'),\n  'Total: ' + total,\n  'Zone client: a confirmer',\n  'Quand vous prenez ca, confirmez a la boutique.'\n].join(nl);\nreturn [{ json: { number, text, driverId: driver.id } }];"
+        },
+        "id": "prepare-driver-notification-node",
+        "name": "Prepare Driver Notification",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1168,
+          1888
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $vars.EVOLUTION_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { number: $json.number, text: $json.text } }}",
+          "options": {}
+        },
+        "id": "send-driver-notification-node",
+        "name": "Send Driver Notification",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1408,
+          1888
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?id=eq.' + encodeURIComponent($('Create WhatsApp Order').first().json.id) }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { delivery_driver_id: $('Prepare Driver Notification').first().json.driverId, delivery_status: 'ASSIGNED' } }}",
+          "options": {}
+        },
+        "id": "mark-driver-assigned-node",
+        "name": "Mark Driver Assigned",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1648,
+          1888
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tikchopSupaHeader01",
+            "name": "Tikchop Supabase header"
+          }
+        },
+        "onError": "continueRegularOutput"
+      }
+    ],
+    "connections": {
+      "Switch Texte": {
+        "main": [
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If media is image": {
+        "main": [
+          [
+            {
+              "node": "Get Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If media is Audio": {
+        "main": [
+          [
+            {
+              "node": "Get Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Image": {
+        "main": [
+          [
+            {
+              "node": "Analyze image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Audio": {
+        "main": [
+          [
+            {
+              "node": "Transcribe Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transcribe Audio": {
+        "main": [
+          [
+            {
+              "node": "Send Seen1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields Texte": {
+        "main": [
+          [
+            {
+              "node": "Create Batch Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields Audio": {
+        "main": [
+          [
+            {
+              "node": "Create Batch Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Analyze image": {
+        "main": [
+          [
+            {
+              "node": "Send Seen2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields Image": {
+        "main": [
+          [
+            {
+              "node": "Create Batch Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Start Typing": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields Texte",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Seen": {
+        "main": [
+          [
+            {
+              "node": "Start Typing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Seen1": {
+        "main": [
+          [
+            {
+              "node": "Start Typing1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Start Typing2": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Seen2": {
+        "main": [
+          [
+            {
+              "node": "Start Typing2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Batch Row": {
+        "main": [
+          [
+            {
+              "node": "Wait for Buffer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Buffer": {
+        "main": [
+          [
+            {
+              "node": "Get Batch Rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Batch Rows": {
+        "main": [
+          [
+            {
+              "node": "Is Chosen One?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Chosen One?": {
+        "main": [
+          [
+            {
+              "node": "Fusion Pro",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Stop Duplicate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fusion Pro": {
+        "main": [
+          [
+            {
+              "node": "Mark as Processed",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Extract Order Ref",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Identify Seller": {
+        "main": [
+          [
+            {
+              "node": "Get Products",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark as Processed": {
+        "main": [
+          [
+            {
+              "node": "Identify Seller",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Order Ref": {
+        "main": [
+          [
+            {
+              "node": "Update Order Link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Order Link": {
+        "main": [
+          []
+        ]
+      },
+      "Router Ai": {
+        "main": [
+          [
+            {
+              "node": "Limit One Reply",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Shop Info": {
+        "main": [
+          [
+            {
+              "node": "Suivi Commande Tool",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Suivi Commande Tool": {
+        "main": [
+          [
+            {
+              "node": "Prepare AI Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Products": {
+        "main": [
+          [
+            {
+              "node": "Get Shop Info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Router Ai",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres Chat Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "Router Ai",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Start Typing1": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "Send Seen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evolution Webhook": {
+        "main": [
+          [
+            {
+              "node": "Normalize Evolution Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize Evolution Payload": {
+        "main": [
+          [
+            {
+              "node": "Is Connection Update?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare AI Context": {
+        "main": [
+          [
+            {
+              "node": "Has Payment Draft?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Limit One Reply": {
+        "main": [
+          [
+            {
+              "node": "Envoyer RÃ©ponse",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Product Images": {
+        "main": [
+          [
+            {
+              "node": "Wait Before Product Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Order Draft?": {
+        "main": [
+          [
+            {
+              "node": "Create WhatsApp Order",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Router Ai",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Prepare Product Images",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Has Follow-up Draft?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create WhatsApp Order": {
+        "main": [
+          [
+            {
+              "node": "Create WhatsApp Order Item",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create WhatsApp Order Item": {
+        "main": [
+          [
+            {
+              "node": "Send Order Confirmation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Payment Draft?": {
+        "main": [
+          [
+            {
+              "node": "Initialize Paystack Payment",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Has Order Draft?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize Paystack Payment": {
+        "main": [
+          [
+            {
+              "node": "Send Paystack Link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Follow-up Draft?": {
+        "main": [
+          [
+            {
+              "node": "Wait Follow-up Window",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Wait Follow-up Window": {
+        "main": [
+          [
+            {
+              "node": "Check Follow-up Orders",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Follow-up Orders": {
+        "main": [
+          [
+            {
+              "node": "Check Recent Follow-up",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Follow-up Message": {
+        "main": [
+          [
+            {
+              "node": "Send Follow-up Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Follow-up Message": {
+        "main": [
+          [
+            {
+              "node": "Save Follow-up Record",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait Before Product Image": {
+        "main": [
+          [
+            {
+              "node": "Send Product Images",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Human Seller Message?": {
+        "main": [
+          [
+            {
+              "node": "Record Human Pause",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Check Human Pause",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Record Human Pause": {
+        "main": [
+          []
+        ]
+      },
+      "Check Human Pause": {
+        "main": [
+          [
+            {
+              "node": "Gate Human Pause",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gate Human Pause": {
+        "main": [
+          [
+            {
+              "node": "Switch Texte",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "If media is Audio",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "If media is image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Recent Follow-up": {
+        "main": [
+          [
+            {
+              "node": "Prepare Follow-up Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Follow-up Record": {
+        "main": [
+          []
+        ]
+      },
+      "Is Connection Update?": {
+        "main": [
+          [
+            {
+              "node": "Update Seller WhatsApp Status",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Is Human Seller Message?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Seller WhatsApp Status": {
+        "main": [
+          []
+        ]
+      },
+      "Send Order Confirmation": {
+        "main": [
+          [
+            {
+              "node": "Get Driver For WhatsApp Order",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Driver For WhatsApp Order": {
+        "main": [
+          [
+            {
+              "node": "Prepare Driver Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Driver Notification": {
+        "main": [
+          [
+            {
+              "node": "Send Driver Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Driver Notification": {
+        "main": [
+          [
+            {
+              "node": "Mark Driver Assigned",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Driver Assigned": {
+        "main": [
+          []
+        ]
+      }
+    },
+    "authors": "Salia Koffi Mohamed",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-16T13:31:49.550Z",
+        "id": 1036,
+        "workflowId": "tkchopEvobd8516ea",
+        "versionId": "bf05b757-f95d-4fe0-967e-2348d1c31abd",
+        "event": "deactivated",
+        "userId": "4a40f9c4-48d0-4b0b-8528-31d3c1875fd9"
+      },
+      {
+        "createdAt": "2026-05-16T13:31:49.576Z",
+        "id": 1037,
+        "workflowId": "tkchopEvobd8516ea",
+        "versionId": "bf05b757-f95d-4fe0-967e-2348d1c31abd",
+        "event": "activated",
+        "userId": "4a40f9c4-48d0-4b0b-8528-31d3c1875fd9"
+      }
+    ]
+  }
+}

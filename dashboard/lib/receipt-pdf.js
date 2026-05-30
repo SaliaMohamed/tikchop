@@ -48,7 +48,7 @@ function getOrderStatus(order, payment = {}) {
   if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "livree";
   if (order?.delivery_status === "ASSIGNED") return "chez le livreur";
   if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "colis pret";
-  if (getPaymentStatus(order, payment) === "confirme") return "payee";
+  if (getPaymentStatus(order, payment) === "confirme") return "confirmee";
   if (order?.status === "CANCELLED") return "annulee";
   return "en attente";
 }
@@ -63,7 +63,7 @@ function getDeliveryLine(order) {
 
 function getHandlingLine(order) {
   if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") {
-    return "Commande terminee. Merci de garder ce recu en cas de verification.";
+    return "Commande livree. Merci de garder ce recu en cas de verification.";
   }
 
   if (order?.delivery_status === "ASSIGNED") {
@@ -75,7 +75,7 @@ function getHandlingLine(order) {
   }
 
   if (["PAID", "PREPARED", "DELIVERED"].includes(order?.status)) {
-    return "Paiement confirme. La boutique prepare les articles.";
+    return "Paiement confirme. La boutique emballe les articles.";
   }
 
   return "Commande recue. Le paiement, l'adresse ou la disponibilite peuvent encore etre confirmes.";
@@ -129,6 +129,10 @@ function buildReceiptLines(order, payment = {}) {
     { text: "LIVRAISON", size: 13, gap: 14 },
     { text: getDeliveryLine(order), size: 11 },
     { text: `Frais livraison: ${formatCfa(totals.deliveryFee)}`, size: 11, gap: 16 },
+    ...(order.customer_note ? [
+      { text: "PRECISION CLIENT", size: 13, gap: 14 },
+      { text: order.customer_note, size: 11, gap: 16 },
+    ] : []),
     { text: "PAIEMENT", size: 13, gap: 14 },
     { text: `Methode: ${paymentOption.label}`, size: 11 },
     { text: `Statut paiement: ${paymentStatus}`, size: 11, gap: 16 },

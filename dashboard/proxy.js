@@ -1,7 +1,34 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+const SELLER_ROUTE_PREFIXES = [
+  "/vendeur",
+  "/admin",
+  "/dashboard",
+  "/orders",
+  "/messages",
+  "/crm",
+  "/products",
+  "/add-product",
+  "/delivery-settings",
+  "/whatsapp",
+  "/shop-info",
+  "/social-sharing",
+  "/app",
+];
+
+function isSellerRoute(pathname = "") {
+  return SELLER_ROUTE_PREFIXES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
 export async function proxy(request) {
+  if (request.nextUrl.pathname === "/") {
+    const appUrl = request.nextUrl.clone();
+    appUrl.pathname = "/vendeur";
+    appUrl.search = "";
+    return NextResponse.redirect(appUrl);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -25,21 +52,14 @@ export async function proxy(request) {
         },
       }
     )
-    await supabase.auth.getUser()
-  }
+    const { data } = await supabase.auth.getUser()
+    const user = data?.user || null;
 
-  const isRoot = request.nextUrl.pathname === "/";
-  if (isRoot) {
-    const userAgent = request.headers.get("user-agent") || "";
-    const isMobile = /android|iphone|ipad|ipod|mobile|opera mini|windows phone/i.test(userAgent);
-    const wantsSiteInfo = request.nextUrl.searchParams.get("info") === "1";
-
-    if (isMobile && !wantsSiteInfo) {
-      const redirectResp = NextResponse.redirect(new URL("/onboarding", request.url));
-      supabaseResponse.cookies.getAll().forEach(cookie => {
-        redirectResp.cookies.set(cookie.name, cookie.value, cookie);
-      });
-      return redirectResp;
+    if (!user && isSellerRoute(request.nextUrl.pathname)) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/onboarding";
+      redirectUrl.search = "?mode=signin&method=phone";
+      return NextResponse.redirect(redirectUrl);
     }
   }
 

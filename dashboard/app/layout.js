@@ -2,12 +2,13 @@ import "./globals.css";
 import AppChrome from "./AppChrome";
 
 export const metadata = {
-  title: "Tikchop | Assistant de vente WhatsApp a Abidjan",
-  description: "Application et chatbot WhatsApp pour transformer les messages TikTok en commandes suivies.",
+  title: "Tikchop · Vendre mieux sur WhatsApp",
+  description: "Créez votre boutique en ligne, recevez des commandes WhatsApp claires et organisez la livraison depuis votre téléphone.",
+  applicationName: "Tikchop",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Tikchop",
   },
   icons: {
@@ -18,6 +19,10 @@ export const metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "format-detection": "telephone=no",
+  },
 };
 
 export const viewport = {
@@ -25,7 +30,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#f4fbf4",
+  themeColor: "#fbf9f4",
 };
 
 export default function RootLayout({ children }) {

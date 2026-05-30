@@ -22,7 +22,7 @@ export default function ConfidentialitePage() {
         {
           title: "Utilisation",
           body: [
-            "Les donnees servent a afficher la boutique, creer les commandes, generer les recus, preparer la livraison, notifier le vendeur et ameliorer le support.",
+            "Les donnees servent a afficher la boutique, creer les commandes, generer les recus, organiser la livraison, notifier le vendeur et ameliorer le support.",
             "Les informations client ne doivent pas etre utilisees pour du spam. Les relances commerciales doivent rester raisonnables et liees a l'activite de la boutique.",
           ],
         },

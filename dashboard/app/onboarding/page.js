@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Banknote, Bot, CheckCircle2, Copy, ExternalLink, Loader2, LockKeyhole, LogOut, Mail, MessageCircle, Package, ShieldCheck, Store, Truck } from "lucide-react";
-import { createSellerAccount, createSellerFromOnboarding, getSellerByOwner } from "../seller-actions";
-import { clearActiveSeller, readActiveSeller, writeActiveSeller } from "../components/sellerContext";
+import { ArrowLeft, ArrowRight, Banknote, Bot, CheckCircle2, Copy, ExternalLink, Loader2, LockKeyhole, LogOut, Mail, MessageCircle, Package, ShieldCheck, Store, Truck, X } from "lucide-react";
+import { createSellerAccount, createSellerAccountAndShop, createSellerFromOnboarding, getSellerByOwner } from "../seller-actions";
+import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 import { friendlyError } from "../../lib/user-facing-error";
 
@@ -24,8 +24,10 @@ function cleanPhone(value) {
 }
 
 function normalizeAuthPhone(value) {
-  const phone = cleanPhone(value);
-  return phone.startsWith("+") ? phone : `+${phone.replace(/[^\d]/g, "")}`;
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("225")) return `+${digits}`;
+  return `+225${digits}`;
 }
 
 function getPhoneAliasEmail(value) {
@@ -51,7 +53,7 @@ function getIvorianLocalPart(value) {
 function hasValidPhone(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (digits.startsWith("225")) return digits.length >= 13;
-  return digits.length >= 8;
+  return digits.length >= 8 && digits.length <= 10;
 }
 
 function getRequestedAccountMode() {
@@ -64,14 +66,16 @@ function getRequestedAccountMethod() {
   if (typeof window === "undefined") return "PHONE";
   const params = new URLSearchParams(window.location.search);
   const method = params.get("method");
-  const mode = params.get("mode");
-  return mode === "signin" && method === "email" ? "EMAIL" : "PHONE";
+  return method === "email" ? "EMAIL" : "PHONE";
 }
 
 function getRequestedInitialStep() {
   if (typeof window === "undefined") return 0;
   const params = new URLSearchParams(window.location.search);
-  return params.get("mode") === "signin" ? 1 : 0;
+  if (params.get("intro") === "1") return 0;
+  if (params.get("step") === "account") return 1;
+  if (params.get("new") === "1" || params.get("mode") === "signin") return 1;
+  return 0;
 }
 
 function isFreshAccountRequest() {
@@ -93,9 +97,13 @@ function withTimeout(promise, message, timeoutMs = 14000) {
 }
 
 function isExpectedOnboardingError(error) {
-  return /incorrect|premiere fois|mot de passe|ajoute|valide|existe deja|connexion lente|connexion impossible|reessayez|creation boutique non terminee/i.test(
+  return /incorrect|premiere fois|mot de passe|ajoute|valide|existe deja|connexion lente|connexion impossible|reessayez|creation boutique incomplete/i.test(
     error?.message || "",
   );
+}
+
+function isSlowAccountError(error) {
+  return /trop longue|trop long|timeout|lente|reseau|network|aborted|operation trop longue/i.test(error?.message || "");
 }
 
 async function signInWithPasswordControlled(credentials, timeoutMs = 22000) {
@@ -181,6 +189,8 @@ const SETUP_STEPS = [
   },
 ];
 
+const GOOGLE_AUTH_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true" && process.env.NEXT_PUBLIC_GOOGLE_AUTH_READY === "true";
+
 function extractAccountProfile(user) {
   const metadata = user?.user_metadata || {};
   return {
@@ -194,12 +204,17 @@ function extractAccountProfile(user) {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [step, setStep] = useState(() => getRequestedInitialStep());
+  const [redirectingToDashboard, setRedirectingToDashboard] = useState(false);
   const [sessionBanner, setSessionBanner] = useState("");
   const [saving, setSaving] = useState(false);
-  const [accountMode, setAccountMode] = useState("SIGN_UP");
-  const [accountMethod, setAccountMethod] = useState("PHONE");
+  const [accountMode, setAccountMode] = useState(() => getRequestedAccountMode());
+  const [accountMethod, setAccountMethod] = useState(() => getRequestedAccountMethod());
   const [sellerAccount, setSellerAccount] = useState(null);
   const [existingSeller, setExistingSeller] = useState(null);
   const [resetSent, setResetSent] = useState(false);
@@ -223,49 +238,43 @@ export default function OnboardingPage() {
   const shopUrl = createdSeller ? `${typeof window !== "undefined" ? window.location.origin : ""}/${createdSeller.slug}` : "";
   const totalSetupSteps = SETUP_STEPS.length;
   const isLoginStep = step === 1 && accountMode === "SIGN_IN";
-  const currentStepMeta = !isLoginStep && step >= 1 && step <= totalSetupSteps ? SETUP_STEPS[step - 1] : null;
-  const footerSpacerClass = step > 0 && step <= totalSetupSteps
-    ? isLoginStep
-      ? "pb-[calc(4.6rem+env(safe-area-inset-bottom,0px))] md:pb-0"
-      : "pb-[calc(5.35rem+env(safe-area-inset-bottom,0px))] md:pb-0"
+  const isQuickSignupStep = step === 1 && accountMode === "SIGN_UP";
+  const currentStepMeta = !isLoginStep && !isQuickSignupStep && step >= 1 && step <= totalSetupSteps ? SETUP_STEPS[step - 1] : null;
+  const footerSpacerClass = step > 1 && step <= totalSetupSteps
+    ? "pb-[calc(5.35rem+env(safe-area-inset-bottom,0px))] md:pb-0"
     : "";
 
   useEffect(() => {
     let active = true;
 
     async function checkExistingSession() {
-      setAccountMode(getRequestedAccountMode());
-      setAccountMethod(getRequestedAccountMethod());
-      setStep(getRequestedInitialStep());
+      const requestedMode = getRequestedAccountMode();
+      const requestedMethod = getRequestedAccountMethod();
+      const requestedStep = getRequestedInitialStep();
+      setAccountMode(requestedMode);
+      setAccountMethod(requestedMethod);
+      setStep(requestedStep);
       const startFresh = isFreshAccountRequest();
 
       if (startFresh) {
         clearActiveSeller();
+        setRedirectingToDashboard(false);
         setExistingSeller(null);
         setSellerAccount(null);
         setSessionBanner("");
-        setStep(0);
-        window.history.replaceState(null, "", "/onboarding");
-        if (active) setCheckingSession(false);
+        setStep(requestedStep);
+        window.history.replaceState(null, "", requestedStep === 0 ? "/onboarding?intro=1" : "/onboarding?step=account");
         if (supabase) {
           await supabase.auth.signOut();
         }
         return;
       }
 
-      const localSeller = readActiveSeller();
-      if (localSeller?.slug) {
-        router.replace("/dashboard");
-        return;
-      }
-
       if (!supabase) {
-        if (active) setCheckingSession(false);
         return;
       }
 
       try {
-        if (active) setCheckingSession(true);
         const { data } = await withTimeout(
           supabase.auth.getSession(),
           "Verification du compte trop longue.",
@@ -277,7 +286,7 @@ export default function OnboardingPage() {
         }
 
         const seller = await withTimeout(
-          getSellerByOwner(user.id),
+          getSellerByOwner(user.id, data.session?.access_token),
           "Chargement de la boutique trop long.",
           10000,
         );
@@ -285,7 +294,8 @@ export default function OnboardingPage() {
           writeActiveSeller(seller);
           if (active) {
             setExistingSeller(seller);
-            router.replace("/dashboard");
+            setRedirectingToDashboard(true);
+            window.location.replace("/dashboard");
           }
         } else if (active) {
           setSellerAccount(user);
@@ -306,8 +316,6 @@ export default function OnboardingPage() {
         if (active) {
           setSessionBanner("On n'a pas pu verifier votre compte tout de suite. Vous pouvez quand meme continuer.");
         }
-      } finally {
-        if (active) setCheckingSession(false);
       }
     }
 
@@ -350,9 +358,10 @@ export default function OnboardingPage() {
       if (accountMode === "SIGN_IN") {
         return hasIdentity && form.password.length > 0;
       }
-      return hasIdentity && form.password.length >= 6;
+      const hasStorePhone = accountMethod === "PHONE" ? true : hasValidPhone(form.phone_number);
+      return hasIdentity && hasStorePhone && form.password.length >= 6 && form.name.trim().length >= 2;
     }
-    if (step === 2) return form.name.trim().length >= 2;
+    if (step === 2) return form.name.trim().length >= 2 && hasValidPhone(form.phone_number);
     if (step === 3) return hasValidPhone(form.phone_number);
     return true;
   }
@@ -389,50 +398,113 @@ export default function OnboardingPage() {
       return data.user;
     }
 
-    const account = await withTimeout(
-      createSellerAccount({
-        method: accountMethod,
-        email,
-        phone,
-        password,
-        display_name: form.account_name.trim() || form.name.trim() || email || phone,
-      }),
-      "Creation du compte trop longue. Reessayez ou utilisez le numero WhatsApp.",
-    );
-
-    const credentials = accountMethod === "EMAIL"
-      ? { email, password }
-      : { email: account.email || getPhoneAliasEmail(account.phone || phone), password };
-    const { data, error: signInError } = await signInWithPasswordControlled(credentials, 24000);
-    if (signInError) {
-      if (accountMethod === "PHONE") {
-        const fallback = await signInWithPasswordControlled({ phone: normalizeAuthPhone(account.phone || phone), password }, 12000);
-        if (!fallback.error) {
-          return fallback.data.user || account;
+    async function signInAfterAccountCreation(account = null, timeoutMs = 24000) {
+      const createdPhone = account?.phone || phone;
+      const createdEmail = account?.email || email;
+      const credentials = accountMethod === "EMAIL"
+        ? { email: createdEmail || email, password }
+        : { email: createdEmail || getPhoneAliasEmail(createdPhone || phone), password };
+      const { data, error: signInError } = await signInWithPasswordControlled(credentials, timeoutMs);
+      if (signInError) {
+        if (accountMethod === "PHONE") {
+          const fallback = await signInWithPasswordControlled({ phone: normalizeAuthPhone(createdPhone || phone), password }, 12000);
+          if (!fallback.error) {
+            return fallback.data.user || account || null;
+          }
         }
+        return null;
       }
-      throw new Error("Compte cree. Appuyez sur Deja inscrit puis connectez-vous avec le meme numero.");
+
+      return data.user || account || null;
     }
 
-    return data.user || account;
+    try {
+      const account = await withTimeout(
+        createSellerAccount({
+          method: accountMethod,
+          email,
+          phone,
+          password,
+          display_name: form.account_name.trim() || form.name.trim() || email || phone,
+        }),
+        "Creation du compte encore en cours. Tikchop verifie automatiquement.",
+        36000,
+      );
+
+      const recovered = await signInAfterAccountCreation(account);
+      if (recovered) {
+        return recovered;
+      }
+
+      throw new Error("Compte cree. Appuyez sur Deja inscrit puis connectez-vous avec le meme numero.");
+    } catch (createError) {
+      const recovered = await signInAfterAccountCreation(null, isSlowAccountError(createError) ? 14000 : 9000);
+      if (recovered) {
+        return recovered;
+      }
+
+      if (/existe deja|already|registered|exists|duplicate/i.test(createError?.message || "")) {
+        throw new Error("Ce compte existe deja. Appuyez sur J'ai deja un compte puis connectez-vous.");
+      }
+
+      throw createError;
+    }
   }
 
   async function handleCreate() {
     let account = sellerAccount;
+    let accessToken = "";
     try {
       setSaving(true);
       setError("");
-      account = account || await withTimeout(
-        ensureSellerAccount(),
-        "Compte trop long a verifier. Reessayez avant de creer la boutique.",
-        18000,
-      );
+
+      if (accountMode === "SIGN_UP" && !account?.id) {
+        const created = await withTimeout(
+          createSellerAccountAndShop({
+            method: accountMethod,
+            email: form.email.trim().toLowerCase(),
+            phone: form.account_phone.trim(),
+            password: form.password,
+            display_name: form.account_name.trim() || form.name.trim() || form.email.trim() || form.account_phone.trim(),
+            name: form.name,
+            phone_number: form.phone_number || form.account_phone,
+            slug: suggestedSlug,
+            delivery_mode: form.delivery_mode,
+            fixed_delivery_fee: form.fixed_delivery_fee,
+            delivery_payment_timing: form.delivery_payment_timing,
+          }),
+          "Creation de la boutique trop longue. Reessayez dans quelques secondes.",
+          26000,
+        );
+
+        const credentials = accountMethod === "EMAIL"
+          ? { email: created.account?.email || form.email.trim().toLowerCase(), password: form.password }
+          : { email: created.account?.email || getPhoneAliasEmail(form.account_phone), password: form.password };
+        const { data: signInData, error: signInError } = await signInWithPasswordControlled(credentials, 16000);
+        if (signInError) {
+          throw new Error("Boutique creee. Appuyez sur J'ai deja un compte puis connectez-vous avec le meme numero.");
+        }
+
+        account = signInData.user || created.account;
+        setSellerAccount(account);
+        writeActiveSeller(created.seller);
+        setCreatedSeller(created.seller);
+        setNotice("Boutique creee. Ouverture de votre espace vendeur...");
+        window.location.replace("/dashboard?created=1");
+        return;
+      }
+
+      account = account || await ensureSellerAccount();
+      setSellerAccount(account);
+      const { data: sessionState } = await supabase.auth.getSession();
+      accessToken = sessionState.session?.access_token || "";
       const seller = await withTimeout(
         createSellerFromOnboarding({
           ...form,
           slug: suggestedSlug,
           owner_user_id: account?.id,
           owner_email: isPhoneAliasEmail(account?.email) ? "" : (account?.email || form.email.trim().toLowerCase()),
+          access_token: accessToken,
         }),
         "Creation boutique trop longue. Reessayez dans quelques secondes.",
         32000,
@@ -447,7 +519,7 @@ export default function OnboardingPage() {
       }
       const recoveredSeller = account?.id
         ? await withTimeout(
-          getSellerByOwner(account.id),
+          getSellerByOwner(account.id, accessToken),
           "Verification de la boutique trop longue.",
           10000,
         ).catch(() => null)
@@ -461,7 +533,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      setError(friendlyError(err, "Creation boutique non terminee. Verifiez le nom et le numero WhatsApp."));
+      setError(friendlyError(err, "Creation boutique incomplete. Verifiez le nom et le numero WhatsApp."));
     } finally {
       setSaving(false);
     }
@@ -476,15 +548,13 @@ export default function OnboardingPage() {
     try {
       setSaving(true);
       setError("");
-      const account = await withTimeout(
-        ensureSellerAccount(),
-        "Operation trop longue. Reessayez avec votre numero WhatsApp ou changez de connexion.",
-      );
+      const account = await ensureSellerAccount();
       setSellerAccount(account);
 
       if (accountMode === "SIGN_IN") {
+        const { data: sessionState } = await supabase.auth.getSession();
         const existingSeller = await withTimeout(
-          getSellerByOwner(account?.id),
+          getSellerByOwner(account?.id, sessionState.session?.access_token),
           "Recherche boutique trop longue. Reessayez.",
           10000,
         );
@@ -568,10 +638,11 @@ export default function OnboardingPage() {
     try {
       setSaving(true);
       setError("");
+      const next = encodeURIComponent("/onboarding?step=account");
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/onboarding`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${next}`,
           queryParams: {
             prompt: "select_account",
           },
@@ -587,15 +658,24 @@ export default function OnboardingPage() {
     }
   }
 
-  if (checkingSession) {
-    return <OnboardingRedirectLoader />;
+  if (!hydrated) {
+    return <OnboardingBootShell />;
+  }
+
+  if (redirectingToDashboard) {
+    return <DashboardRedirectLoader />;
   }
 
   return (
-    <div className="app-shell min-h-screen">
-      <main className={`${step === 0 ? "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))]" : "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))]"} ${isLoginStep ? "flex min-h-[calc(100vh-4.9rem)] flex-col justify-center gap-2.5" : "space-y-2.5"} ${footerSpacerClass}`}>
+    <div className={`app-shell onboarding-shell ${step === 0 ? "pb-0 md:min-h-0 md:w-full md:max-w-[1320px]" : "min-h-screen"}`}>
+      <main className={`${step === 0 ? "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))] md:flex md:min-h-[calc(100vh-1.5rem)] md:items-center md:justify-center md:px-4 md:py-2" : "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))]"} ${isLoginStep ? "flex min-h-[calc(100vh-4.9rem)] flex-col justify-center gap-2.5 md:min-h-[calc(100vh-1.5rem)]" : "space-y-2.5"} ${footerSpacerClass}`}>
         {step === 0 && (
-          <OnboardingLandingHero onStart={() => setStep(1)} onSignIn={() => {
+          <OnboardingLandingHero onStart={() => {
+            window.history.replaceState(null, "", "/onboarding?step=account");
+            setAccountMode("SIGN_UP");
+            setStep(1);
+          }} onSignIn={() => {
+            window.history.replaceState(null, "", "/onboarding?mode=signin&method=phone");
             setAccountMode("SIGN_IN");
             setStep(1);
           }} />
@@ -628,47 +708,81 @@ export default function OnboardingPage() {
         )}
 
         {step === 1 && !existingSeller && (
-          <OnboardingCard
-            icon={<LockKeyhole size={28} />}
-            title={accountMode === "SIGN_IN" ? "Se connecter" : "Acces vendeur"}
-          >
-            {sellerAccount?.id && (
-              <div className="mb-4 rounded-[20px] border border-[var(--outline)]/45 bg-[var(--surface-soft)] p-3">
-                <p className="text-sm font-extrabold text-[var(--text-main)]">Compte deja connecte</p>
-                <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                  Vous pouvez continuer avec ce compte ou vous deconnecter pour choisir un autre numero ou un email.
-                </p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="min-h-[46px] rounded-xl bg-[var(--primary)] px-3 text-sm font-extrabold text-white"
-                  >
-                    Continuer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="min-h-[46px] rounded-xl bg-white px-3 text-sm font-extrabold text-[var(--text-main)] ring-1 ring-[var(--outline)]/45"
-                  >
-                    Changer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <SimpleAccountForm
+          <section className="mx-auto grid w-full max-w-[1040px] gap-3 md:grid-cols-[0.92fr_1.08fr] md:items-stretch md:gap-4">
+            <MobileAccountPanel
               accountMode={accountMode}
               accountMethod={accountMethod}
               form={form}
               saving={saving}
               resetSent={resetSent}
+              sellerAccount={sellerAccount}
+              canContinue={canContinue()}
               setAccountMode={setAccountMode}
               switchAccountMethod={switchAccountMethod}
               updateField={updateField}
               handleGoogleAuth={handleGoogleAuth}
               handlePasswordReset={handlePasswordReset}
+              onPrimary={accountMode === "SIGN_IN" ? handleAccountContinue : handleCreate}
+              onContinueAccount={() => setStep(2)}
+              onChangeAccount={() => handleSignOut(1)}
+              googleAuthEnabled={GOOGLE_AUTH_ENABLED}
             />
+            <DesktopAccountPrimer accountMode={accountMode} />
+
+            <div className="hidden md:block">
+            <OnboardingCard
+              icon={<LockKeyhole size={28} />}
+              title={accountMode === "SIGN_IN" ? "Connexion vendeur" : "Creer le compte"}
+              subtitle={accountMode === "SIGN_IN" ? "Numero WhatsApp ou email." : "3 infos. Ensuite vous ajoutez vos articles."}
+            >
+              {sellerAccount?.id && (
+                <div className="mb-4 rounded-[20px] border border-[var(--outline)]/45 bg-[var(--surface-soft)] p-3">
+                  <p className="text-sm font-extrabold text-[var(--text-main)]">Compte deja connecte</p>
+                  <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                    Continuez avec ce compte ou choisissez un autre numero.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="min-h-[46px] rounded-xl bg-[var(--primary)] px-3 text-sm font-extrabold text-white"
+                    >
+                      Continuer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSignOut(1)}
+                      className="min-h-[46px] rounded-xl bg-white px-3 text-sm font-extrabold text-[var(--text-main)] ring-1 ring-[var(--outline)]/45"
+                    >
+                      Changer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <SimpleAccountForm
+                accountMode={accountMode}
+                accountMethod={accountMethod}
+                form={form}
+                saving={saving}
+                resetSent={resetSent}
+                setAccountMode={setAccountMode}
+                switchAccountMethod={switchAccountMethod}
+                updateField={updateField}
+                handleGoogleAuth={handleGoogleAuth}
+                handlePasswordReset={handlePasswordReset}
+                googleAuthEnabled={GOOGLE_AUTH_ENABLED}
+              />
+
+              <button
+                type="button"
+                disabled={!canContinue() || saving}
+                onClick={accountMode === "SIGN_IN" ? handleAccountContinue : handleCreate}
+                className="mt-4 hidden min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] text-base font-extrabold text-white shadow-[0_18px_34px_rgba(0,143,90,0.20)] disabled:bg-[var(--outline)] md:flex"
+              >
+                {saving ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={19} />}
+                {accountMode === "SIGN_IN" ? "Entrer dans mon espace" : "Creer ma boutique"}
+              </button>
 
             {false && (
             <>
@@ -776,20 +890,22 @@ export default function OnboardingPage() {
               autoComplete={accountMode === "SIGN_UP" ? "new-password" : "current-password"}
             />
 
-            <div className="mt-3 rounded-[20px] border border-[var(--outline)]/45 bg-white p-2 shadow-[var(--shadow-sm)]">
-              <button
-                type="button"
-                onClick={handleGoogleAuth}
-                disabled={saving}
-                className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[16px] bg-[var(--surface-soft)] px-4 text-sm font-extrabold text-[var(--text-main)] disabled:opacity-60"
-              >
-                <GoogleMark />
-                Continuer avec Google
-              </button>
-              <p className="px-2 pb-1 pt-2 text-center text-xs font-semibold leading-4 text-[var(--text-dim)]">
-                Optionnel. Le numero reste le plus simple pour les vendeurs WhatsApp.
-              </p>
-            </div>
+            {GOOGLE_AUTH_ENABLED && (
+              <div className="mt-3 rounded-[20px] border border-[var(--outline)]/45 bg-white p-2 shadow-[var(--shadow-sm)]">
+                <button
+                  type="button"
+                  onClick={handleGoogleAuth}
+                  disabled={saving}
+                  className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[16px] bg-[var(--surface-soft)] px-4 text-sm font-extrabold text-[var(--text-main)] disabled:opacity-60"
+                >
+                  <GoogleMark />
+                  Continuer avec Google
+                </button>
+                <p className="px-2 pb-1 pt-2 text-center text-xs font-semibold leading-4 text-[var(--text-dim)]">
+                  Optionnel. Le numero reste le plus simple pour les vendeurs WhatsApp.
+                </p>
+              </div>
+            )}
 
             {accountMode === "SIGN_IN" && accountMethod === "EMAIL" && (
               <div className="mt-3 rounded-[18px] bg-[var(--surface-soft)] p-3">
@@ -825,30 +941,46 @@ export default function OnboardingPage() {
               <p>
                 {accountMethod === "EMAIL"
                   ? "Votre email sert a vous reconnecter et recuperer votre acces."
-                  : "Votre numero sert a vous reconnecter et preparer votre WhatsApp de vente."}
+                  : "Votre numero sert a vous reconnecter et configurer votre WhatsApp de vente."}
               </p>
             </div>
             </>
             )}
-          </OnboardingCard>
+            </OnboardingCard>
+            </div>
+          </section>
         )}
 
         {step === 2 && (
           <OnboardingCard
             icon={<Store size={28} />}
-            title="Boutique"
+            title="Identite boutique"
+            subtitle="Nom, WhatsApp et devise."
           >
-            <label className="block">
-              <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nom boutique</span>
-              <input
+            <div className="space-y-4">
+              <AuthInput
+                label="Nom boutique"
+                icon={<Store size={19} />}
                 value={form.name}
                 onChange={(event) => updateField("name", event.target.value)}
                 placeholder="Ex: Amina Mode"
-                className="mobile-input text-lg"
+                autoComplete="organization"
               />
-            </label>
-            <div className="mt-3 rounded-2xl bg-[var(--surface-soft)] p-3">
-              <p className="break-all text-base font-extrabold text-[var(--primary)]">tikchop/{suggestedSlug || "ma-boutique"}</p>
+              <PhoneInput
+                label="WhatsApp boutique"
+                icon={<MessageCircle size={19} />}
+                value={form.phone_number}
+                onValueChange={(nextPhone) => updateField("phone_number", nextPhone)}
+              />
+              <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-[22px] bg-[var(--surface-soft)] p-3 ring-1 ring-[var(--outline)]/45">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--text-dim)]">Lien boutique</p>
+                  <p className="mt-1 break-all text-base font-black text-[var(--primary)]">tikchop/{suggestedSlug || "ma-boutique"}</p>
+                </div>
+                <span className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[var(--text-main)] shadow-sm ring-1 ring-[var(--outline)]/40">
+                  XOF
+                </span>
+              </div>
             </div>
           </OnboardingCard>
         )}
@@ -919,13 +1051,13 @@ export default function OnboardingPage() {
                 <div className="mt-4 grid gap-3">
                   <ChoiceButton
                     active={form.delivery_payment_timing === "AT_RECEPTION"}
-                    title="Livraison payee a reception"
+                    title="Livraison reglee a reception"
                     text="Tres courant a Abidjan"
                     onClick={() => updateField("delivery_payment_timing", "AT_RECEPTION")}
                   />
                   <ChoiceButton
                     active={form.delivery_payment_timing === "INCLUDED"}
-                    title="Livraison payee avec la commande"
+                    title="Livraison reglee avec la commande"
                     text={`Le total affichera ${formatPrice(form.fixed_delivery_fee)} en plus`}
                     onClick={() => updateField("delivery_payment_timing", "INCLUDED")}
                   />
@@ -980,17 +1112,17 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        {step > 0 && step <= totalSetupSteps && !(step === 1 && existingSeller) && (
-        <div className="fixed inset-x-0 bottom-0 z-[320] border-t border-[var(--outline)]/25 bg-white/96 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-14px_30px_rgba(22,29,25,0.11)] backdrop-blur-xl md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
+        {step > 1 && step <= totalSetupSteps && !(step === 1 && existingSeller) && (
+        <div className={`fixed inset-x-0 bottom-0 z-[320] border-t border-[var(--outline)]/25 bg-white/96 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-14px_30px_rgba(22,29,25,0.11)] backdrop-blur-xl ${step === 1 ? "md:hidden" : "md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0"}`}>
           {step === 1 && (
             <button
               type="button"
               disabled={!canContinue() || saving}
-              onClick={handleAccountContinue}
-              className="mx-auto flex min-h-[52px] w-full max-w-[460px] items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
+              onClick={accountMode === "SIGN_IN" ? handleAccountContinue : handleCreate}
+              className="mx-auto flex min-h-[52px] w-full max-w-[460px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
             >
               {saving ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={19} />}
-              {accountMode === "SIGN_IN" ? "Se connecter" : "Creer mon compte"}
+              {accountMode === "SIGN_IN" ? "Se connecter" : "Ouvrir ma boutique"}
             </button>
           )}
           {step === 2 && (
@@ -998,10 +1130,10 @@ export default function OnboardingPage() {
               type="button"
               disabled={!canContinue() || saving}
               onClick={handleCreate}
-              className="mx-auto flex min-h-[52px] w-full max-w-[460px] items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
+              className="mx-auto flex min-h-[52px] w-full max-w-[460px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
             >
               {saving ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
-              Creer ma boutique
+              Ouvrir ma boutique
             </button>
           )}
         </div>
@@ -1011,100 +1143,324 @@ export default function OnboardingPage() {
   );
 }
 
-function OnboardingRedirectLoader() {
-  return (
-    <div className="app-shell min-h-screen">
-      <main className="flex min-h-[calc(100vh-2rem)] items-center justify-center px-4 py-8">
-        <section className="w-full max-w-[360px] rounded-[28px] border border-[var(--outline)]/55 bg-white p-5 text-center shadow-[var(--shadow-sm)]">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
-            <Loader2 className="animate-spin" size={24} />
-          </span>
-          <h1 className="mt-4 font-display text-2xl font-bold text-[var(--text-main)]">Ouverture de votre espace vendeur</h1>
-          <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-            Si une boutique existe deja sur ce telephone, Tikchop l&apos;ouvre directement.
-          </p>
-        </section>
-      </main>
-    </div>
-  );
-}
-
 function OnboardingLandingHero({ onStart, onSignIn }) {
   return (
-    <section className="djassa-command overflow-hidden">
-      <div className="relative h-[180px] shrink-0 overflow-hidden md:h-[255px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/landing/fatim-jeune-friperie.jpg"
-          alt="Fatim avec ses articles"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06110b] via-[#06110b]/32 to-transparent" />
-        <div className="absolute left-3 top-3 rounded-2xl bg-[#06110b]/82 px-3 py-2 text-xs font-extrabold text-[var(--primary-bright)] ring-1 ring-white/12 backdrop-blur-md">
-          24h/24
+    <>
+    <section className="flex h-[100dvh] flex-col justify-between p-5 text-white md:hidden bg-[#07120d] relative overflow-hidden">
+      <div className="absolute inset-0 bg-radial-gradient from-[rgba(0,143,90,0.15)] to-transparent pointer-events-none" />
+      <header className="flex items-center justify-between z-10">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#008f5a] font-display text-base font-black text-[#fbf9f4]" aria-hidden="true">T</span>
+          <span className="font-display text-lg font-bold tracking-tight text-[#fbf9f4]">Tikchop</span>
         </div>
-        <div className="absolute right-3 top-3 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-extrabold text-[#06110b] shadow-[0_14px_30px_rgba(0,0,0,0.18)]">
-          <Bot size={15} />
-          Il vend
-        </div>
-        <div className="absolute bottom-3 left-3 right-3">
-          <div className="flex items-center gap-2 rounded-2xl bg-white/16 p-2 shadow-[0_16px_38px_rgba(0,0,0,0.18)] ring-1 ring-white/18 backdrop-blur-md">
-            <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
-            <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
-            <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
-            <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
+        <span className="flex items-center gap-1.5 rounded-full bg-[#fbf9f4]/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--primary-bright)]">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--primary-bright)]" />
+          Live
+        </span>
+      </header>
+
+      <div className="my-auto py-3 flex flex-col gap-4 z-10">
+        <div className="relative mx-auto h-[175px] w-full max-w-[340px] overflow-hidden rounded-[20px]">
+          <img
+            src="/landing/fatim-jeune-friperie.jpg"
+            alt="Vendre en ligne"
+            className="h-full w-full object-cover object-[center_22%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07120d] via-[#07120d]/40 to-transparent" />
+          <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl bg-[#07120d]/80 px-2.5 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm">
+            <Bot size={13} className="text-[#008f5a]" />
+            Assistant 24h/24
           </div>
+        </div>
+
+        <div className="text-center">
+          <h1 className="font-display text-[1.75rem] font-bold leading-[2.1rem] tracking-tight text-[#fbf9f4]">
+            Laissez WhatsApp<br />vendre à votre place.
+          </h1>
+          <p className="mt-2 text-xs font-semibold leading-relaxed text-[#fbf9f4]/75 px-4">
+            Ajoutez vos articles. Tikchop répond à vos clients, encaisse Wave/Orange et gère la livraison.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4]/5 p-2">
+          <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
+          <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
+          <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
+          <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
         </div>
       </div>
 
-      <div className="space-y-4 p-4 md:p-5">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--primary-bright)]">Djassaman digital</p>
-          <h1 className="mt-2 font-display text-[1.82rem] font-bold leading-9 md:text-4xl md:leading-10">
-            Laissez WhatsApp vendre a votre place.
-          </h1>
-          <p className="mt-2 text-[0.95rem] font-semibold leading-6 text-white/82">
-            Votre boutique en ligne avec un vendeur WhatsApp automatique: il repond, encaisse, envoie le recu et aide a coordonner vos livreurs.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          <HeroProof icon={<MessageCircle size={15} />} label="Repond" />
-          <HeroProof icon={<Banknote size={15} />} label="Encaisse" />
-          <HeroProof icon={<Truck size={15} />} label="Livre" />
-        </div>
-
-        <button
-          type="button"
-          onClick={onStart}
-          className="djassa-glow-action flex min-h-[56px] w-full items-center justify-center gap-2 rounded-xl text-base font-extrabold"
+      <div className="flex flex-col gap-2.5 z-10">
+        <Link
+          href="/onboarding?step=account"
+          onClick={(event) => {
+            event.preventDefault();
+            onStart();
+          }}
+          className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-[#fbf9f4] no-underline transition active:scale-[0.98]"
         >
-          Creer ma boutique Tikchop
-          <ArrowRight size={19} />
-        </button>
+          Créer ma boutique
+          <ArrowRight size={17} />
+        </Link>
         <button
           type="button"
           onClick={onSignIn}
-          className="flex min-h-[42px] w-full items-center justify-center rounded-xl bg-white/10 text-sm font-extrabold text-white/88 ring-1 ring-white/10"
+          className="text-center text-xs font-bold text-[#fbf9f4]/60 hover:text-white py-1"
         >
-          J&apos;ai deja un compte
+          J&apos;ai déjà un compte
         </button>
-        <Link
-          href="/?info=1"
-          className="flex min-h-[42px] w-full items-center justify-center rounded-xl text-sm font-extrabold text-white/74 no-underline"
-        >
-          En savoir plus
-        </Link>
+      </div>
+    </section>
+    <DesktopOnboardingHero onStart={onStart} onSignIn={onSignIn} />
+    </>
+  );
+}
+
+function DesktopOnboardingHero({ onStart, onSignIn }) {
+  return (
+    <section className="hidden h-[calc(100vh-3rem)] min-h-[720px] w-full overflow-hidden rounded-[28px] border border-[#d9e2dd] bg-[#f7faf8] shadow-[0_34px_90px_rgba(8,18,13,0.16)] md:block">
+      <header className="grid h-[68px] grid-cols-[auto_1fr_auto] items-center gap-5 border-b border-[#dfe7e2] bg-white px-6">
+        <div className="flex items-center gap-3">
+          <span className="tk-logo-mark flex h-12 w-12 items-center justify-center rounded-2xl bg-[#07120d] font-display text-lg font-black text-[var(--primary-bright)]" aria-hidden="true" />
+          <div>
+            <strong className="block font-display text-xl font-black text-[#07120d]">Tikchop Store</strong>
+            <span className="block text-xs font-bold text-[#6b7a72]">Assistant vendeur WhatsApp</span>
+          </div>
+        </div>
+        <div className="mx-auto flex h-11 w-full max-w-[420px] items-center justify-between rounded-xl bg-[#f0f3f1] px-4 text-sm font-bold text-[#7b8781]">
+          <span>Rechercher un article...</span>
+          <Package size={17} />
+        </div>
+        <nav className="flex items-center gap-2 text-sm font-extrabold text-[#34453c]" aria-label="Actions Tikchop">
+          <button type="button" onClick={onSignIn} className="h-11 rounded-xl px-4 hover:bg-[#f0f3f1]">
+            Connexion
+          </button>
+          <button type="button" onClick={onStart} className="h-11 rounded-xl bg-[#07120d] px-5 text-white shadow-[0_16px_30px_rgba(7,18,13,0.16)]">
+            Creer ma boutique
+          </button>
+        </nav>
+      </header>
+
+      <div className="grid h-[calc(100%-68px)] grid-cols-[360px_1fr]">
+        <aside className="relative overflow-hidden bg-[#101a15] p-6 text-white">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/landing/fatim-jeune-friperie.jpg"
+            alt="Fatim avec ses articles"
+            className="absolute inset-0 h-full w-full object-cover object-[48%_center] opacity-78"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,18,13,0.10),rgba(7,18,13,0.22)_42%,#07120d_100%)]" />
+          <div className="relative flex h-full flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="rounded-full bg-[#07120d]/76 px-4 py-2 text-sm font-black text-[var(--primary-bright)] ring-1 ring-white/10 backdrop-blur-md">24h/24</span>
+              <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-[#07120d] shadow-[0_18px_34px_rgba(0,0,0,0.18)]">
+                <Bot size={17} />
+                Il vend
+              </span>
+            </div>
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--primary-bright)]">Cas Fatim</p>
+              <h2 className="mt-3 font-display text-4xl font-black leading-[1.02]">La boutique reste ouverte meme quand elle prepare les colis.</h2>
+              <div className="mt-5 flex items-center gap-2 rounded-[22px] bg-white/14 p-2 ring-1 ring-white/14 backdrop-blur-md">
+                <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
+                <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
+                <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
+                <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_300px] gap-5 p-6">
+          <main className="min-w-0">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary)]">Vendre mieux sur WhatsApp</p>
+                <h1 className="mt-2 max-w-[650px] font-display text-[2.65rem] font-black leading-[1.02] text-[#07120d]">
+                  Une boutique web claire, un vendeur WhatsApp automatique.
+                </h1>
+                <p className="mt-3 max-w-[660px] text-base font-semibold leading-6 text-[#4d6258]">
+                  Ajoutez photos et prix. Tikchop presente les articles, conseille le client, encaisse et prepare la livraison avec vos livreurs.
+                </p>
+              </div>
+              <div className="hidden grid-cols-3 gap-2 rounded-[18px] bg-white p-2 shadow-[0_18px_42px_rgba(8,18,13,0.07)] ring-1 ring-[#dfe7e2]">
+                <DesktopHeroMetric value="7j" label="essai" />
+                <DesktopHeroMetric value="24h" label="vente" />
+                <DesktopHeroMetric value="0 tuto" label="simple" />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center gap-2 border-b border-[#dfe7e2] pb-3">
+              {["Tous les articles", "Pagne", "Sacs", "Beaute"].map((item, index) => (
+                <span key={item} className={`rounded-xl px-4 py-2 text-sm font-black ${index === 0 ? "bg-[#07120d] text-white" : "bg-white text-[#4d6258] ring-1 ring-[#dfe7e2]"}`}>
+                  {item}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <DesktopProductCard image="/landing/raffia-bags.jpg" name="Sac raphia" price="10 000 F" tag="Disponible" />
+              <DesktopProductCard image="/landing/fabric-display.jpg" name="Pagne wax" price="15 000 F" tag="Top vente" />
+              <DesktopProductCard image="/landing/shea-butter.jpg" name="Karite naturel" price="4 500 F" tag="Livrable" />
+            </div>
+
+          </main>
+
+          <aside className="flex flex-col gap-4">
+            <div className="rounded-[24px] bg-white p-4 shadow-[0_18px_42px_rgba(8,18,13,0.08)] ring-1 ring-[#dfe7e2]">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#7b8781]">Menu boutique</p>
+              <div className="mt-4 grid gap-2">
+                <DesktopMenuItem icon={<Store size={18} />} label="Catalogue" active />
+                <DesktopMenuItem icon={<MessageCircle size={18} />} label="WhatsApp" />
+                <DesktopMenuItem icon={<Truck size={18} />} label="Livraison" />
+              </div>
+            </div>
+            <div className="rounded-[24px] bg-white p-4 shadow-[0_18px_42px_rgba(8,18,13,0.08)] ring-1 ring-[#dfe7e2]">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary)]">Lancement</p>
+              <h3 className="mt-2 font-display text-2xl font-black leading-7 text-[#07120d]">Dort tranquille, Tikchop gere.</h3>
+              <p className="mt-2 text-sm font-semibold leading-5 text-[#607469]">Le client voit les articles, pose ses questions, paie et recoit son recu.</p>
+              <div className="mt-4 space-y-2 rounded-2xl bg-[#07120d] p-3 text-xs font-bold text-white/78">
+                <DesktopOrderLine icon={<Package size={15} />} text="Commande creee" />
+                <DesktopOrderLine icon={<Banknote size={15} />} text="Paiement confirme" />
+                <DesktopOrderLine icon={<Truck size={15} />} text="Livreur notifie" />
+              </div>
+              <button type="button" onClick={onStart} className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-black text-white">
+                Creer ma boutique
+                <ArrowRight size={18} />
+              </button>
+              <button type="button" onClick={onSignIn} className="mt-2 flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#eef5f1] text-sm font-black text-[#07120d]">
+                Deja inscrit
+              </button>
+            </div>
+          </aside>
+        </div>
       </div>
     </section>
   );
 }
 
+function DesktopHeroMetric({ value, label }) {
+  return (
+    <div className="min-w-[66px] rounded-xl bg-[#f7faf8] px-3 py-2 text-center">
+      <strong className="block font-display text-lg font-black text-[#07120d]">{value}</strong>
+      <span className="block text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#7b8781]">{label}</span>
+    </div>
+  );
+}
+
+function DesktopProductCard({ image, name, price, tag }) {
+  return (
+    <article className="overflow-hidden rounded-[22px] bg-white shadow-[0_18px_42px_rgba(8,18,13,0.07)] ring-1 ring-[#dfe7e2]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image} alt={name} className="h-28 w-full object-cover" />
+      <div className="p-3">
+        <span className="rounded-full bg-[#e8f9ee] px-2.5 py-1 text-[0.68rem] font-black uppercase text-[var(--primary)]">{tag}</span>
+        <h3 className="mt-2 truncate font-display text-sm font-black text-[#07120d]">{name}</h3>
+        <p className="mt-1 whitespace-nowrap font-display text-lg font-black text-[var(--primary)]">{price}</p>
+      </div>
+    </article>
+  );
+}
+
+function DesktopOrderLine({ icon, text }) {
+  return (
+    <div className="grid grid-cols-[auto_1fr] items-center gap-2 rounded-2xl bg-white/10 p-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary-bright)] text-[#07120d]">{icon}</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function DesktopMenuItem({ icon, label, active = false }) {
+  return (
+    <div className={`grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl px-3 py-3 text-sm font-black ${active ? "bg-[#07120d] text-white" : "bg-[#f2f5f3] text-[#4d6258]"}`}>
+      <span className={active ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"}>{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function DashboardRedirectLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <section className="w-full max-w-[360px] rounded-[24px] bg-white p-5 text-center shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/35">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
+          <Loader2 className="animate-spin" size={22} />
+        </span>
+        <h1 className="mt-4 font-display text-2xl font-bold text-[var(--text-main)]">Ouverture du dashboard</h1>
+        <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+          Votre boutique est deja connectee.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function OnboardingBootShell() {
+  return (
+    <div className="onboarding-shell flex min-h-screen items-center justify-center bg-[#fafafa] px-6">
+      <section className="w-full max-w-[320px] text-center">
+        <span className="tk-logo-mark mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[var(--primary)] font-display text-2xl font-black text-white shadow-[0_18px_38px_rgba(27,163,74,0.2)]" aria-hidden="true" />
+        <h1 className="mt-5 font-display text-2xl font-black text-[var(--text-main)]">Tikchop</h1>
+        <p className="mt-2 text-sm font-bold text-[var(--text-dim)]">Ouverture de votre espace vendeur...</p>
+        <Loader2 className="mx-auto mt-5 animate-spin text-[var(--primary)]" size={24} />
+      </section>
+    </div>
+  );
+}
+
 function HeroProof({ icon, label }) {
   return (
-    <div className="flex min-h-[52px] flex-col items-center justify-center rounded-2xl bg-white/10 px-2 text-center text-xs font-extrabold text-white ring-1 ring-white/12">
+    <div className="flex min-h-[52px] flex-col items-center justify-center rounded-2xl bg-white/10 px-2 text-center text-xs font-extrabold text-white ring-1 ring-white/12 md:min-h-[72px] md:text-sm">
       <span className="text-[var(--primary-bright)]">{icon}</span>
       <span className="mt-1">{label}</span>
+    </div>
+  );
+}
+
+function DesktopAccountPrimer({ accountMode }) {
+  return (
+    <aside className="hidden overflow-hidden rounded-[28px] bg-[#07120d] text-white shadow-[var(--shadow-lg)] md:block">
+      <div className="relative h-full min-h-[560px] p-6">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing/onboarding-seller-phone.jpg"
+          alt="Vendeuse Tikchop"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.42]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,18,13,0.28),#07120d_72%)]" />
+        <div className="relative flex h-full flex-col justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary-bright)]">
+              {accountMode === "SIGN_IN" ? "Retour vendeur" : "Demarrage rapide"}
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold leading-[1.02]">
+              {accountMode === "SIGN_IN" ? "Retrouvez votre boutique." : "Votre vendeur WhatsApp est pret."}
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <DesktopAccountStep icon={<Store size={18} />} title="Compte" text="Numero WhatsApp ou email." />
+            <DesktopAccountStep icon={<Package size={18} />} title="Articles" text="Ajoutez photos et prix." />
+            <DesktopAccountStep icon={<Bot size={18} />} title="Vente" text="Tikchop repond, encaisse et notifie." />
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function DesktopAccountStep({ icon, title, text }) {
+  return (
+    <div className="grid grid-cols-[auto_1fr] gap-3 rounded-2xl bg-white/10 p-3 ring-1 ring-white/12 backdrop-blur-md">
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[#07120d]">
+        {icon}
+      </span>
+      <span>
+        <span className="block text-sm font-extrabold">{title}</span>
+        <span className="mt-0.5 block text-sm font-semibold leading-5 text-white/70">{text}</span>
+      </span>
     </div>
   );
 }
@@ -1182,7 +1538,7 @@ function PaymentLogo({ src, label, size = "normal" }) {
   }[size] || "max-h-6";
 
   return (
-    <div className="flex h-10 flex-1 items-center justify-center rounded-xl bg-white px-2 shadow-[0_10px_20px_rgba(0,0,0,0.16)]" aria-label={label} title={label}>
+    <div className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-white px-2 shadow-[0_10px_20px_rgba(0,0,0,0.16)] md:h-14" aria-label={label} title={label}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={label} className={`${sizeClass} max-w-full object-contain`} />
     </div>
@@ -1215,6 +1571,259 @@ function AuthTrustPill({ icon, label }) {
   );
 }
 
+function MobileAccountPanel({
+  accountMode,
+  accountMethod,
+  form,
+  saving,
+  resetSent,
+  sellerAccount,
+  canContinue,
+  setAccountMode,
+  switchAccountMethod,
+  updateField,
+  handleGoogleAuth,
+  handlePasswordReset,
+  onPrimary,
+  onContinueAccount,
+  onChangeAccount,
+  googleAuthEnabled,
+}) {
+  const isSignIn = accountMode === "SIGN_IN";
+  const isPhone = accountMethod === "PHONE";
+
+  return (
+    <section className="md:hidden">
+      <div className="flex min-h-[100dvh] flex-col justify-between pb-4 bg-[#fbf9f4]">
+        {/* Premium Header Block */}
+        <div>
+          <div className="relative overflow-hidden bg-gradient-to-b from-[#07120d] to-[#122b1f] px-5 pb-6 pt-[calc(1.2rem+env(safe-area-inset-top,0px))] text-white shadow-md">
+            {/* Background glowing pattern */}
+            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[#008f5a]/10 blur-3xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#008f5a] font-display text-base font-black text-white shadow-lg" aria-hidden="true">T</span>
+                <strong className="font-display text-lg font-black tracking-tight">Tikchop</strong>
+              </div>
+              <Link
+                href="/"
+                aria-label="Fermer"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/80 transition active:bg-white/20 no-underline"
+              >
+                <X size={16} />
+              </Link>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">Tikchop Seller</p>
+              <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white">
+                {isSignIn ? "Bon retour parmi nous" : "Créer ma boutique en 10s"}
+              </h1>
+              <p className="mt-1 text-xs text-white/60 font-semibold leading-relaxed">
+                {isSignIn ? "Connectez-vous pour gérer votre boutique mobile." : "Pas besoin d'ordinateur. Tout se gère depuis WhatsApp."}
+              </p>
+            </div>
+
+            {/* Trust Signal Badges */}
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <AuthTrustPill icon="⚡" label="En 10 secondes" />
+              <AuthTrustPill icon="📱" label="100% Mobile" />
+              <AuthTrustPill icon="🆓" label="Gratuit & sans carte" />
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="px-5 pt-5">
+            {/* Tab switchers */}
+            <div className="flex rounded-2xl bg-[#07120d]/5 p-0.5 ring-1 ring-[#07120d]/5">
+              <button
+                type="button"
+                onClick={() => switchAccountMethod("PHONE")}
+                className={`flex-1 flex min-h-[38px] items-center justify-center gap-1.5 rounded-[14px] text-xs font-bold transition-all duration-250 ${
+                  isPhone ? "bg-white text-[#07120d] shadow-sm" : "text-[#07120d]/60"
+                }`}
+              >
+                <MessageCircle size={14} />
+                Numéro WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() => switchAccountMethod("EMAIL")}
+                className={`flex-1 flex min-h-[38px] items-center justify-center gap-1.5 rounded-[14px] text-xs font-bold transition-all duration-250 ${
+                  !isPhone ? "bg-white text-[#07120d] shadow-sm" : "text-[#07120d]/60"
+                }`}
+              >
+                <Mail size={14} />
+                Adresse Email
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-3.5">
+              {sellerAccount?.id && (
+                <div className="rounded-[22px] bg-white p-4 shadow-[0_4px_18px_rgba(13,23,18,0.06)] ring-1 ring-[#07120d]/5">
+                  <p className="text-xs font-bold text-[#07120d] text-center">Compte déjà connecté</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={onContinueAccount}
+                      className="min-h-[40px] rounded-xl bg-[#008f5a] text-xs font-bold text-white shadow-sm hover:opacity-90 active:scale-[0.98] transition"
+                    >
+                      Continuer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onChangeAccount}
+                      className="min-h-[40px] rounded-xl bg-[#07120d]/5 text-xs font-bold text-[#07120d] active:scale-[0.98] transition"
+                    >
+                      Changer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isPhone ? (
+                <div>
+                  <PhoneInput
+                    label="Numéro WhatsApp"
+                    icon={<MessageCircle size={17} />}
+                    value={form.account_phone}
+                    onValueChange={(nextPhone) => {
+                      updateField("account_phone", nextPhone);
+                      if (!form.phone_number || form.phone_number === form.account_phone) {
+                        updateField("phone_number", nextPhone);
+                      }
+                    }}
+                    autoComplete="tel"
+                  />
+                  <p className="mt-1.5 px-1 text-[0.68rem] font-bold text-[#07120d]/40">
+                    Sera utilisé comme identifiant de votre boutique.
+                  </p>
+                </div>
+              ) : (
+                <AuthInput
+                  label="Adresse Email"
+                  icon={<Mail size={17} />}
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="vendeur@email.com"
+                  inputMode="email"
+                  autoComplete="email"
+                />
+              )}
+
+              {!isSignIn && (
+                <AuthInput
+                  label="Nom de votre boutique"
+                  icon={<Store size={17} />}
+                  value={form.name}
+                  onChange={(event) => updateField("name", event.target.value)}
+                  placeholder="Ex: Amina Boutique"
+                  autoComplete="organization"
+                />
+              )}
+
+              {!isSignIn && !isPhone && (
+                <PhoneInput
+                  label="WhatsApp boutique"
+                  icon={<MessageCircle size={17} />}
+                  value={form.phone_number}
+                  onValueChange={(nextPhone) => updateField("phone_number", nextPhone)}
+                  autoComplete="tel"
+                />
+              )}
+
+              <AuthInput
+                label="Mot de passe"
+                icon={<LockKeyhole size={17} />}
+                value={form.password}
+                onChange={(event) => updateField("password", event.target.value)}
+                placeholder={isSignIn ? "Votre mot de passe" : "Minimum 6 caractères"}
+                type="password"
+                autoComplete={isSignIn ? "current-password" : "new-password"}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Panel */}
+        <div className="mt-6 px-5 space-y-3">
+          <button
+            type="button"
+            disabled={!canContinue || saving}
+            onClick={onPrimary}
+            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#008f5a] text-sm font-extrabold text-white shadow-lg shadow-[#008f5a]/20 hover:bg-[#007a4d] disabled:bg-[#07120d]/20 disabled:shadow-none disabled:text-[#07120d]/40 transition active:scale-[0.98]"
+          >
+            {saving ? <Loader2 className="animate-spin" size={16} /> : null}
+            {saving ? (isSignIn ? "Connexion en cours..." : "Création de la boutique...") : (isSignIn ? "Se connecter" : "Lancer ma boutique")}
+          </button>
+
+          {googleAuthEnabled && (
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={saving}
+              className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-white border border-[#07120d]/10 text-xs font-bold text-[#07120d] hover:bg-zinc-50 disabled:opacity-60 transition active:scale-[0.98]"
+            >
+              <GoogleMark />
+              Continuer avec Google
+            </button>
+          )}
+
+          {isSignIn && !isPhone && (
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={saving}
+              className="w-full text-center text-xs font-bold text-[#008f5a] hover:underline disabled:text-[#07120d]/40"
+            >
+              Mot de passe oublié ?
+            </button>
+          )}
+
+          {resetSent && (
+            <p className="rounded-xl bg-emerald-50 py-2 text-center text-xs font-bold text-emerald-800 ring-1 ring-emerald-100 animate-pulse">
+              Email de réinitialisation envoyé.
+            </p>
+          )}
+
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (isSignIn) {
+                  setAccountMode("SIGN_UP");
+                  switchAccountMethod("PHONE");
+                } else {
+                  setAccountMode("SIGN_IN");
+                }
+              }}
+              className="text-xs font-black text-[#008f5a] hover:text-[#007a4d]"
+            >
+              {isSignIn ? "Créer une nouvelle boutique →" : "J'ai déjà un compte vendeur →"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileAuthMethodPill({ active, icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-[50px] items-center justify-center gap-2 rounded-[24px] px-4 text-base font-black transition active:scale-[0.99] ${
+        active ? "bg-[#e8f8ee] text-[var(--primary)]" : "bg-[#f0f0f0] text-[var(--text-dim)]"
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function SimpleAccountForm({
   accountMode,
   accountMethod,
@@ -1226,6 +1835,7 @@ function SimpleAccountForm({
   updateField,
   handleGoogleAuth,
   handlePasswordReset,
+  googleAuthEnabled,
 }) {
   const isSignIn = accountMode === "SIGN_IN";
   const isPhone = accountMethod === "PHONE";
@@ -1233,19 +1843,49 @@ function SimpleAccountForm({
   return (
     <div className="space-y-3">
       <div className="rounded-[24px] bg-[var(--surface-soft)] p-3">
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => switchAccountMethod("PHONE")}
+            className={`min-h-[46px] rounded-2xl px-3 text-sm font-extrabold ${
+              isPhone
+                ? "bg-[var(--text-main)] text-white shadow-sm"
+                : "bg-white text-[var(--text-dim)] ring-1 ring-[var(--outline)]/45"
+            }`}
+          >
+            Numero WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={() => switchAccountMethod("EMAIL")}
+            className={`min-h-[46px] rounded-2xl px-3 text-sm font-extrabold ${
+              !isPhone
+                ? "bg-[var(--text-main)] text-white shadow-sm"
+                : "bg-white text-[var(--text-dim)] ring-1 ring-[var(--outline)]/45"
+            }`}
+          >
+            Email
+          </button>
+        </div>
+
         {isPhone ? (
-          <PhoneInput
-            label="Numero WhatsApp"
-            icon={<MessageCircle size={19} />}
-            value={form.account_phone}
-            onValueChange={(nextPhone) => {
-              updateField("account_phone", nextPhone);
-              if (!form.phone_number || form.phone_number === form.account_phone) {
-                updateField("phone_number", nextPhone);
-              }
-            }}
-            autoComplete="tel"
-          />
+          <>
+            <PhoneInput
+              label="Numero WhatsApp"
+              icon={<MessageCircle size={19} />}
+              value={form.account_phone}
+              onValueChange={(nextPhone) => {
+                updateField("account_phone", nextPhone);
+                if (!form.phone_number || form.phone_number === form.account_phone) {
+                  updateField("phone_number", nextPhone);
+                }
+              }}
+              autoComplete="tel"
+            />
+            <p className="mt-2 rounded-2xl bg-white px-3 py-2 text-xs font-bold leading-4 text-[var(--text-dim)] ring-1 ring-[var(--outline)]/45">
+              Aucun code SMS. Le numero sert d&apos;identifiant pour retrouver la boutique.
+            </p>
+          </>
         ) : (
           <AuthInput
             label="Email vendeur"
@@ -1255,6 +1895,28 @@ function SimpleAccountForm({
             placeholder="vendeur@email.com"
             inputMode="email"
             autoComplete="email"
+          />
+        )}
+
+        {!isSignIn && !isPhone && (
+          <PhoneInput
+            label="Numero WhatsApp boutique"
+            icon={<MessageCircle size={19} />}
+            value={form.phone_number}
+            onValueChange={(nextPhone) => updateField("phone_number", nextPhone)}
+            autoComplete="tel"
+          />
+        )}
+
+        {!isSignIn && (
+          <AuthInput
+            className="mt-3"
+            label="Nom de la boutique"
+            icon={<Store size={19} />}
+            value={form.name}
+            onChange={(event) => updateField("name", event.target.value)}
+            placeholder="Ex: Amina Mode"
+            autoComplete="organization"
           />
         )}
 
@@ -1269,16 +1931,13 @@ function SimpleAccountForm({
           autoComplete={isSignIn ? "current-password" : "new-password"}
         />
 
-        {isSignIn && (
-          <button
-            type="button"
-            onClick={() => switchAccountMethod(isPhone ? "EMAIL" : "PHONE")}
-            className="mt-3 min-h-[40px] w-full rounded-2xl bg-white px-4 text-sm font-extrabold text-[var(--primary)] ring-1 ring-[var(--outline)]/50"
-          >
-            {isPhone ? "Email" : "WhatsApp"}
-          </button>
-        )}
       </div>
+
+      {!isSignIn && (
+        <div className="rounded-[18px] bg-white p-3 text-sm font-bold leading-5 text-[var(--text-dim)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/45">
+          Votre lien sera <span className="text-[var(--primary)]">tikchop/{slugify(form.name) || "ma-boutique"}</span>. Vous pourrez ajouter les articles juste apres.
+        </div>
+      )}
 
       {isSignIn && !isPhone && (
         <div className="rounded-[18px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/45">
@@ -1298,15 +1957,17 @@ function SimpleAccountForm({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleGoogleAuth}
-        disabled={saving}
-        className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-extrabold text-[var(--text-main)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/55 disabled:opacity-60"
-      >
-        <GoogleMark />
-        Google
-      </button>
+      {googleAuthEnabled && (
+        <button
+          type="button"
+          onClick={handleGoogleAuth}
+          disabled={saving}
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-extrabold text-[var(--text-main)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/55 disabled:opacity-60"
+        >
+          <GoogleMark />
+          Google
+        </button>
+      )}
 
       {isSignIn && (
         <button
@@ -1317,7 +1978,7 @@ function SimpleAccountForm({
           }}
           className="w-full text-center text-sm font-extrabold text-[var(--primary)]"
         >
-          Creer une boutique
+          Creer une nouvelle boutique
         </button>
       )}
 

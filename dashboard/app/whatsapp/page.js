@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Banknote,
@@ -8,10 +9,14 @@ import {
   KeyRound,
   Loader2,
   MessageCircle,
+  MonitorSmartphone,
   Package,
+  Phone,
   PlugZap,
   Power,
+  QrCode,
   RefreshCw,
+  ScanLine,
   ShieldCheck,
   Smartphone,
   Truck,
@@ -24,9 +29,10 @@ import {
   getSellerWhatsAppConnection,
   requestSellerWhatsAppPairing,
   repairSellerWhatsAppWebhook,
+  refreshSellerWhatsAppPairingCode,
   saveSellerChatbotSettings,
 } from "../seller-actions";
-import { useActiveSeller } from "../components/sellerContext";
+import { useActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 
@@ -34,10 +40,31 @@ function formatPairingCode(code) {
   return String(code || "").match(/.{1,4}/g)?.join(" ") || code || "";
 }
 
+function getPairingValidityLabel(pairing) {
+  if (!pairing?.pairingExpiresAt) return "Valable quelques minutes.";
+  const expiresAt = new Date(pairing.pairingExpiresAt).getTime();
+  if (!Number.isFinite(expiresAt)) return "Valable quelques minutes.";
+  const minutes = Math.max(1, Math.ceil((expiresAt - Date.now()) / 60000));
+  return `Valable environ ${minutes} min. Regenere si WhatsApp refuse.`;
+}
+
+function normalizeWhatsAppInput(value) {
+  const raw = String(value || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "+225 ";
+  if (digits.startsWith("225")) return `+${digits}`;
+  if (digits.length <= 10) return `+225 ${digits}`;
+  return raw.startsWith("+") ? raw : `+${digits}`;
+}
+
+function getPhoneDigits(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
 function statusCopy(connection) {
   if (!connection) {
     return {
-      label: "Verification",
+      label: "Verification...",
       tone: "bg-[var(--surface-mid)] text-[var(--text-dim)]",
       icon: <Loader2 className="animate-spin" size={18} />,
     };
@@ -53,9 +80,17 @@ function statusCopy(connection) {
 
   if (connection.state === "pairing" || connection.state === "connecting") {
     return {
-      label: "Appairage",
+      label: "En attente",
       tone: "bg-amber-100 text-amber-800",
       icon: <KeyRound size={18} />,
+    };
+  }
+
+  if (connection.state === "error") {
+    return {
+      label: "Erreur",
+      tone: "bg-red-100 text-red-800",
+      icon: <Unplug size={18} />,
     };
   }
 
@@ -69,7 +104,7 @@ function statusCopy(connection) {
 const DJASSAMAN_PRESET = {
   bot_tone: "Francais ivoirien simple, chaud et convaincant. Parle comme un bon vendeur WhatsApp: poli, direct, rassurant, jamais robotique.",
   bot_greeting: "Bonjour, bienvenue chez nous. Dites-moi ce que vous cherchez, je vous montre les articles disponibles et je vous aide a commander rapidement.",
-  bot_payment_preferences: "Proposer Wave en premier, puis Orange Money, MTN MoMo, Djamo ou paiement a la livraison si la zone le permet. Toujours confirmer le montant total avant d'encaisser.",
+  bot_payment_preferences: "Proposer le paiement a la livraison en premier quand la zone le permet, puis Wave, Orange Money, MTN MoMo ou Djamo. Toujours confirmer le montant total avant d'encaisser.",
   bot_delivery_notes: "Demander quartier, commune, point de repere et numero joignable. Apres paiement ou confirmation, envoyer les infos utiles au livreur par WhatsApp et tenir le client informe.",
   bot_special_rules: "Toujours verifier stock, taille/couleur et prix avant de confirmer. Envoyer un recu ou recap clair au client. Relancer poliment si le client hesite, sans forcer.",
 };
@@ -83,6 +118,8 @@ export default function WhatsAppPage() {
   const [watchingConnection, setWatchingConnection] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("+225 ");
+  const [phoneEdited, setPhoneEdited] = useState(false);
   const [settings, setSettings] = useState({
     bot_tone: "",
     bot_greeting: "",
@@ -92,6 +129,10 @@ export default function WhatsAppPage() {
   });
 
   const status = useMemo(() => statusCopy(connection), [connection]);
+  const storedWhatsAppNumber = normalizeWhatsAppInput(connection?.phone ? `+${connection.phone}` : seller.phone_number || "+225 ");
+  const currentWhatsAppNumber = phoneEdited ? whatsappNumber : storedWhatsAppNumber;
+  const phoneDigits = getPhoneDigits(currentWhatsAppNumber);
+  const phoneReady = phoneDigits.length >= 11;
 
   async function refreshConnection() {
     if (!seller.slug) return;
@@ -180,8 +221,19 @@ export default function WhatsAppPage() {
       setBusy("pairing");
       setError("");
       setMessage("");
+      const normalizedPhone = normalizeWhatsAppInput(currentWhatsAppNumber);
+      if (getPhoneDigits(normalizedPhone).length < 11) {
+        setError("Ajoute le numero WhatsApp vendeur avant de generer le QR.");
+        setBusy("");
+        return;
+      }
+
       const token = await getSellerAccessToken();
-      const data = await requestSellerWhatsAppPairing(seller, token);
+      const data = await requestSellerWhatsAppPairing(seller, token, normalizedPhone);
+      const savedPhone = data.phoneDisplay || (data.phone ? `+${data.phone}` : normalizedPhone);
+      setWhatsappNumber(normalizeWhatsAppInput(savedPhone));
+      setPhoneEdited(false);
+      writeActiveSeller({ ...seller, phone_number: savedPhone });
       setPairing(data);
       setConnection((current) => ({
         ...(current || {}),
@@ -193,9 +245,49 @@ export default function WhatsAppPage() {
         error: "",
       }));
       setWatchingConnection(true);
-      setMessage("Code genere. Tikchop verifie automatiquement la connexion.");
+      setMessage(data.pairingCode
+        ? "QR et code generes. Scanne le QR ou entre le code dans WhatsApp si l'option par numero apparait."
+        : "QR genere. Scanne-le avec WhatsApp sur ton telephone. Tikchop verifie automatiquement la connexion.");
     } catch (err) {
       setError(friendlyError(err, "Connexion WhatsApp non lancee. Verifiez le numero de la boutique ou contactez le support Tikchop."));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function regeneratePairingCode() {
+    try {
+      setBusy("code");
+      setError("");
+      setMessage("");
+      const normalizedPhone = normalizeWhatsAppInput(currentWhatsAppNumber);
+      if (getPhoneDigits(normalizedPhone).length < 11) {
+        setError("Ajoute le numero WhatsApp vendeur avant de regenerer le code.");
+        setBusy("");
+        return;
+      }
+
+      const token = await getSellerAccessToken();
+      const data = await refreshSellerWhatsAppPairingCode(seller, token, normalizedPhone);
+      const savedPhone = data.phoneDisplay || (data.phone ? `+${data.phone}` : normalizedPhone);
+      setWhatsappNumber(normalizeWhatsAppInput(savedPhone));
+      setPhoneEdited(false);
+      writeActiveSeller({ ...seller, phone_number: savedPhone });
+      setPairing(data);
+      setConnection((current) => ({
+        ...(current || {}),
+        instanceName: data.instanceName,
+        phone: data.phone,
+        state: "pairing",
+        isConnected: false,
+        error: "",
+      }));
+      setWatchingConnection(true);
+      setMessage(data.pairingCode
+        ? "Code WhatsApp temporaire genere. Ouvre WhatsApp > Appareils connectes > Lier avec un numero."
+        : "Code non recu. Reessaie ou utilise le QR.");
+    } catch (err) {
+      setError(friendlyError(err, "Code WhatsApp non regenere. Reessayez ou utilisez le QR."));
     } finally {
       setBusy("");
     }
@@ -306,19 +398,20 @@ export default function WhatsAppPage() {
     : "";
 
   return (
-    <div className="app-shell">
-      <header className="mobile-top">
+    <div className="app-shell md:max-w-[1120px]">
+      {/* Desktop-only header */}
+      <header className="mobile-top hidden md:block">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="quiet-label text-[var(--primary)]">Chatbot</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">WhatsApp</h1>
-            <p className="mt-1 text-sm leading-5 text-[var(--text-dim)]">{seller.name}</p>
+            <p className="quiet-label text-[#008f5a]">Chatbot</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">WhatsApp</h1>
+            <p className="mt-1 text-sm leading-5 text-[#07120d]/55">{seller.name}</p>
           </div>
           <button
             type="button"
             onClick={refreshConnection}
             disabled={loading}
-            className="app-icon-button"
+            className="app-icon-button bg-[#07120d] text-white"
             aria-label="Actualiser WhatsApp"
           >
             <RefreshCw className={loading ? "animate-spin" : ""} size={18} />
@@ -326,40 +419,135 @@ export default function WhatsAppPage() {
         </div>
       </header>
 
-      <main className="mt-6 space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-0">
-        <section className="djassa-command p-5">
-          <div className="relative z-10 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">Assistant vendeur</p>
-              <h2 className="mt-2 font-display text-[2rem] font-bold leading-10 text-white">Laissez Tikchop repondre aux clients.</h2>
-              <p className="mt-2 text-sm font-semibold leading-5 text-white/76">
-                Il conseille, prend les commandes, gere le paiement et prepare les infos pour vos livreurs.
+      <main className="mt-4 space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:space-y-6 md:pb-10">
+        <MobileWhatsAppPwaPanel
+          busy={busy}
+          connection={connection}
+          currentWhatsAppNumber={currentWhatsAppNumber}
+          loading={loading}
+          pairing={pairing}
+          phoneReady={phoneReady}
+          qrSource={qrSource}
+          status={status}
+          watchingConnection={watchingConnection}
+          onActivateStandard={activateStandardAssistant}
+          onConnect={connectWhatsApp}
+          onCopyPairingCode={copyPairingCode}
+          onDisconnect={disconnectWhatsApp}
+          onPhoneBlur={() => setWhatsappNumber((current) => normalizeWhatsAppInput(current))}
+          onPhoneChange={(value) => {
+            setPhoneEdited(true);
+            setWhatsappNumber(value);
+          }}
+          onRefresh={refreshConnection}
+          onRefreshPairingCode={regeneratePairingCode}
+        />
+
+        <section className="hidden overflow-hidden rounded-[32px] bg-[#06110c] p-4 text-white shadow-[0_28px_70px_rgba(8,18,13,0.22)] md:grid md:min-h-[520px] md:grid-cols-[minmax(0,0.9fr)_minmax(430px,1.1fr)] md:gap-6 md:p-6 lg:p-8">
+          <div className="relative z-10 flex min-w-0 flex-col justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary-bright)] ring-1 ring-white/10">
+                  <MonitorSmartphone size={15} />
+                  QR sur second ecran
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#07100a]" : "bg-white/10 text-white/78"}`}>
+                  {status.icon}
+                  {status.label}
+                </span>
+              </div>
+              <h1 className="mt-5 font-display text-[2.55rem] font-black leading-[2.65rem] text-white md:text-[4rem] md:leading-[4rem]">
+                Scannez le QR. Tikchop vend avec votre WhatsApp.
+              </h1>
+              <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/72">
+                Ouvrez cette page sur un ordinateur ou un autre telephone, puis scannez le QR avec WhatsApp. Sur un seul telephone, utilisez le code WhatsApp temporaire ou activez le numero Tikchop Standard.
               </p>
             </div>
-            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold shadow-[0_10px_22px_rgba(0,0,0,0.14)] ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#07100a]" : "bg-white/14 text-white/82"}`}>
-              {status.icon}
-              {status.label}
-            </span>
+
+            <div className="mt-6 grid gap-3 md:max-w-[560px]">
+              <button
+                type="button"
+                onClick={connectWhatsApp}
+                disabled={busy === "pairing" || !phoneReady}
+                className="flex min-h-[62px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-5 text-base font-black text-[#07120d] shadow-[0_18px_38px_rgba(57,245,142,0.23)] disabled:opacity-70"
+              >
+                {busy === "pairing" ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={21} />}
+                {!phoneReady ? "Ajoute le numero" : pairing ? "Regenerer le QR" : "Generer le QR WhatsApp"}
+              </button>
+              <div className="grid gap-2 min-[520px]:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={refreshConnection}
+                  disabled={loading}
+                  className="flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] bg-white/10 px-4 text-sm font-black text-white ring-1 ring-white/12 disabled:opacity-60"
+                >
+                  <RefreshCw className={loading ? "animate-spin" : ""} size={17} />
+                  Verifier
+                </button>
+                <button
+                  type="button"
+                  onClick={disconnectWhatsApp}
+                  disabled={busy === "disconnect" || !connection?.instanceName}
+                  className="flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] bg-white/10 px-4 text-sm font-black text-white ring-1 ring-white/12 disabled:opacity-45"
+                >
+                  {busy === "disconnect" ? <Loader2 className="animate-spin" size={17} /> : <Power size={17} />}
+                  Deconnecter
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="relative z-10 mt-5 grid gap-2 min-[420px]:grid-cols-3">
-            <InfoTile icon={<MessageCircle size={19} />} title="Repond" text="Prix, stock, conseils." />
-            <InfoTile icon={<Banknote size={19} />} title="Encaisse" text="Wave, OM, MoMo." />
-            <InfoTile icon={<Truck size={19} />} title="Livre" text="Infos au livreur." />
-          </div>
+
+          <QrConnectionPanel
+            pairing={pairing}
+            qrSource={qrSource}
+            connection={connection}
+            whatsappNumber={currentWhatsAppNumber}
+            phoneReady={phoneReady}
+            busy={busy}
+            loading={loading}
+            watchingConnection={watchingConnection}
+            onConnect={connectWhatsApp}
+            onRefresh={refreshConnection}
+            onRefreshPairingCode={regeneratePairingCode}
+            onPhoneChange={(value) => {
+              setPhoneEdited(true);
+              setWhatsappNumber(value);
+            }}
+            onPhoneBlur={() => setWhatsappNumber((current) => normalizeWhatsAppInput(current))}
+            onCopyPairingCode={copyPairingCode}
+          />
         </section>
 
         {(message || error || connection?.error) && (
-          <div className={`rounded-lg p-4 text-sm font-bold leading-5 ${error || connection?.error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-100" : "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100"}`}>
+          <div className={`rounded-[22px] p-4 text-sm font-bold leading-5 ${error || connection?.error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#eafff1] text-[#005f3d] ring-1 ring-emerald-200"}`}>
             {error || connection?.error || message}
           </div>
         )}
-        <WhatsAppPlans
-          connection={connection}
-          busy={busy}
-          onActivateStandard={activateStandardAssistant}
-          onConnect={connectWhatsApp}
-          onRepair={repairWebhook}
-        />
+
+        <section className="hidden gap-3 md:grid md:grid-cols-3">
+          <InfoTile icon={<MessageCircle size={20} />} title="Repond" text="Prix, stock, disponibilite." />
+          <InfoTile icon={<Banknote size={20} />} title="Encaisse" text="Wave, OM, MoMo ou livraison." />
+          <InfoTile icon={<Truck size={20} />} title="Livre" text="Recap clair au livreur." />
+        </section>
+
+        <section className="hidden rounded-[28px] bg-white p-5 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.42)] md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-5">
+          <div>
+            <p className="quiet-label text-[var(--primary)]">Alternative simple</p>
+            <h2 className="mt-1 font-display text-2xl font-black text-[var(--text-main)]">Pas envie de scanner maintenant ?</h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[var(--text-dim)]">
+              Active le numero Tikchop Standard. Les clients passent par Tikchop, et tes commandes arrivent dans ton dashboard.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={activateStandardAssistant}
+            disabled={busy === "standard" || connection?.provider === "tikchop_standard"}
+            className="mt-4 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-60 md:mt-0"
+          >
+            {busy === "standard" ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+            {connection?.provider === "tikchop_standard" ? "Standard actif" : "Activer Standard"}
+          </button>
+        </section>
 
         <section className="hidden djassa-command p-5">
           <div className="flex items-start justify-between gap-4">
@@ -398,7 +586,7 @@ export default function WhatsAppPage() {
         </section>
 
         {pairing && (
-          <section className="app-card p-5">
+          <section className="hidden app-card p-5">
             <div className="flex items-start gap-3">
               <span className="app-icon-pill shrink-0 bg-[var(--surface-soft)] text-[var(--primary)]">
                 <KeyRound size={22} />
@@ -465,7 +653,7 @@ export default function WhatsAppPage() {
         )}
 
         {connection?.isConnected && (
-          <section className="rounded-lg bg-emerald-50 p-4 text-sm font-bold leading-5 text-emerald-900 ring-1 ring-emerald-100">
+          <section className="hidden rounded-lg bg-emerald-50 p-4 text-sm font-bold leading-5 text-emerald-900 ring-1 ring-emerald-100 md:block">
             Le numero est connecte. Pour tester, envoie un message WhatsApp a cette boutique depuis un autre numero.
           </section>
         )}
@@ -474,7 +662,7 @@ export default function WhatsAppPage() {
           <SalesAutomationPreview isConnected={connection?.isConnected} onApplyPreset={applyDjassamanPreset} />
         </div>
 
-        <details className="app-card p-5">
+        <details className="hidden app-card p-5 md:block">
           <summary className="cursor-pointer list-none text-sm font-extrabold text-[var(--text-main)]">
             Options avancees
           </summary>
@@ -557,6 +745,243 @@ export default function WhatsAppPage() {
   );
 }
 
+function QrConnectionPanel({
+  pairing,
+  qrSource,
+  connection,
+  whatsappNumber,
+  phoneReady,
+  busy,
+  loading,
+  watchingConnection,
+  onConnect,
+  onRefresh,
+  onRefreshPairingCode,
+  onPhoneChange,
+  onPhoneBlur,
+  onCopyPairingCode,
+}) {
+  const isConnected = Boolean(connection?.isConnected);
+  const hasPairing = Boolean(pairing);
+  const hasCode = Boolean(pairing?.pairingCode);
+  const hasCodeOnlyPairing = pairing?.pairingMode === "code";
+
+  return (
+    <div className="mt-6 rounded-[28px] bg-white p-4 text-[var(--text-main)] shadow-[0_24px_60px_rgba(0,0,0,0.22)] ring-1 ring-white/40 md:mt-0 md:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="quiet-label text-[var(--primary)]">QR Evolution</p>
+          <h2 className="mt-1 font-display text-2xl font-black leading-8 md:text-3xl">Connecter WhatsApp</h2>
+        </div>
+        {watchingConnection ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-800">
+            <Loader2 className="animate-spin" size={14} />
+            Verification
+          </span>
+        ) : (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${isConnected ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-700"}`}>
+            {isConnected ? <CheckCircle2 size={14} /> : <QrCode size={14} />}
+            {isConnected ? "Connecte" : "Pret"}
+          </span>
+        )}
+      </div>
+
+      {!isConnected && (
+        <div className="mt-5 rounded-[24px] bg-[#07120d] p-3 text-white shadow-[0_18px_38px_rgba(8,18,13,0.16)]">
+          <label htmlFor="seller-whatsapp-number" className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary-bright)]">
+            <Phone size={15} />
+            Numero WhatsApp vendeur
+          </label>
+          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[#07120d]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-[var(--primary)]">
+              <Smartphone size={19} />
+            </span>
+            <input
+              id="seller-whatsapp-number"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={whatsappNumber}
+              onChange={(event) => onPhoneChange(event.target.value)}
+              onBlur={onPhoneBlur}
+              placeholder="+225 07 00 00 00 00"
+              className="min-h-12 w-full bg-transparent text-lg font-black tracking-normal outline-none placeholder:text-zinc-400"
+            />
+          </div>
+          <p className="mt-2 text-xs font-bold leading-4 text-white/68">
+            Le QR sera genere pour ce numero. Mets le numero WhatsApp que le vendeur utilise avec ses clients.
+          </p>
+          {!phoneReady && (
+            <p className="mt-2 rounded-2xl bg-amber-100 px-3 py-2 text-xs font-black leading-4 text-amber-950">
+              Entre le numero avant de generer le QR.
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_190px] lg:items-start">
+        <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
+          {isConnected ? (
+            <div className="flex min-h-[270px] flex-col items-center justify-center text-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-emerald-100 text-emerald-700">
+                <CheckCircle2 size={34} />
+              </span>
+              <h3 className="mt-4 font-display text-2xl font-black text-[var(--text-main)]">WhatsApp est connecte</h3>
+              <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                Tikchop peut maintenant recevoir les messages et vendre depuis ce numero.
+              </p>
+              <Link
+                href="/messages"
+                className="mt-5 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#08120d] px-5 text-sm font-black text-white no-underline"
+              >
+                <MessageCircle size={17} />
+                Voir les discussions
+              </Link>
+            </div>
+          ) : qrSource ? (
+            <div className="flex flex-col items-center justify-center">
+              <div className="rounded-[24px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.6)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={qrSource} alt="QR WhatsApp Evolution" className="h-[260px] w-[260px] max-w-full object-contain md:h-[310px] md:w-[310px]" />
+              </div>
+              <p className="mt-3 text-center text-sm font-black text-[var(--text-main)]">Scanne ce QR avec WhatsApp sur ton telephone.</p>
+              <p className="mt-1 text-center text-xs font-bold leading-4 text-[var(--text-dim)]">Le QR expire vite. Regenerer si WhatsApp refuse.</p>
+            </div>
+          ) : hasPairing ? (
+            <div className="flex min-h-[270px] flex-col items-center justify-center text-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-amber-100 text-amber-800 shadow-[var(--shadow-sm)]">
+                <KeyRound size={34} />
+              </span>
+              <h3 className="mt-4 font-display text-2xl font-black text-[var(--text-main)]">
+                {pairing.pairingCode ? "Code WhatsApp pret" : "Code non recu"}
+              </h3>
+              <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                {pairing.pairingCode
+                  ? "Entre le code dans WhatsApp si l'option de liaison avec numero est affichee."
+                  : "Genere un code neuf pour la liaison par numero, ou scanne le QR."}
+              </p>
+              <button
+                type="button"
+                onClick={onRefreshPairingCode}
+                disabled={busy === "code"}
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-70"
+              >
+                {busy === "code" ? <Loader2 className="animate-spin" size={18} /> : <RefreshCw size={18} />}
+                Reessayer
+              </button>
+            </div>
+          ) : (
+            <div className="flex min-h-[270px] flex-col items-center justify-center text-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-white text-[var(--primary)] shadow-[var(--shadow-sm)]">
+                <ScanLine size={36} />
+              </span>
+              <h3 className="mt-4 font-display text-2xl font-black text-[var(--text-main)]">QR pret a generer</h3>
+              <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                Clique sur le bouton, puis ouvre WhatsApp sur ton telephone pour scanner.
+              </p>
+              <button
+                type="button"
+                onClick={onConnect}
+                disabled={busy === "pairing" || !phoneReady}
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-70"
+              >
+                {busy === "pairing" ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
+                Generer le QR
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <QrStep icon={<Smartphone size={18} />} title="1. Telephone" text="Ouvre WhatsApp." />
+          <QrStep icon={<MonitorSmartphone size={18} />} title="2. Appareils" text="Va dans Appareils connectes." />
+          <QrStep icon={<ScanLine size={18} />} title="3. Scan" text="Scanne le QR affiche ici." />
+          <div className="rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-4 text-amber-900 ring-1 ring-amber-100">
+            Sur le meme telephone, le QR est difficile a scanner. Affiche Tikchop sur un autre ecran, ou utilise le code WhatsApp si Appareils connectes propose la liaison par numero.
+          </div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="mt-1 flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-[var(--outline)] bg-white px-4 text-xs font-black text-[var(--text-main)] disabled:opacity-60"
+          >
+            <RefreshCw className={loading ? "animate-spin" : ""} size={15} />
+            Verifier
+          </button>
+        </div>
+      </div>
+
+      {hasPairing && hasCode && (
+        <div className="mt-4 rounded-[22px] border border-[var(--outline)] bg-white p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--text-dim)]">Code WhatsApp temporaire</p>
+              <p className="mt-1 font-display text-2xl font-black text-[var(--primary)]">{formatPairingCode(pairing.pairingCode)}</p>
+            </div>
+            <button type="button" onClick={onCopyPairingCode} className="app-icon-button" aria-label="Copier le code WhatsApp temporaire">
+              <Copy size={17} />
+            </button>
+          </div>
+          <p className="mt-3 text-xs font-bold leading-4 text-[var(--text-dim)]">
+            Ce n&apos;est pas le mot de passe Tikchop. Ouvre WhatsApp, Appareils connectes, puis choisis la liaison avec numero si l&apos;option est affichee. {getPairingValidityLabel(pairing)}
+          </p>
+          <button
+            type="button"
+            onClick={onRefreshPairingCode}
+            disabled={busy === "code"}
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#08120d] px-4 text-xs font-black text-white disabled:opacity-60"
+          >
+            {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
+            Generer un nouveau code
+          </button>
+        </div>
+      )}
+      {hasPairing && !hasCode && !hasCodeOnlyPairing && (
+        <div className="mt-4 rounded-[22px] bg-emerald-50 p-3 text-xs font-bold leading-4 text-emerald-950 ring-1 ring-emerald-100">
+          Le QR est pret. Pour connecter sans scanner, genere un code WhatsApp neuf dedie au mode numero.
+          <button
+            type="button"
+            onClick={onRefreshPairingCode}
+            disabled={busy === "code"}
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#08120d] px-4 text-xs font-black text-white disabled:opacity-60"
+          >
+            {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
+            Generer un code WhatsApp
+          </button>
+        </div>
+      )}
+      {hasPairing && !pairing.pairingCode && pairing.pairingError && (
+        <div className="mt-4 rounded-[22px] bg-amber-50 p-3 text-xs font-bold leading-4 text-amber-900 ring-1 ring-amber-100">
+          Le QR est disponible, mais Evolution n&apos;a pas donne de code WhatsApp pour cette tentative. Regenere le QR ou utilise Tikchop sur un second ecran.
+          <button
+            type="button"
+            onClick={onRefreshPairingCode}
+            disabled={busy === "code"}
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-amber-950 px-4 text-xs font-black text-white disabled:opacity-60"
+          >
+            {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
+            Reessayer le code
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QrStep({ icon, title, text }) {
+  return (
+    <div className="grid grid-cols-[auto_1fr] gap-3 rounded-2xl bg-[var(--surface-soft)] p-3">
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[var(--primary)] shadow-sm">
+        {icon}
+      </span>
+      <span>
+        <span className="block text-sm font-black text-[var(--text-main)]">{title}</span>
+        <span className="mt-0.5 block text-xs font-bold leading-4 text-[var(--text-dim)]">{text}</span>
+      </span>
+    </div>
+  );
+}
+
 function SalesAutomationPreview({ isConnected, onApplyPreset }) {
   const steps = [
     {
@@ -620,6 +1045,37 @@ function SalesAutomationPreview({ isConnected, onApplyPreset }) {
           Appliquer le preset vendeur
         </button>
       </div>
+    </section>
+  );
+}
+
+function WhatsAppStateGuide({ statusLabel, connected, watching, hasError }) {
+  const items = [
+    {
+      label: "Etat",
+      value: hasError ? "Erreur" : watching ? "En attente" : connected ? "Connecte" : statusLabel,
+      tone: hasError ? "bg-red-50 text-red-800" : connected ? "bg-emerald-50 text-emerald-900" : watching ? "bg-amber-50 text-amber-900" : "bg-white text-[var(--text-main)]",
+    },
+    {
+      label: "A faire",
+      value: connected ? "Tester Messages" : watching ? "Ouvrir WhatsApp" : "Entrer le numero",
+      tone: "bg-white text-[var(--text-main)]",
+    },
+    {
+      label: "Code",
+      value: "Optionnel",
+      tone: "bg-white text-[var(--text-main)]",
+    },
+  ];
+
+  return (
+    <section className="grid grid-cols-3 gap-2 rounded-[24px] bg-[var(--surface-soft)] p-2 shadow-[var(--shadow-sm)] ring-1 ring-[var(--line)] md:hidden">
+      {items.map((item) => (
+        <div key={item.label} className={`rounded-[18px] px-2 py-3 text-center ring-1 ring-[var(--line)] ${item.tone}`}>
+          <p className="text-[0.62rem] font-black uppercase leading-3 opacity-60">{item.label}</p>
+          <p className="mt-1 truncate text-xs font-black">{item.value}</p>
+        </div>
+      ))}
     </section>
   );
 }
@@ -779,5 +1235,232 @@ function InfoTile({ icon, title, text }) {
       <p className="mt-3 text-sm font-bold text-[var(--text-main)]">{title}</p>
       <p className="mt-1 text-xs font-semibold leading-4 text-[var(--text-dim)]">{text}</p>
     </div>
+  );
+}
+
+function MobileWhatsAppPwaPanel({
+  busy,
+  connection,
+  currentWhatsAppNumber,
+  loading,
+  pairing,
+  phoneReady,
+  qrSource,
+  status,
+  watchingConnection,
+  onActivateStandard,
+  onConnect,
+  onCopyPairingCode,
+  onDisconnect,
+  onPhoneBlur,
+  onPhoneChange,
+  onRefresh,
+  onRefreshPairingCode,
+}) {
+  const connected = Boolean(connection?.isConnected);
+  const standardActive = connection?.provider === "tikchop_standard";
+  const ownWhatsAppActive = connected && !standardActive;
+  const hasPairing = Boolean(pairing);
+  const hasCode = Boolean(pairing?.pairingCode);
+  const hasQr = Boolean(qrSource);
+
+  return (
+    <section className="space-y-3 md:hidden">
+      {/* Main connection card */}
+      <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_14px_rgba(7,18,13,0.07)]">
+        {/* Status bar */}
+        <div className="flex items-center justify-between border-b border-[#07120d]/8 px-4 py-3">
+          <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black ${
+            connected ? "bg-[#eafff5] text-[#005f3d]" : "bg-[#07120d]/7 text-[#07120d]/60"
+          }`}>
+            {status?.icon}
+            {status?.label || "Pret"}
+          </span>
+          {watchingConnection && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-800">
+              <Loader2 className="animate-spin" size={13} />
+              Verification
+            </span>
+          )}
+        </div>
+
+        <div className="p-4">
+          {ownWhatsAppActive ? (
+            <div className="text-center py-2">
+              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#eafff5] text-[#008f5a]">
+                <CheckCircle2 size={34} />
+              </span>
+              <h3 className="mt-3 font-display text-2xl font-black text-[#07120d]">Connecte</h3>
+              <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Tikchop repond depuis ce numero WhatsApp.</p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={onRefresh}
+                  disabled={loading}
+                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-55"
+                >
+                  <RefreshCw className={loading ? "animate-spin" : ""} size={16} />
+                  Verifier
+                </button>
+                <button
+                  type="button"
+                  onClick={onDisconnect}
+                  disabled={busy === "disconnect"}
+                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#07120d] px-4 text-sm font-black text-white disabled:opacity-55"
+                >
+                  {busy === "disconnect" ? <Loader2 className="animate-spin" size={16} /> : <Power size={16} />}
+                  Retirer
+                </button>
+              </div>
+              <Link href="/messages" className="mt-3 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#008f5a] px-4 text-sm font-black text-white no-underline">
+                <MessageCircle size={17} />
+                Voir les messages
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Phone number input */}
+              <label className="block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Numero WhatsApp</label>
+              <div className="mt-2 grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#07120d]/12 px-3 py-2">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a]">
+                  <Phone size={18} />
+                </span>
+                <input
+                  value={currentWhatsAppNumber}
+                  onBlur={onPhoneBlur}
+                  onChange={(event) => onPhoneChange(event.target.value)}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  className="min-h-12 w-full bg-transparent text-lg font-black text-[#07120d] outline-none placeholder:text-[#07120d]/35"
+                  placeholder="+225 07 00 00 00 00"
+                />
+              </div>
+              {!phoneReady && (
+                <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-black leading-4 text-amber-900 ring-1 ring-amber-100">
+                  Numero complet avec +225.
+                </p>
+              )}
+
+              {/* QR / pairing area */}
+              <div className="mt-4 overflow-hidden rounded-[22px] bg-white ring-1 ring-[#07120d]/8 text-center p-4">
+                {hasQr ? (
+                  <>
+                    <div className="mx-auto w-fit rounded-[20px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={qrSource} alt="QR WhatsApp" className="h-[220px] w-[220px] object-contain" />
+                    </div>
+                    <p className="mt-3 text-sm font-black text-[#07120d]">Scanne avec WhatsApp.</p>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">QR expire vite — regenerer si refuse.</p>
+                  </>
+                ) : hasPairing ? (
+                  <>
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-amber-50 text-amber-700">
+                      <KeyRound size={32} />
+                    </span>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Connexion en cours</h3>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Ouvrez WhatsApp pour valider.</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#008f5a]/10 text-[#008f5a]">
+                      <QrCode size={32} />
+                    </span>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Pret a generer</h3>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Cliquez sur le bouton ci-dessous.</p>
+                  </>
+                )}
+              </div>
+
+              {/* Pairing code card */}
+              {hasCode && (
+                <div className="mt-3 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#07120d]/10">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#07120d]/8 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Code WhatsApp temporaire</p>
+                    <button type="button" onClick={onCopyPairingCode} className="app-icon-button" aria-label="Copier le code WhatsApp">
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="font-display text-3xl font-black tracking-wider text-[#07120d]">{formatPairingCode(pairing.pairingCode)}</p>
+                    <p className="mt-2 text-xs font-bold leading-4 text-[#07120d]/50">
+                      {getPairingValidityLabel(pairing)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {watchingConnection && (
+                <p className="mt-3 flex items-center gap-2 rounded-2xl bg-[#eafff5] px-3 py-2.5 text-sm font-bold text-[#005f3d] ring-1 ring-emerald-200">
+                  <Loader2 className="animate-spin" size={16} />
+                  Tikchop verifie la connexion...
+                </p>
+              )}
+
+              {/* CTA buttons */}
+              <div className="mt-4 grid gap-2.5">
+                <button
+                  type="button"
+                  onClick={onConnect}
+                  disabled={busy === "pairing" || !phoneReady}
+                  className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-[#07120d] px-5 text-base font-black text-white disabled:opacity-50"
+                >
+                  {busy === "pairing" ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={20} />}
+                  {hasQr ? "Regenerer le QR" : phoneReady ? "Generer le QR" : "Ajoutez le numero"}
+                </button>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-50"
+                  >
+                    <RefreshCw className={loading ? "animate-spin" : ""} size={16} />
+                    Verifier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onRefreshPairingCode}
+                    disabled={busy === "code" || !phoneReady}
+                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-50"
+                  >
+                    {busy === "code" ? <Loader2 className="animate-spin" size={16} /> : <KeyRound size={16} />}
+                    Code
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Standard / sans QR collapsible */}
+      <details className="overflow-hidden rounded-[24px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
+        <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4">
+          <span className="min-w-0">
+            <span className="block text-base font-black text-[#07120d]">Sans QR — Assistant Standard</span>
+            <span className="block text-xs font-bold text-[#07120d]/50">Tikchop repond a votre place.</span>
+          </span>
+          <MessageCircle className="text-[#008f5a]" size={21} />
+        </summary>
+        <div className={`border-t border-[#07120d]/8 p-4 ${standardActive ? "bg-[#eafff5]" : ""}`}>
+          {standardActive && (
+            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-[#005f3d]">
+              <CheckCircle2 size={16} />
+              Assistant Standard est actif.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={onActivateStandard}
+            disabled={busy === "standard" || standardActive}
+            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#008f5a] px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(0,143,90,0.18)] disabled:opacity-60"
+          >
+            {busy === "standard" ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
+            {standardActive ? "Standard actif" : "Activer Standard"}
+          </button>
+        </div>
+      </details>
+    </section>
   );
 }

@@ -25,6 +25,13 @@ export function getOrderTotal(order) {
   return Number(order?.total_amount || 0) + Number(order?.delivery_fee || 0);
 }
 
+function daysSince(value) {
+  if (!value) return 0;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 0;
+  return Math.floor((Date.now() - date.getTime()) / 86400000);
+}
+
 export function getOrderItems(order) {
   return order?.order_items || [];
 }
@@ -69,16 +76,18 @@ export function getDeliverySummary(order) {
 
 export function getPaymentSummary(order) {
   if (order?.status === "PAID" || order?.payment_method === "PAYSTACK") return "Paiement produit confirme";
-  if (order?.payment_method === "CASH_ON_DELIVERY") return "Paiement a la livraison";
+  if (order?.payment_method === "CASH_ON_DELIVERY") return "Paiement a la livraison, a encaisser a la remise";
   if (order?.payment_method === "WAVE") return "Paiement Wave a confirmer";
   if (order?.payment_method === "ORANGE_MONEY") return "Paiement Orange Money a confirmer";
   if (order?.payment_method === "MTN_MONEY") return "Paiement MTN Money a confirmer";
   return "Paiement a confirmer";
 }
 
-export function buildDriverShareMessage(order, { sellerName = "Tikchop" } = {}) {
+export function buildDriverShareMessage(order, { sellerName = "Tikchop", origin = "" } = {}) {
   const deliveryFee = Number(order?.delivery_fee || 0);
   const deliveryText = deliveryFee > 0 ? `${formatCfa(deliveryFee)} a encaisser` : "Aucun frais";
+  const receiptUrl = getReceiptUrl(order, origin);
+  const receiptLine = receiptUrl ? `\nRecu client: ${receiptUrl}` : "";
 
   return `FICHE LIVRAISON TIKCHOP
 
@@ -93,8 +102,9 @@ Articles:
 ${getOrderItemsText(order)}
 
 Livraison: ${deliveryText}
-Paiement produit: ${order?.status === "PAID" || order?.payment_method === "PAYSTACK" ? "PAYE" : "A verifier"}
+Paiement produit: ${order?.payment_method === "CASH_ON_DELIVERY" ? "A ENCAISSER A LA LIVRAISON" : order?.status === "PAID" || order?.payment_method === "PAYSTACK" ? "PAYE" : "A verifier"}
 Total commande: ${formatCfa(getOrderTotal(order))}
+${receiptLine}
 
 Quand c'est livre, informe la boutique.`;
 }
@@ -114,7 +124,7 @@ export function getOrderCaseNotes(order, { hasDrivers = true } = {}) {
     notes.push({
       id: "missing-address",
       title: "Adresse a confirmer",
-      body: "Avant de preparer, demande commune, quartier, point de repere et heure de reception.",
+      body: "Avant d'emballer, demande commune, quartier, point de repere et heure de reception.",
     });
   }
 
@@ -214,21 +224,21 @@ Confirmez-vous la commande maintenant ?`,
 Mode choisi: ${payment}
 Livraison: ${delivery}
 
-Apres paiement, envoyez la preuve ici. Nous preparons la commande juste apres confirmation.`,
+Apres paiement, envoyez la preuve ici. Nous emballons la commande juste apres confirmation.`,
     });
   }
 
   if (order?.status === "PAID") {
     templates.push({
       id: "paid-preparing",
-      shortTitle: "Preparation",
-      title: "Paiement recu, preparation",
-      scenario: "Commande payee",
+      shortTitle: "Emballage",
+      title: "Paiement recu, emballage",
+      scenario: "Commande confirmee",
       tone: "success",
       priority: 2,
       text: `Bonjour, votre paiement pour la commande ${ref} est confirme.
 
-Nous preparons maintenant:
+Nous emballons maintenant:
 ${getOrderItemsText(order)}
 
 Livraison: ${delivery}
@@ -241,7 +251,7 @@ Total: ${total}${receiptLine}`,
       id: "ready-delivery",
       shortTitle: "Livraison",
       title: "Commande prete",
-      scenario: "Paquet pret a livrer",
+      scenario: "Colis pret pour livreur",
       tone: "info",
       priority: 2,
       text: `Bonjour, votre commande ${ref} est prete.

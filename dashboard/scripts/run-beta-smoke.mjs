@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
+import { buildDriverShareMessage } from "../lib/customer-response-playbook.js";
 
 function loadEnv() {
   const env = {};
@@ -48,8 +49,11 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 8);
 const slug = `beta-smoke-${suffix}`;
 const phone = `2250700${suffix.slice(0, 6)}`;
+const ownerEmail = `beta-smoke-${suffix}@tikchop.local`;
+const ownerPassword = `Tikchop-${suffix}!`;
 const orderRef = `BETA${suffix.slice(0, 4).toUpperCase()}`;
 const created = {
+  userId: null,
   sellerId: null,
   productIds: [],
   orderId: null,
@@ -63,12 +67,27 @@ console.log("-----------------------");
 console.log(`Boutique temporaire: /${slug}`);
 
 try {
+  const { data: owner, error: ownerError } = await supabase.auth.admin.createUser({
+    email: ownerEmail,
+    password: ownerPassword,
+    email_confirm: true,
+    user_metadata: {
+      display_name: "Beta Smoke Tikchop",
+      signup_method: "SMOKE_TEST",
+    },
+  });
+  assertOk(!ownerError && owner?.user?.id, ownerError?.message || "proprietaire vendeur non cree");
+  created.userId = owner.user.id;
+  line(true, "creation proprietaire vendeur temporaire");
+
   const { data: seller, error: sellerError } = await supabase
     .from("sellers")
     .insert([{
       name: "Beta Smoke Tikchop",
       slug,
       phone_number: phone,
+      owner_user_id: owner.user.id,
+      owner_email: ownerEmail,
       delivery_enabled: true,
       pickup_enabled: true,
       fixed_delivery_fee: 1500,
@@ -168,6 +187,22 @@ try {
   created.orderItemIds = items.map((item) => item.id);
   line(true, "creation ligne commande");
 
+  const driverMessage = buildDriverShareMessage({
+    ...order,
+    customer_phone: "+225 07 88 77 66 55",
+    status: "PAID",
+    total_amount: Number(firstProduct.price),
+    payment_method: "WAVE",
+    delivery_type: "DELIVERY",
+    delivery_zone: "Cocody Smoke",
+    delivery_address: "Adresse smoke test, ne pas livrer",
+    delivery_fee: 1500,
+    order_items: [{ quantity: 1, products: { name: firstProduct.name } }],
+  }, { sellerName: "Beta Smoke Tikchop", origin: appUrl });
+  assertOk(driverMessage.includes(`/receipt?order=${order.id}`), "fiche livreur sans lien recu client");
+  assertOk(driverMessage.includes("Cocody Smoke") && driverMessage.includes("Robe beta smoke"), "fiche livreur incomplete");
+  line(true, "fiche livreur WhatsApp avec recu");
+
   const receiptHtml = await requestOk(`${appUrl}/receipt?order=${order.id}`, "text/html");
   assertOk(receiptHtml.bytes.toString("utf8").includes(order.order_ref), "recu HTML sans reference commande");
   line(true, "recu client HTML");
@@ -202,6 +237,9 @@ try {
   }
   if (created.sellerId) {
     await supabase.from("sellers").delete().eq("id", created.sellerId);
+  }
+  if (created.userId) {
+    await supabase.auth.admin.deleteUser(created.userId);
   }
   line(true, "nettoyage donnees temporaires");
 }

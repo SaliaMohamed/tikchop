@@ -1,0 +1,36 @@
+services:
+  waha-tikchop:
+    image: devlikeapro/waha:latest
+    container_name: waha-tikchop
+    restart: unless-stopped
+    environment:
+      WAHA_API_KEY: "${WAHA_API_KEY}"
+      WAHA_DASHBOARD_USERNAME: "${WAHA_DASHBOARD_USERNAME:-admin}"
+      WAHA_DASHBOARD_PASSWORD: "${WAHA_DASHBOARD_PASSWORD}"
+      WHATSAPP_SWAGGER_USERNAME: "${WHATSAPP_SWAGGER_USERNAME:-admin}"
+      WHATSAPP_SWAGGER_PASSWORD: "${WHATSAPP_SWAGGER_PASSWORD}"
+      WHATSAPP_HOOK_URL: "${N8N_TIKCHOP_WEBHOOK_URL}"
+      WHATSAPP_HOOK_EVENTS: "message"
+      WHATSAPP_HOOK_RETRIES_POLICY: "linear"
+      WHATSAPP_HOOK_RETRIES_DELAY_SECONDS: "2"
+      WAHA_BASE_URL: "${WAHA_PUBLIC_URL}"
+    volumes:
+      - waha_tikchop_sessions:/app/.sessions
+      - waha_tikchop_media:/app/.media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.waha-tikchop.rule=Host(`waha-tikchop.76.13.59.214.sslip.io`)"
+      - "traefik.http.routers.waha-tikchop.entrypoints=websecure"
+      - "traefik.http.routers.waha-tikchop.tls=true"
+      - "traefik.http.routers.waha-tikchop.tls.certresolver=myresolver"
+      - "traefik.http.services.waha-tikchop.loadbalancer.server.port=3000"
+    networks:
+      - n8n_default
+
+volumes:
+  waha_tikchop_sessions:
+  waha_tikchop_media:
+
+networks:
+  n8n_default:
+    external: true

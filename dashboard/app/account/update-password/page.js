@@ -1,16 +1,86 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
+import BrandLogo from "../../components/BrandLogo";
+import { updateSellerPassword } from "./actions";
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [checkingLink, setCheckingLink] = useState(true);
+  const [linkReady, setLinkReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function prepareRecoverySession() {
+      if (!supabase) {
+        setError("Supabase Auth n'est pas configure.");
+        setCheckingLink(false);
+        return;
+      }
+
+      try {
+        setError("");
+        const url = new URL(window.location.href);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const code = url.searchParams.get("code");
+        const linkError = url.searchParams.get("error_description") || hashParams.get("error_description");
+
+        if (linkError) {
+          throw new Error(decodeURIComponent(linkError).replace(/\+/g, " "));
+        }
+
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+          window.history.replaceState({}, document.title, "/account/update-password");
+        } else if (hashParams.get("access_token") && hashParams.get("refresh_token")) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: hashParams.get("access_token"),
+            refresh_token: hashParams.get("refresh_token"),
+          });
+          if (sessionError) throw sessionError;
+          window.history.replaceState({}, document.title, "/account/update-password");
+        }
+
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!data.session) {
+          throw new Error("Lien de recuperation expire ou deja utilise. Demandez un nouveau lien.");
+        }
+
+        if (active) setLinkReady(true);
+      } catch (sessionError) {
+        if (active) {
+          setError(sessionError.message || "Lien de recuperation invalide. Demandez un nouveau lien.");
+          setLinkReady(false);
+        }
+      } finally {
+        if (active) setCheckingLink(false);
+      }
+    }
+
+    prepareRecoverySession();
+    const { data: listener } = supabase?.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" && session && active) {
+        setLinkReady(true);
+        setError("");
+        setCheckingLink(false);
+      }
+    }) || { data: null };
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -33,12 +103,7 @@ export default function UpdatePasswordPage() {
     try {
       setSaving(true);
       setError("");
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-
-      if (updateError) {
-        throw updateError;
-      }
-
+      await updateSellerPassword(password);
       setSuccess(true);
     } catch (updateError) {
       setError(updateError.message || "Impossible de changer le mot de passe. Ouvre le lien recu par email.");
@@ -48,71 +113,84 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="app-shell min-h-screen pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
-      <header className="mobile-top">
+    <div className="app-shell min-h-screen bg-[#fbf9f4] pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+      <header className="mobile-top bg-white">
         <div className="flex items-center justify-between">
-          <Link href="/onboarding" className="text-sm font-extrabold text-[var(--text-dim)] no-underline">Retour</Link>
-          <p className="font-display text-lg font-bold text-[var(--primary)]">Tikchop</p>
+          <Link href="/login" className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#07120d]/50 no-underline hover:text-[#07120d]">Retour</Link>
+          <BrandLogo href="/login" size="sm" />
           <span className="h-5 w-10" />
         </div>
       </header>
 
-      <main className="mt-6">
-        <section className="app-card p-5">
-          <div className="mb-6 flex items-start gap-3">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)] text-[var(--primary)]">
-              {success ? <CheckCircle2 size={28} /> : <KeyRound size={28} />}
+      <main className="mt-6 px-4">
+        <section className="mx-auto max-w-[440px] rounded-[34px] bg-white p-6 shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[#07120d]/10">
+          <div className="mb-6 flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#fbf9f4] text-[#008f5a] ring-1 ring-[#07120d]/5">
+              {success ? <CheckCircle2 size={26} /> : <KeyRound size={26} />}
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-3xl font-bold leading-9 text-[var(--text-main)]">
+              <h1 className="font-display text-2xl font-black leading-8 text-[#07120d]">
                 {success ? "Mot de passe change" : "Nouveau mot de passe"}
               </h1>
-              <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+              <p className="mt-1 text-sm font-bold leading-5 text-[#07120d]/50">
                 {success ? "Vous pouvez maintenant vous reconnecter a votre espace vendeur." : "Choisissez un nouveau mot de passe pour votre compte vendeur."}
               </p>
             </div>
           </div>
 
           {success ? (
-            <Link href="/onboarding" className="flex min-h-[58px] w-full items-center justify-center rounded-xl bg-[var(--primary)] text-base font-extrabold text-white no-underline">
+            <Link href="/login" className="flex min-h-[58px] w-full items-center justify-center rounded-[20px] bg-[#008f5a] text-base font-black text-white no-underline shadow-sm active:scale-[0.98] transition-transform">
               Retour connexion
             </Link>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {checkingLink && (
+                <p className="flex items-center gap-2 rounded-[20px] bg-[#fbf9f4] p-3 text-sm font-bold leading-5 text-[#07120d]/50 ring-1 ring-[#07120d]/10">
+                  <Loader2 className="animate-spin text-[#008f5a]" size={18} />
+                  Verification du lien de recuperation...
+                </p>
+              )}
+              {!checkingLink && !linkReady && (
+                <Link href="/onboarding" className="flex min-h-[52px] w-full items-center justify-center rounded-[20px] bg-[#fbf9f4] text-sm font-black text-[#008f5a] no-underline ring-1 ring-[#07120d]/10 active:scale-[0.98] transition-transform">
+                  Demander un nouveau lien
+                </Link>
+              )}
               <label className="block">
-                <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Nouveau mot de passe</span>
+                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Nouveau mot de passe</span>
                 <input
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
                   placeholder="Minimum 6 caracteres"
-                  className="mobile-input text-lg"
+                  disabled={checkingLink || !linkReady}
+                  className="mobile-input bg-[#fbf9f4] text-base font-bold text-[#07120d] placeholder:text-[#07120d]/30"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-bold text-[var(--text-main)]">Confirmer</span>
+                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Confirmer</span>
                 <input
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
                   placeholder="Retape le mot de passe"
-                  className="mobile-input text-lg"
+                  disabled={checkingLink || !linkReady}
+                  className="mobile-input bg-[#fbf9f4] text-base font-bold text-[#07120d] placeholder:text-[#07120d]/30"
                 />
               </label>
 
               {error && (
-                <p className="rounded-lg bg-red-50 p-3 text-sm font-bold leading-5 text-red-700 ring-1 ring-red-100">
+                <p className="rounded-[20px] bg-red-50 p-3 text-sm font-bold leading-5 text-red-700 ring-1 ring-red-100">
                   {error}
                 </p>
               )}
 
               <button
                 type="submit"
-                disabled={saving}
-                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-base font-extrabold text-white disabled:bg-[var(--outline)]"
+                disabled={saving || checkingLink || !linkReady}
+                className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#07120d] text-base font-black text-[#39f58e] shadow-[0_16px_34px_rgba(7,18,13,0.22)] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
               >
                 {saving ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
                 {saving ? "Enregistrement..." : "Changer le mot de passe"}

@@ -1,7 +1,9 @@
 import { supabaseAdmin } from "./supabase-admin";
 import { createHash } from "node:crypto";
+import { sendEvolutionText } from "./evolution";
 
 const ALLOWED_ORDER_STATUS = new Set(["PENDING", "PAID", "PREPARED", "DELIVERED", "CANCELLED"]);
+const DEFAULT_HANDOFF_MINUTES = 24 * 60;
 
 class MobileApiError extends Error {
   constructor(message, status = 400) {
@@ -70,10 +72,111 @@ export function computeMobileStats(products = [], orders = [], seller = {}) {
   };
 }
 
+function normalizeCustomerPhone(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function handoffKey(value) {
+  return normalizeCustomerPhone(value) || String(value || "").trim();
+}
+
+function getSellerEvolutionInstance(seller) {
+  return String(seller.evolution_instance || seller.slug || "").trim();
+}
+
+function getHandoffSellerKeys(seller) {
+  return Array.from(new Set([seller.slug, getSellerEvolutionInstance(seller)].filter(Boolean)));
+}
+
+async function getActiveMobileHandoffs(seller) {
+  const sellerKeys = getHandoffSellerKeys(seller);
+  const { data, error } = await supabaseAdmin
+    .from("messages")
+    .select("id,client,contenu,seller_slug,customer_phone,created_at")
+    .in("seller_slug", sellerKeys)
+    .eq("statut", "human_pause")
+    .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (/messages|seller_slug|customer_phone|schema cache|column/i.test(error.message || "")) return [];
+    throw new Error(error.message);
+  }
+
+  const byPhone = new Map();
+  for (const row of data || []) {
+    const until = String(row.contenu || "").match(/human_pause_until:([^\s]+)/)?.[1];
+    const pausedUntil = until || new Date(new Date(row.created_at || 0).getTime() + 90 * 60 * 1000).toISOString();
+    if (new Date(pausedUntil).getTime() <= Date.now()) continue;
+    const phone = normalizeCustomerPhone(row.customer_phone);
+    if (!phone || byPhone.has(phone)) continue;
+    byPhone.set(phone, {
+      seller_slug: row.seller_slug,
+      customer_phone: phone,
+      instance_name: getSellerEvolutionInstance(seller) || null,
+      paused_until: pausedUntil,
+      last_from_me_at: row.created_at,
+      updated_at: row.created_at,
+    });
+  }
+
+  return Array.from(byPhone.values());
+}
+
+function attachHandoffsToOrders(orders = [], handoffs = []) {
+  const byPhone = new Map();
+  for (const handoff of handoffs) {
+    byPhone.set(handoffKey(handoff.customer_phone), handoff);
+  }
+
+  return orders.map((order) => ({
+    ...order,
+    handoff: byPhone.get(handoffKey(order.customer_phone)) || null,
+  }));
+}
+
+async function saveMobileHandoff(seller, customerPhone, durationMinutes = DEFAULT_HANDOFF_MINUTES) {
+  const cleanPhone = normalizeCustomerPhone(customerPhone);
+  if (cleanPhone.length < 6) {
+    throw new MobileApiError("Numero client invalide.", 400);
+  }
+
+  const minutes = Math.max(15, Math.min(Number.parseInt(durationMinutes, 10) || DEFAULT_HANDOFF_MINUTES, 7 * 24 * 60));
+  const now = new Date();
+  const pausedUntil = new Date(now.getTime() + minutes * 60 * 1000).toISOString();
+  const instanceName = getSellerEvolutionInstance(seller);
+  const sellerKeys = getHandoffSellerKeys(seller);
+
+  const { error } = await supabaseAdmin
+    .from("messages")
+    .insert(sellerKeys.map((sellerKey) => ({
+      contenu: `human_pause_until:${pausedUntil}`,
+      client: `${sellerKey} : Pause vendeur : ${cleanPhone}`,
+      statut: "human_pause",
+      external_message_id: `human_pause:${sellerKey}:${cleanPhone}:${now.getTime()}`,
+      seller_slug: sellerKey,
+      customer_phone: cleanPhone,
+    })));
+
+  if (error) throw new Error(error.message || "Pause bot indisponible.");
+  return {
+    seller_slug: seller.slug,
+    customer_phone: cleanPhone,
+    instance_name: instanceName || null,
+    paused_until: pausedUntil,
+    last_from_me_at: now.toISOString(),
+    updated_at: now.toISOString(),
+  };
+}
+
 export async function getMobileOverview(request) {
   const { seller } = await requireMobileSeller(request);
 
-  const [{ data: products, error: productsError }, { data: orders, error: ordersError }] = await Promise.all([
+  const [
+    { data: products, error: productsError },
+    { data: orders, error: ordersError },
+    handoffs,
+  ] = await Promise.all([
     supabaseAdmin
       .from("products")
       .select("id,name,description,price,stock_quantity,image_url,category,created_at")
@@ -86,18 +189,87 @@ export async function getMobileOverview(request) {
       .eq("seller_id", seller.id)
       .order("created_at", { ascending: false })
       .limit(50),
+    getActiveMobileHandoffs(seller),
   ]);
 
   if (productsError) throw new Error(productsError.message);
   if (ordersError) throw new Error(ordersError.message);
+  const normalizedOrders = attachHandoffsToOrders(orders || [], handoffs);
 
   return {
     source: "supabase",
     seller,
     products: products || [],
-    orders: orders || [],
-    stats: computeMobileStats(products || [], orders || [], seller),
+    orders: normalizedOrders,
+    stats: computeMobileStats(products || [], normalizedOrders, seller),
   };
+}
+
+export async function pauseMobileBotForCustomer(request, customerPhone) {
+  const { seller } = await requireMobileSeller(request);
+  const body = await request.json().catch(() => ({}));
+  const handoff = await saveMobileHandoff(seller, customerPhone || body.customer_phone, body.duration_minutes);
+  return { handoff };
+}
+
+export async function resumeMobileBotForCustomer(request, customerPhone) {
+  const { seller } = await requireMobileSeller(request);
+  const cleanPhone = normalizeCustomerPhone(customerPhone);
+  if (cleanPhone.length < 6) {
+    throw new MobileApiError("Numero client invalide.", 400);
+  }
+
+  const { error } = await supabaseAdmin
+    .from("messages")
+    .delete()
+    .in("seller_slug", getHandoffSellerKeys(seller))
+    .eq("statut", "human_pause")
+    .eq("customer_phone", cleanPhone);
+
+  if (error) throw new Error(error.message || "Pause bot indisponible.");
+  return { ok: true };
+}
+
+export async function sendMobileManualReply(request, customerPhone) {
+  const { seller } = await requireMobileSeller(request);
+  const body = await request.json().catch(() => ({}));
+  const text = String(body.text || "").trim();
+  if (text.length < 1 || text.length > 1200) {
+    throw new MobileApiError("Message client invalide.", 400);
+  }
+
+  const cleanPhone = normalizeCustomerPhone(customerPhone || body.customer_phone);
+  const handoff = await saveMobileHandoff(seller, cleanPhone, body.duration_minutes);
+  const result = await sendEvolutionText({
+    instanceName: getSellerEvolutionInstance(seller),
+    number: cleanPhone,
+    text,
+  });
+
+  if (!result?.ok) {
+    throw new MobileApiError("Message non envoye. Verifiez la connexion WhatsApp de la boutique.", 503);
+  }
+
+  const messageRow = {
+    contenu: text,
+    client: `${seller.slug} : Vendeur : ${cleanPhone}@s.whatsapp.net`,
+    statut: "followup",
+    seller_slug: seller.slug,
+    customer_phone: cleanPhone,
+    external_message_id: `manual:${seller.slug}:${cleanPhone}:${Date.now()}`,
+  };
+
+  await supabaseAdmin
+    .from("messages")
+    .insert(messageRow)
+    .then((insertResult) => {
+      if (insertResult.error && !/messages|seller_slug|customer_phone|external_message_id|schema cache|column/i.test(insertResult.error.message || "")) {
+        throw insertResult.error;
+      }
+      return insertResult;
+    });
+
+  return { ok: true, handoff };
 }
 
 export async function createMobileProduct(request) {
@@ -176,6 +348,7 @@ export async function uploadMobileProductImage(request) {
 
   return {
     url: data.secure_url,
+    cleanUrl: getCloudinaryCleanProductUrl(data.secure_url),
     publicId: data.public_id,
   };
 }
@@ -244,4 +417,16 @@ function getCloudinaryConfig() {
   } catch {
     return directConfig;
   }
+}
+
+function getCloudinaryCleanProductUrl(imageUrl) {
+  const url = String(imageUrl || "").trim();
+  if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
+    return url;
+  }
+
+  return url.replace(
+    "/image/upload/",
+    "/image/upload/e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_limit,w_1400,h_1800/f_auto,q_auto:good/",
+  );
 }

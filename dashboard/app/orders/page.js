@@ -3,14 +3,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Bot,
   CheckCircle2,
   ChevronRight,
+  ClipboardList,
   Clock3,
   Loader2,
   MapPin,
   MessageCircle,
   Package,
+  PauseCircle,
   Phone,
+  PlayCircle,
   RefreshCw,
   ReceiptText,
   Send,
@@ -18,7 +22,17 @@ import {
   Truck,
   X,
 } from "lucide-react";
-import { assignOrderDriver, createDemoOrder, getSellerDeliverySettings, getSellerOrders, updateOrderStatus } from "../actions";
+import {
+  assignOrderDriver,
+  createDemoOrder,
+  getSellerDeliverySettings,
+  getSellerOrders,
+  markOrderSharedToDriver,
+  pauseBotForCustomer,
+  resumeBotForCustomer,
+  sendSellerManualReply,
+  updateOrderStatus,
+} from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
@@ -38,28 +52,38 @@ function cleanPhone(phoneNumber) {
   return String(phoneNumber || "").replace(/[^\d]/g, "");
 }
 
+function getSimpleOrderStatus(order) {
+  if (order?.status === "DELIVERED") return "DELIVERED";
+  if (order?.status === "CANCELLED") return "CANCELLED";
+  if (order?.delivery_status === "ASSIGNED") return "IN_DELIVERY";
+  return order?.status || "PENDING";
+}
+
 const statusLabels = {
   ALL: "Toutes",
-  WORK: "A traiter",
+  WORK: "A faire",
   PENDING: "A confirmer",
-  PAID: "A preparer",
+  PAID: "A emballer",
   PREPARED: "A livrer",
-  DELIVERED: "Finies",
+  IN_DELIVERY: "En route",
+  DELIVERED: "Livrees",
   CANCELLED: "Annulees",
 };
 
 const statusHints = {
-  PENDING: "Verifiez le client, l'adresse et le paiement",
-  PAID: "Commande confirmee. Prepare les articles",
-  PREPARED: "Commande remise au livreur ou prete a partir",
-  DELIVERED: "Commande terminee",
-  CANCELLED: "Annule",
+  PENDING: "Confirmer le client et le mode de paiement",
+  PAID: "Emballer les articles",
+  PREPARED: "Partager au livreur ou livrer",
+  IN_DELIVERY: "Marquer livree apres reception",
+  DELIVERED: "Commande fermee",
+  CANCELLED: "Commande annulee",
 };
 
 const statusClasses = {
   PENDING: "bg-amber-100 text-amber-700",
   PAID: "bg-green-100 text-green-700",
   PREPARED: "bg-blue-100 text-blue-700",
+  IN_DELIVERY: "bg-indigo-100 text-indigo-700",
   DELIVERED: "bg-zinc-100 text-zinc-500",
   CANCELLED: "bg-red-100 text-red-700",
 };
@@ -132,7 +156,7 @@ export default function OrdersPage() {
         clearTimeout(slowTimer);
       }
     } catch (err) {
-      console.error("Error fetching orders:", err);
+      console.warn("Orders unavailable:", err);
       const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
       setError(sessionExpired
         ? "Session vendeur expiree. Reconnectez-vous pour voir vos commandes."
@@ -162,6 +186,14 @@ export default function OrdersPage() {
     }
   }
 
+  async function markPaid(order) {
+    await markStatus(order, "PAID");
+  }
+
+  async function cancelOrder(order) {
+    await markStatus(order, "CANCELLED");
+  }
+
   async function markDriverAssigned(order, driver) {
     try {
       const token = await getSellerAccessToken();
@@ -177,6 +209,65 @@ export default function OrdersPage() {
     }
   }
 
+  async function markSharedToDriver(order) {
+    try {
+      const token = await getSellerAccessToken();
+      const result = await markOrderSharedToDriver(order.id, token);
+      setOrders((current) => current.map((item) => (
+        item.id === order.id ? { ...item, ...result } : item
+      )));
+      setSelectedOrder((current) => current?.id === order.id ? { ...current, ...result } : current);
+    } catch (err) {
+      setError(friendlyError(err, "Commande partagée, mais le statut livraison n'a pas été mis à jour."));
+    }
+  }
+
+  function updateOrderHandoff(orderId, handoff) {
+    setOrders((current) => current.map((item) => (
+      item.id === orderId ? { ...item, handoff } : item
+    )));
+    setSelectedOrder((current) => current?.id === orderId ? { ...current, handoff } : current);
+  }
+
+  async function handlePauseBot(order) {
+    try {
+      const token = await getSellerAccessToken();
+      const result = await pauseBotForCustomer(seller.slug, order.customer_phone, token);
+      updateOrderHandoff(order.id, result?.handoff || null);
+      return result;
+    } catch (err) {
+      const message = friendlyError(err, "Pause bot non appliquee. Verifiez le numero client.");
+      setError(message);
+      throw new Error(message);
+    }
+  }
+
+  async function handleResumeBot(order) {
+    try {
+      const token = await getSellerAccessToken();
+      await resumeBotForCustomer(seller.slug, order.customer_phone, token);
+      updateOrderHandoff(order.id, null);
+      return { ok: true };
+    } catch (err) {
+      const message = friendlyError(err, "Bot non reactive. Reessayez dans quelques secondes.");
+      setError(message);
+      throw new Error(message);
+    }
+  }
+
+  async function handleManualReply(order, text) {
+    try {
+      const token = await getSellerAccessToken();
+      const result = await sendSellerManualReply(seller.slug, order.customer_phone, text, token);
+      updateOrderHandoff(order.id, result?.handoff || order.handoff || null);
+      return result;
+    } catch (err) {
+      const message = friendlyError(err, "Message client non envoye. Verifiez WhatsApp puis reessayez.");
+      setError(message);
+      throw new Error(message);
+    }
+  }
+
   async function handleCreateDemoOrder() {
     try {
       setDemoBusy(true);
@@ -189,7 +280,7 @@ export default function OrdersPage() {
         setSelectedOrder(demoOrder);
       }
     } catch (err) {
-      console.error("Demo order create error:", err);
+      console.warn("Demo order create unavailable:", err);
       setError(friendlyError(err, "Commande test non creee. Verifiez qu'une boutique est bien active."));
     } finally {
       setDemoBusy(false);
@@ -197,43 +288,56 @@ export default function OrdersPage() {
   }
 
   const filteredOrders = useMemo(() => {
-    if (filter === "WORK") return orders.filter((order) => ["PENDING", "PAID", "PREPARED"].includes(order.status));
+    if (filter === "WORK") return orders.filter((order) => ["PENDING", "PAID", "PREPARED", "IN_DELIVERY"].includes(getSimpleOrderStatus(order)));
     if (filter === "ALL") return orders;
-    return orders.filter((order) => order.status === filter);
+    return orders.filter((order) => getSimpleOrderStatus(order) === filter);
   }, [filter, orders]);
-  const activeCount = orders.filter((order) => ["PENDING", "PAID"].includes(order.status)).length;
-  const verifyCount = orders.filter((order) => order.status === "PENDING").length;
-  const prepareCount = orders.filter((order) => order.status === "PAID").length;
-  const readyCount = orders.filter((order) => order.status === "PREPARED").length;
-  const doneCount = orders.filter((order) => order.status === "DELIVERED").length;
+  const activeCount = orders.filter((order) => ["PENDING", "PAID"].includes(getSimpleOrderStatus(order))).length;
+  const verifyCount = orders.filter((order) => getSimpleOrderStatus(order) === "PENDING").length;
+  const prepareCount = orders.filter((order) => getSimpleOrderStatus(order) === "PAID").length;
+  const readyCount = orders.filter((order) => getSimpleOrderStatus(order) === "PREPARED").length;
+  const deliveryCount = orders.filter((order) => getSimpleOrderStatus(order) === "IN_DELIVERY").length;
+  const toFinishCount = readyCount + deliveryCount;
+  const doneCount = orders.filter((order) => getSimpleOrderStatus(order) === "DELIVERED").length;
   const nextOrder = getNextOrder(orders);
   const sessionExpired = /Session vendeur expiree/i.test(error);
 
   function getFilterCount(item) {
-    if (item === "WORK") return activeCount + readyCount;
+    if (item === "WORK") return activeCount + toFinishCount;
     if (item === "PENDING") return verifyCount;
     if (item === "PREPARED") return readyCount;
+    if (item === "IN_DELIVERY") return deliveryCount;
     if (item === "DELIVERED") return doneCount;
     if (item === "ALL") return orders.length;
-    return orders.filter((order) => order.status === item).length;
+    return orders.filter((order) => getSimpleOrderStatus(order) === item).length;
   }
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
       <header className="mobile-top">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex items-center justify-between gap-3 md:items-start">
+          <div className="hidden md:block">
             <p className="quiet-label text-[var(--primary)]">Commandes</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Commandes a traiter</h1>
-            <p className="mt-1 text-base font-semibold leading-6 text-[var(--text-dim)]">Chaque commande avance en 3 actions: confirmer, preparer, terminer.</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">A faire maintenant</h1>
           </div>
           <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
             <RefreshCw size={19} strokeWidth={2.5} />
           </button>
+          <span className="ml-auto inline-flex items-center gap-2 rounded-full bg-[var(--surface-soft)] px-3 py-2 text-sm font-black text-[var(--primary)] ring-1 ring-[rgba(0,143,90,0.10)] md:hidden" aria-label={`${getFilterCount("WORK")} commandes ouvertes`}>
+            <ClipboardList size={16} />
+            {getFilterCount("WORK")}
+          </span>
         </div>
 
-        <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1">
-          {["WORK", "PENDING", "PAID", "PREPARED"].map((item) => (
+        <div className="mt-3 grid grid-cols-4 gap-2 rounded-[22px] bg-white/85 p-2 shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/24 md:mt-5">
+          <MiniOrderMetric icon={<Phone size={18} />} label="Confirmer" value={verifyCount} active={filter === "PENDING"} onClick={() => setFilter("PENDING")} />
+          <MiniOrderMetric icon={<Package size={18} />} label="Emballer" value={prepareCount} active={filter === "PAID"} onClick={() => setFilter("PAID")} />
+          <MiniOrderMetric icon={<Truck size={18} />} label="Livrer" value={readyCount + deliveryCount} active={filter === "PREPARED" || filter === "IN_DELIVERY"} onClick={() => setFilter(readyCount > 0 ? "PREPARED" : "IN_DELIVERY")} />
+          <MiniOrderMetric icon={<CheckCircle2 size={18} />} label="Finies" value={doneCount} active={filter === "DELIVERED"} onClick={() => setFilter("DELIVERED")} />
+        </div>
+
+        <div className="no-scrollbar -mx-4 mt-3 hidden gap-2 overflow-x-auto px-4 pb-1 md:flex">
+          {["WORK", "PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].map((item) => (
             <button
               key={item}
               onClick={() => setFilter(item)}
@@ -278,12 +382,18 @@ export default function OrdersPage() {
       {!loading && !error && orders.length > 0 && (
         <section className="mt-5 space-y-4">
           {nextOrder && (
-            <NextOrderHero order={nextOrder} onOpen={() => setSelectedOrder(nextOrder)} />
+            <div className="hidden md:block">
+              <NextOrderHero order={nextOrder} onOpen={() => setSelectedOrder(nextOrder)} />
+            </div>
           )}
-          <div className="grid grid-cols-3 gap-2">
-            <WorkTile title="A confirmer" value={verifyCount} tone="primary" />
-            <WorkTile title="A preparer" value={prepareCount} tone="accent" />
-            <WorkTile title="A terminer" value={readyCount} />
+          <div className="hidden md:block">
+            <OrderActionPath
+              verifyCount={verifyCount}
+              prepareCount={prepareCount}
+              readyCount={readyCount}
+              deliveryCount={deliveryCount}
+              doneCount={doneCount}
+            />
           </div>
         </section>
       )}
@@ -310,8 +420,10 @@ export default function OrdersPage() {
                 key={order.id}
                 order={order}
                 onClick={() => setSelectedOrder(order)}
+                onPaid={() => markPaid(order)}
                 onPrepared={() => markStatus(order, "PREPARED")}
                 onDelivered={() => markStatus(order, "DELIVERED")}
+                onOpenDelivery={() => setSelectedOrder(order)}
               />
             ))}
           </div>
@@ -324,62 +436,107 @@ export default function OrdersPage() {
           drivers={drivers}
           sellerName={seller.name}
           onClose={() => setSelectedOrder(null)}
+          onPaid={() => markPaid(selectedOrder)}
           onPrepared={() => markStatus(selectedOrder, "PREPARED")}
           onDelivered={() => markStatus(selectedOrder, "DELIVERED")}
+          onCancel={() => cancelOrder(selectedOrder)}
           onDriverShared={markDriverAssigned}
+          onManualDriverShare={markSharedToDriver}
+          onPauseBot={handlePauseBot}
+          onResumeBot={handleResumeBot}
+          onManualReply={handleManualReply}
         />
       )}
     </div>
   );
 }
 
-function EmptyOrdersGuide({ creating, onCreateDemo }) {
+function MiniOrderMetric({ icon, label, value, active, onClick }) {
   return (
-    <div className="space-y-4">
-      <section className="djassa-command p-5">
-        <div className="relative">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">Aucune commande pour le moment</p>
-          <h2 className="mt-2 font-display text-2xl font-bold leading-8 text-white">Ajoutez vos articles, Tikchop vendra.</h2>
-          <p className="mt-2 text-sm font-semibold leading-5 text-white/78">
-            Quand un client commande sur WhatsApp, vous verrez seulement les infos utiles ici: confirmer, preparer, livrer.
-          </p>
-          <Link href="/add-product" className="mt-5 flex min-h-[56px] items-center justify-center gap-2 rounded-xl bg-[var(--primary-bright)] px-4 text-sm font-extrabold text-[#07100a] no-underline shadow-[0_16px_32px_rgba(57,245,142,0.24)]">
-            <Package size={18} />
-            Ajouter mes articles
-          </Link>
-        </div>
-      </section>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label}: ${value}`}
+      title={label}
+      className={`flex min-h-[66px] flex-col items-center justify-center rounded-[18px] px-1.5 text-center transition active:scale-[0.98] ${
+        active
+          ? "bg-[#07120d] text-white shadow-sm"
+          : "bg-[var(--surface-soft)] text-[var(--text-main)]"
+      }`}
+    >
+      <span className={`mb-1 flex h-8 w-8 items-center justify-center rounded-2xl ${
+        active ? "bg-[var(--primary-bright)] text-[#07120d]" : "bg-white text-[var(--primary)] shadow-sm"
+      }`}>
+        {icon}
+      </span>
+      <span className={`block font-display text-2xl font-black leading-none ${
+        active ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"
+      }`}>
+        {value}
+      </span>
+      <span className={`mt-1 block text-[0.64rem] font-black uppercase leading-3 ${
+        active ? "text-white/64" : "text-[var(--text-dim)]"
+      }`}>
+        <span className="hidden md:inline">{label}</span>
+      </span>
+    </button>
+  );
+}
 
-      <details className="rounded-[22px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/35">
-        <summary className="cursor-pointer list-none text-sm font-extrabold text-[var(--text-main)]">
-          Voir une commande exemple
-        </summary>
-        <div className="mt-3 rounded-[18px] bg-[var(--surface-soft)] p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-display text-lg font-bold text-[var(--text-main)]">#DJASSA24</p>
-              <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">Client WhatsApp - Cocody Angre</p>
-            </div>
-            <span className="rounded-full bg-[var(--accent)] px-3 py-1 text-sm font-extrabold text-[#07100a]">
-              18 500 F
-            </span>
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <DemoStep label="Paiement" value="Wave OK" />
-            <DemoStep label="Paquet" value="A preparer" />
-            <DemoStep label="Livreur" value="A envoyer" />
-          </div>
-          <button
-            type="button"
-            onClick={onCreateDemo}
-            disabled={creating}
-            className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-extrabold text-[var(--primary)] shadow-sm ring-1 ring-[var(--outline)]/30 disabled:opacity-60"
-          >
-            {creating ? <Loader2 className="animate-spin" size={17} /> : <ReceiptText size={17} />}
-            {creating ? "Creation..." : "Creer une commande test"}
-          </button>
-        </div>
-      </details>
+function EmptyOrdersGuide({ creating, onCreateDemo }) {
+  const seller = useActiveSeller();
+  const [copied, setCopied] = useState(false);
+  const shopUrl = seller?.slug ? `${typeof window !== "undefined" ? window.location.origin : ""}/${seller.slug}` : "";
+
+  async function handleShare() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: seller.name || "Ma boutique Tikchop",
+          text: "Découvrez mes articles sur ma boutique Tikchop !",
+          url: shopUrl,
+        });
+      } catch (err) {
+        console.warn("Share failed:", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shopUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (err) {
+        console.warn("Clipboard failed:", err);
+      }
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf9f4] rounded-[24px] border border-[#07120d]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a] mb-4">
+        <ReceiptText size={28} />
+      </div>
+      <h3 className="font-display text-xl font-bold text-[#07120d]">Aucune commande</h3>
+      <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
+        Partagez le lien de votre boutique pour commencer à recevoir des commandes sur WhatsApp.
+      </p>
+      
+      <button
+        type="button"
+        onClick={handleShare}
+        className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)]"
+      >
+        <Share2 size={16} />
+        {copied ? "Lien copié !" : "Partager ma boutique"}
+      </button>
+
+      <button
+        type="button"
+        onClick={onCreateDemo}
+        disabled={creating}
+        className="mt-4 text-xs font-bold text-[#07120d]/40 hover:text-[#07120d]/80 py-1 transition disabled:opacity-60"
+      >
+        {creating ? "Création en cours..." : "Créer une commande exemple (test)"}
+      </button>
     </div>
   );
 }
@@ -407,9 +564,10 @@ function NextOrderHero({ order, onOpen }) {
     >
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">Prochaine commande</p>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">A faire maintenant</p>
           <h2 className="mt-2 font-display text-2xl font-bold leading-8 text-white">{action.title}</h2>
-          <p className="mt-1 text-sm font-semibold leading-5 text-white/76">#{order.order_ref || order.id?.slice(0, 8)} - {itemCount} article{itemCount > 1 ? "s" : ""}</p>
+          <p className="mt-1 text-sm font-semibold leading-5 text-white/76">{action.subtitle}</p>
+          <p className="mt-2 text-xs font-extrabold uppercase tracking-[0.12em] text-white/45">#{order.order_ref || order.id?.slice(0, 8)} - {itemCount} article{itemCount > 1 ? "s" : ""}</p>
         </div>
         <span className="rounded-full bg-[var(--accent)] px-3 py-1 text-sm font-extrabold text-[var(--text-main)] shadow-[0_12px_24px_rgba(255,176,0,0.22)]">
           {demoOrder ? "TEST" : formatPrice(total)}
@@ -428,15 +586,28 @@ function NextOrderHero({ order, onOpen }) {
   );
 }
 
-function OrderCard({ order, onClick, onPrepared, onDelivered }) {
+function OrderCard({ order, onClick, onPaid, onPrepared, onDelivered, onOpenDelivery }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   const demoOrder = isDemoOrder(order);
+  const simpleStatus = getSimpleOrderStatus(order);
   const primaryLine = order.customer_phone && order.customer_phone !== "UNKNOWN"
     ? order.customer_phone
     : "Client WhatsApp";
   const action = getNextAction(order);
-  const quickAction = getQuickAction(order, onPrepared, onDelivered);
+  const quickAction = getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery);
   const itemCount = getOrderItemCount(order);
+  const botPaused = isHandoffActive(order.handoff);
+
+  const steps = ["Reçue", "Confirmée", "Prête", "Livrée"];
+  const currentStepMap = {
+    PENDING: 0,
+    PAID: 1,
+    PREPARED: 2,
+    IN_DELIVERY: 2,
+    DELIVERED: 3,
+    CANCELLED: -1,
+  };
+  const stepIdx = currentStepMap[simpleStatus] ?? 0;
 
   return (
     <div className="w-full overflow-hidden rounded-[24px] border border-white/80 bg-white/95 text-left shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[rgba(191,206,197,0.34)]">
@@ -453,41 +624,81 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
                   {action.icon}
                 </span>
                 <div>
-                  <p className="font-display text-base font-semibold text-[var(--text-main)]">#{order.order_ref || order.id?.slice(0, 8)}</p>
-                  <p className="text-xs font-bold text-[var(--text-dim)]">{demoOrder ? "Client demo Tikchop" : primaryLine}</p>
+                  <p className="font-display text-base font-black leading-5 text-[var(--text-main)]">{action.title}</p>
+                  <p className="text-xs font-bold text-[var(--text-dim)]">{demoOrder ? "Client demo" : primaryLine}</p>
                 </div>
               </div>
             </div>
             <div className="shrink-0 text-right">
               <p className="font-display text-lg font-bold text-[var(--primary)]">{demoOrder ? "TEST" : formatPrice(total)}</p>
-              <p className="mt-1 text-xs text-[var(--outline)]">
+              <p className="mt-1 hidden text-xs text-[var(--outline)] md:block">
                 {new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
               </p>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+          <div className="mt-3 grid grid-cols-[1fr_auto] gap-3 md:mt-4">
             <div className="min-w-0 rounded-2xl bg-[var(--surface-soft)] px-3 py-2">
-              <p className="text-xs font-bold text-[var(--text-dim)]">{statusHints[order.status] || "Action"}</p>
-              <p className="mt-0.5 truncate text-sm font-semibold text-[var(--text-main)]">
-                {itemCount} article{itemCount > 1 ? "s" : ""} dans la commande
+              <p className="truncate text-sm font-black text-[var(--text-main)]">
+                {itemCount} article{itemCount > 1 ? "s" : ""}
               </p>
             </div>
-            <span className={`self-start rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[order.status] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
-              {statusLabels[order.status] || order.status}
-            </span>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[simpleStatus] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
+                {statusLabels[simpleStatus] || simpleStatus}
+              </span>
+              {botPaused && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#06281a] px-2.5 py-1 text-[0.66rem] font-extrabold uppercase text-[var(--primary-bright)]">
+                  <Bot size={12} />
+                  Bot pause
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-1 text-sm text-[var(--text-dim)]">
+          {simpleStatus !== "CANCELLED" && (
+            <div className="mt-4 rounded-2xl bg-[#fbf9f4] p-3 border border-[#07120d]/5">
+              <div className="relative flex justify-between items-center max-w-[340px] mx-auto">
+                <div className="absolute left-3 right-3 top-3 h-0.5 bg-[#07120d]/5 -translate-y-1/2 z-0">
+                  <div 
+                    className="h-full bg-[#008f5a] transition-all duration-300" 
+                    style={{ width: `${(stepIdx / 3) * 100}%` }}
+                  />
+                </div>
+                {steps.map((label, index) => {
+                  const isDone = index < stepIdx;
+                  const isActive = index === stepIdx;
+                  return (
+                    <div key={label} className="relative z-10 flex flex-col items-center flex-1">
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-black transition-all ${
+                        isDone 
+                          ? "bg-[#008f5a] text-white shadow-sm" 
+                          : isActive 
+                            ? "bg-[#07120d] text-white scale-105" 
+                            : "bg-white text-[#07120d]/30 ring-1 ring-[#07120d]/10"
+                      }`}>
+                        {isDone ? "✓" : index + 1}
+                      </div>
+                      <span className={`mt-2 text-[9px] font-extrabold tracking-tight ${isActive ? "text-[#07120d]" : "text-[#07120d]/40"}`}>
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 hidden items-center gap-1 text-sm text-[var(--text-dim)] md:flex">
             <MapPin size={16} className="shrink-0 text-[var(--outline)]" />
             <span className="truncate">{order.delivery_zone || order.delivery_address || "Adresse a confirmer"}</span>
           </div>
         </div>
 
-        <div className={`flex items-center justify-between gap-3 px-4 py-3 ${action.barClass}`}>
-          <span className="min-w-0 text-sm font-bold">{action.title}</span>
+        <div className={`hidden items-center justify-between gap-3 px-4 py-3 md:flex ${action.barClass}`}>
+          <span className="min-w-0 text-sm font-bold">{action.subtitle}</span>
           <span className="flex shrink-0 items-center gap-1 text-sm font-bold">
-            Details
+            Ouvrir
             <ChevronRight size={16} />
           </span>
         </div>
@@ -514,21 +725,39 @@ function OrderCard({ order, onClick, onPrepared, onDelivered }) {
   );
 }
 
-function getQuickAction(order, onPrepared, onDelivered) {
-  if (order.status === "PREPARED" || order.delivery_status === "READY") {
+function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery) {
+  if (order.delivery_status === "ASSIGNED" && order.status !== "DELIVERED") {
     return {
-      label: "Marquer terminee",
+      label: "Marquer livree",
       icon: <CheckCircle2 size={18} />,
-      className: "bg-[var(--primary-bright)] text-zinc-950",
+      className: "bg-[#008f5a] text-white hover:bg-[#007a4d]",
       onClick: onDelivered,
     };
   }
 
-  if (order.status === "PENDING" || order.status === "PAID") {
+  if (order.status === "PREPARED" || order.delivery_status === "READY") {
     return {
-      label: order.status === "PENDING" ? "Confirmer et preparer" : "Paquet pret",
+      label: "Partager au livreur",
+      icon: <Truck size={18} />,
+      className: "bg-[#07120d] text-white hover:bg-[#122b20]",
+      onClick: onOpenDelivery,
+    };
+  }
+
+  if (order.status === "PENDING") {
+    return {
+      label: "Client confirme",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-[#008f5a] text-white hover:bg-[#007a4d]",
+      onClick: onPaid,
+    };
+  }
+
+  if (order.status === "PAID") {
+    return {
+      label: "Colis pret",
       icon: <Package size={18} />,
-      className: "bg-[var(--text-main)] text-white",
+      className: "bg-[#07120d] text-white hover:bg-[#122b20]",
       onClick: onPrepared,
     };
   }
@@ -546,25 +775,45 @@ function isDemoOrder(order) {
 }
 
 function getNextOrder(orders) {
-  const priority = { PENDING: 1, PAID: 2, PREPARED: 3 };
+  const priority = { PENDING: 1, PAID: 2, PREPARED: 3, IN_DELIVERY: 4 };
   return [...orders]
-    .filter((order) => ["PENDING", "PAID", "PREPARED"].includes(order.status))
+    .filter((order) => ["PENDING", "PAID", "PREPARED", "IN_DELIVERY"].includes(getSimpleOrderStatus(order)))
     .sort((a, b) => {
-      const statusDiff = (priority[a.status] || 9) - (priority[b.status] || 9);
+      const statusDiff = (priority[getSimpleOrderStatus(a)] || 9) - (priority[getSimpleOrderStatus(b)] || 9);
       if (statusDiff !== 0) return statusDiff;
       return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
     })[0] || null;
 }
 
-function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDelivered, onDriverShared }) {
+function OrderSheet({
+  order,
+  drivers,
+  sellerName,
+  onClose,
+  onPaid,
+  onPrepared,
+  onDelivered,
+  onCancel,
+  onDriverShared,
+  onManualDriverShare,
+  onPauseBot,
+  onResumeBot,
+  onManualReply,
+}) {
   const items = order.order_items || [];
   const demoOrder = isDemoOrder(order);
   const displayClientPhone = demoOrder
     ? "Client demo Tikchop"
     : order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Client WhatsApp";
   const availableDrivers = drivers.filter((driver) => driver.is_active !== false);
+  const isInDelivery = order.delivery_status === "ASSIGNED" && order.status !== "DELIVERED";
   const isPrepared = order.status === "PREPARED" || order.delivery_status === "READY";
+  const isReadyForDriver = isPrepared && !isInDelivery;
+  const canMarkDelivered = isPrepared || isInDelivery;
+  const isPaid = order.status === "PAID";
+  const isPending = order.status === "PENDING";
   const isDone = order.status === "DELIVERED";
+  const isCancelled = order.status === "CANCELLED";
   const nextAction = getNextAction(order);
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -572,9 +821,9 @@ function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDeliver
   const responseTemplates = getOrderResponseTemplates(order, responseContext);
   const bestResponse = getBestOrderResponse(order, responseContext);
   const caseNotes = getOrderCaseNotes(order, { hasDrivers: availableDrivers.length > 0 });
-  const driverMessage = encodeURIComponent(buildDriverShareMessage(order, { sellerName }));
-  const clientHref = demoOrder ? "" : buildWhatsappHref(order.customer_phone, bestResponse?.text);
   const receiptUrl = typeof window !== "undefined" ? `/receipt?order=${order.id}` : `/receipt?order=${order.id}`;
+  const driverMessage = encodeURIComponent(buildDriverShareMessage(order, { sellerName, origin }));
+  const clientHref = demoOrder ? "" : buildWhatsappHref(order.customer_phone, bestResponse?.text);
 
   function openDriverWhatsapp(driver = null) {
     const phone = cleanPhone(driver?.phone_number);
@@ -583,50 +832,48 @@ function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDeliver
 
     if (driver) {
       onDriverShared(order, driver);
+    } else {
+      onManualDriverShare(order);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-[260] flex items-end bg-black/50 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-[3px] md:items-center">
-      <div className="mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:rounded-[30px]">
-        <div className="relative overflow-hidden bg-[var(--text-main)] p-5 text-white">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[var(--info)]" />
+    <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
+      <div className="mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[32px] bg-white border border-[#e8dcc8]/45 shadow-2xl md:rounded-[32px]">
+        <div className="relative overflow-hidden bg-[#fbf9f4] border-b border-[#e8dcc8]/40 p-5 text-[#07120d]">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[var(--primary)] to-[var(--primary-bright)]" />
+          <button 
+            onClick={onClose} 
+            className="absolute right-5 top-5 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#07120d] border border-[#e8dcc8]/30 shadow-sm hover:bg-[#fbf9f4] transition active:scale-95" 
+            aria-label="Fermer"
+          >
+            <X size={16} strokeWidth={2.5} />
+          </button>
           <div className="relative z-10 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/45">Commande #{order.order_ref || order.id?.slice(0, 8)}</p>
-              <h2 className="mt-2 font-display text-2xl font-bold leading-8 text-white">{nextAction.title}</h2>
-              <p className="mt-1 text-sm font-semibold leading-5 text-white/62">{nextAction.subtitle}</p>
+            <div className="min-w-0 pr-12">
+              <p className="text-[0.64rem] font-black uppercase tracking-[0.14em] text-[#685f4f]/80">Commande #{order.order_ref || order.id?.slice(0, 8)}</p>
+              <h2 className="mt-2 font-display text-xl font-black leading-7 text-[#07120d]">{nextAction.title}</h2>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#685f4f]">{nextAction.subtitle}</p>
             </div>
-            <button onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white" aria-label="Fermer">
-            <X size={18} />
-            </button>
           </div>
           <div className="relative z-10 mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-              <p className="text-xs font-bold text-white/45">Total</p>
-              <p className="mt-1 font-display text-xl font-bold text-[var(--primary-bright)]">{formatPrice(total)}</p>
+            <div className="rounded-2xl bg-white border border-[#e8dcc8]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
+              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80">Total</p>
+              <p className="mt-1 font-display text-lg font-black text-[#008f5a]">{formatPrice(total)}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-              <p className="text-xs font-bold text-white/45">Articles</p>
-              <p className="mt-1 font-display text-xl font-bold text-white">{getOrderItemCount(order)}</p>
+            <div className="rounded-2xl bg-white border border-[#e8dcc8]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
+              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80">Articles</p>
+              <p className="mt-1 font-display text-lg font-black text-[#07120d]">{getOrderItemCount(order)}</p>
             </div>
           </div>
         </div>
 
         <div className="no-scrollbar max-h-[58vh] space-y-4 overflow-y-auto p-5">
-          <div className="rounded-2xl bg-[var(--surface-soft)] p-3 text-sm font-bold leading-5 text-[var(--text-dim)]">
-            {isPrepared || isDone
-              ? "La commande est prete. Vous pouvez l'envoyer a un livreur, puis la marquer terminee apres reception client."
-              : "Verifiez les articles ci-dessous. Quand le paquet est pret, appuyez sur le bouton principal en bas."}
-          </div>
+          <OrderNextActionCard order={order} />
 
-          <OrderProgress status={order.status} />
+          <OrderProgress status={order.status} deliveryStatus={order.delivery_status} />
 
           {demoOrder && <DemoOrderChecklist />}
-
-          <OrderCaseNotes notes={caseNotes} />
-
-          <ResponseTemplateRail templates={responseTemplates} phoneNumber={order.customer_phone} />
 
           <section>
             <SectionTitle step="1" title="Articles dans le sachet" />
@@ -652,106 +899,323 @@ function OrderSheet({ order, drivers, sellerName, onClose, onPrepared, onDeliver
               <InfoBlock icon={<MapPin size={18} />} label="Adresse" value={`${order.delivery_zone || "Zone non renseignee"} - ${order.delivery_address || "Adresse non renseignee"}`} />
               <InfoBlock icon={<Truck size={18} />} label="Livreur" value={order.delivery_drivers?.name || "Pas encore assigne"} />
             </div>
+            {(isPrepared || isDone || isInDelivery) ? (
+              <DriverSharePanel
+                availableDrivers={availableDrivers}
+                order={order}
+                onShare={openDriverWhatsapp}
+              />
+            ) : (
+              <div className="mt-3 rounded-2xl bg-[#fff8db] p-3 text-sm font-bold leading-5 text-[#5a4212] ring-1 ring-[#ffcf3d]/40">
+                La fiche livreur apparait ici apres <strong>Marquer colis pret</strong>. Elle contient client, adresse, articles, total, frais a encaisser et lien recu.
+              </div>
+            )}
           </section>
 
-          <div className="rounded-[24px] bg-zinc-950 p-4 text-white">
-            <div className="flex justify-between text-sm font-bold text-white/60">
+          <div className="rounded-[24px] bg-[#fbf9f4] border border-[#e8dcc8]/45 p-4.5 text-[#07120d] shadow-[0_2px_10px_rgba(58,47,30,0.02)]">
+            <div className="flex justify-between text-xs font-black uppercase tracking-wider text-[#685f4f]">
               <span>Produits</span>
               <span>{formatPrice(order.total_amount)}</span>
             </div>
-            <div className="mt-2 flex justify-between text-sm font-bold text-white/60">
+            <div className="mt-2.5 flex justify-between text-xs font-black uppercase tracking-wider text-[#685f4f]">
               <span>Livraison</span>
               <span>{formatPrice(order.delivery_fee)}</span>
             </div>
-            <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-xl font-extrabold">
+            <div className="mt-3.5 flex justify-between border-t border-dashed border-[#e8dcc8] pt-3.5 text-lg font-black font-display">
               <span>Total</span>
-              <span className="text-green-400">{formatPrice(total)}</span>
+              <span className="text-[#008f5a]">{formatPrice(total)}</span>
             </div>
           </div>
+
+          <OrderCaseNotes notes={caseNotes} />
+
+          <details className="rounded-[22px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.42)]">
+            <summary className="flex min-h-[50px] cursor-pointer list-none items-center justify-between gap-3 rounded-[18px] bg-[var(--surface-soft)] px-3 text-sm font-black text-[var(--text-main)]">
+              Messages et bot
+              <ChevronRight size={18} className="text-[var(--primary)]" />
+            </summary>
+            <div className="mt-3 space-y-3">
+              <ResponseTemplateRail templates={responseTemplates} phoneNumber={order.customer_phone} />
+
+              <BotControlPanel
+                key={order.id}
+                order={order}
+                bestResponse={bestResponse}
+                disabled={demoOrder || cleanPhone(order.customer_phone).length < 6}
+                onPauseBot={onPauseBot}
+                onResumeBot={onResumeBot}
+                onManualReply={onManualReply}
+              />
+            </div>
+          </details>
         </div>
 
         <div className="space-y-3 border-t border-zinc-100 p-4">
-          <p className="quiet-label">Action a faire maintenant</p>
-          {!isPrepared && !isDone ? (
-            <button onClick={onPrepared} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] text-base font-extrabold text-zinc-950 shadow-[0_14px_34px_rgba(0,108,73,0.20)] active:scale-[0.99]">
+          <p className="quiet-label">Prochaine action</p>
+          {isCancelled ? (
+            <div className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-red-50 text-sm font-extrabold text-red-700">
+              <X size={18} />
+              Commande annulee
+            </div>
+          ) : isPending ? (
+            <button onClick={onPaid} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#008f5a] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
+              <CheckCircle2 size={20} />
+              Client confirme
+            </button>
+          ) : isPaid ? (
+            <button onClick={onPrepared} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#07120d] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
               <Package size={20} />
-              {order.status === "PENDING" ? "Confirmer et preparer" : "Paquet pret"}
+              Marquer colis pret
+            </button>
+          ) : isInDelivery ? (
+            <button onClick={onDelivered} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#008f5a] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
+              <CheckCircle2 size={20} />
+              Marquer livree
             </button>
           ) : isDone ? (
             <div className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm font-extrabold text-zinc-500">
               <CheckCircle2 size={18} />
-              Commande terminee
+              Commande livree
             </div>
           ) : (
-            <button onClick={() => openDriverWhatsapp()} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-zinc-950 text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.18)] active:scale-[0.99]">
+            <button onClick={() => openDriverWhatsapp()} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#07120d] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
               <Share2 size={19} />
-              Envoyer la fiche au livreur
+              Partager au livreur
             </button>
           )}
 
           <div className="grid grid-cols-2 gap-2">
-            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${clientHref ? "bg-white text-zinc-950 ring-1 ring-zinc-200" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
-              <Send size={17} />
+            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${clientHref ? "bg-[#fbf9f4] text-[#07120d] border border-[#e8dcc8]/60 shadow-sm active:scale-98" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
+              <Send size={15} />
               Message client
             </a>
-            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-zinc-950 ring-1 ring-zinc-200">
-              <ReceiptText size={17} />
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4] text-xs font-black text-[#07120d] border border-[#e8dcc8]/60 shadow-sm transition active:scale-98">
+              <ReceiptText size={15} />
               Recu
             </a>
           </div>
 
-          <div className="grid grid-cols-1 gap-2">
-            <button onClick={onDelivered} disabled={!isPrepared || isDone} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-extrabold ${isPrepared && !isDone ? "bg-[var(--surface-soft)] text-[var(--primary)] ring-1 ring-[var(--primary)]/15" : "bg-zinc-100 text-zinc-400"}`}>
-              <CheckCircle2 size={17} />
-              Marquer terminee
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={onDelivered} disabled={!canMarkDelivered || isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${canMarkDelivered && !isDone && !isCancelled ? "bg-[#fbf9f4] text-[#008f5a] border border-[#e8dcc8]/60 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
+              <CheckCircle2 size={15} />
+              {isReadyForDriver ? "Livree sans livreur" : "Marquer livree"}
+            </button>
+            <button onClick={onCancel} disabled={isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${!isDone && !isCancelled ? "bg-rose-50 text-rose-700 border border-rose-100 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
+              <X size={15} />
+              Annuler
             </button>
           </div>
         </div>
 
-        <div className="border-t border-zinc-100 px-4 pb-4">
-          {isPrepared || isDone ? (
-            <>
-              <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.16em] text-zinc-400">Envoyer a un livreur</p>
-              {availableDrivers.length === 0 ? (
-                <Link href="/delivery-settings" className="flex min-h-[48px] items-center justify-center rounded-lg bg-zinc-50 text-sm font-extrabold text-zinc-500 ring-1 ring-zinc-100">
-                  Ajouter un livreur
-                </Link>
-              ) : (
-                <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-                  {availableDrivers.map((driver) => (
-                    <button
-                      key={driver.id}
-                      onClick={() => openDriverWhatsapp(driver)}
-                      className={`min-h-[48px] shrink-0 rounded-lg px-4 text-left text-sm font-extrabold ring-1 ${
-                        order.delivery_driver_id === driver.id
-                          ? "bg-green-50 text-green-700 ring-green-200"
-                          : "bg-zinc-50 text-zinc-950 ring-zinc-100"
-                      }`}
-                    >
-                      <span className="block">{driver.name}</span>
-                      <span className="block text-xs font-bold text-zinc-400">{driver.zone || "Toutes zones"}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 ring-1 ring-zinc-100">
-              Le partage livreur apparait apres le bouton Paquet pret.
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
 }
 
+function DriverSharePanel({ availableDrivers, order, onShare }) {
+  const assignedDriverId = order.delivery_driver_id;
+
+  return (
+    <div className="mt-3 rounded-[22px] bg-[#06281a] p-3 text-white shadow-[var(--shadow-sm)]">
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[#06100a]">
+          <Truck size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-white/50">Fiche livreur WhatsApp</p>
+          <h4 className="mt-1 font-display text-lg font-bold text-white">Envoyer la fiche</h4>
+          <p className="mt-1 text-sm font-semibold leading-5 text-white/66">
+            Le livreur recoit client, adresse, articles, total, frais a encaisser et lien recu.
+          </p>
+        </div>
+      </div>
+
+      {availableDrivers.length === 0 ? (
+        <Link href="/delivery-settings" className="mt-3 flex min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-[#06281a] no-underline">
+          <Phone size={17} />
+          Ajouter un livreur WhatsApp
+        </Link>
+      ) : (
+        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+          {availableDrivers.map((driver) => (
+            <button
+              key={driver.id}
+              type="button"
+              onClick={() => onShare(driver)}
+              className={`min-h-[54px] shrink-0 rounded-2xl px-4 text-left text-sm font-extrabold ring-1 ${
+                assignedDriverId === driver.id
+                  ? "bg-[var(--primary-bright)] text-[#06100a] ring-[var(--primary-bright)]"
+                  : "bg-white/10 text-white ring-white/14"
+              }`}
+            >
+              <span className="block">{driver.name}</span>
+              <span className={`block text-xs font-bold ${assignedDriverId === driver.id ? "text-[#28533f]" : "text-white/48"}`}>
+                {assignedDriverId === driver.id ? "Deja envoye" : (driver.zone || "Toutes zones")}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onShare()}
+        className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-extrabold text-white ring-1 ring-white/14"
+      >
+        <Share2 size={17} />
+        Ouvrir WhatsApp sans choisir
+      </button>
+    </div>
+  );
+}
+
+function isHandoffActive(handoff) {
+  return Boolean(handoff?.paused_until && new Date(handoff.paused_until).getTime() > Date.now());
+}
+
+function formatPauseUntil(value) {
+  if (!value) return "";
+  try {
+    return new Date(value).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
+function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onResumeBot, onManualReply }) {
+  const [message, setMessage] = useState(bestResponse?.text || "");
+  const [busy, setBusy] = useState("");
+  const [notice, setNotice] = useState("");
+  const active = isHandoffActive(order.handoff);
+  const pauseUntil = formatPauseUntil(order.handoff?.paused_until);
+
+  async function runAction(kind, action) {
+    try {
+      setBusy(kind);
+      setNotice("");
+      await action();
+    } catch (err) {
+      setNotice(err?.message || "Action impossible. Reessayez.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <section className={`rounded-[24px] p-4 shadow-[var(--shadow-sm)] ring-1 ${
+      active
+        ? "bg-[#06281a] text-white ring-[#39f58e]/20"
+        : "bg-white text-[var(--text-main)] ring-[var(--outline)]/20"
+    }`}>
+      <div className="flex items-start gap-3">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+          active ? "bg-[var(--primary-bright)] text-[#06100a]" : "bg-[var(--surface-soft)] text-[var(--primary)]"
+        }`}>
+          <Bot size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={`text-xs font-extrabold uppercase tracking-[0.14em] ${active ? "text-white/52" : "text-[var(--primary)]"}`}>
+            Bot WhatsApp
+          </p>
+          <h3 className={`mt-1 font-display text-lg font-bold ${active ? "text-white" : "text-[var(--text-main)]"}`}>
+            {active ? "Vous repondez vous-meme" : "Le bot peut repondre"}
+          </h3>
+          <p className={`mt-1 text-sm font-semibold leading-5 ${active ? "text-white/68" : "text-[var(--text-dim)]"}`}>
+            {disabled
+              ? "Ajoutez un vrai numero client pour gerer la conversation depuis Tikchop."
+              : active
+                ? `Le bot ne repond plus a ce client${pauseUntil ? ` jusqu'a ${pauseUntil}` : ""}.`
+                : "Pausez le bot si vous voulez reprendre cette discussion a la main."}
+          </p>
+        </div>
+      </div>
+
+      {!disabled && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {active ? (
+              <button
+                type="button"
+                onClick={() => runAction("resume", async () => {
+                  await onResumeBot(order);
+                  setNotice("Bot reactive pour ce client.");
+                })}
+                disabled={Boolean(busy)}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-[#06281a] ring-1 ring-white/20 disabled:opacity-60"
+              >
+                {busy === "resume" ? <Loader2 className="animate-spin" size={17} /> : <PlayCircle size={17} />}
+                Relancer le bot
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => runAction("pause", async () => {
+                  await onPauseBot(order);
+                  setNotice("Vous avez la main pendant 24h. Le bot ne repond plus a ce client.");
+                })}
+                disabled={Boolean(busy)}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--text-main)] text-sm font-extrabold text-white disabled:opacity-60"
+              >
+                {busy === "pause" ? <Loader2 className="animate-spin" size={17} /> : <PauseCircle size={17} />}
+                Reprendre 24h
+              </button>
+            )}
+            <a
+              href={buildWhatsappHref(order.customer_phone, message) || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--surface-soft)] text-sm font-extrabold text-[var(--primary)] no-underline ring-1 ring-[var(--primary)]/10"
+            >
+              <MessageCircle size={17} />
+              WhatsApp
+            </a>
+          </div>
+
+          <textarea
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            rows={4}
+            maxLength={1200}
+            placeholder="Ecrivez votre reponse au client..."
+            className={`mt-3 min-h-[112px] w-full resize-none rounded-[20px] border-0 p-3 text-sm font-semibold leading-5 outline-none ring-1 focus:ring-2 ${
+              active
+                ? "bg-white/10 text-white placeholder:text-white/35 ring-white/12 focus:ring-[var(--primary-bright)]"
+                : "bg-[var(--surface-soft)] text-[var(--text-main)] placeholder:text-[var(--outline)] ring-[var(--outline)]/20 focus:ring-[var(--primary)]/30"
+            }`}
+          />
+
+          <button
+            type="button"
+            onClick={() => runAction("reply", async () => {
+              await onManualReply(order, message);
+              setNotice("Message envoye. Le bot reste en pause 24h.");
+            })}
+            disabled={Boolean(busy) || !message.trim()}
+            className="mt-2 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-bright)] text-sm font-extrabold text-[#06100a] shadow-[0_12px_28px_rgba(57,245,142,0.20)] disabled:opacity-55"
+          >
+            {busy === "reply" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
+            Envoyer moi-meme
+          </button>
+        </>
+      )}
+
+      {notice && (
+        <p className={`mt-3 rounded-2xl px-3 py-2 text-sm font-bold ${
+          active ? "bg-white/10 text-white/78" : "bg-[var(--surface-soft)] text-[var(--text-dim)]"
+        }`}>
+          {notice}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function DemoOrderChecklist() {
   const checks = [
-    "Appuyez sur Paquet pret pour simuler la preparation.",
+    "Appuyez sur Marquer colis pret pour simuler l'emballage.",
     "Ouvre la fiche livreur pour voir le message de livraison.",
     "Ouvre Recu pour verifier le recap client.",
-    "Marque terminee pour fermer le cycle.",
+    "Marquez livree pour fermer le cycle.",
   ];
 
   return (
@@ -830,36 +1294,157 @@ function getTemplateToneClass(tone) {
   return "bg-[var(--surface-soft)] text-[var(--text-main)]";
 }
 
-function WorkTile({ title, value, tone = "default" }) {
-  const className = tone === "primary"
-    ? "border-[var(--text-main)] bg-[var(--text-main)] text-white"
-    : tone === "accent"
-      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-main)]"
-      : "border-[var(--outline)]/35 bg-white text-[var(--text-main)]";
+function OrderActionPath({ verifyCount, prepareCount, readyCount, deliveryCount, doneCount }) {
+  const steps = [
+    {
+      key: "confirm",
+      title: "Confirmer",
+      count: verifyCount,
+      detail: "Client, adresse, paiement",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-[var(--text-main)] text-white ring-[var(--text-main)]",
+    },
+    {
+      key: "prepare",
+      title: "Preparer",
+      count: prepareCount,
+      detail: "Articles en sachet",
+      icon: <Package size={18} />,
+      className: "bg-[var(--primary-bright)] text-[#06100a] ring-[var(--primary-bright)]",
+    },
+    {
+      key: "driver",
+      title: "Envoyer",
+      count: readyCount,
+      detail: "Fiche au livreur",
+      icon: <Truck size={18} />,
+      className: "bg-white text-[var(--text-main)] ring-[var(--outline)]/28",
+    },
+    {
+      key: "delivery",
+      title: "Fermer",
+      count: deliveryCount,
+      detail: doneCount > 0 ? `${doneCount} livree${doneCount > 1 ? "s" : ""}` : "Apres reception",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-white text-[var(--text-main)] ring-[var(--outline)]/28",
+    },
+  ];
 
   return (
-    <div className={`rounded-[18px] border p-3 shadow-[var(--shadow-sm)] ${className}`}>
-      <p className={`text-sm font-bold ${tone === "primary" ? "text-white/80" : "text-[var(--text-dim)]"}`}>{title}</p>
-      <p className="mt-2 font-display text-3xl font-bold leading-none">{value}</p>
+    <div className="rounded-[24px] bg-white/92 p-3 shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/24">
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div>
+          <p className="quiet-label text-[var(--primary)]">File d&apos;action</p>
+          <p className="mt-1 text-sm font-extrabold text-[var(--text-main)]">Le meme chemin pour chaque vente, sans chercher.</p>
+        </div>
+        <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-extrabold text-[var(--primary)]">
+          {verifyCount + prepareCount + readyCount + deliveryCount} ouvertes
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+        {steps.map((step, index) => (
+          <div key={step.key} className={`rounded-[18px] p-3 shadow-sm ring-1 ${step.className}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${index < 2 ? "bg-white/14" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+                {step.icon}
+              </span>
+              <span className="font-display text-2xl font-bold leading-none">{step.count}</span>
+            </div>
+            <p className={`mt-2 text-sm font-extrabold ${index === 0 ? "text-white" : "text-current"}`}>{index + 1}. {step.title}</p>
+            <p className={`mt-0.5 text-[0.7rem] font-bold leading-4 ${index === 0 ? "text-white/58" : "text-[var(--text-dim)]"}`}>{step.detail}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function OrderProgress({ status }) {
+function OrderNextActionCard({ order }) {
+  const simpleStatus = getSimpleOrderStatus(order);
+  const content = {
+    PENDING: {
+      label: "Etape 1",
+      title: "Confirmer le client",
+      body: "Verifiez client, commune, adresse et paiement choisi avant de preparer.",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-amber-50 text-amber-900 ring-amber-100",
+    },
+    PAID: {
+      label: "Etape 2",
+      title: "Preparer le colis",
+      body: "Mettez les articles dans le sachet, puis marquez colis pret.",
+      icon: <Package size={18} />,
+      className: "bg-green-50 text-green-900 ring-green-100",
+    },
+    PREPARED: {
+      label: "Etape 3",
+      title: "Envoyer au livreur",
+      body: "Choisissez un livreur ou partagez la fiche WhatsApp avec client, adresse et frais.",
+      icon: <Truck size={18} />,
+      className: "bg-blue-50 text-blue-900 ring-blue-100",
+    },
+    IN_DELIVERY: {
+      label: "Etape 4",
+      title: "Attendre la reception",
+      body: "Le livreur a la fiche. Quand le client confirme, marquez livree.",
+      icon: <Truck size={18} />,
+      className: "bg-indigo-50 text-indigo-900 ring-indigo-100",
+    },
+    DELIVERED: {
+      label: "Finie",
+      title: "Commande livree",
+      body: "Le cycle est ferme. Le recu reste disponible.",
+      icon: <CheckCircle2 size={18} />,
+      className: "bg-zinc-50 text-zinc-700 ring-zinc-100",
+    },
+    CANCELLED: {
+      label: "Annulee",
+      title: "Commande annulee",
+      body: "Aucune action livraison n'est necessaire.",
+      icon: <X size={18} />,
+      className: "bg-red-50 text-red-700 ring-red-100",
+    },
+  }[simpleStatus] || {
+    label: "Action",
+    title: "Verifier la vente",
+    body: "Ouvrez les details avant de passer a l'etape suivante.",
+    icon: <Clock3 size={18} />,
+    className: "bg-[var(--surface-soft)] text-[var(--text-main)] ring-[var(--outline)]/20",
+  };
+
+  return (
+    <div className={`rounded-[22px] p-3 shadow-sm ring-1 ${content.className}`}>
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-current shadow-sm">
+          {content.icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] opacity-60">{content.label}</p>
+          <h3 className="mt-1 font-display text-lg font-bold leading-6">{content.title}</h3>
+          <p className="mt-1 text-sm font-bold leading-5 opacity-75">{content.body}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderProgress({ status, deliveryStatus }) {
+  const simpleStatus = getSimpleOrderStatus({ status, delivery_status: deliveryStatus });
   const steps = [
-    { key: "CHECK", label: "Nouvelle", active: ["PENDING", "PAID", "PREPARED", "DELIVERED"].includes(status) },
-    { key: "READY", label: "Paquet", active: ["PREPARED", "DELIVERED"].includes(status) },
-    { key: "DONE", label: "Livre", active: status === "DELIVERED" },
+    { key: "CONFIRM", label: "Client", active: ["PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "PACK", label: "Paquet", active: ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "DRIVER", label: "Livreur", active: ["PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "DONE", label: "Finie", active: ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-4 gap-2">
       {steps.map((step, index) => (
-        <div key={step.key} className={`rounded-2xl border p-3 text-center ${step.active ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-zinc-100 bg-zinc-50 text-zinc-400"}`}>
+        <div key={step.key} className={`min-w-0 rounded-2xl border p-2 text-center ${step.active ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-zinc-100 bg-zinc-50 text-zinc-400"}`}>
           <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold ${step.active ? "bg-[var(--primary)] text-white" : "bg-white text-zinc-400"}`}>
             {step.active ? <CheckCircle2 size={16} /> : index + 1}
           </span>
-          <p className="mt-1 text-xs font-extrabold">{step.label}</p>
+          <p className="mt-1 truncate text-[0.68rem] font-extrabold">{step.label}</p>
         </div>
       ))}
     </div>
@@ -867,10 +1452,20 @@ function OrderProgress({ status }) {
 }
 
 function getNextAction(order) {
-  if (order.status === "PREPARED" || order.delivery_status === "READY") {
+  if (order.delivery_status === "ASSIGNED" && order.status !== "DELIVERED") {
     return {
       title: "En livraison",
-      subtitle: "Partage la fiche au livreur ou marque terminee apres reception.",
+      subtitle: "Le livreur a la fiche. Fermez apres reception client.",
+      icon: <Truck size={17} />,
+      iconTone: "bg-indigo-100 text-indigo-700",
+      barClass: "bg-indigo-50 text-indigo-800",
+    };
+  }
+
+  if (order.status === "PREPARED" || order.delivery_status === "READY") {
+    return {
+      title: "A envoyer au livreur",
+      subtitle: "Partagez la fiche WhatsApp avec client, adresse et frais.",
       icon: <Truck size={17} />,
       iconTone: "bg-blue-100 text-blue-700",
       barClass: "bg-blue-50 text-blue-800",
@@ -879,8 +1474,8 @@ function getNextAction(order) {
 
   if (order.status === "DELIVERED") {
     return {
-      title: "Commande terminee",
-      subtitle: "Cette commande est terminee.",
+      title: "Commande finie",
+      subtitle: "Cette commande est fermee.",
       icon: <CheckCircle2 size={17} />,
       iconTone: "bg-zinc-100 text-zinc-500",
       barClass: "bg-zinc-50 text-zinc-500",
@@ -888,10 +1483,10 @@ function getNextAction(order) {
   }
 
   return {
-    title: order.status === "PAID" ? "Preparer le paquet" : "A confirmer",
+    title: order.status === "PAID" ? "Preparer le colis" : "Client a confirmer",
     subtitle: order.status === "PAID"
-      ? "Paiement recu. Mets les articles dans le sachet."
-      : "Verifiez client, paiement et adresse avant preparation.",
+      ? "Commande confirmee. Mettez les articles dans le sachet."
+      : "Verifiez client, adresse et mode de paiement avant d'emballer.",
     icon: order.status === "PAID" ? <CheckCircle2 size={17} /> : <Clock3 size={17} />,
     iconTone: order.status === "PAID" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700",
     barClass: order.status === "PAID" ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800",

@@ -306,7 +306,7 @@ export async function sendOrderLifecycleMessage(orderId, status, { driver = null
   return { sent: result.ok, skipped: result.skipped || false };
 }
 
-export async function savePaystackInitialization(orderId, payment = {}) {
+export async function savePaystackInitialization(orderId, payment = {}, split = {}) {
   if (!supabaseAdmin || !orderId || !payment.reference) {
     return { data: null, error: null };
   }
@@ -317,6 +317,8 @@ export async function savePaystackInitialization(orderId, payment = {}) {
       paystack_reference: payment.reference,
       paystack_authorization_url: payment.authorization_url || null,
       paystack_payment_status: "initialized",
+      ...(split.subaccount ? { paystack_split_subaccount_code: split.subaccount } : {}),
+      ...(split.bearer ? { paystack_split_bearer: split.bearer } : {}),
     })
     .eq("id", orderId)
     .select("id")

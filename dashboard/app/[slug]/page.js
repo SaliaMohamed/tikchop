@@ -16,11 +16,21 @@ async function getSellerData(slug) {
 
   if (error || !seller) return null;
 
-  const { data: products } = await supabase
+  let { data: products, error: productsError } = await supabase
     .from("products")
     .select("*")
     .eq("seller_id", seller.id)
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
+
+  if (productsError && /is_active|schema cache|column/i.test(productsError.message || "")) {
+    const fallback = await supabase
+      .from("products")
+      .select("*")
+      .eq("seller_id", seller.id)
+      .order("created_at", { ascending: false });
+    products = fallback.data;
+  }
 
   const { data: deliveryZones } = await supabase
     .from("delivery_zones")

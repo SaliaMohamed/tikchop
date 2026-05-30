@@ -376,6 +376,26 @@
             {
               "fieldId": "customer_phone",
               "fieldValue": "={{ $('Normalize Evolution Payload').first().json.customerPhone || String($('Normalize Evolution Payload').first().json.payload?.from || '').replace(/\\D/g, '') }}"
+            },
+            {
+              "fieldId": "media_type",
+              "fieldValue": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload?.media || {}; const mime = String(media.mimetype || '').toLowerCase(); if (!mime) return null; if (mime.startsWith('image/')) return 'image'; if (mime.startsWith('audio/')) return 'audio'; if (mime.startsWith('video/')) return 'video'; return 'document'; })() }}"
+            },
+            {
+              "fieldId": "media_url",
+              "fieldValue": "={{ $('Normalize Evolution Payload').first().json.payload?.media?.url || '' }}"
+            },
+            {
+              "fieldId": "media_mime_type",
+              "fieldValue": "={{ $('Normalize Evolution Payload').first().json.payload?.media?.mimetype || '' }}"
+            },
+            {
+              "fieldId": "media_caption",
+              "fieldValue": "={{ $('Normalize Evolution Payload').first().json.payload?.media?.caption || $('Normalize Evolution Payload').first().json.payload?.body || '' }}"
+            },
+            {
+              "fieldId": "media_payload",
+              "fieldValue": "={{ (() => { const media = $('Normalize Evolution Payload').first().json.payload?.media || {}; return { mimetype: media.mimetype || '', url: media.url || '', caption: media.caption || '', base64: media.base64 || '' }; })() }}"
             }
           ]
         }
@@ -518,25 +538,36 @@
     },
     {
       "parameters": {
-        "operation": "update",
-        "tableId": "orders",
-        "id": "={{$node[\"Extract Order Ref\"].json[\"ref\"]}}",
-        "fields": {
-          "customer_phone": "={{$node[\"Extract Order Ref\"].json[\"phone\"]}}"
-        }
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?order_ref=eq.' + $node[\"Extract Order Ref\"].json[\"ref\"] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"customer_phone\": $node[\"Extract Order Ref\"].json[\"phone\"] } }}",
+        "options": {}
       },
       "id": "update-order-link-node",
       "name": "Update Order Link",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
       "position": [
         -700,
         2150
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "tikchopSupabase01",
-          "name": "Tikchop Supabase account"
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
         }
       },
       "onError": "continueRegularOutput"
@@ -631,7 +662,7 @@
         "promptType": "define",
         "text": "={{ $('Fusion Pro').item.json.message }}",
         "options": {
-          "systemMessage": "= IDENTITE :\nVous etes l'assistant de vente WhatsApp de la boutique {{ $('Identify Seller').first().json.name }} sur Tikchop.\n\nMISSION :\n1. Vendre les produits de la boutique avec des reponses courtes, utiles et naturelles.\n2. Quand le client demande le stock, les articles disponibles, le catalogue ou les prix, utilisez uniquement CONTEXTE PRODUITS.\n3. Si CONTEXTE PRODUITS contient des articles, ne dites jamais que vous n'avez pas acces au stock ou au catalogue.\n4. Presentez d'abord 3 articles maximum avec nom, prix et une description tres courte. Ne donnez pas de lien produit au premier message de catalogue. Ne dites pas \"photo disponible\".\n5. Apres la liste, demandez simplement quel article l'interesse et dites que vous pouvez envoyer les photos ou mettre de cote l'article.\n6. Si le client veut payer, parlez de Wave, Orange Money, MTN/Moov, carte ou paiement a la livraison selon la boutique. Presentez le lien comme le paiement securise de la boutique, avec Wave, Orange Money ou carte selon les options affichees. Ne mentionnez jamais Paystack au client.\n\nSTYLE LOCAL :\n- Francais ivoirien simple, clair, poli, direct.\n- Reponse courte, comme un vendeur WhatsApp, pas comme un assistant de site. 6 lignes maximum quand c'est possible.\n- Pas de formule robotique comme \"faites-le moi savoir\", \"n'hesitez pas\", \"je reste a votre disposition\".\n- Utilisez plutot : \"Oui c'est disponible\", \"Lequel vous interesse ?\", \"Je peux vous le mettre de cote\", \"Vous etes dans quelle zone ?\".\n- Si INFOS BOUTIQUE / STYLE VENDEUR contient un ton, un message d'accueil, des paiements preferes ou des regles boutique, suivez ces consignes en priorite.\n- Vouvoiement obligatoire.\n\nFORMAT SI LE CLIENT DEMANDE STOCK / PRIX / CATALOGUE :\nCommencez par : \"Oui, voici les articles disponibles chez {{ $('Identify Seller').first().json.name }} :\"\nPuis listez 3 articles maximum :\n1. Nom - prix CFA. Petite description.\nFinissez par : \"Lequel vous interesse ? Je peux vous envoyer la photo et le mettre de cote. Paiement possible par Wave, Orange Money, MTN/Moov, carte ou livraison selon la zone.\"\n\nREGLES :\n- Si le client demande une photo sans pr?ciser l'article, demandez simplement lequel il veut voir. Ne choisissez pas un produit au hasard.\n- Vous parlez au nom de {{ $('Identify Seller').first().json.name }}.\n- Pas de gras, pas d'asterisques.\n- Ne mentionnez pas Supabase, n8n, Evolution API, Paystack ou les outils internes.\n- Si le catalogue est vide, dites que la boutique n'a pas encore publie d'article et proposez de revenir plus tard.\n\nCONTEXTE PRODUITS :\n{{ $json.productsText }}\n\nINFOS BOUTIQUE / STYLE VENDEUR :\n{{ $json.shopText }}\n\nDERNIERES COMMANDES CLIENT :\n{{ $json.ordersText }}\n\nINFOS BOUTIQUE :\nNom: {{ $('Identify Seller').first().json.name }}\nSlug: {{ $('Identify Seller').first().json.slug }}"
+          "systemMessage": "= IDENTITE :\nVous etes l'assistant de vente WhatsApp de la boutique {{ $('Identify Seller').first().json.name }} sur Tikchop.\n\nMISSION :\n1. Vendre les produits de la boutique avec des reponses courtes, utiles et naturelles.\n2. Quand le client demande le stock, les articles disponibles, le catalogue ou les prix, utilisez uniquement CONTEXTE PRODUITS.\n3. Si CONTEXTE PRODUITS contient des articles, ne dites jamais que vous n'avez pas acces au stock ou au catalogue.\n4. Presentez d'abord 3 articles maximum avec nom, prix et une description tres courte. Ne donnez pas de lien produit au premier message de catalogue. Ne dites pas \"photo disponible\".\n5. Apres la liste, demandez simplement quel article l'interesse et dites que vous pouvez envoyer les photos ou mettre de cote l'article.\n6. Paiement: respectez uniquement MOYENS DE PAIEMENT VENDEUR. Ne proposez jamais un moyen absent de cette liste. Proposez le moyen par defaut en premier. Ne mentionnez jamais Paystack au client; dites seulement \"lien securise\" si ce moyen est autorise.\n7. Livraison: demandez la commune/quartier, puis utilisez LIVRAISON VENDEUR pour parler des frais et du moment ou la livraison se paie.\n8. Bot V1: priorite a disponibilite produit, support simple, et redirection boutique quand le client veut voir plus d articles ou commander sur le site.\n\nSTYLE LOCAL :\n- Francais ivoirien simple, clair, poli, direct.\n- Reponse courte, comme un vendeur WhatsApp, pas comme un assistant de site. 6 lignes maximum quand c'est possible.\n- Pas de formule robotique comme \"faites-le moi savoir\", \"n'hesitez pas\", \"je reste a votre disposition\".\n- Utilisez plutot : \"Oui c'est disponible\", \"Lequel vous interesse ?\", \"Je peux vous le mettre de cote\", \"Vous etes dans quelle zone ?\".\n- Si INFOS BOUTIQUE / STYLE VENDEUR contient un ton, un message d'accueil, des paiements preferes ou des regles boutique, suivez ces consignes en priorite.\n- Vouvoiement obligatoire.\n\nFORMAT SI LE CLIENT DEMANDE STOCK / PRIX / CATALOGUE :\nCommencez par : \"Oui, voici les articles disponibles chez {{ $('Identify Seller').first().json.name }} :\"\nPuis listez 3 articles maximum :\n1. Nom - prix CFA. Petite description.\nFinissez par : \"Lequel vous interesse ? Je peux vous envoyer la photo et le mettre de cote.\"\nAjoutez une seule phrase paiement depuis MOYENS DE PAIEMENT VENDEUR si elle n'est pas deja presente.\n\nSUPPORT ET REDIRECTION BOUTIQUE :\n- Si le client demande comment commander, donnez les etapes simples: choisir article, confirmer taille/couleur, donner commune/quartier, puis paiement/livraison selon les choix du vendeur.\n- Si le client veut voir la boutique ou plus d articles, donnez ce lien: https://tikchop.app/{{ $('Identify Seller').first().json.slug }}\n- Si la demande sort de la vente (probleme, reclamation, livraison, paiement confus), repondez calmement, demandez la reference ou le detail manquant, puis dites que la boutique va verifier.\n- Si vous ne savez pas, n inventez pas. Demandez une precision ou proposez de transferer au vendeur.\n\nREGLES :\n- Si le client demande une photo sans preciser l'article, demandez simplement lequel il veut voir. Ne choisissez pas un produit au hasard.\n- Vous parlez au nom de {{ $('Identify Seller').first().json.name }}.\n- Pas de gras, pas d'asterisques.\n- Ne mentionnez pas Supabase, n8n, Evolution API, Paystack ou les outils internes.\n- Si le catalogue est vide, dites que la boutique n'a pas encore publie d'article et proposez de revenir plus tard.\n\nCONTEXTE PRODUITS :\n{{ $json.productsText }}\n\nMOYENS DE PAIEMENT VENDEUR :\n{{ $json.paymentText }}\n\nLIVRAISON VENDEUR :\n{{ $json.deliveryText }}\n\nINFOS BOUTIQUE / STYLE VENDEUR :\n{{ $json.shopText }}\n\nDERNIERES COMMANDES CLIENT :\n{{ $json.ordersText }}\n\nINFOS BOUTIQUE :\nNom: {{ $('Identify Seller').first().json.name }}\nSlug: {{ $('Identify Seller').first().json.slug }}"
         }
       },
       "id": "3842e0ca-4bc6-4665-bb51-7ce65b3009c4",
@@ -646,7 +677,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ `SELECT name, slug, fixed_delivery_fee, delivery_payment_timing, row_to_json(s)->>'bot_tone' AS bot_tone, row_to_json(s)->>'bot_greeting' AS bot_greeting, row_to_json(s)->>'bot_payment_preferences' AS bot_payment_preferences, row_to_json(s)->>'bot_delivery_notes' AS bot_delivery_notes, row_to_json(s)->>'bot_special_rules' AS bot_special_rules FROM sellers s WHERE id = '${$('Identify Seller').first().json.id}';` }}",
+        "query": "={{ `SELECT s.name, s.slug, s.fixed_delivery_fee, s.delivery_payment_timing, s.accepted_payment_methods, s.default_payment_method, s.payout_network, s.payout_phone, s.payout_status, s.paystack_subaccount_code, row_to_json(s)->>'bot_tone' AS bot_tone, row_to_json(s)->>'bot_greeting' AS bot_greeting, row_to_json(s)->>'bot_payment_preferences' AS bot_payment_preferences, row_to_json(s)->>'bot_delivery_notes' AS bot_delivery_notes, row_to_json(s)->>'bot_special_rules' AS bot_special_rules, COALESCE((SELECT json_agg(json_build_object('name', dz.name, 'fee', dz.fee) ORDER BY dz.name) FROM delivery_zones dz WHERE dz.seller_id = s.id AND coalesce(dz.is_active, true) = true), '[]'::json) AS delivery_zones FROM sellers s WHERE s.id = '${$('Identify Seller').first().json.id}';` }}",
         "options": {}
       },
       "id": "8e8dd170-85b7-4f73-a911-ba635c30d45a",
@@ -825,7 +856,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst body = input.body || input;\nconst query = input.query || {};\nconst data = body.data || body.message || {};\nconst key = data.key || {};\nconst event = body.event || '';\n\nif (event && !['MESSAGES_UPSERT', 'messages.upsert'].includes(event)) {\n  return [];\n}\n\nconst msg = data.message || data;\nconst instanceName = body.instance || body.instanceName || query.seller || 'unknown';\nconst remoteJid = key.remoteJid || data.remoteJid || data.chatId || body.remoteJid || body.chatId || '';\nconst messageId = key.id || data.id || body.id || String(Date.now());\nconst pushName = data.pushName || body.pushName || 'Client';\nconst isFromMe = Boolean(key.fromMe || data.fromMe || body.fromMe);\n\nlet text =\n  msg.conversation ||\n  msg.extendedTextMessage?.text ||\n  msg.imageMessage?.caption ||\n  msg.videoMessage?.caption ||\n  data.messageText ||\n  body.text ||\n  '';\n\nconst mimetype =\n  msg.imageMessage?.mimetype ||\n  msg.audioMessage?.mimetype ||\n  msg.videoMessage?.mimetype ||\n  msg.documentMessage?.mimetype ||\n  '';\n\nconst mediaBase64 =\n  msg.base64 ||\n  data.base64 ||\n  body.base64 ||\n  msg.imageMessage?.base64 ||\n  msg.audioMessage?.base64 ||\n  msg.documentMessage?.base64 ||\n  msg.imageMessage?.jpegThumbnail ||\n  '';\n\nconst isImage = mimetype.includes('image');\nconst isAudio = mimetype.includes('audio');\nconst hasMedia = Boolean(mimetype && mediaBase64);\n\nif (!text && isImage && !hasMedia) {\n  text = 'Le client a envoye une image, mais le fichier image n est pas disponible. Repondez simplement que la photo est recue et demandez quel modele ou detail il cherche.';\n}\n\nif (!text && isAudio && !hasMedia) {\n  text = 'Le client a envoye un vocal, mais le fichier audio n est pas disponible. Demandez lui d ecrire sa demande en quelques mots.';\n}\n\nif (!text && !hasMedia) {\n  return [];\n}\n\nconst payload = {\n  id: messageId,\n  from: remoteJid,\n  body: text,\n  hasMedia,\n  media: { mimetype, url: '', caption: text, base64: mediaBase64 },\n  _data: { notifyName: pushName },\n};\nconst customerPhone = String(remoteJid || '').replace(/\\D/g, '');\n\nreturn [{\n  json: {\n    source: 'evolution',\n    event,\n    instanceName,\n    seller: query.seller || instanceName,\n    sellerSlug: query.seller || instanceName,\n    query,\n    isFromMe,\n    customerPhone,\n    payload,\n    body: {\n      session: instanceName,\n      payload,\n      event: body.event,\n      instance: instanceName,\n      isFromMe,\n      customerPhone,\n    },\n    raw: body,\n  }\n}];"
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || input;\nconst query = input.query || {};\nconst data = body.data || body.message || {};\nconst key = data.key || {};\nconst event = String(body.event || '').trim();\nconst eventKey = event.toLowerCase();\nconst instanceName = body.instance || body.instanceName || query.seller || 'unknown';\n\nconst isMessageEvent = !event || ['messages_upsert', 'messages.upsert'].includes(eventKey);\nconst isConnectionUpdate = ['connection_update', 'connection.update'].includes(eventKey);\n\nif (isConnectionUpdate) {\n  const rawState = String(data.state || data.status || data.connectionStatus || body.state || body.status || body.connectionStatus || '').toLowerCase();\n  let whatsappStatus = 'pending';\n  if (['open', 'connected', 'online'].includes(rawState)) whatsappStatus = 'connected';\n  else if (['close', 'closed', 'disconnected', 'logout', 'loggedout', 'offline'].includes(rawState)) whatsappStatus = 'disconnected';\n  else if (['connecting', 'pairing', 'qrcode', 'qr', 'pending'].includes(rawState)) whatsappStatus = 'pending';\n  else if (rawState.includes('error') || rawState.includes('fail')) whatsappStatus = 'error';\n\n  return [{\n    json: {\n      source: 'evolution',\n      event,\n      eventType: 'connection_update',\n      instanceName,\n      seller: query.seller || instanceName,\n      sellerSlug: query.seller || instanceName,\n      query,\n      isFromMe: false,\n      connectionState: rawState || 'unknown',\n      whatsappStatus,\n      raw: body,\n    }\n  }];\n}\n\nif (!isMessageEvent) {\n  return [];\n}\n\nconst msg = data.message || data;\nconst remoteJid = key.remoteJid || data.remoteJid || data.chatId || body.remoteJid || body.chatId || '';\nconst messageId = key.id || data.id || body.id || String(Date.now());\nconst pushName = data.pushName || body.pushName || 'Client';\nconst isFromMe = Boolean(key.fromMe || data.fromMe || body.fromMe);\n\nlet text =\n  msg.conversation ||\n  msg.extendedTextMessage?.text ||\n  msg.imageMessage?.caption ||\n  msg.videoMessage?.caption ||\n  data.messageText ||\n  body.text ||\n  '';\n\nconst mimetype =\n  msg.imageMessage?.mimetype ||\n  msg.audioMessage?.mimetype ||\n  msg.videoMessage?.mimetype ||\n  msg.documentMessage?.mimetype ||\n  '';\n\nconst mediaBase64 =\n  msg.base64 ||\n  data.base64 ||\n  body.base64 ||\n  msg.imageMessage?.base64 ||\n  msg.audioMessage?.base64 ||\n  msg.documentMessage?.base64 ||\n  msg.imageMessage?.jpegThumbnail ||\n  '';\n\nconst isImage = mimetype.includes('image');\nconst isAudio = mimetype.includes('audio');\nconst hasMedia = Boolean(mimetype && mediaBase64);\n\nif (!text && isImage && !hasMedia) {\n  text = 'Le client a envoye une image, mais le fichier image n est pas disponible. Repondez simplement que la photo est recue et demandez quel modele ou detail il cherche.';\n}\n\nif (!text && isAudio && !hasMedia) {\n  text = 'Le client a envoye un vocal, mais le fichier audio n est pas disponible. Demandez lui d ecrire sa demande en quelques mots.';\n}\n\nif (!text && !hasMedia) {\n  return [];\n}\n\nconst payload = {\n  id: messageId,\n  from: remoteJid,\n  body: text,\n  hasMedia,\n  media: { mimetype, url: '', caption: text, base64: mediaBase64 },\n  _data: { notifyName: pushName },\n};\nconst customerPhone = String(remoteJid || '').replace(/\\D/g, '');\n\nreturn [{\n  json: {\n    source: 'evolution',\n    event,\n    eventType: 'message',\n    instanceName,\n    seller: query.seller || instanceName,\n    sellerSlug: query.seller || instanceName,\n    query,\n    isFromMe,\n    customerPhone,\n    payload,\n    body: {\n      session: instanceName,\n      payload,\n      event: body.event,\n      instance: instanceName,\n      isFromMe,\n      customerPhone,\n    },\n    raw: body,\n  }\n}];"
       },
       "id": "265ca4c5-1b57-4865-8330-c2f92436a8e7",
       "name": "Normalize Evolution Payload",
@@ -838,7 +869,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const seller = $('Identify Seller').first().json;\nconst nl = String.fromCharCode(10);\nconst orders = $input.all().map(item => item.json).filter(order => Object.keys(order).length > 0);\nconst products = $('Get Products').all().map(item => item.json).map(product => ({\n  id: product.id,\n  name: product.name,\n  price: product.price,\n  stock_quantity: product.stock_quantity,\n  image_url: product.image_url,\n  description: product.description,\n  product_variants: product.product_variants || [],\n  product_keywords: product.product_keywords || '',\n  product_url: 'https://tikchop.app/' + seller.slug + '?product=' + product.id,\n}));\nconst shop = $('Get Shop Info').all().map(item => item.json)[0] || {};\nconst productsText = products.length\n  ? products.filter(product => Number(product.stock_quantity || 0) > 0).slice(0, 3).map((product, index) => {\n      const stock = Number(product.stock_quantity || 0);\n      const availability = stock > 0 ? 'DISPO (' + stock + ')' : 'INDISPONIBLE';\n      const variants = Array.isArray(product.product_variants) && product.product_variants.length ? ' - Variantes: ' + product.product_variants.slice(0, 4).map(v => [v.label || v.size || v.color, v.stock ? ('stock ' + v.stock) : ''].filter(Boolean).join(' ')).join(', ') : '';\n      const keywords = product.product_keywords ? ' - Mots cles: ' + product.product_keywords : '';\n      return (index + 1) + '. ' + product.name + ' - ' + Number(product.price || 0).toLocaleString('fr-FR') + ' CFA - ' + (product.description || 'Description a confirmer') + variants + keywords;\n    }).join(nl)\n  : 'Aucun produit publie.';\nconst ordersText = orders.length\n  ? orders.map(order => 'Commande ' + (order.order_ref || order.id) + ' - ' + order.status + ' - ' + Number(order.total_amount || 0).toLocaleString('fr-FR') + ' CFA').join(nl)\n  : 'Aucune commande connue pour ce client.';\nconst shopText = Object.keys(shop).length ? [\n  'Boutique: ' + (shop.name || seller.name || ''),\n  'Livraison: ' + (shop.delivery_payment_timing || 'non renseignee'),\n  'Frais: ' + Number(shop.fixed_delivery_fee || 0).toLocaleString('fr-FR') + ' CFA',\n  shop.bot_tone ? 'Ton boutique: ' + shop.bot_tone : '',\n  shop.bot_greeting ? 'Accueil boutique: ' + shop.bot_greeting : '',\n  shop.bot_payment_preferences ? 'Paiements preferes: ' + shop.bot_payment_preferences : '',\n  shop.bot_delivery_notes ? 'Notes livraison: ' + shop.bot_delivery_notes : '',\n  shop.bot_special_rules ? 'Regles boutique: ' + shop.bot_special_rules : '',\n].filter(Boolean).join(nl) : 'Infos livraison non renseignees.';\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst message = $('Fusion Pro').first().json.message || '';\nconst normalizedMessage = normalize(message);\nconst wantsCatalog = /\\b(stock|catalogue|article|articles|produit|produits|disponible|disponibles|photo|photos|image|images|prix|combien|cout|coute|modeles|modele|voir|montre|envoie|envoyer|envoi)\\b/i.test(normalizedMessage);\nconst orderIntent = /\\b(je prends|je prend|j achete|jachete|acheter|commande|commander|je veux commander|je vais prendre|c est bon pour|interesse|interessee|preneur|garde moi|reserve|reserver|mettre de cote|mets de cote)\\b/i.test(normalizedMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|mod?le|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst quantityMatch = normalizedMessage.match(/(?:quantite|qte|qty|nombre|prends en|prendre en|x)\\s*(\\d{1,2})|(?:\\b(\\d{1,2})\\s*(?:pieces?|pcs?|articles?)\\b)/);\nconst quantity = Math.max(1, Math.min(20, Number(quantityMatch?.[1] || quantityMatch?.[2] || 1)));\nconst stopWords = new Set(['avec','pour','dans','vous','nous','veux','prendre','commande','commander','article','produit','taille','prix','stock','celui','celle','bonjour','salut','bonsoir']);\nconst messageTokens = new Set(normalizedMessage.split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token)));\n\nconst scoredProducts = products.map((product, index) => {\n  const productName = normalize(product.name);\n  const productExtra = normalize((product.description || '') + ' ' + (product.product_keywords || '') + ' ' + (Array.isArray(product.product_variants) ? product.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''));\n  const productTokens = (productName + ' ' + productExtra).split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token));\n  let score = 0;\n  if (productName && normalizedMessage.includes(productName)) score += 20;\n  if (indexMatch && Number(indexMatch[1]) === index + 1) score += 15;\n  for (const token of productTokens) {\n    if (messageTokens.has(token)) score += 4;\n    else if (normalizedMessage.includes(token)) score += 2;\n  }\n  return { product, index, score };\n}).sort((a, b) => b.score - a.score);\n\nconst best = scoredProducts[0];\nconst second = scoredProducts[1];\nconst matchedProduct = best && best.score > 0 ? best.product : null;\nconst ready = Boolean(orderIntent && best && best.score > 0 && (!second || best.score >= second.score + 2) && Number(best.product.stock_quantity || 0) >= quantity);\nconst orderDraft = ready ? {\n  ready: true,\n  quantity,\n  product: best.product,\n  total_amount: Number(best.product.price || 0) * quantity,\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: orderIntent,\n  reason: orderIntent ? 'product_unclear_or_stock_missing' : 'no_order_intent',\n};\n\nconst paymentIntent = /\\b(wave|orange money|orange|om|mtn|moov|mobile money|mobile|payer|paiement|paye|payement|carte|visa|mastercard|lien de paiement|paiement en ligne)\\b/i.test(normalizedMessage);\nconst pendingOrders = orders\n  .filter(order => order.status === 'PENDING' && Number(order.total_amount || 0) > 0 && String(order.customer_phone || '') === String($('Fusion Pro').first().json.phone || ''))\n  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));\nconst paymentDraft = paymentIntent && pendingOrders.length ? {\n  ready: true,\n  order: pendingOrders[0],\n  amount: Number(pendingOrders[0].total_amount || 0) + Number(pendingOrders[0].delivery_fee || 0),\n  customer_phone: $('Fusion Pro').first().json.phone,\n} : {\n  ready: false,\n  intent: paymentIntent,\n  reason: paymentIntent ? 'no_pending_order' : 'no_payment_intent',\n};\n\nconst inStockProducts = products.filter(product => Number(product.stock_quantity || 0) > 0);\nconst followProduct = (best && best.score > 0 && Number(best.product.stock_quantity || 0) > 0) ? best.product : inStockProducts[0];\nconst followUpDraft = wantsCatalog && !orderIntent && !paymentIntent && followProduct && !pendingOrders.length ? {\n  ready: true,\n  started_at: new Date().toISOString(),\n  seller_id: seller.id,\n  seller_name: seller.name,\n  customer_phone: $('Fusion Pro').first().json.phone,\n  product_name: followProduct.name,\n  product_price: Number(followProduct.price || 0),\n} : {\n  ready: false,\n  reason: wantsCatalog ? 'order_or_payment_or_pending_exists' : 'no_catalog_interest',\n};\n\nreturn [{ json: { orders, products, shop, productsText, ordersText, shopText, wantsCatalog, orderIntent, paymentIntent, matchedProduct, orderDraft, paymentDraft, followUpDraft } }];"
+        "jsCode": "const seller = $('Identify Seller').first().json;\nconst nl = String.fromCharCode(10);\nconst orders = $input.all().map(item => item.json).filter(order => Object.keys(order).length > 0);\nconst products = $('Get Products').all().map(item => item.json).map(product => ({\n  id: product.id,\n  name: product.name,\n  price: product.price,\n  stock_quantity: product.stock_quantity,\n  image_url: product.image_url,\n  description: product.description,\n  product_variants: product.product_variants || [],\n  product_keywords: product.product_keywords || '',\n  product_url: 'https://tikchop.app/' + seller.slug + '?product=' + product.id,\n}));\nconst shop = $('Get Shop Info').all().map(item => item.json)[0] || {};\n\nconst METHOD_LABELS = {\n  CASH_ON_DELIVERY: 'paiement a la livraison',\n  WAVE: 'Wave',\n  ORANGE_MONEY: 'Orange Money',\n  MTN_MONEY: 'MTN MoMo',\n  PAYSTACK: 'lien securise carte/Djamo',\n};\nconst DIRECT_MOBILE_METHODS = new Set(['WAVE', 'ORANGE_MONEY', 'MTN_MONEY']);\nconst ALLOWED_METHODS = Object.keys(METHOD_LABELS);\n\nfunction asArray(value) {\n  if (Array.isArray(value)) return value;\n  if (value === null || value === undefined) return [];\n  const text = String(value).trim();\n  if (!text) return [];\n  try {\n    const parsed = JSON.parse(text);\n    if (Array.isArray(parsed)) return parsed;\n  } catch (error) {}\n  if (text.startsWith('{') && text.endsWith('}')) {\n    return text.slice(1, -1).split(',');\n  }\n  return text.split(',');\n}\n\nfunction normalizeMethod(value) {\n  const method = String(value || '').trim().toUpperCase();\n  if (['COD', 'CASH', 'LIVRAISON', 'CASH_ON_DELIVERY'].includes(method)) return 'CASH_ON_DELIVERY';\n  if (['ORANGE', 'OM', 'ORANGE_MONEY'].includes(method)) return 'ORANGE_MONEY';\n  if (['MTN', 'MOMO', 'MTN_MOMO', 'MTN_MONEY'].includes(method)) return 'MTN_MONEY';\n  if (['CARD', 'CARTE', 'DJAMO', 'ONLINE', 'PAYSTACK'].includes(method)) return 'PAYSTACK';\n  return method;\n}\n\nfunction formatMoney(value) {\n  return Number(value || 0).toLocaleString('fr-FR') + ' CFA';\n}\n\nfunction formatMethods(methods) {\n  const labels = methods.map(method => METHOD_LABELS[method]).filter(Boolean);\n  if (labels.length <= 1) return labels[0] || 'a confirmer avec la boutique';\n  return labels.slice(0, -1).join(', ') + ' ou ' + labels[labels.length - 1];\n}\n\nlet acceptedPaymentMethods = asArray(shop.accepted_payment_methods)\n  .map(normalizeMethod)\n  .filter(method => ALLOWED_METHODS.includes(method));\nif (!acceptedPaymentMethods.length) acceptedPaymentMethods = ['CASH_ON_DELIVERY', 'WAVE', 'ORANGE_MONEY', 'MTN_MONEY'];\nconst paystackReady = Boolean(shop.paystack_subaccount_code || shop.payout_status === 'paystack_ready');\nlet clientPaymentMethods = acceptedPaymentMethods.filter(method => method !== 'PAYSTACK' || paystackReady);\nif (!clientPaymentMethods.length) clientPaymentMethods = ['CASH_ON_DELIVERY'];\nlet defaultPaymentMethod = normalizeMethod(shop.default_payment_method);\nif (!clientPaymentMethods.includes(defaultPaymentMethod)) defaultPaymentMethod = clientPaymentMethods[0];\nconst directMobileMethods = clientPaymentMethods.filter(method => DIRECT_MOBILE_METHODS.has(method));\nconst payoutPhone = String(shop.payout_phone || '').trim();\n\nfunction buildPaymentLine(method) {\n  if (method === 'CASH_ON_DELIVERY') return 'Paiement: a la livraison, apres reception.';\n  if (DIRECT_MOBILE_METHODS.has(method)) {\n    return payoutPhone\n      ? 'Paiement: ' + METHOD_LABELS[method] + ' au ' + payoutPhone + '.'\n      : 'Paiement: ' + METHOD_LABELS[method] + '. La boutique confirme le numero avant envoi.';\n  }\n  if (method === 'PAYSTACK') return 'Paiement: lien securise de la boutique si vous voulez payer en ligne.';\n  return 'Paiement: ' + formatMethods(clientPaymentMethods) + '.';\n}\n\nconst paymentText = [\n  'Paiements acceptes: ' + formatMethods(clientPaymentMethods) + '.',\n  'A proposer en premier: ' + METHOD_LABELS[defaultPaymentMethod] + '.',\n  clientPaymentMethods.includes('CASH_ON_DELIVERY')\n    ? 'Paiement a la livraison: autorise. Le client paie apres reception.'\n    : 'Paiement a la livraison: non active par le vendeur.',\n  directMobileMethods.length\n    ? 'Paiement mobile avant livraison: ' + formatMethods(directMobileMethods) + (payoutPhone ? ' au numero ' + payoutPhone + '.' : '. Numero boutique a confirmer avant de demander un paiement.')\n    : '',\n  clientPaymentMethods.includes('PAYSTACK')\n    ? 'Lien securise carte/Djamo: autorise seulement si le client demande un paiement en ligne.'\n    : 'Lien securise carte/Djamo: non active pour cette boutique.',\n].filter(Boolean).join(nl);\n\nconst paymentSummary = {\n  methods: clientPaymentMethods,\n  default_method: defaultPaymentMethod,\n  default_label: METHOD_LABELS[defaultPaymentMethod],\n  paystack_ready: paystackReady,\n  direct_mobile_methods: directMobileMethods,\n  payout_phone: payoutPhone,\n  catalogLine: 'Paiement possible: ' + formatMethods(clientPaymentMethods) + '.',\n  orderConfirmationLine: buildPaymentLine(defaultPaymentMethod),\n};\n\nfunction parseZones(value) {\n  if (Array.isArray(value)) return value;\n  if (value === null || value === undefined) return [];\n  const text = String(value).trim();\n  if (!text) return [];\n  try {\n    const parsed = JSON.parse(text);\n    return Array.isArray(parsed) ? parsed : [];\n  } catch (error) {\n    return [];\n  }\n}\n\nconst deliveryZones = parseZones(shop.delivery_zones)\n  .filter(zone => zone && zone.name)\n  .map(zone => ({ name: String(zone.name), fee: Number(zone.fee || 0) }));\nconst deliveryTimingLabel = shop.delivery_payment_timing === 'INCLUDED'\n  ? 'livraison incluse dans le total'\n  : shop.delivery_payment_timing === 'OFFERED'\n    ? 'livraison offerte'\n    : 'livraison payee apres reception';\nconst zoneText = deliveryZones.length\n  ? deliveryZones.map(zone => zone.name + ': ' + formatMoney(zone.fee)).join(', ')\n  : 'Aucune zone detaillee; frais fixe boutique: ' + formatMoney(shop.fixed_delivery_fee || 0);\nconst deliveryText = [\n  'Mode livraison: ' + deliveryTimingLabel + '.',\n  'Frais par commune/quartier: ' + zoneText + '.',\n  'Toujours demander la commune/quartier avant de confirmer les frais exacts.',\n].join(nl);\nconst deliverySummary = {\n  zones: deliveryZones,\n  timing: shop.delivery_payment_timing || 'AT_RECEPTION',\n  timing_label: deliveryTimingLabel,\n  askLine: deliveryZones.length\n    ? 'Vous etes dans quelle commune/quartier ? Zones configurees: ' + deliveryZones.slice(0, 6).map(zone => zone.name).join(', ') + '.'\n    : 'Vous etes dans quelle commune/quartier pour la livraison ?',\n};\n\nconst productsText = products.length\n  ? products.filter(product => Number(product.stock_quantity || 0) > 0).slice(0, 3).map((product, index) => {\n      const stock = Number(product.stock_quantity || 0);\n      const availability = stock > 0 ? 'DISPO (' + stock + ')' : 'INDISPONIBLE';\n      const variants = Array.isArray(product.product_variants) && product.product_variants.length ? ' - Variantes: ' + product.product_variants.slice(0, 4).map(v => [v.label || v.size || v.color, v.stock ? ('stock ' + v.stock) : ''].filter(Boolean).join(' ')).join(', ') : '';\n      const keywords = product.product_keywords ? ' - Mots cles: ' + product.product_keywords : '';\n      return (index + 1) + '. ' + product.name + ' - ' + formatMoney(product.price) + ' - ' + availability + ' - ' + (product.description || 'Description a confirmer') + variants + keywords;\n    }).join(nl)\n  : 'Aucun produit publie.';\nconst ordersText = orders.length\n  ? orders.map(order => 'Commande ' + (order.order_ref || order.id) + ' - ' + order.status + ' - ' + formatMoney(order.total_amount || 0) + (order.payment_method ? ' - paiement ' + order.payment_method : '')).join(nl)\n  : 'Aucune commande connue pour ce client.';\nconst shopText = Object.keys(shop).length ? [\n  'Boutique: ' + (shop.name || seller.name || ''),\n  paymentText,\n  deliveryText,\n  shop.bot_tone ? 'Ton boutique: ' + shop.bot_tone : '',\n  shop.bot_greeting ? 'Accueil boutique: ' + shop.bot_greeting : '',\n  shop.bot_payment_preferences ? 'Note vendeur paiement: ' + shop.bot_payment_preferences : '',\n  shop.bot_delivery_notes ? 'Notes livraison: ' + shop.bot_delivery_notes : '',\n  shop.bot_special_rules ? 'Regles boutique: ' + shop.bot_special_rules : '',\n].filter(Boolean).join(nl) : 'Infos boutique non renseignees.';\n\nfunction normalize(value) {\n  return String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, ' ')\n    .trim();\n}\n\nconst message = $('Fusion Pro').first().json.message || '';\nconst normalizedMessage = normalize(message);\nconst wantsCatalog = /\\b(stock|catalogue|article|articles|produit|produits|disponible|disponibles|photo|photos|image|images|prix|combien|cout|coute|modeles|modele|voir|montre|envoie|envoyer|envoi)\\b/i.test(normalizedMessage);\nconst orderIntent = /\\b(je prends|je prend|j achete|jachete|acheter|commande|commander|je veux commander|je vais prendre|c est bon pour|interesse|interessee|preneur|garde moi|reserve|reserver|mettre de cote|mets de cote)\\b/i.test(normalizedMessage);\nconst indexMatch = normalizedMessage.match(/(?:numero|article|produit|modele|mod?le|le|la|l)?\\s*(\\d{1,2})\\b/);\nconst quantityMatch = normalizedMessage.match(/(?:quantite|qte|qty|nombre|prends en|prendre en|x)\\s*(\\d{1,2})|(?:\\b(\\d{1,2})\\s*(?:pieces?|pcs?|articles?)\\b)/);\nconst quantity = Math.max(1, Math.min(20, Number(quantityMatch?.[1] || quantityMatch?.[2] || 1)));\nconst stopWords = new Set(['avec','pour','dans','vous','nous','veux','prendre','commande','commander','article','produit','taille','prix','stock','celui','celle','bonjour','salut','bonsoir']);\nconst messageTokens = new Set(normalizedMessage.split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token)));\n\nconst scoredProducts = products.map((product, index) => {\n  const productName = normalize(product.name);\n  const productExtra = normalize((product.description || '') + ' ' + (product.product_keywords || '') + ' ' + (Array.isArray(product.product_variants) ? product.product_variants.map(v => [v.label, v.size, v.color].filter(Boolean).join(' ')).join(' ') : ''));\n  const productTokens = (productName + ' ' + productExtra).split(/\\s+/).filter(token => token.length > 2 && !stopWords.has(token));\n  let score = 0;\n  if (productName && normalizedMessage.includes(productName)) score += 20;\n  if (indexMatch && Number(indexMatch[1]) === index + 1) score += 15;\n  for (const token of productTokens) {\n    if (messageTokens.has(token)) score += 4;\n    else if (normalizedMessage.includes(token)) score += 2;\n  }\n  return { product, index, score };\n}).sort((a, b) => b.score - a.score);\n\nconst best = scoredProducts[0];\nconst second = scoredProducts[1];\nconst matchedProduct = best && best.score > 0 ? best.product : null;\nconst ready = Boolean(orderIntent && best && best.score > 0 && (!second || best.score >= second.score + 2) && Number(best.product.stock_quantity || 0) >= quantity);\nconst orderDraft = ready ? {\n  ready: true,\n  quantity,\n  product: best.product,\n  total_amount: Number(best.product.price || 0) * quantity,\n  customer_phone: $('Fusion Pro').first().json.phone,\n  payment_method: defaultPaymentMethod,\n  payment_label: METHOD_LABELS[defaultPaymentMethod],\n  payment_line: paymentSummary.orderConfirmationLine,\n} : {\n  ready: false,\n  intent: orderIntent,\n  reason: orderIntent ? 'product_unclear_or_stock_missing' : 'no_order_intent',\n};\n\nconst paymentIntent = /\\b(wave|orange money|orange|om|mtn|momo|moov|mobile money|mobile|payer|paiement|paye|payement|carte|visa|mastercard|lien de paiement|paiement en ligne|djamo|livraison|reception|cash)\\b/i.test(normalizedMessage);\nconst wantsOnlineLink = /\\b(carte|visa|mastercard|djamo|lien|en ligne|paystack)\\b/i.test(normalizedMessage);\nconst pendingOrders = orders\n  .filter(order => order.status === 'PENDING' && Number(order.total_amount || 0) > 0 && String(order.customer_phone || '') === String($('Fusion Pro').first().json.phone || ''))\n  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));\nconst shouldSendOnlineLink = clientPaymentMethods.includes('PAYSTACK') && (wantsOnlineLink || defaultPaymentMethod === 'PAYSTACK');\nconst paymentDraft = paymentIntent && pendingOrders.length && shouldSendOnlineLink ? {\n  ready: true,\n  order: pendingOrders[0],\n  amount: Number(pendingOrders[0].total_amount || 0) + Number(pendingOrders[0].delivery_fee || 0),\n  customer_phone: $('Fusion Pro').first().json.phone,\n  method: 'PAYSTACK',\n} : {\n  ready: false,\n  intent: paymentIntent,\n  reason: paymentIntent ? (pendingOrders.length ? 'seller_does_not_use_online_link' : 'no_pending_order') : 'no_payment_intent',\n};\n\nconst inStockProducts = products.filter(product => Number(product.stock_quantity || 0) > 0);\nconst followProduct = (best && best.score > 0 && Number(best.product.stock_quantity || 0) > 0) ? best.product : inStockProducts[0];\nconst followUpDraft = wantsCatalog && !orderIntent && !paymentIntent && followProduct && !pendingOrders.length ? {\n  ready: true,\n  started_at: new Date().toISOString(),\n  seller_id: seller.id,\n  seller_name: seller.name,\n  customer_phone: $('Fusion Pro').first().json.phone,\n  product_name: followProduct.name,\n  product_price: Number(followProduct.price || 0),\n} : {\n  ready: false,\n  reason: wantsCatalog ? 'order_or_payment_or_pending_exists' : 'no_catalog_interest',\n};\n\nreturn [{ json: { orders, products, shop, productsText, ordersText, shopText, paymentText, paymentSummary, deliveryText, deliverySummary, wantsCatalog, orderIntent, paymentIntent, matchedProduct, orderDraft, paymentDraft, followUpDraft } }];"
       },
       "id": "prepare-ai-context-node",
       "name": "Prepare AI Context",
@@ -851,7 +882,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst first = items.find(item => (item.json.output || '').trim()) || items[0];\nif (!first) return [];\nconst context = $('Prepare AI Context').first().json || {};\nlet output = String(first.json.output || '').replace('[SEND_BROCHURE]', '').trim();\nif (context.wantsCatalog && output && !/Wave|Orange Money|MTN|Moov|mobile money/i.test(output)) {\n  output += String.fromCharCode(10) + 'Paiement possible par Wave, Orange Money, MTN/Moov ou carte.';\n}\nreturn [{ json: { ...first.json, output } }];"
+        "jsCode": "const items = $input.all();\nconst first = items.find(item => (item.json.output || '').trim()) || items[0];\nif (!first) return [];\nconst context = $('Prepare AI Context').first().json || {};\nlet output = String(first.json.output || '').replace('[SEND_BROCHURE]', '').trim();\nconst paymentLine = context.paymentSummary?.catalogLine || 'Paiement possible selon les choix de la boutique.';\nif (context.wantsCatalog && output && !/paiement|payer|Wave|Orange|MTN|MoMo|livraison|Djamo|carte|lien securise/i.test(output)) {\n  output += String.fromCharCode(10) + paymentLine;\n}\nreturn [{ json: { ...first.json, output } }];"
       },
       "id": "limit-one-reply-node",
       "name": "Limit One Reply",
@@ -959,7 +990,7 @@
             },
             {
               "fieldId": "payment_method",
-              "fieldValue": "WAVE"
+              "fieldValue": "={{ $('Prepare AI Context').first().json.orderDraft.payment_method }}"
             },
             {
               "fieldId": "delivery_status",
@@ -1037,7 +1068,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['C est note, votre commande est prise.', 'Reference: ' + $('Create WhatsApp Order').first().json.order_ref, 'Total: ' + Number($('Prepare AI Context').first().json.orderDraft.total_amount).toLocaleString('fr-FR') + ' CFA', 'Paiement possible par Wave, Orange Money, MTN/Moov, carte ou a la livraison selon votre zone.', 'Vous etes dans quelle commune/quartier pour la livraison ?'].join(String.fromCharCode(10)) } }}",
+        "jsonBody": "={{ (() => { const ctx = $('Prepare AI Context').first().json; const draft = ctx.orderDraft || {}; const order = $('Create WhatsApp Order').first().json || {}; const nl = String.fromCharCode(10); const lines = ['C est note, votre commande est prise.', 'Reference: ' + (order.order_ref || order.id), draft.product?.name ? 'Article: ' + draft.quantity + ' x ' + draft.product.name : '', 'Total articles: ' + Number(draft.total_amount || 0).toLocaleString('fr-FR') + ' CFA', draft.payment_line || ctx.paymentSummary?.orderConfirmationLine || '', ctx.deliverySummary?.askLine || 'Vous etes dans quelle commune/quartier pour la livraison ?'].filter(Boolean); return { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: lines.join(nl) }; })() }}",
         "options": {}
       },
       "id": "send-order-confirmation-node",
@@ -1128,7 +1159,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: ['Pour finaliser la commande ' + $('Prepare AI Context').first().json.paymentDraft.order.order_ref + ', vous pouvez payer ici :', $('Initialize Paystack Payment').first().json.data.authorization_url, 'Choisissez Wave, Orange Money ou carte selon ce qui s affiche.', 'Apres paiement, vous recevez le recu PDF ici meme.'].join(String.fromCharCode(10)) } }}",
+        "jsonBody": "={{ (() => { const ctx = $('Prepare AI Context').first().json; const order = ctx.paymentDraft.order || {}; const lines = ['Pour finaliser la commande ' + order.order_ref + ', voici le lien securise de la boutique :', $('Initialize Paystack Payment').first().json.data.authorization_url, ctx.paymentSummary?.methods?.includes('CASH_ON_DELIVERY') ? 'Si vous preferez payer a la livraison, dites-le simplement.' : '', 'Apres validation, vous recevez le recu ici meme.'].filter(Boolean); return { number: String($('Normalize Evolution Payload').first().json.body.payload.from || '').replace(/\\D/g, ''), text: lines.join(String.fromCharCode(10)) }; })() }}",
         "options": {}
       },
       "id": "send-paystack-link-node",
@@ -1296,14 +1327,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -520,
-        240
+        -280,
+        360
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/tikchop_customer_handoffs?on_conflict=seller_slug,customer_phone",
+        "url": "https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -1315,13 +1346,13 @@
             },
             {
               "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=minimal"
+              "value": "return=minimal"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { seller_slug: $('Normalize Evolution Payload').first().json.sellerSlug, instance_name: $('Normalize Evolution Payload').first().json.instanceName, customer_phone: $('Normalize Evolution Payload').first().json.customerPhone, paused_until: new Date(Date.now() + 90 * 60 * 1000).toISOString(), last_from_me_at: new Date().toISOString() } }}",
+        "jsonBody": "={{ (() => { const n = $('Normalize Evolution Payload').first().json; const sellerSlug = n.sellerSlug || n.instanceName || 'unknown'; const phone = n.customerPhone || String(n.payload?.from || '').replace(/\\D/g, ''); const until = new Date(Date.now() + 90 * 60 * 1000).toISOString(); return { contenu: 'human_pause_until:' + until, client: sellerSlug + ' : Pause vendeur : ' + phone, statut: 'human_pause', external_message_id: 'human_pause:' + sellerSlug + ':' + phone + ':' + Date.now(), seller_slug: sellerSlug, customer_phone: phone }; })() }}",
         "options": {}
       },
       "id": "record-human-pause-node",
@@ -1329,7 +1360,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -300,
+        -40,
         120
       ],
       "credentials": {
@@ -1342,7 +1373,7 @@
     },
     {
       "parameters": {
-        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/tikchop_customer_handoffs?select=paused_until&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug) + '&customer_phone=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.customerPhone) + '&paused_until=gt.' + encodeURIComponent(new Date().toISOString()) + '&limit=1' }}",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/messages?select=id,contenu,created_at&seller_slug=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.sellerSlug || $('Normalize Evolution Payload').first().json.instanceName || 'unknown') + '&customer_phone=eq.' + encodeURIComponent($('Normalize Evolution Payload').first().json.customerPhone || '') + '&statut=eq.human_pause&created_at=gte.' + encodeURIComponent(new Date(Date.now() - 90 * 60 * 1000).toISOString()) + '&order=created_at.desc&limit=1' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -1352,7 +1383,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -300,
+        -40,
         360
       ],
       "credentials": {
@@ -1365,14 +1396,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.all().map(item => item.json);\nconst records = raw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.paused_until);\nif (records.length) return [];\nreturn [{ json: $('Normalize Evolution Payload').first().json }];"
+        "jsCode": "const raw = $input.all().map(item => item.json);\nconst records = raw.flatMap(item => Array.isArray(item) ? item : [item]).filter(item => item && item.id);\nconst active = records.some((record) => {\n  const text = String(record.contenu || '');\n  const match = text.match(/human_pause_until:(\\\\S+)/);\n  if (match) return new Date(match[1]).getTime() > Date.now();\n  return new Date(record.created_at || 0).getTime() > Date.now() - 90 * 60 * 1000;\n});\nif (active) return [];\nreturn [{ json: $('Normalize Evolution Payload').first().json }];"
       },
       "id": "gate-human-pause-node",
       "name": "Gate Human Pause",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -80,
+        180,
         360
       ]
     },
@@ -1430,6 +1461,181 @@
       "position": [
         1400,
         2336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-evolution-connection-update",
+              "leftValue": "={{ $json.eventType }}",
+              "rightValue": "connection_update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-connection-update-node",
+      "name": "Is Connection Update?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -520,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/sellers?slug=eq.' + encodeURIComponent($json.sellerSlug) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const status = $json.whatsappStatus || 'pending'; return { whatsapp_provider: 'evolution', evolution_instance: $json.instanceName, whatsapp_status: status, whatsapp_last_error: status === 'disconnected' ? 'WhatsApp deconnecte. Reconnectez le numero pour relancer le bot.' : (status === 'error' ? 'Erreur de connexion WhatsApp Evolution. Reessayez la connexion.' : null), ...(status === 'connected' ? { whatsapp_connected_at: new Date().toISOString(), whatsapp_last_error: null } : {}) }; })() }}",
+        "options": {}
+      },
+      "id": "update-seller-whatsapp-status-node",
+      "name": "Update Seller WhatsApp Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -280,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tikchopSupaHeader01",
+          "name": "Tikchop Supabase header"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ `SELECT d.id, d.name, d.phone_number, d.zone FROM sellers s JOIN delivery_drivers d ON d.seller_id = s.id AND d.is_active = true WHERE s.id = '${$('Identify Seller').first().json.id}' AND coalesce(s.auto_share_to_driver, false) = true ORDER BY CASE WHEN coalesce(d.zone, '') = '' THEN 1 ELSE 0 END, d.created_at ASC LIMIT 1;` }}",
+        "options": {}
+      },
+      "id": "get-driver-for-whatsapp-order-node",
+      "name": "Get Driver For WhatsApp Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        1888
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3nOsdzFArVQH863B",
+          "name": "Supabase PLA PostgreSQL"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const driver = $input.first().json || {};\nconst order = $('Create WhatsApp Order').first().json || {};\nconst context = $('Prepare AI Context').first().json || {};\nconst draft = context.orderDraft || {};\nconst product = draft.product || {};\nconst number = String(driver.phone_number || '').replace(/\\D/g, '');\nif (!number) return [];\nconst nl = String.fromCharCode(10);\nconst orderRef = order.order_ref || String(order.id || '').slice(0, 8).toUpperCase();\nconst total = Number(draft.total_amount || order.total_amount || 0).toLocaleString('fr-FR') + ' CFA';\nconst qty = Number(draft.quantity || 1);\nconst text = [\n  'Nouvelle commande Tikchop',\n  'Commande: ' + orderRef,\n  'Boutique: ' + ($('Identify Seller').first().json.name || 'Boutique'),\n  'Client: ' + (draft.customer_phone || order.customer_phone || 'a confirmer'),\n  'Article: ' + qty + ' x ' + (product.name || 'Article'),\n  'Total: ' + total,\n  'Zone client: a confirmer',\n  'Quand vous prenez ca, confirmez a la boutique.'\n].join(nl);\nreturn [{ json: { number, text, driverId: driver.id } }];"
+      },
+      "id": "prepare-driver-notification-node",
+      "name": "Prepare Driver Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-tikchop.76.13.59.214.sslip.io/message/sendText/{{ $('Normalize Evolution Payload').first().json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: $json.number, text: $json.text } }}",
+        "options": {}
+      },
+      "id": "send-driver-notification-node",
+      "name": "Send Driver Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1408,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://suhqntkvldwzrzaidnsw.supabase.co/rest/v1/orders?id=eq.' + encodeURIComponent($('Create WhatsApp Order').first().json.id) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { delivery_driver_id: $('Prepare Driver Notification').first().json.driverId, delivery_status: 'ASSIGNED' } }}",
+        "options": {}
+      },
+      "id": "mark-driver-assigned-node",
+      "name": "Mark Driver Assigned",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1648,
+        1888
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -1814,7 +2020,7 @@
       "main": [
         [
           {
-            "node": "Is Human Seller Message?",
+            "node": "Is Connection Update?",
             "type": "main",
             "index": 0
           }
@@ -2070,9 +2276,81 @@
       "main": [
         []
       ]
+    },
+    "Is Connection Update?": {
+      "main": [
+        [
+          {
+            "node": "Update Seller WhatsApp Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Human Seller Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Seller WhatsApp Status": {
+      "main": [
+        []
+      ]
+    },
+    "Send Order Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Get Driver For WhatsApp Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Driver For WhatsApp Order": {
+      "main": [
+        [
+          {
+            "node": "Prepare Driver Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Driver Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Driver Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Driver Notification": {
+      "main": [
+        [
+          {
+            "node": "Mark Driver Assigned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Driver Assigned": {
+      "main": [
+        []
+      ]
     }
   },
   "settings": {},
-  "active": false,
+  "active": true,
   "id": "tkchopEvobd8516ea"
 }

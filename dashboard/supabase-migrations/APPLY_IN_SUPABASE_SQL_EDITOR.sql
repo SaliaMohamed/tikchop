@@ -49,7 +49,9 @@ ADD COLUMN IF NOT EXISTS delivery_enabled boolean DEFAULT true,
 ADD COLUMN IF NOT EXISTS pickup_enabled boolean DEFAULT true,
 ADD COLUMN IF NOT EXISTS fixed_delivery_fee numeric DEFAULT 0,
 ADD COLUMN IF NOT EXISTS delivery_payment_timing public.delivery_payment_timing DEFAULT 'AT_RECEPTION',
-ADD COLUMN IF NOT EXISTS auto_share_to_driver boolean DEFAULT false;
+ADD COLUMN IF NOT EXISTS auto_share_to_driver boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS accepted_payment_methods text[] DEFAULT ARRAY['CASH_ON_DELIVERY','WAVE','ORANGE_MONEY','MTN_MONEY']::text[],
+ADD COLUMN IF NOT EXISTS default_payment_method text DEFAULT 'CASH_ON_DELIVERY';
 
 UPDATE public.sellers
 SET
@@ -57,7 +59,9 @@ SET
   pickup_enabled = coalesce(pickup_enabled, true),
   fixed_delivery_fee = coalesce(fixed_delivery_fee, 1000),
   delivery_payment_timing = coalesce(delivery_payment_timing, 'AT_RECEPTION'::public.delivery_payment_timing),
-  auto_share_to_driver = coalesce(auto_share_to_driver, false)
+  auto_share_to_driver = coalesce(auto_share_to_driver, false),
+  accepted_payment_methods = coalesce(accepted_payment_methods, ARRAY['CASH_ON_DELIVERY','WAVE','ORANGE_MONEY','MTN_MONEY']::text[]),
+  default_payment_method = coalesce(default_payment_method, 'CASH_ON_DELIVERY')
 WHERE slug = 'salia';
 
 -- 5. Delivery drivers linked to sellers.
@@ -183,10 +187,37 @@ ADD COLUMN IF NOT EXISTS bot_special_rules text;
 
 ALTER TABLE public.products
 ADD COLUMN IF NOT EXISTS product_variants jsonb DEFAULT '[]'::jsonb,
-ADD COLUMN IF NOT EXISTS product_keywords text;
+ADD COLUMN IF NOT EXISTS product_keywords text,
+ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
+
+ALTER TABLE public.sellers
+DROP CONSTRAINT IF EXISTS sellers_accepted_payment_methods_check;
+
+ALTER TABLE public.sellers
+ADD CONSTRAINT sellers_accepted_payment_methods_check
+CHECK (
+  cardinality(accepted_payment_methods) > 0
+  AND accepted_payment_methods <@ ARRAY['CASH_ON_DELIVERY','WAVE','ORANGE_MONEY','MTN_MONEY','PAYSTACK']::text[]
+);
+
+ALTER TABLE public.sellers
+DROP CONSTRAINT IF EXISTS sellers_default_payment_method_check;
+
+ALTER TABLE public.sellers
+ADD CONSTRAINT sellers_default_payment_method_check
+CHECK (
+  default_payment_method = ANY(accepted_payment_methods)
+);
+
+UPDATE public.products
+SET is_active = true
+WHERE is_active IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_products_variants_gin
 ON public.products USING gin(product_variants);
+
+CREATE INDEX IF NOT EXISTS idx_products_seller_active_created
+ON public.products(seller_id, is_active, created_at DESC);
 
 -- 11. WhatsApp message deduplication and faster batch lookups.
 ALTER TABLE public.messages
@@ -202,4 +233,242 @@ CREATE INDEX IF NOT EXISTS idx_messages_client_status_created
 ON public.messages(client, statut, created_at DESC);
 
 -- Refresh PostgREST schema cache so Next.js and n8n see new columns quickly.
+NOTIFY pgrst, 'reload schema';
+
+-- WhatsApp media previews in seller conversations.
+ALTER TABLE public.messages
+  ADD COLUMN IF NOT EXISTS media_type text,
+  ADD COLUMN IF NOT EXISTS media_url text,
+  ADD COLUMN IF NOT EXISTS media_mime_type text,
+  ADD COLUMN IF NOT EXISTS media_caption text,
+  ADD COLUMN IF NOT EXISTS media_payload jsonb DEFAULT '{}'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_messages_media_seller_created
+  ON public.messages(seller_slug, created_at DESC)
+  WHERE media_type IS NOT NULL;
+
+NOTIFY pgrst, 'reload schema';
+
+-- 12. Isolation stricte des vendeurs.
+-- Version source: 2026-05-16-seller-auth-isolation-rls.sql
+-- Les boutiques publiques passent par les routes serveur Tikchop (service role),
+-- pas par un SELECT anon direct sur sellers/products/orders.
+
+ALTER TABLE public.sellers
+  ADD COLUMN IF NOT EXISTS owner_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS owner_email text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sellers_one_shop_per_owner
+  ON public.sellers(owner_user_id)
+  WHERE owner_user_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sellers_unique_phone_number
+  ON public.sellers(phone_number)
+  WHERE phone_number IS NOT NULL AND phone_number <> '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sellers_unique_owner_email
+  ON public.sellers(lower(owner_email))
+  WHERE owner_email IS NOT NULL AND owner_email <> '';
+
+CREATE INDEX IF NOT EXISTS idx_sellers_owner_user_id
+  ON public.sellers(owner_user_id);
+
+CREATE INDEX IF NOT EXISTS idx_products_seller_id
+  ON public.products(seller_id);
+
+CREATE INDEX IF NOT EXISTS idx_orders_seller_id
+  ON public.orders(seller_id);
+
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id
+  ON public.order_items(order_id);
+
+ALTER TABLE public.sellers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.delivery_zones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.delivery_drivers ENABLE ROW LEVEL SECURITY;
+
+DO $$
+DECLARE
+  policy_row record;
+BEGIN
+  FOR policy_row IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN ('sellers', 'products', 'orders', 'order_items', 'delivery_zones', 'delivery_drivers')
+  LOOP
+    EXECUTE format(
+      'DROP POLICY IF EXISTS %I ON %I.%I',
+      policy_row.policyname,
+      policy_row.schemaname,
+      policy_row.tablename
+    );
+  END LOOP;
+END $$;
+
+REVOKE ALL ON public.sellers FROM anon;
+REVOKE ALL ON public.products FROM anon;
+REVOKE ALL ON public.orders FROM anon;
+REVOKE ALL ON public.order_items FROM anon;
+REVOKE ALL ON public.delivery_zones FROM anon;
+REVOKE ALL ON public.delivery_drivers FROM anon;
+
+GRANT SELECT, UPDATE ON public.sellers TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.products TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.order_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.delivery_zones TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.delivery_drivers TO authenticated;
+
+CREATE POLICY seller_owner_select
+  ON public.sellers
+  FOR SELECT
+  TO authenticated
+  USING (owner_user_id = (SELECT auth.uid()));
+
+CREATE POLICY seller_owner_update
+  ON public.sellers
+  FOR UPDATE
+  TO authenticated
+  USING (owner_user_id = (SELECT auth.uid()))
+  WITH CHECK (owner_user_id = (SELECT auth.uid()));
+
+CREATE POLICY products_owner_all
+  ON public.products
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = products.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = products.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  );
+
+CREATE POLICY orders_owner_all
+  ON public.orders
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = orders.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = orders.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  );
+
+CREATE POLICY order_items_owner_all
+  ON public.order_items
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.orders o
+      JOIN public.sellers s ON s.id = o.seller_id
+      WHERE o.id = order_items.order_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.orders o
+      JOIN public.sellers s ON s.id = o.seller_id
+      WHERE o.id = order_items.order_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  );
+
+CREATE POLICY delivery_zones_owner_all
+  ON public.delivery_zones
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = delivery_zones.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = delivery_zones.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  );
+
+CREATE POLICY delivery_drivers_owner_all
+  ON public.delivery_drivers
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = delivery_drivers.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.sellers s
+      WHERE s.id = delivery_drivers.seller_id
+        AND s.owner_user_id = (SELECT auth.uid())
+    )
+  );
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.decrement_stock_atomic(uuid,uuid,integer)') IS NOT NULL THEN
+    REVOKE ALL ON FUNCTION public.decrement_stock_atomic(uuid, uuid, integer) FROM PUBLIC;
+    REVOKE ALL ON FUNCTION public.decrement_stock_atomic(uuid, uuid, integer) FROM anon;
+    REVOKE ALL ON FUNCTION public.decrement_stock_atomic(uuid, uuid, integer) FROM authenticated;
+    GRANT EXECUTE ON FUNCTION public.decrement_stock_atomic(uuid, uuid, integer) TO service_role;
+  END IF;
+END $$;
+
+DO $$
+DECLARE
+  unowned_count integer;
+BEGIN
+  SELECT COUNT(*) INTO unowned_count
+  FROM public.sellers
+  WHERE owner_user_id IS NULL;
+
+  IF unowned_count > 0 THEN
+    RAISE NOTICE 'Tikchop: % boutique(s) sans owner_user_id a rattacher manuellement.', unowned_count;
+  END IF;
+END $$;
+
+-- 13. Seller branding columns and physical address
+ALTER TABLE public.sellers 
+ADD COLUMN IF NOT EXISTS logo_url text,
+ADD COLUMN IF NOT EXISTS brand_color text DEFAULT '#008f5a',
+ADD COLUMN IF NOT EXISTS physical_address text;
+
 NOTIFY pgrst, 'reload schema';

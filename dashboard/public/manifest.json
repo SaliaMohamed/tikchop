@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#f4f8f2",
-  "theme_color": "#067a55",
+  "background_color": "#fbf9f4",
+  "theme_color": "#07120d",
   "orientation": "portrait-primary",
   "categories": ["business", "shopping", "productivity"],
   "icons": [
@@ -59,6 +59,12 @@
       "name": "Voir les commandes",
       "short_name": "Commandes",
       "url": "/orders",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Partager la boutique",
+      "short_name": "Partager",
+      "url": "/social-sharing",
       "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]

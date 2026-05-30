@@ -16,7 +16,7 @@ export default function MentionsLegalesPage() {
           title: "Service",
           body: [
             "Tikchop est un outil de boutique en ligne, de suivi de commandes et d'assistance WhatsApp pour vendeurs.",
-            "Tikchop aide a presenter les articles, organiser les commandes, preparer les paiements et faciliter la livraison. Le vendeur reste responsable de ses produits, de ses prix, de ses stocks et de ses clients.",
+            "Tikchop aide a presenter les articles, organiser les commandes, proposer les paiements et faciliter la livraison. Le vendeur reste responsable de ses produits, de ses prix, de ses stocks et de ses clients.",
           ],
         },
         {

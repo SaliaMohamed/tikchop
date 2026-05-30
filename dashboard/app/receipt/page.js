@@ -28,6 +28,12 @@ function formatPrice(value) {
   }).format(Number(value || 0));
 }
 
+const EXTRA_IMAGES_PATTERN = /\n?\[\[TIKCHOP_EXTRA_IMAGES:([^\]]*)\]\]/i;
+
+function getCleanProductDescription(description) {
+  return String(description || "").replace(EXTRA_IMAGES_PATTERN, "").trim();
+}
+
 function formatDate(value) {
   if (!value) return "Date indisponible";
   return new Intl.DateTimeFormat("fr-FR", {
@@ -116,7 +122,7 @@ function getStatusLabel(order, paid) {
   if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "Livree";
   if (order?.delivery_status === "ASSIGNED") return "Chez le livreur";
   if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "Colis pret";
-  if (paid) return "Payee";
+  if (paid) return "Confirmee";
   if (order?.status === "CANCELLED") return "Annulee";
   return "En attente";
 }
@@ -175,19 +181,39 @@ export default async function ReceiptPage({ searchParams }) {
   const statusLabel = getStatusLabel(order, paid);
   const quantityTotal = getItemQuantityTotal(items);
 
+  const brandColor = order.sellers?.brand_color || "#008f5a";
+  const brandColorLight = `${brandColor}12`; // ~7% opacity for soft backgrounds
+  const brandStyles = {
+    "--primary": brandColor,
+    "--accent": brandColor,
+    "--surface-soft": brandColorLight,
+  };
+
   return (
-    <main className="min-h-screen bg-[var(--background)] px-4 py-5 md:py-10">
+    <main className="min-h-screen bg-[var(--background)] px-4 py-5 md:py-10" style={brandStyles}>
       <section className="print-receipt mx-auto max-w-[480px] overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgb(16_24_20_/_0.12)] ring-1 ring-[var(--outline)]/55">
         <div className="relative overflow-hidden bg-[var(--text-main)] px-5 pb-6 pt-5 text-white">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[#5b8cff]" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[#5b8cff]" style={{ backgroundImage: `linear-gradient(to right, var(--primary-bright), ${brandColor}, #5b8cff)` }} />
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/55">Recu de commande</p>
               <h1 className="mt-1 font-display text-3xl font-bold leading-9">Commande #{receiptRef}</h1>
-              <p className="mt-2 text-sm font-semibold text-white/65">{sellerName}</p>
+              <p className="mt-2 text-sm font-semibold text-white/65">
+                {sellerName}
+                {order.sellers?.physical_address && (
+                  <span className="block text-xs text-white/50 font-medium mt-1">
+                    <MapPin size={11} className="inline mr-1 -mt-0.5" />
+                    {order.sellers.physical_address}
+                  </span>
+                )}
+              </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--text-main)]">
-              <ReceiptText size={24} />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--text-main)] overflow-hidden">
+              {order.sellers?.logo_url ? (
+                <img src={order.sellers.logo_url} alt="Logo" className="h-full w-full object-cover" />
+              ) : (
+                <ReceiptText size={24} style={{ color: brandColor }} />
+              )}
             </div>
           </div>
 
@@ -227,18 +253,42 @@ export default async function ReceiptPage({ searchParams }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--surface-mid)] bg-[var(--surface-soft)] p-4">
-            <div className="grid grid-cols-4 gap-2">
-              {["Recue", "Payee", "Prete", "Livree"].map((label, index) => {
+          <div className="rounded-2xl border border-[#07120d]/5 bg-[#fbf9f4] p-4">
+            <div className="relative flex justify-between items-center max-w-[360px] mx-auto">
+              {/* Background progress line */}
+              <div className="absolute left-4 right-4 top-4 h-0.5 bg-[#07120d]/5 -translate-y-1/2 z-0">
+                <div 
+                  className="h-full transition-all duration-500" 
+                  style={{ width: `${(currentStep / 3) * 100}%`, backgroundColor: brandColor }}
+                />
+              </div>
+              
+              {["Recue", "Confirmee", "Prete", "Livree"].map((label, index) => {
                 const state = getStepState(index, currentStep);
+                const isDone = state === "done";
+                const isActive = state === "active";
+                
                 return (
-                  <div key={label} className="min-w-0 text-center">
-                    <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-extrabold ${
-                      state === "done" ? "bg-[var(--primary)] text-white" : state === "active" ? "bg-[var(--text-main)] text-white" : "bg-white text-[var(--text-dim)] ring-1 ring-[var(--outline)]"
-                    }`}>
-                      {state === "done" ? <CheckCircle2 size={16} /> : index + 1}
+                  <div key={label} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
+                      isDone 
+                        ? "text-white shadow-sm" 
+                        : isActive 
+                          ? "bg-[#07120d] text-white shadow-[0_0_0_4px_rgba(7,18,13,0.1)] scale-105" 
+                          : "bg-white text-[#07120d]/40 ring-1 ring-[#07120d]/10"
+                    }`}
+                    style={isDone ? { backgroundColor: brandColor } : {}}>
+                      {isDone ? (
+                        <CheckCircle2 size={15} />
+                      ) : (
+                        <span className="text-[11px] font-black">{index + 1}</span>
+                      )}
                     </div>
-                    <p className="mt-1 truncate text-[0.66rem] font-extrabold text-[var(--text-dim)]">{label}</p>
+                    <span className={`mt-2 text-[10px] font-extrabold tracking-tight ${
+                      isActive ? "text-[#07120d]" : "text-[#07120d]/40"
+                    }`}>
+                      {label}
+                    </span>
                   </div>
                 );
               })}
@@ -266,6 +316,13 @@ export default async function ReceiptPage({ searchParams }) {
             </p>
           </div>
 
+          {order.customer_note && (
+            <div className="rounded-2xl bg-white p-4 ring-1 ring-[var(--surface-mid)]">
+              <p className="quiet-label text-[var(--primary)]">Precision client</p>
+              <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">{order.customer_note}</p>
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-lg font-bold text-[var(--text-main)]">Articles</h2>
@@ -280,8 +337,8 @@ export default async function ReceiptPage({ searchParams }) {
                   <div key={item.id} className="flex items-start justify-between gap-3 p-3">
                   <div className="min-w-0">
                       <p className="font-bold leading-5 text-[var(--text-main)]">{item.products?.name || "Article"}</p>
-                      {item.products?.description && (
-                        <p className="mt-1 line-clamp-2 text-xs font-semibold leading-4 text-[var(--text-dim)]">{item.products.description}</p>
+                      {getCleanProductDescription(item.products?.description) && (
+                        <p className="mt-1 line-clamp-2 text-xs font-semibold leading-4 text-[var(--text-dim)]">{getCleanProductDescription(item.products.description)}</p>
                       )}
                       <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
                         {item.quantity} x {formatPrice(item.price_at_time)}

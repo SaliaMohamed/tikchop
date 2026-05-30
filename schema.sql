@@ -13,6 +13,11 @@ CREATE TABLE public.sellers (
     bot_payment_preferences text DEFAULT 'Wave, Orange Money, MTN MoMo, Djamo, paiement a la livraison selon la zone.',
     bot_delivery_notes text,
     bot_special_rules text,
+    accepted_payment_methods text[] NOT NULL DEFAULT ARRAY['CASH_ON_DELIVERY','WAVE','ORANGE_MONEY','MTN_MONEY']::text[],
+    default_payment_method text NOT NULL DEFAULT 'CASH_ON_DELIVERY',
+    logo_url text,
+    brand_color text DEFAULT '#008f5a',
+    physical_address text,
     created_at timestamp with time zone DEFAULT now(),
     PRIMARY KEY (id)
 );
@@ -50,7 +55,7 @@ CREATE TABLE public.orders (
     customer_phone text NOT NULL,
     status order_status DEFAULT 'PENDING',
     total_amount numeric NOT NULL,
-    payment_method text CHECK (payment_method IN ('WAVE', 'PAYSTACK')),
+    payment_method text CHECK (payment_method IN ('WAVE', 'ORANGE_MONEY', 'MTN_MONEY', 'CASH_ON_DELIVERY', 'PAYSTACK')),
     paystack_reference text UNIQUE,
     paystack_authorization_url text,
     paystack_payment_status text,

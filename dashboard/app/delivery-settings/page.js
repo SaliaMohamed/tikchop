@@ -183,7 +183,7 @@ export default function DeliverySettingsPage() {
       });
       closeZoneModal();
     } catch (err) {
-      setError(friendlyError(err, "Zone non enregistree. Verifiez le nom du quartier et le tarif."));
+      setError(friendlyError(err, "Commune non enregistree. Verifiez le nom du quartier et le tarif."));
     } finally {
       setSaving(false);
     }
@@ -222,7 +222,7 @@ export default function DeliverySettingsPage() {
       await deleteDeliveryZone(zoneId, token);
       setZones((current) => current.filter((zone) => zone.id !== zoneId));
     } catch (err) {
-      setError(friendlyError(err, "Zone gardee pour le moment."));
+      setError(friendlyError(err, "Commune gardee pour le moment."));
     }
   }
 
@@ -238,265 +238,379 @@ export default function DeliverySettingsPage() {
 
   return (
     <div className="app-shell">
-      <header className="mobile-top">
+      {/* Desktop Header */}
+      <header className="mobile-top hidden md:block">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[var(--primary)]">Livraison</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">Reglages livraison</h1>
-            <p className="mt-1 text-base text-[var(--text-dim)]">Choisissez retrait, livraison, frais par zone et livreurs WhatsApp.</p>
+            <p className="quiet-label text-[#008f5a]">Livraison</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">Livraison client</h1>
+            <p className="mt-1 text-base text-[#07120d]/55">Retrait, communes, frais et livreurs WhatsApp.</p>
           </div>
-          <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[var(--primary-bright)] text-white disabled:bg-[var(--surface-mid)]" aria-label="Enregistrer">
+          <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#07120d] text-[#39f58e] disabled:bg-[#07120d]/30" aria-label="Enregistrer">
             <Save size={19} strokeWidth={2.5} />
           </button>
         </div>
       </header>
 
       {error && (
-        <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
+        <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
           {error}
         </div>
       )}
 
       {notice && (
-        <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 ring-1 ring-emerald-200">
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#eafff1] p-4 text-sm font-semibold text-[#005f3d] ring-1 ring-emerald-200">
+          <CheckCircle2 size={17} />
           {notice}
         </div>
       )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
-          <p className="mt-4 font-extrabold text-zinc-400">Chargement...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#008f5a] border-t-transparent" />
+          <p className="mt-4 font-extrabold text-[#07120d]/40">Chargement...</p>
         </div>
       ) : (
-        <main className="mt-8 space-y-5 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+        <main className="mt-4 space-y-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:mt-8 md:space-y-5 md:pb-0">
+
+          {/* Next Action Banner */}
           <DeliveryNextActionCard action={nextAction} saving={saving} />
 
-          <section className="grid grid-cols-3 gap-2">
-            <DeliveryStat icon={<MapPin size={17} />} label="Zones" value={zones.length} tone="primary" />
+          {/* Stats Row — desktop */}
+          <section className="hidden grid-cols-3 gap-3 md:grid">
+            <DeliveryStat icon={<MapPin size={17} />} label="Communes" value={zones.length} tone="primary" />
             <DeliveryStat icon={<Truck size={17} />} label="Livreurs" value={drivers.length} tone="info" />
             <DeliveryStat icon={<CircleDollarSign size={17} />} label="Frais" value={`${Number(settings.fixed_delivery_fee || 0).toLocaleString("fr-FR")} F`} tone="accent" />
           </section>
 
-          <div className="grid gap-6 md:grid-cols-[0.95fr_1.05fr] md:items-start">
-          <section className="space-y-5">
-          <div>
-            <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
-              <Truck className="text-[var(--primary)]" size={21} />
-              Modes de livraison
-            </h2>
-            <div className="overflow-hidden rounded-[18px] border border-[var(--line)] bg-white p-2 shadow-[var(--shadow-sm)]">
-              <ToggleRow
-                title="Livraison a domicile"
-                text="Le client renseigne son quartier et son adresse."
-                active={settings.delivery_enabled}
-                onClick={() => setSettings({ ...settings, delivery_enabled: !settings.delivery_enabled })}
-              />
-              <ToggleRow
-                title="Retrait sur place"
-                text="Le client peut choisir de venir recuperer."
-                active={settings.pickup_enabled}
-                onClick={() => setSettings({ ...settings, pickup_enabled: !settings.pickup_enabled })}
-              />
-              <ToggleRow
-                title="Partage livreur auto"
-                text="Quand vous marquez une commande prete, Tikchop l'envoie au livreur de la zone."
-                active={settings.auto_share_to_driver}
-                onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
-              />
-            </div>
-          </div>
+          <div className="grid gap-5 md:grid-cols-[0.95fr_1.05fr] md:items-start">
 
-          <div>
-            <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
-              <CheckCircle2 className="text-[var(--primary)]" size={21} />
-              Frais & Paiement
-            </h2>
-            <div className="rounded-[18px] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)]">
-              <label className="block">
-                <span className="quiet-label mb-2 block">Frais fixes si aucune zone ne correspond</span>
-                <input type="number" value={settings.fixed_delivery_fee} onChange={(event) => setSettings({ ...settings, fixed_delivery_fee: event.target.value })} className="mobile-input" placeholder="1000" />
-              </label>
+            {/* Left column: toggles + fee */}
+            <section className="space-y-4">
 
-              <div className="mt-5 space-y-3">
-                <PaymentChoice
-                  title="Apres reception"
-                  text="Le client paie la livraison au livreur."
-                  active={settings.delivery_payment_timing === "AT_RECEPTION"}
-                  onClick={() => setSettings({ ...settings, delivery_payment_timing: "AT_RECEPTION" })}
-                />
-                <PaymentChoice
-                  title="Inclus au paiement"
-                  text="Le client paie produit + livraison."
-                  active={settings.delivery_payment_timing === "INCLUDED"}
-                  onClick={() => setSettings({ ...settings, delivery_payment_timing: "INCLUDED" })}
-                />
-                <PaymentChoice
-                  title="Livraison offerte"
-                  text="La boutique prend en charge."
-                  active={settings.delivery_payment_timing === "OFFERED"}
-                  onClick={() => setSettings({ ...settings, delivery_payment_timing: "OFFERED" })}
-                />
+              {/* Delivery options toggles */}
+              <div className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_12px_rgba(7,18,13,0.07)]">
+                <div className="flex items-center gap-2 border-b border-[#07120d]/8 px-4 py-3">
+                  <Truck className="text-[#008f5a]" size={19} />
+                  <h2 className="font-display text-lg font-black text-[#07120d]">Options client</h2>
+                </div>
+                <div className="divide-y divide-[#07120d]/7">
+                  <ToggleRow
+                    title="Livraison"
+                    text="Le client renseigne commune, quartier et adresse."
+                    active={settings.delivery_enabled}
+                    onClick={() => setSettings({ ...settings, delivery_enabled: !settings.delivery_enabled })}
+                  />
+                  <ToggleRow
+                    title="Retrait"
+                    text="Le client vient recuperer la commande."
+                    active={settings.pickup_enabled}
+                    onClick={() => setSettings({ ...settings, pickup_enabled: !settings.pickup_enabled })}
+                  />
+                  <ToggleRow
+                    title="Envoyer au livreur auto"
+                    text="Quand le colis est pret, Tikchop envoie la fiche au livreur."
+                    active={settings.auto_share_to_driver}
+                    onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
+                  />
+                </div>
               </div>
 
-              <div className="mt-5 rounded-2xl bg-[var(--surface-soft)] p-4">
-                <p className="quiet-label text-[var(--primary)]">Options visibles client</p>
-                <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">
-                  Wave, Orange Money, MTN Money, paiement a la livraison et paiement en ligne.
-                </p>
-              </div>
-            </div>
-          </div>
-          </section>
+              {/* Delivery fee + payment timing */}
+              <div className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_12px_rgba(7,18,13,0.07)]">
+                <div className="flex items-center gap-2 border-b border-[#07120d]/8 px-4 py-3">
+                  <CircleDollarSign className="text-[#008f5a]" size={19} />
+                  <h2 className="font-display text-lg font-black text-[#07120d]">Prix de livraison</h2>
+                </div>
+                <div className="p-4 space-y-4">
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Frais par defaut</span>
+                    <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#07120d]/12">
+                      <span className="flex h-[54px] items-center justify-center border-r border-[#07120d]/10 px-4 text-sm font-black text-[#008f5a]">FCFA</span>
+                      <input
+                        type="number"
+                        value={settings.fixed_delivery_fee}
+                        onChange={(event) => setSettings({ ...settings, fixed_delivery_fee: event.target.value })}
+                        className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#07120d] outline-none"
+                        placeholder="1000"
+                      />
+                    </div>
+                  </label>
 
-          <section>
-            <div className="mb-6">
-              <div className="mb-3 flex items-center justify-between px-1">
-                <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
-                  <MapPin className="text-[var(--primary)]" size={21} />
-                  Gestion des zones
-                </h2>
-                <div className="flex gap-2">
-                  <button onClick={handleAddAbidjanZones} disabled={saving} className="hidden min-h-[40px] items-center gap-1 rounded-full bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)] disabled:opacity-60 min-[390px]:flex">
-                    Abidjan
+                  <div>
+                    <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Quand payer ?</p>
+                    <div className="grid gap-2">
+                      <PaymentChoice
+                        title="Apres reception"
+                        text="Le client paie le livreur a la livraison."
+                        active={settings.delivery_payment_timing === "AT_RECEPTION"}
+                        onClick={() => setSettings({ ...settings, delivery_payment_timing: "AT_RECEPTION" })}
+                      />
+                      <PaymentChoice
+                        title="Inclus au paiement"
+                        text="Le client paie article + livraison ensemble."
+                        active={settings.delivery_payment_timing === "INCLUDED"}
+                        onClick={() => setSettings({ ...settings, delivery_payment_timing: "INCLUDED" })}
+                      />
+                      <PaymentChoice
+                        title="Livraison offerte"
+                        text="Vous offrez les frais de livraison au client."
+                        active={settings.delivery_payment_timing === "OFFERED"}
+                        onClick={() => setSettings({ ...settings, delivery_payment_timing: "OFFERED" })}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={saveSettings}
+                    disabled={saving || !seller}
+                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-4 text-sm font-black text-white active:scale-[0.99] disabled:bg-[#07120d]/30"
+                  >
+                    {saving ? "Enregistrement..." : <><Save size={17} /> Enregistrer livraison</>}
                   </button>
-                  <button onClick={() => openZoneModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
-                    <Plus size={16} strokeWidth={3} />
+                </div>
+              </div>
+            </section>
+
+            {/* Right column: zones + drivers */}
+            <section className="space-y-5">
+
+              {/* Zones */}
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="text-[#008f5a]" size={19} />
+                    <h2 className="font-display text-lg font-black text-[#07120d]">Communes</h2>
+                    {zones.length > 0 && (
+                      <span className="rounded-full bg-[#008f5a]/10 px-2.5 py-0.5 text-xs font-black text-[#008f5a]">{zones.length}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddAbidjanZones}
+                      disabled={saving}
+                      className="hidden min-h-[38px] items-center gap-1.5 rounded-full bg-[#fbf9f4] px-3 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/20 disabled:opacity-60 min-[390px]:flex"
+                    >
+                      Abidjan
+                    </button>
+                    <button
+                      onClick={() => openZoneModal()}
+                      className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#07120d] px-3 text-sm font-extrabold text-white"
+                    >
+                      <Plus size={15} strokeWidth={3} />
+                      Ajouter
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleAddAbidjanZones}
+                  disabled={saving}
+                  className="mb-3 flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#fbf9f4] px-4 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/15 disabled:opacity-60 min-[390px]:hidden"
+                >
+                  Ajouter les communes d&apos;Abidjan
+                </button>
+
+                {zones.length === 0 ? (
+                  <div className="rounded-[22px] bg-[#fbf9f4] p-6 text-center ring-1 ring-[#07120d]/8">
+                    <MapPin className="mx-auto text-[#07120d]/20" size={30} />
+                    <p className="mt-3 font-extrabold text-[#07120d]">Frais fixes actifs</p>
+                    <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Ajoutez les communes d&apos;Abidjan en un geste, puis ajustez les frais.</p>
+                    <button
+                      onClick={handleAddAbidjanZones}
+                      disabled={saving}
+                      className="mt-4 min-h-[50px] w-full rounded-2xl bg-[#07120d] text-sm font-extrabold text-white disabled:bg-[#07120d]/30"
+                    >
+                      {saving ? "Ajout..." : "Ajouter Abidjan"}
+                    </button>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      {abidjanZoneSuggestions.slice(0, 12).map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => openSuggestedZone(name)}
+                          className="min-h-[36px] rounded-full bg-white px-3 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/20"
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {zones.map((zone) => (
+                      <div key={zone.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#008f5a] shadow-sm">
+                            <MapPin size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[#07120d]">{zone.name}</p>
+                            <p className="truncate text-xs font-bold text-[#008f5a]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => openZoneModal(zone)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#07120d]/50 shadow-sm"
+                            aria-label={`Modifier ${zone.name}`}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteZone(zone.id)}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#07120d]/25"
+                            aria-label={`Supprimer ${zone.name}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Drivers */}
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="text-[#008f5a]" size={19} />
+                    <h2 className="font-display text-lg font-black text-[#07120d]">Livreurs</h2>
+                    {drivers.length > 0 && (
+                      <span className="rounded-full bg-[#008f5a]/10 px-2.5 py-0.5 text-xs font-black text-[#008f5a]">{drivers.length}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => openDriverModal()}
+                    className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#07120d] px-3 text-sm font-extrabold text-white"
+                  >
+                    <Plus size={15} strokeWidth={3} />
                     Ajouter
                   </button>
                 </div>
-              </div>
-              <button onClick={handleAddAbidjanZones} disabled={saving} className="mb-3 flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-[var(--surface-soft)] px-4 text-sm font-extrabold text-[var(--primary)] disabled:opacity-60 min-[390px]:hidden">
-                Ajouter les communes d&apos;Abidjan
-              </button>
 
-              {zones.length === 0 ? (
-                <div className="rounded-[18px] border border-[var(--line)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
-                  <MapPin className="mx-auto text-zinc-300" size={30} />
-                  <p className="mt-3 font-extrabold text-zinc-950">Frais fixes actifs</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoute toutes les communes d&apos;Abidjan en un geste, puis ajuste les frais selon ton livreur.</p>
-                  <button onClick={handleAddAbidjanZones} disabled={saving} className="mt-4 min-h-[52px] w-full rounded-2xl bg-[var(--text-main)] text-sm font-extrabold text-white disabled:bg-zinc-300">
-                    {saving ? "Ajout..." : "Ajouter Abidjan"}
-                  </button>
-                  <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    {abidjanZoneSuggestions.slice(0, 12).map((name) => (
-                      <button key={name} onClick={() => openSuggestedZone(name)} className="min-h-[38px] rounded-full bg-[var(--surface-soft)] px-3 text-sm font-extrabold text-[var(--primary)]">
-                        {name}
-                      </button>
+                {drivers.length === 0 ? (
+                  <div className="rounded-[22px] bg-[#fbf9f4] p-7 text-center ring-1 ring-[#07120d]/8">
+                    <Truck className="mx-auto text-[#07120d]/20" size={32} />
+                    <p className="mt-3 font-extrabold text-[#07120d]">Aucun livreur</p>
+                    <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Ajoutez les numeros WhatsApp des livreurs qui recoivent les fiches.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {drivers.map((driver) => (
+                      <div key={driver.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#008f5a] shadow-sm">
+                            <User size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[#07120d]">{driver.name}</p>
+                            <p className="truncate text-xs font-bold text-[#07120d]/50">{driver.phone_number} / {driver.zone || "Toutes communes"}</p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => openDriverModal(driver)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#07120d]/50 shadow-sm"
+                            aria-label={`Modifier ${driver.name}`}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDriver(driver.id)}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#07120d]/25"
+                            aria-label={`Supprimer ${driver.name}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {zones.map((zone) => (
-                    <div key={zone.id} className="flex items-center justify-between rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
-                          <MapPin size={18} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-[var(--text-main)]">{zone.name}</p>
-                          <p className="truncate text-sm text-[var(--primary)]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button onClick={() => openZoneModal(zone)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-50 text-zinc-500" aria-label={`Modifier ${zone.name}`}>
-                          <Pencil size={17} />
-                        </button>
-                        <button onClick={() => handleDeleteZone(zone.id)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300" aria-label={`Supprimer ${zone.name}`}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="mb-3 flex items-center justify-between px-1">
-              <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-[var(--text-main)]">
-                <Truck className="text-[var(--primary)]" size={21} />
-                Livreurs
-              </h2>
-                <button onClick={() => openDriverModal()} className="flex min-h-[40px] items-center gap-1 rounded-full bg-[var(--text-main)] px-3 text-sm font-extrabold text-white">
-                <Plus size={16} strokeWidth={3} />
-                Ajouter
-              </button>
-            </div>
-
-            {drivers.length === 0 ? (
-              <div className="rounded-[18px] border border-[var(--line)] bg-white p-7 text-center shadow-[var(--shadow-sm)]">
-                <Truck className="mx-auto text-zinc-300" size={34} />
-                <p className="mt-3 font-extrabold text-zinc-950">Aucun livreur</p>
-                <p className="mt-1 text-sm font-semibold text-zinc-400">Ajoutez les numeros WhatsApp de votre equipe.</p>
+                )}
               </div>
-            ) : (
-              <div className="space-y-3">
-                {drivers.map((driver) => (
-                  <div key={driver.id} className="flex items-center justify-between rounded-[18px] border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--info-soft)] text-[var(--info)]">
-                        <User size={18} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-[var(--text-main)]">{driver.name}</p>
-                        <p className="truncate text-sm text-[var(--text-dim)]">{driver.phone_number} / {driver.zone || "Toutes zones"}</p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button onClick={() => openDriverModal(driver)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-50 text-zinc-500" aria-label={`Modifier ${driver.name}`}>
-                        <Pencil size={17} />
-                      </button>
-                      <button onClick={() => handleDeleteDriver(driver.id)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300" aria-label={`Supprimer ${driver.name}`}>
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+            </section>
           </div>
         </main>
       )}
 
+      {/* Add/Edit Driver Modal */}
       {showAddDriver && (
-        <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white p-5 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-extrabold text-zinc-950">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
-              <button onClick={closeDriverModal} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
-                <X size={18} />
+        <div className="fixed inset-0 z-[260] flex items-end bg-black/50 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
+          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf9f4] shadow-2xl ring-1 ring-[#07120d]/10">
+            <div className="flex items-center justify-between border-b border-[#07120d]/8 px-5 py-4">
+              <h2 className="font-display text-xl font-black text-[#07120d]">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
+              <button onClick={closeDriverModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#07120d]/8" aria-label="Fermer">
+                <X size={17} />
               </button>
             </div>
-            <div className="space-y-3">
-              <input className="mobile-input bg-zinc-50" placeholder="Nom du livreur" value={newDriver.name} onChange={(event) => setNewDriver({ ...newDriver, name: event.target.value })} />
-              <input className="mobile-input bg-zinc-50" placeholder="WhatsApp" value={newDriver.phone_number} onChange={(event) => setNewDriver({ ...newDriver, phone_number: event.target.value })} />
-              <input className="mobile-input bg-zinc-50" placeholder="Zone optionnelle" value={newDriver.zone} onChange={(event) => setNewDriver({ ...newDriver, zone: event.target.value })} />
+            <div className="space-y-3 p-5">
+              <input
+                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                placeholder="Nom du livreur"
+                value={newDriver.name}
+                onChange={(event) => setNewDriver({ ...newDriver, name: event.target.value })}
+              />
+              <input
+                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                placeholder="WhatsApp (+225...)"
+                value={newDriver.phone_number}
+                onChange={(event) => setNewDriver({ ...newDriver, phone_number: event.target.value })}
+              />
+              <input
+                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                placeholder="Commune ou zone (optionnel)"
+                value={newDriver.zone}
+                onChange={(event) => setNewDriver({ ...newDriver, zone: event.target.value })}
+              />
+              <button
+                onClick={handleSaveDriver}
+                disabled={saving}
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-base font-extrabold text-white disabled:bg-[#07120d]/30"
+              >
+                {editingDriver ? "Mettre a jour" : "Enregistrer"}
+              </button>
             </div>
-            <button onClick={handleSaveDriver} disabled={saving} className="mt-5 min-h-[58px] w-full rounded-2xl bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
-              {editingDriver ? "Mettre a jour" : "Enregistrer"}
-            </button>
           </div>
         </div>
       )}
 
+      {/* Add/Edit Zone Modal */}
       {showAddZone && (
-        <div className="fixed inset-0 z-[260] flex items-end bg-black/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white p-5 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-extrabold text-zinc-950">{editingZone ? "Modifier la zone" : "Nouvelle zone"}</h2>
-              <button onClick={closeZoneModal} className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100" aria-label="Fermer">
-                <X size={18} />
+        <div className="fixed inset-0 z-[260] flex items-end bg-black/50 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
+          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf9f4] shadow-2xl ring-1 ring-[#07120d]/10">
+            <div className="flex items-center justify-between border-b border-[#07120d]/8 px-5 py-4">
+              <h2 className="font-display text-xl font-black text-[#07120d]">{editingZone ? "Modifier la commune" : "Nouvelle commune"}</h2>
+              <button onClick={closeZoneModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#07120d]/8" aria-label="Fermer">
+                <X size={17} />
               </button>
             </div>
-            <div className="space-y-3">
-              <input className="mobile-input bg-zinc-50" placeholder="Ex: Angre, Riviera 2, Koumassi..." value={newZone.name} onChange={(event) => setNewZone({ ...newZone, name: event.target.value })} />
-              <input className="mobile-input bg-zinc-50" type="number" placeholder="Frais livraison" value={newZone.fee} onChange={(event) => setNewZone({ ...newZone, fee: event.target.value })} />
+            <div className="space-y-3 p-5">
+              <input
+                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                placeholder="Ex: Cocody, Angre, Riviera..."
+                value={newZone.name}
+                onChange={(event) => setNewZone({ ...newZone, name: event.target.value })}
+              />
+              <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#07120d]/12">
+                <span className="flex h-[54px] items-center justify-center border-r border-[#07120d]/10 px-4 text-sm font-black text-[#008f5a]">FCFA</span>
+                <input
+                  type="number"
+                  className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#07120d] outline-none"
+                  placeholder="Frais de livraison"
+                  value={newZone.fee}
+                  onChange={(event) => setNewZone({ ...newZone, fee: event.target.value })}
+                />
+              </div>
+              <button
+                onClick={handleSaveZone}
+                disabled={saving}
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-base font-extrabold text-white disabled:bg-[#07120d]/30"
+              >
+                {editingZone ? "Mettre a jour" : "Enregistrer"}
+              </button>
             </div>
-            <button onClick={handleSaveZone} disabled={saving} className="mt-5 min-h-[58px] w-full rounded-2xl bg-zinc-950 text-base font-extrabold text-white disabled:bg-zinc-300">
-              {editingZone ? "Mettre a jour" : "Enregistrer"}
-            </button>
           </div>
         </div>
       )}
@@ -508,9 +622,9 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
   if (zones.length === 0 && settings.delivery_enabled) {
     return {
       step: "1",
-      title: "Ajoute tes zones",
-      body: "Le vendeur choisit lui-meme les quartiers, communes ou sous-quartiers qu'il livre.",
-      label: "Ajouter une zone",
+      title: "Ajoutez les communes",
+      body: "Indiquez les communes ou quartiers ou vous livrez et leurs frais.",
+      label: "Ajouter une commune",
       icon: <MapPin size={20} />,
       onClick: onAddZone,
     };
@@ -519,8 +633,8 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
   if (drivers.length === 0 && settings.delivery_enabled) {
     return {
       step: "2",
-      title: "Ajoute un livreur",
-      body: "Son numero WhatsApp permettra de partager une commande prete en un geste.",
+      title: "Ajoutez un livreur",
+      body: "Son numero WhatsApp recevra la fiche client quand le colis est pret.",
       label: "Ajouter un livreur",
       icon: <Truck size={20} />,
       onClick: onAddDriver,
@@ -528,9 +642,9 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
   }
 
   return {
-    step: "OK",
+    step: "✓",
     title: "Livraison prete",
-    body: "Les clients pourront choisir retrait ou livraison selon tes reglages.",
+    body: "Les clients peuvent choisir retrait ou livraison selon vos reglages.",
     label: "Enregistrer les reglages",
     icon: <Save size={20} />,
     onClick: onSave,
@@ -540,28 +654,28 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
 
 function DeliveryNextActionCard({ action, saving }) {
   return (
-    <section className={`rounded-[20px] border p-4 shadow-[var(--shadow-sm)] ${action.strong ? "border-[var(--text-main)] bg-[var(--text-main)] text-white" : "border-[var(--line)] bg-white text-[var(--text-main)]"}`}>
+    <section className={`rounded-[26px] p-4 ${action.strong ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/10"}`}>
       <div className="flex items-start gap-3">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${action.strong ? "bg-white text-[var(--text-main)]" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${action.strong ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-white text-[#008f5a] shadow-sm"}`}>
           {action.step}
         </span>
         <div className="min-w-0 flex-1">
-          <p className={`quiet-label ${action.strong ? "text-white/55" : "text-[var(--primary)]"}`}>Action suivante</p>
+          <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${action.strong ? "text-[#39f58e]/80" : "text-[#008f5a]"}`}>Action suivante</p>
           <h2 className="mt-1 font-display text-xl font-bold leading-7">{action.title}</h2>
-          <p className={`mt-1 text-sm leading-5 ${action.strong ? "text-white/68" : "text-[var(--text-dim)]"}`}>{action.body}</p>
+          <p className={`mt-1 text-sm leading-5 ${action.strong ? "text-white/65" : "text-[#07120d]/55"}`}>{action.body}</p>
         </div>
       </div>
       <button
         type="button"
         onClick={action.onClick}
         disabled={saving}
-        className={`mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold active:scale-[0.99] disabled:opacity-70 ${
-          action.strong ? "bg-[var(--primary-bright)] text-zinc-950" : "bg-[var(--text-main)] text-white"
+        className={`mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold active:scale-[0.99] disabled:opacity-70 ${
+          action.strong ? "bg-[#39f58e] text-[#07120d]" : "bg-[#07120d] text-white"
         }`}
       >
         {saving ? "Enregistrement..." : action.icon}
         {saving ? "" : action.label}
-        {!saving && <ArrowRight size={18} />}
+        {!saving && <ArrowRight size={17} />}
       </button>
     </section>
   );
@@ -569,31 +683,34 @@ function DeliveryNextActionCard({ action, saving }) {
 
 function DeliveryStat({ icon, label, value, tone }) {
   const toneClass = {
-    primary: "bg-[var(--surface-soft)] text-[var(--primary)]",
-    info: "bg-[var(--info-soft)] text-[var(--info)]",
-    accent: "bg-[var(--accent-soft)] text-[var(--accent)]",
+    primary: "bg-[#008f5a]/10 text-[#008f5a]",
+    info: "bg-blue-50 text-blue-600",
+    accent: "bg-amber-50 text-amber-600",
   }[tone];
 
   return (
-    <div className="rounded-[18px] border border-[var(--line)] bg-white p-3 shadow-[var(--shadow-sm)]">
+    <div className="rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
         {icon}
       </span>
-      <p className="mt-3 font-display text-lg font-bold leading-none text-[var(--text-main)]">{value}</p>
-      <p className="mt-1 text-xs font-bold text-[var(--text-dim)]">{label}</p>
+      <p className="mt-3 font-display text-lg font-bold leading-none text-[#07120d]">{value}</p>
+      <p className="mt-1 text-xs font-bold text-[#07120d]/50">{label}</p>
     </div>
   );
 }
 
 function ToggleRow({ title, text, active, onClick }) {
   return (
-    <button onClick={onClick} className="flex min-h-[82px] w-full items-center justify-between gap-4 border-b border-[var(--surface-mid)] p-4 text-left last:border-b-0">
+    <button
+      onClick={onClick}
+      className="flex min-h-[70px] w-full items-center justify-between gap-4 px-4 py-3 text-left"
+    >
       <div>
-        <p className="font-semibold text-[var(--text-main)]">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-[var(--text-dim)]">{text}</p>
+        <p className="text-sm font-black text-[#07120d]">{title}</p>
+        <p className="mt-0.5 text-xs font-bold leading-4 text-[#07120d]/50">{text}</p>
       </div>
-      <div className={`h-6 w-12 shrink-0 rounded-full p-0.5 transition ${active ? "bg-[var(--primary-bright)]" : "bg-[var(--surface-mid)]"}`}>
-        <div className={`h-5 w-5 rounded-full bg-white transition ${active ? "translate-x-6" : ""}`} />
+      <div className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 ${active ? "bg-[#008f5a]" : "bg-[#07120d]/15"}`}>
+        <div className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? "translate-x-5" : ""}`} />
       </div>
     </button>
   );
@@ -601,12 +718,17 @@ function ToggleRow({ title, text, active, onClick }) {
 
 function PaymentChoice({ title, text, active, onClick }) {
   return (
-    <button onClick={onClick} className={`flex min-h-[72px] w-full items-center justify-between gap-4 rounded-lg border p-3 text-left ${active ? "border-[var(--primary-bright)] bg-[var(--surface-soft)]" : "border-[var(--outline)]/45 bg-white"}`}>
+    <button
+      onClick={onClick}
+      className={`flex min-h-[60px] w-full items-center justify-between gap-4 rounded-2xl border p-3 text-left transition-colors ${
+        active ? "border-[#008f5a]/40 bg-[#eafff5]" : "border-[#07120d]/10 bg-white"
+      }`}
+    >
       <div>
-        <p className="font-semibold text-[var(--text-main)]">{title}</p>
-        <p className="mt-1 text-xs leading-4 text-[var(--text-dim)]">{text}</p>
+        <p className={`text-sm font-black ${active ? "text-[#07120d]" : "text-[#07120d]"}`}>{title}</p>
+        <p className="mt-0.5 text-xs font-bold leading-4 text-[#07120d]/50">{text}</p>
       </div>
-      {active && <CheckCircle2 className="text-[var(--primary)]" size={20} />}
+      {active && <CheckCircle2 className="shrink-0 text-[#008f5a]" size={19} />}
     </button>
   );
 }

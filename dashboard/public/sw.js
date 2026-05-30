@@ -1,6 +1,15 @@
-const SHELL_CACHE = "tikchop-shell-v3";
-const ASSET_CACHE = "tikchop-assets-v3";
-const LEGACY_CACHES = ["tikchop-shell-v1", "tikchop-runtime-v1", "tikchop-shell-v2", "tikchop-runtime-v2"];
+const SHELL_CACHE = "tikchop-shell-v5";
+const ASSET_CACHE = "tikchop-assets-v5";
+const LEGACY_CACHES = [
+  "tikchop-shell-v1",
+  "tikchop-runtime-v1",
+  "tikchop-shell-v2",
+  "tikchop-runtime-v2",
+  "tikchop-shell-v3",
+  "tikchop-assets-v3",
+  "tikchop-shell-v4",
+  "tikchop-assets-v4",
+];
 
 const SHELL_FILES = [
   "/install",

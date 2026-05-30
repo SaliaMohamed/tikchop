@@ -1,8 +1,6 @@
 ﻿"use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -56,16 +54,18 @@ const products = [
 ];
 
 const proof = [
-  { label: "essai offert", value: "7 jours" },
+  { label: "pendant le lancement", value: "gratuit" },
   { label: "fait pour le mobile", value: "100%" },
   { label: "commandes plus claires", value: "moins de stress" },
 ];
 
-const whatsappTrialMessage = "Bonjour, je veux tester Tikchop gratuitement pendant 7 jours pour ma boutique.";
+const whatsappTrialMessage = "Bonjour, je veux activer Tikchop gratuitement pour ma boutique.";
 const whatsappContactNumber = process.env.NEXT_PUBLIC_TIKCHOP_WHATSAPP || "";
+const publicContactEmail = process.env.NEXT_PUBLIC_TIKCHOP_CONTACT_EMAIL || "saliamohamed05@gmail.com";
 const whatsappTrialHref = whatsappContactNumber
   ? `https://wa.me/${whatsappContactNumber}?text=${encodeURIComponent(whatsappTrialMessage)}`
   : `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappTrialMessage)}`;
+const trialFallbackHref = `mailto:${publicContactEmail}?subject=${encodeURIComponent("Acces gratuit Tikchop")}&body=${encodeURIComponent(whatsappTrialMessage)}`;
 
 const clarityCards = [
   {
@@ -105,7 +105,7 @@ const features = [
   },
   {
     icon: ReceiptText,
-    title: "Commandes faciles à préparer",
+    title: "Commandes faciles à emballer",
     text: "Produit, commune, téléphone, total et statut sont regroupés au même endroit.",
   },
   {
@@ -117,7 +117,7 @@ const features = [
 
 const localSignals = [
   "Pagne, sacs, beauté, accessoires",
-  "Paiement Wave, Orange Money, MTN Money",
+  "Paiement a la livraison, Wave, Orange Money",
   "Djamo et paiement à la livraison",
   "Relance des clients hésitants",
   "Catalogue avec vraies photos",
@@ -126,8 +126,8 @@ const localSignals = [
 
 const paymentSignals = [
   { icon: Wallet, title: "Paiement direct", text: "Wave, Orange Money, MTN Money, Djamo ou paiement à la livraison sont affichés selon ce que vous acceptez." },
-  { icon: MessageCircle, title: "Confirmation plus propre", text: "Le client confirme son choix, sa commune et son numéro avant que la commande parte en préparation." },
-  { icon: ShieldCheck, title: "Moins d'aller-retour", text: "Vous répétez moins les mêmes consignes et vous gardez votre énergie pour encaisser, préparer et livrer." },
+  { icon: MessageCircle, title: "Confirmation plus propre", text: "Le client confirme son choix, sa commune et son numéro avant que la commande parte à l'emballage." },
+  { icon: ShieldCheck, title: "Moins d'aller-retour", text: "Vous répétez moins les mêmes consignes et vous gardez votre énergie pour encaisser, emballer et livrer." },
 ];
 
 const fatimPain = [
@@ -156,9 +156,9 @@ const boutiqueSetupSteps = [
   { title: "Identité boutique", text: "Nom, logo, WhatsApp, communes de livraison et horaires : la boutique devient claire dès l'ouverture." },
   { title: "Catalogue vêtements", text: "Photos, prix, tailles, stock et description courte pour éviter les mêmes questions toute la journée." },
   { title: "Paiements locaux", text: "Wave, Orange Money, MTN Money, Djamo ou paiement à la livraison selon les habitudes de la boutique." },
-  { title: "Livreurs habituels", text: "Numéros WhatsApp, zones et frais par commune pour préparer vite l'envoi de chaque commande." },
+  { title: "Livreurs habituels", text: "Numéros WhatsApp, zones et frais par commune pour envoyer vite chaque commande." },
   { title: "Lien de vente", text: "Le lien se partage en bio TikTok, statut WhatsApp ou message privé. Les clients commandent sans attendre." },
-  { title: "Suivi simple", text: "Chaque commande reste visible avec son statut : à confirmer, à préparer, en livraison ou terminée." },
+  { title: "Suivi simple", text: "Chaque commande reste visible avec son statut : nouvelle, à emballer, en livraison ou finie." },
 ];
 
 const desktopFlow = [
@@ -183,27 +183,8 @@ const demoProcess = [
 export default function TikchopLanding() {
   return (
     <div className="tk-page">
-      <MobileHomeRedirect />
       <DesktopLanding />
-    </div>
-  );
-}
-
-function MobileHomeRedirect() {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (window.matchMedia("(max-width: 820px)").matches) {
-      router.replace("/onboarding?new=1");
-    }
-  }, [router]);
-
-  return (
-    <div className="tk-mobile-redirect" aria-live="polite">
-      <div>
-        <span>T</span>
-        <strong>Tikchop</strong>
-      </div>
+      <MobileLanding />
     </div>
   );
 }
@@ -221,7 +202,7 @@ function DesktopLanding() {
             </p>
             <h1>Votre boutique en ligne, avec un assistant WhatsApp qui vend avec vous.</h1>
             <p className="tk-hero-lead">
-              Vous vendez sur TikTok, Instagram ou WhatsApp ? Tikchop vous aide à présenter vos articles, répondre plus vite, recevoir des commandes claires et préparer la livraison sans vous noyer dans les messages.
+              Vous vendez sur TikTok, Instagram ou WhatsApp ? Tikchop vous aide à présenter vos articles, répondre plus vite, recevoir des commandes claires et organiser la livraison sans vous noyer dans les messages.
             </p>
             <div className="tk-hero-actions">
               <WhatsappTrialButton label="Tester avec ma boutique" />
@@ -303,7 +284,7 @@ function DesktopLanding() {
               <span>En ligne</span>
             </div>
             <div className="tk-chat client">Bonjour, le sac raphia est-il disponible ?</div>
-            <div className="tk-chat bot">Oui, il est disponible. Le prix est de 10 000 F. Vous pouvez payer par Wave, Orange Money ou MTN Money. Livraison possible aujourd&apos;hui à Cocody, Marcory ou Yopougon.</div>
+            <div className="tk-chat bot">Oui, il est disponible. Le prix est de 10 000 F. Paiement a la livraison possible selon la zone, ou Wave/Orange Money si vous voulez payer avant. Livraison possible aujourd&apos;hui à Cocody, Marcory ou Yopougon.</div>
             <div className="tk-process-label">
               <Sparkles size={14} />
               Le processus Tikchop
@@ -354,25 +335,22 @@ function DesktopLanding() {
           </div>
         </section>
 
-        <section className="tk-pricing-section" id="prix">
+        <section className="tk-pricing-section" id="acces">
           <div>
-            <p className="tk-eyebrow">Deux offres</p>
-            <h2>Commencez simple, ajoutez plus d&apos;accompagnement quand la boutique grandit.</h2>
+            <p className="tk-eyebrow">Accès lancement</p>
+            <h2>Tikchop est gratuit pour le moment, pendant la phase de lancement.</h2>
           </div>
           <div className="tk-price-card">
-            <span className="tk-price-label">Simple</span>
-            <strong>À partir de 5K / mois</strong>
-            <p>La formule la plus simple pour démarrer : aucun branchement compliqué. Les clients passent par le numéro Tikchop et les commandes arrivent dans votre espace vendeur.</p>
-            <WhatsappTrialButton label="Demander mon essai" />
+            <span className="tk-price-label">Boutique</span>
+            <strong>Accès gratuit actuellement</strong>
+            <p>Vous pouvez créer votre boutique, ajouter vos articles, recevoir des commandes et tester le parcours avec vos vrais clients pendant la phase de lancement.</p>
+            <WhatsappTrialButton label="Demander mon accès gratuit" />
           </div>
           <div className="tk-price-card tk-price-card-dark">
-            <span className="tk-price-label">Accompagné</span>
-            <strong>Sur devis</strong>
-            <p>Pour les boutiques qui veulent une mise en place plus personnalisée : Tikchop peut répondre depuis votre propre numéro WhatsApp avec notre aide.</p>
-            <Link href="/onboarding" className="tk-light-button">
-              Créer ma boutique
-              <ChevronRight size={18} />
-            </Link>
+            <span className="tk-price-label">Évolution</span>
+            <strong>Modèle freemium à venir</strong>
+            <p>Plus tard, certaines options avancées pourront devenir payantes. Pour l&apos;instant, l&apos;objectif est de tester, améliorer et accompagner les premières boutiques.</p>
+            <WhatsappTrialButton className="tk-light-button" label="Demander l'accès" />
           </div>
         </section>
 
@@ -386,11 +364,11 @@ function MobileLanding() {
   return (
     <div className="tk-mobile">
       <header className="tk-mobile-top">
-        <Link href="/" className="tk-brand" aria-label="Tikchop accueil">
-          <span>T</span>
+        <Link href="/site" className="tk-brand" aria-label="Tikchop accueil">
+          <span className="tk-logo-mark" aria-hidden="true" />
           Tikchop
         </Link>
-        <Link href="/onboarding">Essai 7j</Link>
+        <Link href="/vendeur">App vendeur</Link>
       </header>
 
       <main>
@@ -401,7 +379,7 @@ function MobileLanding() {
           </p>
           <h1>Votre boutique en ligne, prête pour vos clients WhatsApp.</h1>
           <p>
-            Montrez vos articles, recevez les commandes proprement et préparez la livraison sans perdre les messages importants.
+            Montrez vos articles, recevez les commandes proprement et organisez la livraison sans perdre les messages importants.
           </p>
           <WhatsappTrialButton label="Tester ma boutique" />
         </section>
@@ -444,10 +422,10 @@ function MobileLanding() {
         </section>
 
         <section className="tk-mobile-price">
-          <span>Simple recommandé</span>
-          <strong>À partir de 5K / mois</strong>
-          <p>Les clients écrivent au numéro Tikchop, l&apos;assistant aide à vendre, et les commandes arrivent dans votre espace sans installation compliquée.</p>
-          <WhatsappTrialButton label="Demander mon essai" />
+          <span>Accès lancement</span>
+          <strong>Gratuit pour le moment</strong>
+          <p>Créez votre boutique, testez avec vos vrais articles et recevez vos commandes pendant la phase de lancement.</p>
+          <WhatsappTrialButton label="Demander mon accès gratuit" />
         </section>
 
         <TrialWhatsappSection mobile />
@@ -459,20 +437,21 @@ function MobileLanding() {
 function Header() {
   return (
     <header className="tk-nav">
-      <Link href="/" className="tk-brand" aria-label="Tikchop accueil">
-        <span>T</span>
+      <Link href="/site" className="tk-brand" aria-label="Tikchop accueil">
+        <span className="tk-logo-mark" aria-hidden="true" />
         Tikchop
       </Link>
       <nav aria-label="Navigation Tikchop">
         <a href="#demo">Démo</a>
         <a href="#fatim">Cas Fatim</a>
         <a href="#abidjan">Abidjan</a>
-        <a href="#prix">Prix</a>
+        <a href="#acces">Accès</a>
       </nav>
       <div className="tk-nav-actions">
-        <Link href="/install">Installer</Link>
-        <Link href="/dashboard">Espace vendeur</Link>
-        <WhatsappTrialButton className="tk-dark-button tk-nav-whatsapp" label="Essai WhatsApp" showArrow={false} />
+        <Link href="/vendeur" className="tk-light-button">
+          App vendeur
+        </Link>
+        <WhatsappTrialButton className="tk-dark-button tk-nav-whatsapp" label="Accès gratuit" showArrow={false} />
       </div>
     </header>
   );
@@ -481,11 +460,11 @@ function Header() {
 function WhatsappTrialButton({ className = "tk-dark-button tk-big-button", label = "Demander l'essai sur WhatsApp", showArrow = true }) {
   if (!whatsappContactNumber) {
     return (
-      <Link href="/onboarding?new=1" className={`tk-whatsapp-button ${className}`}>
+      <a href={trialFallbackHref} className={`tk-whatsapp-button ${className}`}>
         <MessageCircle size={18} />
         {label}
         {showArrow ? <ArrowRight size={18} /> : null}
-      </Link>
+      </a>
     );
   }
 
@@ -505,7 +484,7 @@ function ClaritySection() {
         <p className="tk-eyebrow">À quoi ça sert ?</p>
         <h2>Vous gardez WhatsApp, mais vous arrêtez de tout gérer dans le désordre.</h2>
         <p>
-          Quand les demandes arrivent de TikTok, des statuts, des lives et des messages privés, tout se mélange vite. Tikchop vous aide à répondre, ranger, confirmer le paiement et préparer la livraison.
+          Quand les demandes arrivent de TikTok, des statuts, des lives et des messages privés, tout se mélange vite. Tikchop vous aide à répondre, ranger, confirmer le paiement et organiser la livraison.
         </p>
       </motion.div>
       <div className="tk-clarity-grid">
@@ -560,13 +539,13 @@ function TrialWhatsappSection({ mobile = false }) {
   return (
     <section className={mobile ? "tk-mobile-whatsapp-cta" : "tk-whatsapp-cta"}>
       <div>
-        <p className="tk-eyebrow">Essai gratuit</p>
+        <p className="tk-eyebrow">Accès gratuit</p>
         <h2>Testez avec votre vraie boutique, pas avec une démo vide.</h2>
         <p>
           Envoyez simplement la demande. Vous pourrez tester Tikchop avec vos articles, votre numéro WhatsApp et vos habitudes de livraison.
         </p>
       </div>
-      <WhatsappTrialButton label="Envoyer la demande d'essai" />
+      <WhatsappTrialButton label="Demander mon accès gratuit" />
     </section>
   );
 }
@@ -678,7 +657,7 @@ function CaseStudySection({ id }) {
               </div>
             </div>
             <div className="fatim-chat client">Le jean du live est encore disponible ?</div>
-            <div className="fatim-chat bot">Oui. Taille 40, 7 500 FCFA. Paiement possible par Wave, Orange Money ou MTN Money.</div>
+            <div className="fatim-chat bot">Oui. Taille 40, 7 500 FCFA. Paiement a la livraison possible, ou Wave/Orange Money si vous preferez payer avant.</div>
             <div className="fatim-order">
               <PackageCheck size={18} />
               <span>Commande enregistrée : jean friperie, Yopougon, paiement Wave confirmé</span>
@@ -700,7 +679,7 @@ function CaseStudySection({ id }) {
           <p className="install-eyebrow">Prise en charge automatique</p>
           <h2>La commande ne reste plus bloquée dans WhatsApp.</h2>
           <p>
-            Dans une boutique de vêtements, le client peut passer de la question à la commande sans que tout reste bloqué dans une discussion. Vous récupérez les bonnes informations et vous préparez la suite plus vite.
+            Dans une boutique de vêtements, le client peut passer de la question à la commande sans que tout reste bloqué dans une discussion. Vous récupérez les bonnes informations et vous avancez plus vite.
           </p>
         </div>
         <div className="fatim-automation-grid">
@@ -720,7 +699,7 @@ function CaseStudySection({ id }) {
           <div>
             <strong>Vos livreurs habituels restent dans votre organisation</strong>
             <p>
-              Vous pouvez garder les numéros WhatsApp des livreurs, leurs zones, leurs frais et leurs disponibilités. Quand une commande arrive à Yopougon ou Cocody, Tikchop prépare les informations à envoyer.
+              Vous pouvez garder les numéros WhatsApp des livreurs, leurs zones, leurs frais et leurs disponibilités. Quand une commande arrive à Yopougon ou Cocody, Tikchop prépare une fiche claire à envoyer.
             </p>
           </div>
         </div>

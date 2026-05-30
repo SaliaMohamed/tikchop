@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 
 export const SELLER_STORAGE_KEY = "tikchop:activeSeller";
+export const ONBOARDING_COMPLETE_KEY = "tikchop:onboardingComplete";
 
 export const defaultSeller = {
   id: "",
@@ -43,11 +44,24 @@ export function readActiveSeller() {
   }
 }
 
+export function hasCompletedOnboarding() {
+  if (typeof window === "undefined") return false;
+
+  return window.localStorage.getItem(ONBOARDING_COMPLETE_KEY) === "1";
+}
+
+export function markOnboardingComplete() {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(ONBOARDING_COMPLETE_KEY, "1");
+}
+
 export function writeActiveSeller(seller) {
   if (typeof window === "undefined") return;
 
   const normalized = normalizeSeller(seller);
   window.localStorage.setItem(SELLER_STORAGE_KEY, JSON.stringify(normalized));
+  markOnboardingComplete();
   window.dispatchEvent(new CustomEvent("tikchop:seller-changed", { detail: normalized }));
 }
 
