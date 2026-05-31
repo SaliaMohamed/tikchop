@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -18,17 +18,17 @@
   --surface-mid: #f4f1e9;
   /* Aynid charcoal */
   --text-main: #07120d;
-  --text-dim: #4a6055;
-  --outline: #d8e4df;
-  --line: #e8ede9;
+  --text-dim: #4e6055;
+  --outline: rgba(7, 18, 13, 0.07);
+  --line: rgba(7, 18, 13, 0.05);
   /* Shadows with charcoal tint */
-  --shadow-sm: 0 14px 32px rgb(7 18 13 / 0.07);
-  --shadow-md: 0 22px 54px rgb(7 18 13 / 0.10);
-  --shadow-lg: 0 34px 86px rgb(7 18 13 / 0.14);
-  --radius-md: 24px;
+  --shadow-sm: 0 10px 30px rgba(7, 18, 13, 0.03);
+  --shadow-md: 0 20px 48px rgba(7, 18, 13, 0.06);
+  --shadow-lg: 0 32px 76px rgba(7, 18, 13, 0.09);
+  --radius-md: 22px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* Typography */
-  --font-display: "Plus Jakarta Sans";
+  --font-display: "Outfit";
   --font-sans: "Inter";
 }
 
@@ -39,12 +39,17 @@
 body {
   background: var(--background);
   color: var(--text-main);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   min-width: 320px;
   text-rendering: geometricPrecision;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif !important;
+  letter-spacing: -0.03em !important;
 }
 
 button,
@@ -68,17 +73,83 @@ img {
   max-width: 100%;
 }
 
+/* ========= ANIMATIONS PREMIUM ========= */
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* Slide-up pour les bottom sheets */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Apparition avec légère montée (list items) */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Image fade-in au chargement */
+@keyframes imgReveal {
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-rise-in {
+  animation: riseIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-img-reveal {
+  animation: imgReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays — à appliquer via style={{ animationDelay }} */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.13s; }
+.stagger-4 { animation-delay: 0.18s; }
+.stagger-5 { animation-delay: 0.24s; }
+
+/* Skeleton shimmer de base */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0ede8 25%,
+    #e8e4dc 50%,
+    #f0ede8 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 12px;
+}
+
+/* Overrides pour les conteneurs skeleton */
+.skeleton-text  { border-radius: 6px; height: 0.85em; }
+.skeleton-round { border-radius: 9999px; }
+
+/* ========= INPUT FOCUS PREMIUM ========= */
+.mobile-input:focus {
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 143, 90, 0.1);
+  outline: none;
 }
 
 .container {
@@ -440,38 +511,42 @@ img {
 
 .card {
   background: var(--surface);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(7, 18, 13, 0.06);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-3px);
+  border-color: rgba(7, 18, 13, 0.1);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .mobile-input {
-  background: #f0f0f0;
-  border: 1px solid transparent;
-  border-radius: 28px;
+  background: rgba(7, 18, 13, 0.035);
+  border: 1px solid rgba(7, 18, 13, 0.08);
+  border-radius: 18px;
   color: var(--text-main);
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  min-height: 68px;
+  min-height: 54px;
+  height: 54px;
   outline: none;
-  padding: 1rem 1.25rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0 1.15rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
 }
 
 .mobile-input::placeholder {
-  color: #a6adb5;
+  color: #7e8f86;
+  font-weight: 500;
 }
 
 .mobile-input:focus {
+  background: white;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgb(16 185 129 / 0.14);
+  box-shadow: 0 0 0 4px var(--surface-soft);
 }
 
 .app-shell {
@@ -690,10 +765,11 @@ img {
 
 .app-card {
   background: #ffffff;
-  border: 1px solid rgb(236 236 236 / 0.98);
-  border-radius: 30px;
+  border: 1px solid rgba(7, 18, 13, 0.05);
+  border-radius: 28px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .public-shop {

@@ -313,122 +313,90 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
-      <header className="mobile-top">
-        <div className="flex items-center justify-between gap-3 md:items-start">
-          <div className="hidden md:block">
-            <p className="quiet-label text-[var(--primary)]">Commandes</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[var(--text-main)]">A faire maintenant</h1>
-          </div>
-          <button onClick={fetchOrders} className="app-icon-button" aria-label="Actualiser">
-            <RefreshCw size={19} strokeWidth={2.5} />
-          </button>
-          <span className="ml-auto inline-flex items-center gap-2 rounded-full bg-[var(--surface-soft)] px-3 py-2 text-sm font-black text-[var(--primary)] ring-1 ring-[rgba(0,143,90,0.10)] md:hidden" aria-label={`${getFilterCount("WORK")} commandes ouvertes`}>
-            <ClipboardList size={16} />
-            {getFilterCount("WORK")}
-          </span>
+    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
+      {/* 1. Header Pur et Aéré */}
+      <header className="py-8 flex items-center justify-between border-b border-[#07120d]/5">
+        <div>
+          <h1 className="font-display text-3xl font-black text-[#07120d] leading-none">Commandes</h1>
+          <p className="mt-2 text-xs font-semibold text-[#4e6055]/60">
+            {getFilterCount("WORK")} en cours
+          </p>
         </div>
+        <button 
+          onClick={fetchOrders} 
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#07120d]/5 text-[#07120d] active:scale-95 transition"
+          aria-label="Actualiser"
+        >
+          <RefreshCw size={16} strokeWidth={1.5} className={loading ? "animate-spin text-[#008f5a]" : ""} />
+        </button>
+      </header>
 
-        <div className="mt-3 grid grid-cols-4 gap-2 rounded-[22px] bg-white/85 p-2 shadow-[var(--shadow-sm)] ring-1 ring-[var(--outline)]/24 md:mt-5">
-          <MiniOrderMetric icon={<Phone size={18} />} label="Confirmer" value={verifyCount} active={filter === "PENDING"} onClick={() => setFilter("PENDING")} />
-          <MiniOrderMetric icon={<Package size={18} />} label="Emballer" value={prepareCount} active={filter === "PAID"} onClick={() => setFilter("PAID")} />
-          <MiniOrderMetric icon={<Truck size={18} />} label="Livrer" value={readyCount + deliveryCount} active={filter === "PREPARED" || filter === "IN_DELIVERY"} onClick={() => setFilter(readyCount > 0 ? "PREPARED" : "IN_DELIVERY")} />
-          <MiniOrderMetric icon={<CheckCircle2 size={18} />} label="Finies" value={doneCount} active={filter === "DELIVERED"} onClick={() => setFilter("DELIVERED")} />
-        </div>
-
-        <div className="no-scrollbar -mx-4 mt-3 hidden gap-2 overflow-x-auto px-4 pb-1 md:flex">
-          {["WORK", "PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].map((item) => (
+      {/* 2. Filtres Minimalistes (Aynid Aesthetic Tabs) */}
+      <nav className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4 pb-2">
+        <div className="flex gap-6 border-b border-[#07120d]/5 pb-1 min-w-max">
+          {["WORK", "PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED", "ALL"].map((item) => (
             <button
               key={item}
               onClick={() => setFilter(item)}
-              className={`min-h-[40px] whitespace-nowrap rounded-full px-4 text-sm font-semibold ${
-                filter === item ? "border border-[var(--text-main)] bg-[var(--text-main)] text-white shadow-sm" : "border border-[var(--outline)]/40 bg-white text-[var(--text-dim)] shadow-sm"
+              className={`pb-2 text-sm font-black transition relative ${
+                filter === item ? "text-[#07120d]" : "text-[#4e6055]/50 hover:text-[#07120d]/70"
               }`}
             >
               {statusLabels[item]}
-              <span className={`ml-2 rounded-full px-2 py-0.5 text-[0.68rem] ${filter === item ? "bg-white/14 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
-                {getFilterCount(item)}
+              <span className="ml-1 text-[10px] opacity-60 font-semibold">
+                ({getFilterCount(item)})
               </span>
+              {filter === item && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#008f5a] rounded-full" />
+              )}
             </button>
           ))}
         </div>
-      </header>
+      </nav>
 
       {error && (
-        <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
-          {error}
-          <p className="mt-2 text-xs">
-            {sessionExpired
-              ? "Vos commandes restent sauvegardees. Reconnectez-vous pour les afficher."
-              : "Vos commandes restent sauvegardees. Actualisez quand la connexion revient."}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-xs font-semibold text-amber-900 ring-1 ring-amber-100/50">
+          <p>{error}</p>
+          <div className="mt-3 flex gap-2">
             {sessionExpired && (
-              <Link href="/login" className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[var(--text-main)] px-4 text-sm font-extrabold text-white no-underline">
+              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-[#07120d] px-4 text-xs font-black text-white no-underline">
                 Se reconnecter
               </Link>
             )}
             <button
               type="button"
               onClick={fetchOrders}
-              className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-white px-4 text-sm font-extrabold text-amber-900 ring-1 ring-amber-200"
+              className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
             >
-              Reessayer
+              Réessayer
             </button>
           </div>
         </div>
       )}
 
-      {!loading && !error && orders.length > 0 && (
-        <section className="mt-5 space-y-4">
-          {nextOrder && (
-            <div className="hidden md:block">
-              <NextOrderHero order={nextOrder} onOpen={() => setSelectedOrder(nextOrder)} />
-            </div>
-          )}
-          <div className="hidden md:block">
-            <OrderActionPath
-              verifyCount={verifyCount}
-              prepareCount={prepareCount}
-              readyCount={readyCount}
-              deliveryCount={deliveryCount}
-              doneCount={doneCount}
-            />
-          </div>
-        </section>
-      )}
-
-      <section className="mt-5 md:mt-6">
+      {/* 3. Liste des Commandes (Ultra-Sleek & Space-Aéré) */}
+      <main className="mt-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
-            <p className="mt-4 text-center font-extrabold text-zinc-400">{loadingNote}</p>
-            <button
-              type="button"
-              onClick={fetchOrders}
-              className="mt-5 min-h-[44px] rounded-full bg-white px-5 text-sm font-extrabold text-[var(--primary)] shadow-sm ring-1 ring-[var(--outline)]/30"
-            >
-              Relancer
-            </button>
+          <div className="space-y-3 pt-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="skeleton h-[88px] w-full rounded-[24px]" style={{ animationDelay: `${i * 0.06}s` }} />
+            ))}
           </div>
         ) : error ? null : filteredOrders.length === 0 ? (
           <EmptyOrdersGuide creating={demoBusy} onCreateDemo={handleCreateDemoOrder} />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {filteredOrders.map((order) => (
+          <div className="space-y-3">
+            {filteredOrders.map((order, i) => (
               <OrderCard
                 key={order.id}
                 order={order}
                 onClick={() => setSelectedOrder(order)}
-                onPaid={() => markPaid(order)}
-                onPrepared={() => markStatus(order, "PREPARED")}
-                onDelivered={() => markStatus(order, "DELIVERED")}
-                onOpenDelivery={() => setSelectedOrder(order)}
+                index={i}
               />
             ))}
           </div>
         )}
-      </section>
+      </main>
 
       {selectedOrder && (
         <OrderSheet
@@ -436,10 +404,22 @@ export default function OrdersPage() {
           drivers={drivers}
           sellerName={seller.name}
           onClose={() => setSelectedOrder(null)}
-          onPaid={() => markPaid(selectedOrder)}
-          onPrepared={() => markStatus(selectedOrder, "PREPARED")}
-          onDelivered={() => markStatus(selectedOrder, "DELIVERED")}
-          onCancel={() => cancelOrder(selectedOrder)}
+          onPaid={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(40);
+            markPaid(selectedOrder);
+          }}
+          onPrepared={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(40);
+            markStatus(selectedOrder, "PREPARED");
+          }}
+          onDelivered={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([30, 30, 60]);
+            markStatus(selectedOrder, "DELIVERED");
+          }}
+          onCancel={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(80);
+            cancelOrder(selectedOrder);
+          }}
           onDriverShared={markDriverAssigned}
           onManualDriverShare={markSharedToDriver}
           onPauseBot={handlePauseBot}
@@ -452,35 +432,7 @@ export default function OrdersPage() {
 }
 
 function MiniOrderMetric({ icon, label, value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`${label}: ${value}`}
-      title={label}
-      className={`flex min-h-[66px] flex-col items-center justify-center rounded-[18px] px-1.5 text-center transition active:scale-[0.98] ${
-        active
-          ? "bg-[#07120d] text-white shadow-sm"
-          : "bg-[var(--surface-soft)] text-[var(--text-main)]"
-      }`}
-    >
-      <span className={`mb-1 flex h-8 w-8 items-center justify-center rounded-2xl ${
-        active ? "bg-[var(--primary-bright)] text-[#07120d]" : "bg-white text-[var(--primary)] shadow-sm"
-      }`}>
-        {icon}
-      </span>
-      <span className={`block font-display text-2xl font-black leading-none ${
-        active ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"
-      }`}>
-        {value}
-      </span>
-      <span className={`mt-1 block text-[0.64rem] font-black uppercase leading-3 ${
-        active ? "text-white/64" : "text-[var(--text-dim)]"
-      }`}>
-        <span className="hidden md:inline">{label}</span>
-      </span>
-    </button>
-  );
+  return null;
 }
 
 function EmptyOrdersGuide({ creating, onCreateDemo }) {
@@ -542,186 +494,73 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
 }
 
 function DemoStep({ label, value }) {
-  return (
-    <div className="rounded-2xl bg-white/14 p-2 text-center ring-1 ring-white/14">
-      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.08em] text-white/56">{label}</p>
-      <p className="mt-1 text-xs font-extrabold leading-4 text-white">{value}</p>
-    </div>
-  );
+  return null;
 }
 
 function NextOrderHero({ order, onOpen }) {
-  const action = getNextAction(order);
-  const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
-  const itemCount = getOrderItemCount(order);
-  const demoOrder = isDemoOrder(order);
-
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="djassa-command w-full p-5 text-left active:scale-[0.99]"
-    >
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">A faire maintenant</p>
-          <h2 className="mt-2 font-display text-2xl font-bold leading-8 text-white">{action.title}</h2>
-          <p className="mt-1 text-sm font-semibold leading-5 text-white/76">{action.subtitle}</p>
-          <p className="mt-2 text-xs font-extrabold uppercase tracking-[0.12em] text-white/45">#{order.order_ref || order.id?.slice(0, 8)} - {itemCount} article{itemCount > 1 ? "s" : ""}</p>
-        </div>
-        <span className="rounded-full bg-[var(--accent)] px-3 py-1 text-sm font-extrabold text-[var(--text-main)] shadow-[0_12px_24px_rgba(255,176,0,0.22)]">
-          {demoOrder ? "TEST" : formatPrice(total)}
-        </span>
-      </div>
-      <div className="relative z-10 mt-5 grid grid-cols-[1fr_auto] items-center gap-3 rounded-[22px] bg-white/14 p-3 ring-1 ring-white/16">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">{demoOrder ? "Client demo Tikchop" : (order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Client WhatsApp")}</p>
-          <p className="mt-1 truncate text-xs font-semibold text-white/70">{order.delivery_zone || order.delivery_address || "Adresse a confirmer"}</p>
-        </div>
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[var(--text-main)] shadow-[0_14px_28px_rgba(57,245,142,0.22)]">
-          <ChevronRight size={22} />
-        </span>
-      </div>
-    </button>
-  );
+  return null;
 }
 
-function OrderCard({ order, onClick, onPaid, onPrepared, onDelivered, onOpenDelivery }) {
+function OrderCard({ order, onClick, index = 0 }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   const demoOrder = isDemoOrder(order);
   const simpleStatus = getSimpleOrderStatus(order);
   const primaryLine = order.customer_phone && order.customer_phone !== "UNKNOWN"
     ? order.customer_phone
     : "Client WhatsApp";
-  const action = getNextAction(order);
-  const quickAction = getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery);
-  const itemCount = getOrderItemCount(order);
-  const botPaused = isHandoffActive(order.handoff);
-
-  const steps = ["Reçue", "Confirmée", "Prête", "Livrée"];
-  const currentStepMap = {
-    PENDING: 0,
-    PAID: 1,
-    PREPARED: 2,
-    IN_DELIVERY: 2,
-    DELIVERED: 3,
-    CANCELLED: -1,
+  
+  const statusColors = {
+    PENDING: "bg-amber-50 text-amber-800 border-amber-100",
+    PAID: "bg-emerald-50 text-emerald-800 border-emerald-100",
+    PREPARED: "bg-blue-50 text-blue-800 border-blue-100",
+    IN_DELIVERY: "bg-indigo-50 text-indigo-800 border-indigo-100",
+    DELIVERED: "bg-zinc-50 text-zinc-600 border-zinc-100",
+    CANCELLED: "bg-rose-50 text-rose-800 border-rose-100",
   };
-  const stepIdx = currentStepMap[simpleStatus] ?? 0;
+
+  const statusLabel = statusLabels[simpleStatus] || simpleStatus;
+  const itemCount = getOrderItemCount(order);
+  const dateStr = new Date(order.created_at).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+  });
+  // stagger delay up to 5 items
+  const delay = `${Math.min(index, 5) * 0.06}s`;
 
   return (
-    <div className="w-full overflow-hidden rounded-[24px] border border-white/80 bg-white/95 text-left shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[rgba(191,206,197,0.34)]">
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full text-left transition active:scale-[0.99]"
-      >
-        <div className="p-4">
-          <div className="flex justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${action.iconTone}`}>
-                  {action.icon}
-                </span>
-                <div>
-                  <p className="font-display text-base font-black leading-5 text-[var(--text-main)]">{action.title}</p>
-                  <p className="text-xs font-bold text-[var(--text-dim)]">{demoOrder ? "Client demo" : primaryLine}</p>
-                </div>
-              </div>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="font-display text-lg font-bold text-[var(--primary)]">{demoOrder ? "TEST" : formatPrice(total)}</p>
-              <p className="mt-1 hidden text-xs text-[var(--outline)] md:block">
-                {new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-              </p>
-            </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="animate-rise-in w-full text-left rounded-[24px] bg-white border border-[#07120d]/5 p-4 md:p-5 hover:shadow-[0_8px_30px_rgba(7,18,13,0.03)] active:scale-[0.99] transition"
+      style={{ animationDelay: delay }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-display text-base font-black text-[#07120d] truncate">
+              #{order.order_ref || order.id?.slice(0, 8).toUpperCase()}
+            </h3>
+            <span className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${statusColors[simpleStatus] || "bg-zinc-50 text-zinc-600"}`}>
+              {statusLabel}
+            </span>
           </div>
-
-          <div className="mt-3 grid grid-cols-[1fr_auto] gap-3 md:mt-4">
-            <div className="min-w-0 rounded-2xl bg-[var(--surface-soft)] px-3 py-2">
-              <p className="truncate text-sm font-black text-[var(--text-main)]">
-                {itemCount} article{itemCount > 1 ? "s" : ""}
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase ${statusClasses[simpleStatus] || "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
-                {statusLabels[simpleStatus] || simpleStatus}
-              </span>
-              {botPaused && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#06281a] px-2.5 py-1 text-[0.66rem] font-extrabold uppercase text-[var(--primary-bright)]">
-                  <Bot size={12} />
-                  Bot pause
-                </span>
-              )}
-            </div>
-          </div>
-
-          {simpleStatus !== "CANCELLED" && (
-            <div className="mt-4 rounded-2xl bg-[#fbf9f4] p-3 border border-[#07120d]/5">
-              <div className="relative flex justify-between items-center max-w-[340px] mx-auto">
-                <div className="absolute left-3 right-3 top-3 h-0.5 bg-[#07120d]/5 -translate-y-1/2 z-0">
-                  <div 
-                    className="h-full bg-[#008f5a] transition-all duration-300" 
-                    style={{ width: `${(stepIdx / 3) * 100}%` }}
-                  />
-                </div>
-                {steps.map((label, index) => {
-                  const isDone = index < stepIdx;
-                  const isActive = index === stepIdx;
-                  return (
-                    <div key={label} className="relative z-10 flex flex-col items-center flex-1">
-                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-black transition-all ${
-                        isDone 
-                          ? "bg-[#008f5a] text-white shadow-sm" 
-                          : isActive 
-                            ? "bg-[#07120d] text-white scale-105" 
-                            : "bg-white text-[#07120d]/30 ring-1 ring-[#07120d]/10"
-                      }`}>
-                        {isDone ? "✓" : index + 1}
-                      </div>
-                      <span className={`mt-2 text-[9px] font-extrabold tracking-tight ${isActive ? "text-[#07120d]" : "text-[#07120d]/40"}`}>
-                        {label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-3 hidden items-center gap-1 text-sm text-[var(--text-dim)] md:flex">
-            <MapPin size={16} className="shrink-0 text-[var(--outline)]" />
-            <span className="truncate">{order.delivery_zone || order.delivery_address || "Adresse a confirmer"}</span>
-          </div>
+          <p className="mt-1.5 text-sm font-semibold text-[#4e6055] truncate">
+            {demoOrder ? "Client de démonstration" : primaryLine}
+          </p>
+          <p className="mt-0.5 text-xs font-medium text-[#4e6055]/60">
+            {itemCount} article{itemCount > 1 ? "s" : ""} • {dateStr}
+          </p>
         </div>
-
-        <div className={`hidden items-center justify-between gap-3 px-4 py-3 md:flex ${action.barClass}`}>
-          <span className="min-w-0 text-sm font-bold">{action.subtitle}</span>
-          <span className="flex shrink-0 items-center gap-1 text-sm font-bold">
-            Ouvrir
-            <ChevronRight size={16} />
-          </span>
+        <div className="text-right shrink-0">
+          <p className="font-display text-base font-black text-[#07120d] whitespace-nowrap">
+            {demoOrder ? "TEST" : formatPrice(total)}
+          </p>
+          <p className="mt-1.5 text-xs font-black text-[#008f5a] flex items-center justify-end gap-1">
+            Gérer <ChevronRight size={11} strokeWidth={1.5} />
+          </p>
         </div>
-      </button>
-
-      <div className="border-t border-[var(--surface-mid)] bg-white p-3">
-        {quickAction ? (
-          <button
-            type="button"
-            onClick={quickAction.onClick}
-            className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold shadow-sm active:scale-[0.99] ${quickAction.className}`}
-          >
-            {quickAction.icon}
-            {quickAction.label}
-          </button>
-        ) : (
-          <div className="flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-zinc-100 text-sm font-extrabold text-zinc-500">
-            <CheckCircle2 size={17} />
-            Effectuee
-          </div>
-        )}
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -839,7 +678,7 @@ function OrderSheet({
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
-      <div className="mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[32px] bg-white border border-[#e8dcc8]/45 shadow-2xl md:rounded-[32px]">
+      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[32px] bg-white border border-[#e8dcc8]/45 shadow-2xl md:rounded-[32px]">
         <div className="relative overflow-hidden bg-[#fbf9f4] border-b border-[#e8dcc8]/40 p-5 text-[#07120d]">
           <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[var(--primary)] to-[var(--primary-bright)]" />
           <button 

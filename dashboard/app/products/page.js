@@ -372,105 +372,123 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="mobile-top">
-        <div className="space-y-4">
-          <section className="overflow-hidden rounded-[30px] bg-[var(--text-main)] p-4 text-white shadow-[var(--shadow-lg)] md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary-bright)]">Catalogue vendeur</p>
-                <h1 className="mt-2 font-display text-[2.05rem] font-black leading-[2.15rem] text-white md:text-4xl md:leading-tight">
-                  Mes articles en ligne
-                </h1>
-                <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-white/68">
-                  Voyez ce qui se vend, ce qui manque, et partagez vite la boutique.
-                </p>
-              </div>
-              <Link href="/add-product" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[var(--text-main)] no-underline shadow-sm" aria-label="Ajouter">
-                <Plus size={24} strokeWidth={2.6} />
-              </Link>
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <StatTile label="Publies" value={stockStats.live} active />
-              <StatTile label="Non publies" value={stockStats.unpublished} warn={stockStats.unpublished > 0} />
-              <StatTile label="Rupture" value={stockStats.outOfStock} warn={stockStats.outOfStock > 0} />
-            </div>
-
-            <NextCatalogueAction
-              stats={stockStats}
-              hasProducts={products.length > 0}
-              onFilter={setStockFilter}
-            />
-          </section>
-
-          <div className="flex min-h-[54px] items-center gap-2 rounded-[22px] border border-[var(--outline)]/55 bg-white px-4 shadow-[var(--shadow-sm)]">
-            <Search className="shrink-0 text-[var(--outline)]" size={18} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Chercher robe, sac, taille..."
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
-            />
-            {query && (
-              <button type="button" onClick={() => setQuery("")} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Effacer">
-                <X size={15} />
-              </button>
-            )}
-          </div>
-
-          {!loading && products.length > 0 && (
-            <CatalogueFilters stats={stockStats} filter={stockFilter} onFilter={setStockFilter} />
-          )}
+    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
+      {/* 1. Header Pur et Aéré */}
+      <header className="py-8 flex items-center justify-between border-b border-[#07120d]/5">
+        <div>
+          <h1 className="font-display text-3xl font-black text-[#07120d] leading-none">Catalogue</h1>
+          <p className="mt-2 text-xs font-semibold text-[#4e6055]/60">
+            {stockStats.live} article{stockStats.live > 1 ? "s" : ""} en ligne
+          </p>
         </div>
+        <Link 
+          href="/add-product" 
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#07120d] text-white hover:bg-[#122b20] active:scale-95 transition shadow-md shadow-[#07120d]/10" 
+          aria-label="Ajouter un produit"
+        >
+          <Plus size={20} strokeWidth={1.5} />
+        </Link>
       </header>
 
+      {/* 2. Filtres Minimalistes (Aynid Aesthetic Tabs) */}
+      <nav className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4 pb-2">
+        <div className="flex gap-6 border-b border-[#07120d]/5 pb-1 min-w-max">
+          {[
+            { value: "ALL", label: "Tous", count: stockStats.total },
+            { value: "LIVE", label: "En vente", count: stockStats.live },
+            { value: "HIDDEN", label: "Non publiés", count: stockStats.unpublished },
+            { value: "OUT", label: "Rupture", count: stockStats.outOfStock },
+            { value: "LOW", label: "Faible", count: stockStats.lowStock },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setStockFilter(item.value)}
+              className={`pb-2 text-sm font-black transition relative ${
+                stockFilter === item.value ? "text-[#07120d]" : "text-[#4e6055]/50 hover:text-[#07120d]/70"
+              }`}
+            >
+              {item.label}
+              <span className="ml-1 text-[10px] opacity-60 font-semibold">
+                ({item.count})
+              </span>
+              {stockFilter === item.value && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#008f5a] rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* 3. Barre de Recherche Pure */}
+      <div className="mt-6 flex min-h-[50px] items-center gap-3 rounded-[20px] bg-[#07120d]/5 px-4">
+        <Search className="shrink-0 text-[#4e6055]/60" size={16} strokeWidth={1.5} />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Chercher robe, sac, taille, couleur..."
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#07120d] outline-none placeholder:text-[#4e6055]/50"
+        />
+        {query && (
+          <button type="button" onClick={() => setQuery("")} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#07120d]/10 text-[#07120d]" aria-label="Effacer">
+            <X size={12} />
+          </button>
+        )}
+      </div>
+
       {error && (
-        <div className="mt-4 rounded-[22px] bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
-          {error}
-          <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-xs font-semibold text-amber-900 ring-1 ring-amber-100/50">
+          <p>{error}</p>
+          <div className="mt-3 flex gap-2">
             {sessionExpired && (
-              <Link href="/login" className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[var(--text-main)] px-4 text-sm font-extrabold text-white no-underline">
+              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-[#07120d] px-4 text-xs font-black text-white no-underline">
                 Se reconnecter
               </Link>
             )}
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-white px-4 text-sm font-extrabold text-amber-900 ring-1 ring-amber-200"
+              className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
             >
-              Reessayer
+              Réessayer
             </button>
           </div>
         </div>
       )}
 
       {notice && (
-        <div className="mt-4 rounded-[22px] bg-emerald-50 p-4 text-sm font-extrabold text-emerald-900 ring-1 ring-emerald-200">
+        <div className="mt-6 rounded-2xl bg-emerald-50 p-4 text-xs font-extrabold text-emerald-950 ring-1 ring-emerald-100/50 animate-fade-in">
           {notice}
         </div>
       )}
 
-      <main className="mt-5 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+      {/* 4. Liste des Produits épurée en Ligne verticale */}
+      <main className="mt-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
-            <p className="mt-4 font-extrabold text-zinc-400">Chargement...</p>
+          <div className="space-y-2.5">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-[20px] bg-white border border-[#07120d]/5 p-3" style={{ animationDelay: `${i * 0.06}s` }}>
+                <div className="skeleton h-14 w-14 rounded-[14px] shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="skeleton skeleton-text w-3/4" />
+                  <div className="skeleton skeleton-text w-1/3" style={{ height: '0.7em' }} />
+                  <div className="skeleton skeleton-round w-16" style={{ height: '1.2em' }} />
+                </div>
+                <div className="skeleton skeleton-round h-9 w-14 shrink-0" />
+              </div>
+            ))}
           </div>
         ) : error ? null : filteredProducts.length === 0 ? (
           <EmptyProductsState hasProducts={products.length > 0} />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProducts.map((product) => (
+          <div className="space-y-2.5">
+            {filteredProducts.map((product, i) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 sellerSlug={seller.slug}
                 busy={busyProductId === product.id}
-                onStock={setProductStock}
                 onEdit={openEditor}
-                onShare={copyProductLink}
-                onDuplicate={duplicateProductCard}
+                index={i}
               />
             ))}
           </div>
@@ -488,7 +506,15 @@ export default function ProductsPage() {
           onPickImage={() => editFileInputRef.current?.click()}
           onImageSelection={handleEditImageSelection}
           onClose={closeEditor}
-          onSave={saveProduct}
+          onSave={async () => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(40);
+            await saveProduct();
+          }}
+          onShare={() => copyProductLink(editingProduct)}
+          onDuplicate={async () => {
+            await duplicateProductCard(editingProduct);
+            closeEditor();
+          }}
         />
       )}
     </div>
@@ -496,229 +522,82 @@ export default function ProductsPage() {
 }
 
 function StatTile({ label, value, active = false, warn = false }) {
-  return (
-    <div className={`rounded-[20px] p-3 text-center ring-1 ${active ? "bg-white text-[var(--primary)] ring-white" : warn ? "bg-amber-50 text-amber-900 ring-amber-100" : "bg-white/10 text-white ring-white/10"}`}>
-      <strong className="block font-display text-2xl font-black leading-none">{value}</strong>
-      <span className={`mt-1 block text-[0.62rem] font-black uppercase leading-3 ${active || warn ? "text-[var(--text-dim)]" : "text-white/50"}`}>{label}</span>
-    </div>
-  );
+  return null;
 }
 
 function NextCatalogueAction({ stats, hasProducts, onFilter }) {
-  if (!hasProducts) {
-    return (
-      <Link href="/add-product" className="mt-4 flex min-h-[58px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-black text-[var(--text-main)] no-underline">
-        <Camera size={20} />
-        Ajouter mes premiers articles
-      </Link>
-    );
-  }
-
-  if (stats.unpublished > 0) {
-    return (
-      <button type="button" onClick={() => onFilter("HIDDEN")} className="mt-4 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-black text-[var(--text-main)]">
-        <Eye size={20} />
-        Publier les articles masques
-      </button>
-    );
-  }
-
-  if (stats.outOfStock > 0) {
-    return (
-      <button type="button" onClick={() => onFilter("OUT")} className="mt-4 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-black text-[var(--text-main)]">
-        <AlertTriangle size={20} />
-        Corriger les ruptures
-      </button>
-    );
-  }
-
-  if (stats.lowStock > 0) {
-    return (
-      <button type="button" onClick={() => onFilter("LOW")} className="mt-4 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-black text-[var(--text-main)]">
-        <AlertTriangle size={20} />
-        Corriger les stocks faibles
-      </button>
-    );
-  }
-
-  return (
-    <Link href="/social-sharing" className="mt-4 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-black text-[var(--text-main)] no-underline">
-      <Share2 size={20} />
-      Partager boutique et articles
-    </Link>
-  );
+  return null;
 }
 
 function CatalogueFilters({ stats, filter, onFilter }) {
-  const filters = [
-    { value: "ALL", label: "Tous", count: stats.total },
-    { value: "LIVE", label: "Publies", count: stats.live },
-    { value: "HIDDEN", label: "Non publies", count: stats.unpublished },
-    { value: "OUT", label: "Rupture", count: stats.outOfStock },
-    { value: "LOW", label: "Stock faible", count: stats.lowStock },
-  ];
-
-  return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-      {filters.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          onClick={() => onFilter(item.value)}
-          className={`min-h-[42px] shrink-0 rounded-full px-4 text-sm font-extrabold shadow-sm ${
-            filter === item.value
-              ? "bg-[var(--text-main)] text-white"
-              : "border border-[var(--line)] bg-white text-[var(--text-main)]"
-          }`}
-        >
-          {item.label}
-          <span className={`ml-2 rounded-full px-2 py-0.5 text-[0.68rem] ${filter === item.value ? "bg-white/14 text-white" : "bg-[var(--surface-soft)] text-[var(--primary)]"}`}>
-            {item.count}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
+  return null;
 }
 
 function EmptyProductsState({ hasProducts }) {
   return (
-    <div className="djassa-command p-8 text-center md:py-16">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/12 text-[var(--primary-bright)]">
-        <Package size={32} />
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf9f4] rounded-[24px] border border-[#07120d]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a] mb-4">
+        <Package size={28} />
       </div>
-      <h2 className="mt-4 font-display text-2xl font-bold text-white">
-        {hasProducts ? "Aucun article dans ce filtre" : "Aucun article en ligne"}
-      </h2>
-      <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-5 text-white/72">
+      <h3 className="font-display text-xl font-bold text-[#07120d]">
+        {hasProducts ? "Aucun article trouvé" : "Aucun article en ligne"}
+      </h3>
+      <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
         {hasProducts
-          ? "Changez le filtre ou cherchez un autre nom d'article."
-          : "Ajoutez une photo, un prix et un stock. Tikchop pourra ensuite vendre ces articles sur WhatsApp."}
+          ? "Modifiez vos filtres ou écrivez un autre mot-clé dans la recherche."
+          : "Ajoutez une photo, un prix et un stock pour commencer à vendre en ligne."}
       </p>
-      <Link href="/add-product" className="mt-5 inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[var(--primary-bright)] px-6 text-sm font-extrabold text-[#042719] no-underline">
-        Ajouter mes photos
+      <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+        <Plus size={16} />
+        Ajouter un produit
       </Link>
     </div>
   );
 }
 
-function ProductCard({ product, sellerSlug, busy, onStock, onEdit, onShare, onDuplicate }) {
+function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
   const stock = getStock(product);
   const status = getProductStatus(product);
-  const variants = Array.isArray(product.product_variants) ? product.product_variants.filter(Boolean).slice(0, 3) : [];
-  const publicHref = sellerSlug ? `/${sellerSlug}?product=${product.id}` : "/onboarding";
+  const delay = `${Math.min(index, 6) * 0.05}s`;
 
   return (
-    <article className="overflow-hidden rounded-[28px] border border-[#e8dcc8]/45 bg-white shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.22)]">
-      <div className="relative aspect-square bg-[var(--surface-mid)]">
-        <ProductImage src={product.image_url} />
-        <span className={`absolute right-3 top-3 inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-[0.72rem] font-black shadow-sm ${status.toneClass}`}>
-          {status.icon}
-          {status.label}
-        </span>
-        {busy && (
-          <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
-            <Loader2 className="animate-spin" size={28} />
+    <article
+      className="animate-rise-in flex items-center justify-between gap-3 rounded-[20px] bg-white border border-[#07120d]/5 p-3 hover:shadow-[0_4px_20px_rgba(7,18,13,0.03)] transition relative"
+      style={{ animationDelay: delay }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Soft Thumbnail */}
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[14px] bg-[var(--surface-soft)]">
+          <ProductImage src={product.image_url} />
+          {busy && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
+              <Loader2 className="animate-spin text-white" size={14} />
+            </span>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="min-w-0">
+          <h3 className="truncate font-display text-sm font-black text-[#07120d] leading-snug">
+            {product.name}
+          </h3>
+          <p className="mt-0.5 font-display text-xs font-bold text-[#008f5a]">
+            {formatPrice(product.price)}
+          </p>
+          <span className={`inline-flex items-center gap-1 mt-1 rounded-full px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${status.toneClass}`}>
+            {status.label}
           </span>
-        )}
-      </div>
-
-      <div className="space-y-4 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="line-clamp-2 font-display text-xl font-black leading-6 text-[#07120d]">{product.name}</p>
-            <p className="mt-1 font-display text-2xl font-black text-[var(--primary)]">{formatPrice(product.price)}</p>
-          </div>
-          <Link href={publicHref} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)] no-underline" aria-label="Voir dans la boutique">
-            <Store size={18} />
-          </Link>
-        </div>
-
-        <p className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-5 text-[#685f4f]">
-          {getCleanProductDescription(product.description) || "Article visible dans la boutique Tikchop."}
-        </p>
-
-        {variants.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {variants.map((variant, index) => (
-              <span key={`${variant.label || variant.size || index}`} className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--primary)]">
-                {variant.label || variant.size || variant.color} {Number(variant.stock || 0) > 0 ? `(${variant.stock})` : ""}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="rounded-[26px] bg-[#fbf9f4] border border-[#e8dcc8]/40 p-3.5 space-y-3 shadow-[0_2px_10px_rgba(58,47,30,0.02)]">
-          <div className="flex items-center justify-between gap-2">
-            <button 
-              type="button" 
-              onClick={() => onStock(product, stock - 1)} 
-              disabled={busy || stock <= 0} 
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#07120d] border border-[#e8dcc8]/50 shadow-sm hover:bg-[#fbf9f4] disabled:opacity-35 transition active:scale-95" 
-              aria-label="Retirer un stock"
-            >
-              <Minus size={16} strokeWidth={2.5} />
-            </button>
-            
-            <div className="text-center flex-1">
-              <p className="font-display text-2xl font-black leading-none text-[#07120d]">{stock}</p>
-              <p className="mt-1 text-[0.6rem] font-black uppercase tracking-[0.1em] text-[#685f4f]/80">Quantité en Stock</p>
-            </div>
-            
-            <button 
-              type="button" 
-              onClick={() => onStock(product, stock + 1)} 
-              disabled={busy} 
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#07120d] text-white shadow-sm hover:bg-[#122b20] disabled:opacity-55 transition active:scale-95" 
-              aria-label="Ajouter un stock"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </button>
-          </div>
-          
-          <button
-            type="button"
-            onClick={() => onStock(product, stock > 0 ? 0 : 1)}
-            disabled={busy}
-            className={`flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl text-xs font-black transition active:scale-[0.98] ${
-              stock > 0 
-                ? "bg-white text-rose-600 border border-rose-100 shadow-sm hover:bg-rose-50" 
-                : "bg-[#008f5a] text-white hover:bg-[#007a4d]"
-            } disabled:opacity-55`}
-          >
-            {stock > 0 ? <EyeOff size={14} strokeWidth={2.5} /> : <Eye size={14} strokeWidth={2.5} />}
-            {stock > 0 ? "Mettre en rupture" : "Remettre en vente"}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 mt-4 pt-1">
-          <button 
-            type="button" 
-            onClick={() => onShare(product)} 
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white active:scale-[0.97] transition shadow-sm"
-          >
-            <Share2 size={15} strokeWidth={2.5} />
-            Partager
-          </button>
-          <button 
-            type="button" 
-            onClick={() => onDuplicate(product)} 
-            disabled={busy} 
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4] border border-[#e8dcc8]/45 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition shadow-[0_2px_6px_rgba(58,47,30,0.02)]"
-          >
-            <Copy size={15} strokeWidth={2.5} />
-            Dupliquer
-          </button>
-          <button 
-            type="button" 
-            onClick={() => onEdit(product)} 
-            className="col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4] border border-[#e8dcc8]/60 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition"
-          >
-            <Pencil size={15} strokeWidth={2.5} />
-            Modifier l'article
-          </button>
         </div>
       </div>
+
+      {/* Single edit action button */}
+      <button
+        type="button"
+        onClick={() => onEdit(product)}
+        className="flex h-9 shrink-0 px-3.5 items-center justify-center rounded-full bg-[#07120d]/5 text-xs font-black text-[#07120d] hover:bg-[#07120d]/10 active:scale-95 transition"
+      >
+        Édit
+      </button>
     </article>
   );
 }
@@ -734,6 +613,8 @@ function ProductEditor({
   onImageSelection,
   onClose,
   onSave,
+  onShare,
+  onDuplicate,
 }) {
   function setVisible(nextVisible) {
     setFormData((current) => ({
@@ -745,7 +626,7 @@ function ProductEditor({
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 backdrop-blur-sm px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-      <div className="mx-auto max-h-[92vh] w-full max-w-[470px] overflow-y-auto rounded-[32px] bg-white p-5 border border-[#e8dcc8]/45 shadow-2xl space-y-4 no-scrollbar">
+      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[470px] overflow-y-auto rounded-[32px] bg-white p-5 border border-[#e8dcc8]/45 shadow-2xl space-y-4 no-scrollbar">
         
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
@@ -759,7 +640,7 @@ function ProductEditor({
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] border border-[#e8dcc8]/25 text-[#07120d]" 
             aria-label="Fermer"
           >
-            <X size={16} strokeWidth={2.5} />
+            <X size={16} strokeWidth={1.5} />
           </button>
         </div>
 
@@ -893,6 +774,27 @@ function ProductEditor({
           </div>
         </div>
 
+        {/* Share & Duplicate Panel */}
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#e8dcc8]/30">
+          <button
+            type="button"
+            onClick={onShare}
+            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf9f4] border border-[#e8dcc8]/45 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition"
+          >
+            <Share2 size={14} />
+            Partager le lien
+          </button>
+          <button
+            type="button"
+            onClick={onDuplicate}
+            disabled={saving}
+            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf9f4] border border-[#e8dcc8]/45 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition"
+          >
+            <Copy size={14} />
+            Dupliquer
+          </button>
+        </div>
+
         {/* Save Button */}
         <button 
           type="button" 
@@ -900,8 +802,8 @@ function ProductEditor({
           disabled={saving || imageUploading} 
           className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-black text-white hover:bg-[#122b20] active:scale-[0.98] transition disabled:bg-zinc-300 shadow-md shadow-[#07120d]/10"
         >
-          <Save size={16} strokeWidth={2.5} />
-          {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer les changements"}
+          <Save size={16} strokeWidth={1.5} />
+          {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>
     </div>
@@ -921,19 +823,28 @@ function formatVariantsText(variants) {
 
 function ProductImage({ src }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   if (!src || failed) {
     return (
       <div className="flex h-full w-full items-center justify-center text-[var(--outline)]">
-        <ImagePlus size={30} />
+        <ImagePlus size={24} strokeWidth={1.5} />
       </div>
     );
   }
 
   return (
     <>
+      {/* Placeholder shimmer until image loads */}
+      {!loaded && <div className="skeleton absolute inset-0" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" onError={() => setFailed(true)} className="h-full w-full object-cover" />
+      <img
+        src={src}
+        alt=""
+        onError={() => setFailed(true)}
+        onLoad={() => setLoaded(true)}
+        className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
     </>
   );
 }
