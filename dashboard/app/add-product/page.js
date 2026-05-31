@@ -251,7 +251,7 @@ export default function AddProductPage() {
       uploading: true,
       analyzing: false,
       analysisError: "",
-      reviewNotice: inferProductNameFromFile(file.name) ? "Nom provisoire depuis la photo. Tikchop va l'ameliorer." : "",
+      reviewNotice: "",
     }));
 
     setBulkPhotoItems((current) => [...current, ...pendingItems]);
@@ -351,7 +351,7 @@ export default function AddProductPage() {
       console.warn("Bulk image analysis unavailable:", analysisFailure);
       setBulkPhotoItems((current) => current.map((entry) => (
         entry.id === id
-          ? { ...entry, analysisError: "IA indisponible. Gardez le nom provisoire ou dictez les infos.", analyzing: false }
+          ? { ...entry, analysisError: "", analyzing: false }
           : entry
       )));
     }
@@ -1109,7 +1109,7 @@ export default function AddProductPage() {
                       </button>
                     )}
                     {bulkBackgroundProgress && (
-                      <div className="col-span-2 rounded-2xl bg-white px-3 py-2 text-center text-xs font-extrabold text-[var(--text-dim)] ring-1 ring-[var(--outline)]/25">
+                      <div className="col-span-2 hidden rounded-2xl bg-white px-3 py-2 text-center text-xs font-extrabold text-[var(--text-dim)] ring-1 ring-[var(--outline)]/25 md:block">
                         {getBackgroundProgressAdvice(bulkBackgroundProgress)}
                       </div>
                     )}
@@ -1151,7 +1151,7 @@ export default function AddProductPage() {
                               <div className="min-w-0">
                                 <p className="text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-[var(--text-dim)]">Article {index + 1}</p>
                                 <h3 className="mt-1 line-clamp-2 font-display text-lg font-bold leading-6 text-[var(--text-main)]">
-                                  {item.name || (item.analyzing ? "Nom en cours..." : "Nom a confirmer")}
+                                  {item.name || `Article ${index + 1}`}
                                 </h3>
                                 <p className={`mt-1 text-sm font-extrabold ${item.price ? "text-[var(--primary)]" : "text-[var(--accent)]"}`}>
                                   {item.price ? formatPrice(item.price) : "Prix a ajouter"}
@@ -1363,10 +1363,10 @@ export default function AddProductPage() {
                       )}
 
                       {item.analysisError && (
-                        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">{item.analysisError}</p>
+                        <p className="mt-2 hidden rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 md:block">{item.analysisError}</p>
                       )}
                       {item.reviewNotice && (
-                        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">{item.reviewNotice}</p>
+                        <p className="mt-2 hidden rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 md:block">{item.reviewNotice}</p>
                       )}
                       {item.uploadError && (
                         <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{item.uploadError}</p>
@@ -1892,21 +1892,23 @@ function buildItemAnalysisHint(item = {}, preset = {}) {
 
 function reviewBulkAnalysis(item) {
   const confidence = Number(item?.confidence || 0);
-  const noticeParts = [];
 
   if (!item?.name && item?.category) {
-    noticeParts.push("Nom a confirmer: Tikchop a reconnu le rayon, pas le modele exact.");
+    return {
+      ...item,
+      name: item.category,
+      reviewNotice: "",
+    };
   } else if (confidence > 0 && confidence < 0.55) {
-    noticeParts.push("Nom a verifier: photo un peu ambigue.");
-  }
-
-  if (!item?.category) {
-    noticeParts.push("Ajoutez le rayon si besoin.");
+    return {
+      ...item,
+      reviewNotice: "",
+    };
   }
 
   return {
     ...item,
-    reviewNotice: noticeParts.join(" "),
+    reviewNotice: "",
   };
 }
 
@@ -2104,13 +2106,6 @@ function getBulkItemMeta(item) {
   if (!item?.price) {
     return {
       label: "Prix a ajouter",
-      toneClass: "bg-[var(--accent-soft)] text-[var(--accent)]",
-    };
-  }
-
-  if (!item?.name) {
-    return {
-      label: "Nom a verifier",
       toneClass: "bg-[var(--accent-soft)] text-[var(--accent)]",
     };
   }
@@ -2647,7 +2642,7 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-[0.12em] text-[#008f5a]">Studio</p>
             <h1 className="font-display text-[1.55rem] font-black leading-7 text-[#07120d]">
-              {selectedCount} photo{selectedCount > 1 ? "s" : ""}
+              {selectedCount} article{selectedCount > 1 ? "s" : ""}
             </h1>
           </div>
           <button
@@ -2657,14 +2652,14 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
             className="flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-[18px] bg-[#07120d] px-3 text-sm font-black text-white shadow-[0_12px_26px_rgb(7_18_13_/_0.16)] disabled:opacity-60"
           >
             {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
-            {canSubmit ? "Publier" : "Prix"}
+            {canSubmit ? "Publier" : "Suivant"}
           </button>
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Photos" value={photosDone ? selectedCount : "0"} done={photosDone} />
+          <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Articles" value={photosDone ? selectedCount : "0"} done={photosDone} />
           <MobileProductStep icon={<CircleDollarSign size={16} strokeWidth={2.7} />} label="Prix" value={pricesDone ? `${readyCount}/${total || readyCount}` : "0"} done={pricesDone} warn={photosDone && !pricesDone} />
-          <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "Off"} done={canSubmit} />
+          <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "A finir"} done={canSubmit} />
         </div>
       </section>
     );
@@ -2716,7 +2711,7 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
           <div className="flex items-center justify-between gap-3">
             <span>
               <span className="block text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--primary-bright)]">Galerie</span>
-              <strong className="mt-1 block text-base font-black leading-5">Photos + IA + prix</strong>
+              <strong className="mt-1 block text-base font-black leading-5">Photos puis prix</strong>
             </span>
             <span className="tk-icon-badge flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[#07120d]">
               <ImagePlus size={22} strokeWidth={2.75} />
@@ -2742,9 +2737,9 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Photos" value={photosDone ? selectedCount : "0"} done={photosDone} />
+        <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Articles" value={photosDone ? selectedCount : "0"} done={photosDone} />
         <MobileProductStep icon={<CircleDollarSign size={16} strokeWidth={2.7} />} label="Prix" value={pricesDone ? `${readyCount}/${total || readyCount}` : "0"} done={pricesDone} warn={photosDone && !pricesDone} />
-        <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "Off"} done={canSubmit} />
+        <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "A finir"} done={canSubmit} />
       </div>
     </section>
   );

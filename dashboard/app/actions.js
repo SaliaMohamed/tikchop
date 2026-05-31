@@ -745,6 +745,25 @@ export async function analyzeProductImage(imageUrl, voiceHint = "") {
   return normalizeProductAnalysis({});
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 18000, timeoutMessage = "Service trop lent.") {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(timeoutMessage);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function analyzeProductImagesBatch(imageUrls = [], voiceHint = "") {
   const urls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean).slice(0, 6) : [];
   if (urls.length === 0) return [];
@@ -764,7 +783,12 @@ export async function analyzeProductImagesBatch(imageUrls = [], voiceHint = "") 
 }
 
 async function analyzeProductImageWithGemini(imageUrl, voiceHint = "") {
-  const imageResponse = await fetch(getAiOptimizedImageUrl(imageUrl));
+  const imageResponse = await fetchWithTimeout(
+    getAiOptimizedImageUrl(imageUrl),
+    {},
+    8000,
+    "Photo trop lente a lire pour l'IA.",
+  );
   if (!imageResponse.ok) {
     throw new Error("Image impossible a lire pour l'IA.");
   }
@@ -775,7 +799,7 @@ async function analyzeProductImageWithGemini(imageUrl, voiceHint = "") {
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
   const imageBase64 = imageBuffer.toString("base64");
   const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -802,7 +826,7 @@ async function analyzeProductImageWithGemini(imageUrl, voiceHint = "") {
         maxOutputTokens: 1600,
       },
     }),
-  });
+  }, 18000, "Analyse Gemini trop lente.");
 
   const data = await response.json();
 
@@ -824,7 +848,12 @@ async function analyzeProductImagesBatchWithGemini(imageUrls, voiceHint = "") {
   const imageParts = [];
 
   for (const [index, imageUrl] of imageUrls.entries()) {
-    const imageResponse = await fetch(getAiOptimizedImageUrl(imageUrl));
+    const imageResponse = await fetchWithTimeout(
+      getAiOptimizedImageUrl(imageUrl),
+      {},
+      8000,
+      `Image ${index + 1} trop lente a lire pour l'IA.`,
+    );
     if (!imageResponse.ok) {
       throw new Error(`Image ${index + 1} impossible a lire pour l'IA.`);
     }
@@ -846,7 +875,7 @@ async function analyzeProductImagesBatchWithGemini(imageUrls, voiceHint = "") {
   }
 
   const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -868,7 +897,7 @@ async function analyzeProductImagesBatchWithGemini(imageUrls, voiceHint = "") {
         maxOutputTokens: Math.max(2200, imageUrls.length * 850),
       },
     }),
-  });
+  }, 22000, "Analyse Gemini en lot trop lente.");
 
   const data = await response.json();
 
@@ -892,7 +921,7 @@ async function analyzeProductImagesBatchWithGemini(imageUrls, voiceHint = "") {
 async function analyzeProductImageWithOpenAI(imageUrl, voiceHint = "") {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetchWithTimeout("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -926,7 +955,7 @@ async function analyzeProductImageWithOpenAI(imageUrl, voiceHint = "") {
       },
       max_output_tokens: 500,
     }),
-  });
+  }, 18000, "Analyse OpenAI trop lente.");
 
   const data = await response.json();
 
@@ -955,7 +984,7 @@ async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
     throw new Error("OpenRouter vision non configure.");
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -989,7 +1018,7 @@ async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
       temperature: 0.15,
       max_tokens: 900,
     }),
-  });
+  }, 20000, "Analyse OpenRouter trop lente.");
 
   const data = await response.json();
 

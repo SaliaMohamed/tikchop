@@ -1245,11 +1245,9 @@ function MobileWhatsAppPwaPanel({
   loading,
   pairing,
   phoneReady,
-  qrSource,
   status,
   watchingConnection,
   onActivateStandard,
-  onConnect,
   onCopyPairingCode,
   onDisconnect,
   onPhoneBlur,
@@ -1262,7 +1260,6 @@ function MobileWhatsAppPwaPanel({
   const ownWhatsAppActive = connected && !standardActive;
   const hasPairing = Boolean(pairing);
   const hasCode = Boolean(pairing?.pairingCode);
-  const hasQr = Boolean(qrSource);
 
   return (
     <section className="space-y-3 md:hidden">
@@ -1341,32 +1338,31 @@ function MobileWhatsAppPwaPanel({
                 </p>
               )}
 
-              {/* QR / pairing area */}
+              {/* Mobile code pairing area. QR is desktop-only to avoid clutter. */}
               <div className="mt-4 overflow-hidden rounded-[22px] bg-white ring-1 ring-[#07120d]/8 text-center p-4">
-                {hasQr ? (
+                {hasCode ? (
                   <>
-                    <div className="mx-auto w-fit rounded-[20px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={qrSource} alt="QR WhatsApp" className="h-[220px] w-[220px] object-contain" />
-                    </div>
-                    <p className="mt-3 text-sm font-black text-[#07120d]">Scanne avec WhatsApp.</p>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">QR expire vite — regenerer si refuse.</p>
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#008f5a]/10 text-[#008f5a]">
+                      <KeyRound size={32} />
+                    </span>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code pret</h3>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Ouvrez WhatsApp puis liez avec un numero.</p>
                   </>
                 ) : hasPairing ? (
                   <>
                     <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-amber-50 text-amber-700">
                       <KeyRound size={32} />
                     </span>
-                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Connexion en cours</h3>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Ouvrez WhatsApp pour valider.</p>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code a regenerer</h3>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Si aucun code ne s&apos;affiche, relancez le code.</p>
                   </>
                 ) : (
                   <>
                     <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#008f5a]/10 text-[#008f5a]">
-                      <QrCode size={32} />
+                      <KeyRound size={32} />
                     </span>
-                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Pret a generer</h3>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Cliquez sur le bouton ci-dessous.</p>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code WhatsApp</h3>
+                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Le plus simple sur mobile. Pas besoin de scanner.</p>
                   </>
                 )}
               </div>
@@ -1400,12 +1396,12 @@ function MobileWhatsAppPwaPanel({
               <div className="mt-4 grid gap-2.5">
                 <button
                   type="button"
-                  onClick={onConnect}
-                  disabled={busy === "pairing" || !phoneReady}
+                  onClick={onRefreshPairingCode}
+                  disabled={busy === "code" || !phoneReady}
                   className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-[#07120d] px-5 text-base font-black text-white disabled:opacity-50"
                 >
-                  {busy === "pairing" ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={20} />}
-                  {hasQr ? "Regenerer le QR" : phoneReady ? "Generer le QR" : "Ajoutez le numero"}
+                  {busy === "code" ? <Loader2 className="animate-spin" size={20} /> : <KeyRound size={20} />}
+                  {phoneReady ? (hasCode ? "Regenerer le code" : "Generer le code WhatsApp") : "Ajoutez le numero"}
                 </button>
 
                 <div className="grid grid-cols-2 gap-2.5">
@@ -1425,7 +1421,7 @@ function MobileWhatsAppPwaPanel({
                     className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-50"
                   >
                     {busy === "code" ? <Loader2 className="animate-spin" size={16} /> : <KeyRound size={16} />}
-                    Code
+                    Nouveau code
                   </button>
                 </div>
               </div>
@@ -1438,7 +1434,7 @@ function MobileWhatsAppPwaPanel({
       <details className="overflow-hidden rounded-[24px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
         <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4">
           <span className="min-w-0">
-            <span className="block text-base font-black text-[#07120d]">Sans QR — Assistant Standard</span>
+            <span className="block text-base font-black text-[#07120d]">Assistant Standard</span>
             <span className="block text-xs font-bold text-[#07120d]/50">Tikchop repond a votre place.</span>
           </span>
           <MessageCircle className="text-[#008f5a]" size={21} />

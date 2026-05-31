@@ -61,21 +61,22 @@ function getSimpleOrderStatus(order) {
 
 const statusLabels = {
   ALL: "Toutes",
-  WORK: "A faire",
-  PENDING: "A confirmer",
-  PAID: "A emballer",
-  PREPARED: "A livrer",
+  WORK: "Ouvertes",
+  PENDING: "Nouvelles",
+  PAID: "Preparer",
+  DELIVERY: "Livreur",
+  PREPARED: "Livreur",
   IN_DELIVERY: "En route",
-  DELIVERED: "Livrees",
+  DELIVERED: "Terminees",
   CANCELLED: "Annulees",
 };
 
 const statusHints = {
-  PENDING: "Confirmer le client et le mode de paiement",
-  PAID: "Emballer les articles",
-  PREPARED: "Partager au livreur ou livrer",
-  IN_DELIVERY: "Marquer livree apres reception",
-  DELIVERED: "Commande fermee",
+  PENDING: "Confirmer le client",
+  PAID: "Mettre dans le sachet",
+  PREPARED: "Envoyer au livreur",
+  IN_DELIVERY: "Marquer livree",
+  DELIVERED: "Vente fermee",
   CANCELLED: "Commande annulee",
 };
 
@@ -289,6 +290,7 @@ export default function OrdersPage() {
 
   const filteredOrders = useMemo(() => {
     if (filter === "WORK") return orders.filter((order) => ["PENDING", "PAID", "PREPARED", "IN_DELIVERY"].includes(getSimpleOrderStatus(order)));
+    if (filter === "DELIVERY") return orders.filter((order) => ["PREPARED", "IN_DELIVERY"].includes(getSimpleOrderStatus(order)));
     if (filter === "ALL") return orders;
     return orders.filter((order) => getSimpleOrderStatus(order) === filter);
   }, [filter, orders]);
@@ -306,6 +308,7 @@ export default function OrdersPage() {
     if (item === "WORK") return activeCount + toFinishCount;
     if (item === "PENDING") return verifyCount;
     if (item === "PREPARED") return readyCount;
+    if (item === "DELIVERY") return readyCount + deliveryCount;
     if (item === "IN_DELIVERY") return deliveryCount;
     if (item === "DELIVERED") return doneCount;
     if (item === "ALL") return orders.length;
@@ -334,7 +337,7 @@ export default function OrdersPage() {
       {/* 2. Filtres Minimalistes (Aynid Aesthetic Tabs) */}
       <nav className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4 pb-2">
         <div className="flex gap-6 border-b border-[#07120d]/5 pb-1 min-w-max">
-          {["WORK", "PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED", "ALL"].map((item) => (
+          {["WORK", "PENDING", "PAID", "DELIVERY", "DELIVERED"].map((item) => (
             <button
               key={item}
               onClick={() => setFilter(item)}

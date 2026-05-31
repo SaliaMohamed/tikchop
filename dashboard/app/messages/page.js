@@ -303,10 +303,10 @@ export default function MessagesPage() {
       <header className={`mobile-top ${showChatOnMobile ? "hidden md:block" : ""}`}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[#008f5a]">Boite clients</p>
-            <h1 className="mt-1 font-display text-3xl font-black leading-10 text-[#07120d]">Messages</h1>
+            <p className="quiet-label text-[#008f5a]">WhatsApp</p>
+            <h1 className="mt-1 font-display text-3xl font-black leading-10 text-[#07120d]">Clients</h1>
           </div>
-          <button onClick={fetchConversations} className="app-icon-button bg-[#07120d] text-white" aria-label="Actualiser les discussions">
+          <button onClick={fetchConversations} className="app-icon-button bg-white text-[#008f5a] shadow-sm ring-1 ring-[#07120d]/8" aria-label="Actualiser les discussions">
             <RefreshCw className={loading ? "animate-spin" : ""} size={19} />
           </button>
         </div>
@@ -334,7 +334,7 @@ export default function MessagesPage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/35"
-                placeholder="Rechercher un client..."
+                placeholder="Nom ou numero..."
               />
             </label>
             <div className="px-3 py-2">
@@ -390,36 +390,15 @@ export default function MessagesPage() {
 }
 
 function MobileMessagesFocus({ total, waitingCount, pausedCount, orderCount, onFilter }) {
-  const title = total === 0
-    ? "Aucun client a lire"
-    : waitingCount > 0
-      ? `${waitingCount} client${waitingCount > 1 ? "s" : ""} a lire`
-      : pausedCount > 0
-        ? `${pausedCount} client${pausedCount > 1 ? "s" : ""} a vous`
-        : orderCount > 0
-          ? `${orderCount} vente${orderCount > 1 ? "s" : ""} a suivre`
-          : "Tout est calme";
-  const body = total === 0
-    ? "Aucun message pour l'instant."
-    : waitingCount > 0
-      ? "Une reponse peut debloquer la vente."
-      : pausedCount > 0
-        ? "Le bot attend votre feu vert."
-        : orderCount > 0
-          ? "Suivez les ventes en cours."
-          : "Rien d'urgent.";
+  const activeCount = waitingCount + pausedCount + orderCount;
 
   return (
-    <section className="mb-3 overflow-hidden rounded-[26px] bg-[#07120d] text-white md:hidden">
-      <div className="p-4">
-        <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]/80">Priorite</p>
-        <h2 className="mt-1.5 font-display text-2xl font-black leading-7">{title}</h2>
-        <p className="mt-1 text-sm font-bold leading-5 text-white/60">{body}</p>
-      </div>
-      <div className="grid grid-cols-3 gap-px border-t border-white/8 bg-white/8">
-        <MobileMessageMetric label="A lire" value={waitingCount} onClick={() => onFilter("WAITING")} />
-        <MobileMessageMetric label="A moi" value={pausedCount} onClick={() => onFilter("HUMAN")} />
-        <MobileMessageMetric label="Ventes" value={orderCount || total} onClick={() => onFilter(orderCount > 0 ? "ORDERS" : "ALL")} />
+    <section className="mb-3 rounded-[24px] bg-white p-2 shadow-[var(--shadow-sm)] ring-1 ring-[#07120d]/8 md:hidden">
+      <div className="grid grid-cols-4 gap-1.5">
+        <MobileMessageMetric label="Tous" value={total} active={activeCount === 0} onClick={() => onFilter("ALL")} />
+        <MobileMessageMetric label="A lire" value={waitingCount} active={waitingCount > 0} onClick={() => onFilter("WAITING")} />
+        <MobileMessageMetric label="Vous" value={pausedCount} active={pausedCount > 0} onClick={() => onFilter("HUMAN")} />
+        <MobileMessageMetric label="Ventes" value={orderCount} active={orderCount > 0} onClick={() => onFilter(orderCount > 0 ? "ORDERS" : "ALL")} />
       </div>
     </section>
   );
@@ -459,11 +438,17 @@ function InboxFilterRail({ value, onChange, counts }) {
   );
 }
 
-function MobileMessageMetric({ label, value, onClick }) {
+function MobileMessageMetric({ label, value, active, onClick }) {
   return (
-    <button type="button" onClick={onClick} className="bg-[#07120d] p-3 text-center active:bg-white/5">
-      <strong className="block font-display text-xl font-black leading-none text-white">{value}</strong>
-      <small className="mt-1 block text-[0.6rem] font-black uppercase leading-3 text-white/55">{label}</small>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-[70px] rounded-[18px] p-2 text-center ring-1 active:scale-[0.98] ${
+        active ? "bg-[#07120d] text-white ring-[#07120d]" : "bg-[#f3fbf6] text-[#07120d] ring-[#07120d]/5"
+      }`}
+    >
+      <strong className={`block font-display text-xl font-black leading-none ${active ? "text-[#39f58e]" : "text-[#008f5a]"}`}>{value}</strong>
+      <small className={`mt-1 block text-[0.6rem] font-black uppercase leading-3 ${active ? "text-white/62" : "text-[#4e6055]"}`}>{label}</small>
     </button>
   );
 }
@@ -495,35 +480,30 @@ function ConversationCard({ conversation, active, onClick }) {
   const lastOrder = conversation.last_order;
   const stats = getConversationStats(conversation);
   const action = getConversationAction(conversation);
+  const total = Number(lastOrder?.total_amount || 0) + Number(lastOrder?.delivery_fee || 0);
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-[22px] p-3 text-left ring-1 active:scale-[0.99] transition-colors ${
-        active ? "bg-[#07120d] text-white ring-[#07120d]" : "bg-[#fbf9f4] text-[#07120d] ring-[#07120d]/8"
+      className={`w-full rounded-[24px] p-3 text-left shadow-[0_12px_28px_rgb(7_18_13_/_0.04)] ring-1 active:scale-[0.99] transition-colors ${
+        active ? "bg-[#07120d] text-white ring-[#07120d]" : "bg-white text-[#07120d] ring-[#07120d]/8"
       }`}
     >
-      <div className="grid grid-cols-[auto_1fr_auto] items-start gap-3">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${active ? "bg-white/10 text-[#39f58e]" : "bg-white text-[#008f5a] shadow-sm"}`}>
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${active ? "bg-white/10 text-[#39f58e]" : "bg-[#f3fbf6] text-[#008f5a]"}`}>
           <UserRound size={19} />
         </span>
         <span className="min-w-0">
-          <span className="block truncate font-display text-base font-black">{action.title}</span>
+          <span className="block truncate font-display text-base font-black">{getConversationTitle(conversation)}</span>
           <span className={`mt-0.5 block truncate text-xs font-bold ${active ? "text-white/55" : "text-[#07120d]/50"}`}>
-            {getConversationTitle(conversation)}
+            {lastOrder ? `Commande ${lastOrder.order_ref || lastOrder.id?.slice(0, 8)}` : getPreview(conversation)}
           </span>
         </span>
         <span className={`rounded-full px-2 py-1 text-[0.63rem] font-black ${active ? "bg-white/12 text-white" : action.chipClass}`}>
           {action.label}
         </span>
       </div>
-      <p className={`mt-2.5 rounded-xl px-3 py-2 text-xs font-black leading-4 ${active ? "bg-white/8 text-white/75" : "bg-white text-[#008f5a] ring-1 ring-[#008f5a]/10"}`}>
-        {action.detail}
-      </p>
-      <p className={`mt-2 line-clamp-2 text-xs font-semibold leading-4 ${active ? "text-white/60" : "text-[#07120d]/55"}`}>
-        {getPreview(conversation)}
-      </p>
-      <div className="mt-2.5 flex items-center justify-between gap-2">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#07120d]/6 pt-2.5">
         <span className={`flex items-center gap-2 text-[0.65rem] font-bold ${active ? "text-white/40" : "text-[#07120d]/35"}`}>
           <span className="inline-flex items-center gap-1">
             <MessageCircle size={11} />
@@ -537,7 +517,7 @@ function ConversationCard({ conversation, active, onClick }) {
         </span>
         {lastOrder && (
           <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${active ? "bg-white/10 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
-            {lastOrder.status || "Commande"}
+            {formatPrice(total)}
           </span>
         )}
       </div>
@@ -585,26 +565,26 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
           <BotStatus paused={conversation.bot_paused} />
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
-            disabled={!canReply || busy === "pause" || busy === "resume"}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white disabled:opacity-50"
-          >
-            {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={16} /> : conversation.bot_paused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
-            {conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
-          </button>
-          <a
-            href={canReply ? `tel:${cleanPhone(conversation.customer_phone)}` : undefined}
-            className={`flex min-h-[46px] items-center justify-center gap-2 rounded-2xl px-3 text-xs font-black no-underline ring-1 ${
-              canReply ? "bg-white text-[#07120d] ring-[#07120d]/12" : "pointer-events-none bg-[#07120d]/5 text-[#07120d]/30 ring-transparent"
-            }`}
-          >
-            <Phone size={15} />
-            Appeler
-          </a>
-        </div>
+        {canReply && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
+              disabled={busy === "pause" || busy === "resume"}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white disabled:opacity-50"
+            >
+              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={16} /> : conversation.bot_paused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+              {conversation.bot_paused ? "Rendre au bot" : "Repondre moi"}
+            </button>
+            <a
+              href={`tel:${cleanPhone(conversation.customer_phone)}`}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-xs font-black text-[#07120d] no-underline ring-1 ring-[#07120d]/12"
+            >
+              <Phone size={15} />
+              Appeler
+            </a>
+          </div>
+        )}
 
         <SellerConversationHint paused={conversation.bot_paused} canReply={canReply} />
         <ConversationStatusStrip conversation={conversation} />
@@ -616,8 +596,8 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
         {(conversation.messages || []).length === 0 ? (
           <div className="rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-[rgba(191,206,197,0.42)]">
             <MessageCircle className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="mt-3 text-sm font-black text-[var(--text-main)]">Aucun message sauvegarde</p>
-            <p className="mt-1 text-xs font-bold leading-4 text-[var(--text-dim)]">Tu peux quand meme envoyer un message si le numero client est connu.</p>
+            <p className="mt-3 text-sm font-black text-[var(--text-main)]">{canReply ? "Discussion prete" : "Client sans numero"}</p>
+            <p className="mt-1 text-xs font-bold leading-4 text-[var(--text-dim)]">{canReply ? "Ecrivez en bas si vous voulez reprendre la main." : "Ouvrez la vente pour completer le contact."}</p>
           </div>
         ) : (
           (conversation.messages || []).map((message) => (
@@ -656,19 +636,19 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
 function SellerConversationHint({ paused, canReply }) {
   const content = !canReply
     ? {
-      title: "Numero manquant",
-      body: "Reponse bloquee.",
-      className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200",
+      title: "Numero a completer",
+      body: "La vente reste consultable.",
+      className: "bg-white text-[#07120d] ring-1 ring-[#07120d]/8",
     }
     : paused
       ? {
-        title: "Mode humain actif",
-        body: "Vous avez la main.",
+        title: "Vous repondez",
+        body: "Le bot attend.",
         className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200",
       }
       : {
         title: "Bot actif",
-        body: "Tikchop gere.",
+        body: "Tikchop suit.",
         className: "bg-[#eafff5] text-[#005f3d] ring-1 ring-emerald-200",
       };
 
