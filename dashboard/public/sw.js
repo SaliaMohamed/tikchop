@@ -1,5 +1,5 @@
-const SHELL_CACHE = "tikchop-shell-v5";
-const ASSET_CACHE = "tikchop-assets-v5";
+const SHELL_CACHE = "tikchop-shell-v6";
+const ASSET_CACHE = "tikchop-assets-v6";
 const LEGACY_CACHES = [
   "tikchop-shell-v1",
   "tikchop-runtime-v1",
@@ -9,6 +9,8 @@ const LEGACY_CACHES = [
   "tikchop-assets-v3",
   "tikchop-shell-v4",
   "tikchop-assets-v4",
+  "tikchop-shell-v5",
+  "tikchop-assets-v5",
 ];
 
 const SHELL_FILES = [
@@ -52,7 +54,12 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match("/install")),
+      fetch(event.request).catch(() => new Response(
+        "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Tikchop</title><body style=\"margin:0;font-family:system-ui;background:#fbf9f4;color:#07120d;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px\"><main><strong style=\"font-size:22px\">Connexion indisponible</strong><p style=\"font-weight:700;color:#4e6055\">Reconnectez internet puis actualisez Tikchop.</p></main></body>",
+        {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        },
+      )),
     );
     return;
   }

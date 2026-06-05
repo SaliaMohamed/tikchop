@@ -31,6 +31,7 @@ import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { compressImage } from "../../lib/image-compressor";
+import { PRODUCT_PROFILES, getProductProfile, getStoredProductProfileId, storeProductProfileId } from "../../lib/product-profiles";
 
 function formatPrice(value) {
   return `${Number(normalizeMoneyInput(value) || 0).toLocaleString("fr-FR")} FCFA`;
@@ -56,6 +57,7 @@ export default function AddProductPage() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageAnalyzing, setImageAnalyzing] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkAnalyzingAll, setBulkAnalyzingAll] = useState(false);
   const [backgroundBusyId, setBackgroundBusyId] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [imageError, setImageError] = useState("");
@@ -73,6 +75,7 @@ export default function AddProductPage() {
     size: "",
     product_keywords: "",
   });
+  const [productProfileId, setProductProfileId] = useState("general");
   const [bulkPhotoItems, setBulkPhotoItems] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -99,6 +102,10 @@ export default function AddProductPage() {
       setFormData((current) => ({ ...current, seller_id: activeSeller.id }));
     }
   }, [activeSeller.id]);
+
+  useEffect(() => {
+    setProductProfileId(getStoredProductProfileId(activeSeller.slug || "default"));
+  }, [activeSeller.slug]);
 
   useEffect(() => {
     if (mode !== "BULK") return;
@@ -204,9 +211,21 @@ export default function AddProductPage() {
       setImageAnalyzing(true);
       try {
         const analysis = await analyzeProductImage(cleanUrl, formData.description);
-        setFormData((current) => applyAnalysisToProduct(current, analysis));
+        setFormData((current) => {
+          const next = applyAnalysisToProduct(current, analysis);
+          return {
+            ...next,
+            name: sanitizeAiProductName(next.name) || getFallbackProductName(next, productProfile, 0),
+          };
+        });
       } catch (analysisFailure) {
         console.warn("Image analysis unavailable:", analysisFailure);
+        setFormData((current) => ({
+          ...current,
+          name: current.name || getFallbackProductName(current, productProfile, 0),
+          category: current.category || productProfile.categorySuggestions?.[0] || "",
+          product_keywords: mergeKeywords(current.product_keywords, productProfile.shortLabel),
+        }));
         setAnalysisError("Nom non propose. Completez les infos a la main.");
       } finally {
         setImageAnalyzing(false);
@@ -301,30 +320,91 @@ export default function AddProductPage() {
   async function analyzeUploadedBulkItems(uploadedItems) {
     if (uploadedItems.length === 0) return;
 
-    const chunks = chunkArray(uploadedItems, 4);
-    const analysisHint = buildBulkAnalysisHint(bulkPreset);
+    await analyzeBulkItemsInBatches(uploadedItems, {
+      notice: "Tikchop analyse le lot...",
+    });
+  }
 
-    for (const chunk of chunks) {
+  async function analyzeBulkItemsInBatches(itemsToAnalyze, options = {}) {
+    const validItems = (itemsToAnalyze || []).filter((item) => item?.id && item?.image_url);
+    if (validItems.length === 0) return;
+
+    const batches = chunkArray(validItems, 6);
+
+    for (const batch of batches) {
+      setBulkPhotoItems((current) => current.map((entry) => (
+        batch.some((item) => item.id === entry.id)
+          ? { ...entry, analyzing: true, analysisError: "", reviewNotice: options.notice || "Tikchop prepare la fiche..." }
+          : entry
+      )));
+
       try {
-        const analyses = await analyzeProductImagesBatch(chunk.map((item) => item.image_url), analysisHint);
-        setBulkPhotoItems((current) => current.map((entry) => {
-          const chunkIndex = chunk.findIndex((item) => item.id === entry.id);
-          if (chunkIndex === -1) return entry;
+        const analyses = await analyzeProductImagesBatch(
+          batch.map((item) => item.image_url),
+          buildBulkAnalysisHint(bulkPreset, productProfile),
+        );
 
-          const reviewedItem = reviewBulkAnalysis(applyAnalysisToProduct(entry, analyses[chunkIndex] || {}));
+        setBulkPhotoItems((current) => {
+          const analyzed = current.map((entry) => {
+            const batchIndex = batch.findIndex((item) => item.id === entry.id);
+            if (batchIndex === -1) return entry;
+
+            const analysis = analyses?.[batchIndex] || {};
+            const reviewed = reviewBulkAnalysis(applyAnalysisToProduct(entry, analysis));
+            const entryIndex = current.findIndex((item) => item.id === entry.id);
+            const name = sanitizeAiProductName(reviewed.name) || getFallbackProductName(reviewed, productProfile, entryIndex);
+
+            return {
+              ...reviewed,
+              name,
+              category: reviewed.category || productProfile.categorySuggestions?.[0] || "",
+              product_keywords: mergeKeywords(reviewed.product_keywords, reviewed.category, productProfile.shortLabel),
+              analyzing: false,
+              analysisError: "",
+              reviewNotice: sanitizeAiProductName(analysis?.name) ? "" : "Nom provisoire. Corrigez si besoin.",
+            };
+          });
+
+          return autoGroupBulkPhotoItems(analyzed);
+        });
+      } catch (analysisFailure) {
+        console.warn("Bulk batch image analysis unavailable:", analysisFailure);
+        setBulkPhotoItems((current) => current.map((entry) => {
+          const batchIndex = batch.findIndex((item) => item.id === entry.id);
+          if (batchIndex === -1) return entry;
+          const entryIndex = current.findIndex((item) => item.id === entry.id);
+
           return {
-            ...reviewedItem,
+            ...entry,
+            name: entry.name || getFallbackProductName(entry, productProfile, entryIndex),
+            category: entry.category || productProfile.categorySuggestions?.[0] || "",
+            product_keywords: mergeKeywords(entry.product_keywords, productProfile.shortLabel),
             analyzing: false,
             analysisError: "",
+            reviewNotice: "Nom provisoire. Mettez le prix pour publier.",
           };
         }));
-        setBulkPhotoItems((current) => autoGroupBulkPhotoItems(current));
-      } catch (batchError) {
-        console.warn("Batch image analysis unavailable:", batchError);
-        await runLimited(chunk, 2, async (item) => {
-          await reanalyzeBulkPhotoItem(item.id, item.image_url, { silent: true });
-        });
       }
+    }
+  }
+
+  async function reanalyzeAllBulkPhotos() {
+    const itemsToAnalyze = bulkPhotoItems.filter((item) => item.image_url && !item.uploading);
+    if (itemsToAnalyze.length === 0 || bulkAnalyzingAll) return;
+
+    setBulkAnalyzingAll(true);
+    setBulkPhotoItems((current) => current.map((item) => (
+      itemsToAnalyze.some((entry) => entry.id === item.id)
+        ? { ...item, analyzing: true, analysisError: "", reviewNotice: "Tikchop renomme le lot..." }
+        : item
+    )));
+
+    try {
+      await analyzeBulkItemsInBatches(itemsToAnalyze, {
+        notice: "Tikchop renomme le lot...",
+      });
+    } finally {
+      setBulkAnalyzingAll(false);
     }
   }
 
@@ -340,18 +420,32 @@ export default function AddProductPage() {
     )));
 
     try {
-      const analysis = await analyzeProductImage(imageUrl, buildItemAnalysisHint(item, bulkPreset));
-      setBulkPhotoItems((current) => current.map((entry) => (
-        entry.id === id
-          ? { ...reviewBulkAnalysis(applyAnalysisToProduct(entry, analysis)), analyzing: false, analysisError: "" }
-          : entry
-      )));
+      const analysis = await analyzeProductImage(imageUrl, buildItemAnalysisHint(item, bulkPreset, productProfile));
+      setBulkPhotoItems((current) => current.map((entry, entryIndex) => {
+        if (entry.id !== id) return entry;
+
+        const reviewed = reviewBulkAnalysis(applyAnalysisToProduct(entry, analysis));
+        return {
+          ...reviewed,
+          name: sanitizeAiProductName(reviewed.name) || getFallbackProductName(reviewed, productProfile, entryIndex),
+          analyzing: false,
+          analysisError: "",
+        };
+      }));
       setBulkPhotoItems((current) => autoGroupBulkPhotoItems(current));
     } catch (analysisFailure) {
       console.warn("Bulk image analysis unavailable:", analysisFailure);
       setBulkPhotoItems((current) => current.map((entry) => (
         entry.id === id
-          ? { ...entry, analysisError: "", analyzing: false }
+          ? {
+            ...entry,
+            name: entry.name || getFallbackProductName(entry, productProfile, current.findIndex((item) => item.id === id)),
+            category: entry.category || productProfile.categorySuggestions?.[0] || "",
+            product_keywords: mergeKeywords(entry.product_keywords, productProfile.shortLabel),
+            analysisError: "",
+            analyzing: false,
+            reviewNotice: "Nom provisoire. Corrigez si besoin.",
+          }
           : entry
       )));
     }
@@ -758,12 +852,13 @@ export default function AddProductPage() {
   }
 
   const sellers = activeSeller.id ? [activeSeller] : [];
+  const productProfile = getProductProfile(productProfileId);
   const bulkProducts = parseBulkProducts(bulkText);
   const readyBulkPhotos = bulkPhotoItems.filter(isBulkItemReady);
   const cleanableBulkPhotos = bulkPhotoItems.filter((item) => item.image_url && !item.uploading && !item.background_image_url);
   const backgroundCleanedBulkPhotos = bulkPhotoItems.filter((item) => item.background_image_url);
   const firstIncompleteBulkItem = bulkPhotoItems.find((item) => !isBulkItemReady(item)) || bulkPhotoItems[0] || null;
-  const singleFieldCopy = getProductFieldCopy(formData);
+  const singleFieldCopy = getProductFieldCopy(formData, productProfile);
   const publishCount = mode === "BULK" ? readyBulkPhotos.length || bulkProducts.length : canSingleProductSubmit(formData, imageUploading, imageAnalyzing) ? 1 : 0;
   const selectedCount = mode === "BULK" ? bulkPhotoItems.length || bulkProducts.length : formData.image_url ? 1 : 0;
   const progressLabel = mode === "BULK"
@@ -805,6 +900,16 @@ export default function AddProductPage() {
     onPublish: () => formRef.current?.requestSubmit(),
     onVoice: startVoiceCapture,
   });
+
+  function changeProductProfile(profileId) {
+    setProductProfileId(profileId);
+    storeProductProfileId(profileId, activeSeller.slug || "default");
+    const nextProfile = getProductProfile(profileId);
+    setBulkPreset((current) => ({
+      ...current,
+      product_keywords: current.product_keywords || nextProfile.keywords,
+    }));
+  }
 
   function resetAfterPublish() {
     setPublishResult(null);
@@ -961,6 +1066,19 @@ export default function AddProductPage() {
                 className="hidden"
                 onChange={handleBulkImageSelection}
               />
+              <MobileBulkPrepCard
+                preset={bulkPreset}
+                productProfile={productProfile}
+                productProfileId={productProfileId}
+                hasPhotos={bulkPhotoItems.length > 0 || bulkProducts.length > 0}
+                canRename={bulkPhotoItems.some((item) => item.image_url && !item.uploading)}
+                renamingAll={bulkAnalyzingAll}
+                onChange={setBulkPreset}
+                onProfileChange={changeProductProfile}
+                onApplyIncomplete={applyBulkPresetToIncomplete}
+                onOpenGallery={() => bulkFileInputRef.current?.click()}
+                onRenameAll={reanalyzeAllBulkPhotos}
+              />
             <div className={`rounded-[26px] border border-white/80 bg-white/95 p-4 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.34)] ${
               bulkPhotoItems.length === 0 && bulkProducts.length === 0 ? "hidden md:block" : ""
             }`}>
@@ -1076,7 +1194,7 @@ export default function AddProductPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 md:hidden">
+                  <div className="hidden">
                     <button
                       type="button"
                       onClick={() => bulkFileInputRef.current?.click()}
@@ -1116,16 +1234,12 @@ export default function AddProductPage() {
                   </div>
                   <div id="bulk-products" className="space-y-3">
                   {bulkPhotoItems.map((item, index) => {
-                    const itemFieldCopy = getProductFieldCopy(item);
+                    const itemFieldCopy = getProductFieldCopy(item, productProfile);
                     const focusedOnMobile = !mobileFocusBulkItemId || item.id === mobileFocusBulkItemId;
                     const previousItem = bulkPhotoItems[index - 1] || null;
                     const duplicateHint = getLikelyDuplicateHint(item, previousItem);
-                    const progressPercent = bulkPhotoItems.length > 0
-                      ? Math.round(((index + 1) / bulkPhotoItems.length) * 100)
-                      : 0;
-
                     return (
-                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} rounded-[24px] border border-[var(--outline)]/35 bg-white p-3 shadow-[0_14px_30px_rgb(16_24_20_/_0.07)]`}>
+                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} rounded-[24px] bg-white p-3 shadow-[0_10px_26px_rgb(7_18_13_/_0.045)] ring-1 ring-[#07120d]/8`}>
                       <button
                         type="button"
                         onClick={() => setExpandedBulkItemId((current) => current === item.id ? "" : item.id)}
@@ -1149,8 +1263,10 @@ export default function AddProductPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <p className="text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-[var(--text-dim)]">Article {index + 1}</p>
-                                <h3 className="mt-1 line-clamp-2 font-display text-lg font-bold leading-6 text-[var(--text-main)]">
+                                <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.08em] text-[var(--primary)]">
+                                  {index + 1}/{bulkPhotoItems.length}
+                                </p>
+                                <h3 className="mt-1 line-clamp-2 font-display text-lg font-black leading-6 text-[var(--text-main)]">
                                   {item.name || `Article ${index + 1}`}
                                 </h3>
                                 <p className={`mt-1 text-sm font-extrabold ${item.price ? "text-[var(--primary)]" : "text-[var(--accent)]"}`}>
@@ -1182,24 +1298,13 @@ export default function AddProductPage() {
 
                       {expandedBulkItemId === item.id && (
                         <div className="mt-4 space-y-3 border-t border-[var(--outline)]/20 pt-4">
-                          <div className="rounded-[22px] bg-[var(--surface-soft)] p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
-                                {index + 1}/{bulkPhotoItems.length}
-                              </span>
-                              <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="shrink-0 text-xs font-black text-red-600">
-                                Retirer
-                              </button>
-                            </div>
-                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-                              <span
-                                className="block h-full rounded-full bg-[var(--primary)]"
-                                style={{ width: `${progressPercent}%` }}
-                              />
-                            </div>
-                            <p className="mt-3 hidden text-sm font-bold leading-5 text-[var(--text-dim)] md:block">
-                              Tikchop propose le nom. Vous confirmez surtout le prix; option et stock restent modifiables.
-                            </p>
+                          <div className="flex items-center justify-between gap-3 rounded-[20px] bg-[var(--surface-soft)] px-3 py-2">
+                            <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
+                              Fiche {index + 1}
+                            </span>
+                            <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-black text-red-600">
+                              Retirer
+                            </button>
                           </div>
                           <BulkQuickPricePanel
                             item={item}
@@ -1207,6 +1312,17 @@ export default function AddProductPage() {
                             onUpdate={updateBulkPhotoItem}
                             onNext={markCurrentAndNext}
                           />
+                          <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#07120d]/7 md:hidden">
+                            <label className="block">
+                              <span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.13em] text-[#008f5a]">Nom article</span>
+                              <input
+                                value={item.name}
+                                onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
+                                placeholder={item.analyzing ? "Tikchop prepare..." : "Nom visible"}
+                                className="min-h-[48px] w-full rounded-[18px] bg-[#fbf9f4] px-3 text-sm font-black text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                              />
+                            </label>
+                          </div>
                           <div className="hidden space-y-3 md:block">
                             <AngleDecisionCard
                               index={index}
@@ -1323,7 +1439,7 @@ export default function AddProductPage() {
                             className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-extrabold text-white shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]"
                           >
                             <CheckCircle2 size={16} />
-                            Fiche OK, suivante
+                            Valider cette fiche
                             <ArrowRight size={16} />
                           </button>
                           <details className="rounded-2xl bg-[var(--surface-soft)] p-3 md:hidden">
@@ -1343,6 +1459,9 @@ export default function AddProductPage() {
                               onReanalyze={reanalyzeBulkPhotoItem}
                               onAttachPrevious={attachBulkPhotoToPrevious}
                               onSeparateLast={separateLastBulkAngle}
+                              onImageVersionChange={setBulkImageVersion}
+                              onCleanBackground={BACKGROUND_REMOVAL_ENABLED ? cleanBulkBackground : null}
+                              backgroundBusy={backgroundBusyId === item.id || backgroundBusyId === "bulk-all"}
                               onUpdate={updateBulkPhotoItem}
                             />
                           </details>
@@ -1356,6 +1475,9 @@ export default function AddProductPage() {
                               onReanalyze={reanalyzeBulkPhotoItem}
                               onAttachPrevious={attachBulkPhotoToPrevious}
                               onSeparateLast={separateLastBulkAngle}
+                              onImageVersionChange={setBulkImageVersion}
+                              onCleanBackground={BACKGROUND_REMOVAL_ENABLED ? cleanBulkBackground : null}
+                              backgroundBusy={backgroundBusyId === item.id || backgroundBusyId === "bulk-all"}
                               onUpdate={updateBulkPhotoItem}
                             />
                           </div>
@@ -1848,7 +1970,7 @@ async function runLimited(items, limit, worker) {
   await Promise.all(workers);
 }
 
-function chunkArray(items, size) {
+function chunkArray(items = [], size = 6) {
   const chunks = [];
   for (let index = 0; index < items.length; index += size) {
     chunks.push(items.slice(index, index + size));
@@ -1860,12 +1982,13 @@ function inferProductNameFromFile(filename) {
   const clean = String(filename || "")
     .replace(/\.[a-z0-9]+$/i, "")
     .replace(/img|image|photo|screenshot|whatsapp|dsc|pxl/gi, " ")
+    .replace(/\bat\b|\bjpeg\b|\bjpg\b|\bpng\b/gi, " ")
     .replace(/\b\d{3,}\b/g, " ")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-  if (!clean || clean.length < 3) return "";
+  if (!clean || clean.length < 3 || /^(at|\(?\d+\)?|wa)$/i.test(clean)) return "";
 
   return clean
     .split(" ")
@@ -1874,17 +1997,21 @@ function inferProductNameFromFile(filename) {
     .join(" ");
 }
 
-function buildBulkAnalysisHint(preset = {}) {
+function buildBulkAnalysisHint(preset = {}, profile = getProductProfile("general")) {
   return [
+    profile?.keywords ? `Type de boutique: ${profile.keywords}` : "",
     String(preset.product_keywords || "").trim() ? `Contexte du lot: ${String(preset.product_keywords).trim()}` : "",
     String(preset.size || "").trim() ? `Tailles ou formats habituels du lot: ${String(preset.size).trim()}` : "",
-    "Objectif: creer rapidement des fiches vendables, avec noms courts et categories utiles pour une boutique a Abidjan.",
+    "Objectif: creer rapidement des fiches vendables, avec noms courts.",
+    "Ne nomme jamais le decor: fleurs, jardin, table, sol, mur, lit, main, sac plastique, cintre ou mannequin ne sont pas le produit sauf si le vendeur l'indique.",
+    "Si le produit est petit sur un fond charge, privilegie l'objet vendu probable.",
+    "Ne suppose pas que ce sont des vetements: adapte-toi au type de boutique et au contexte du lot.",
   ].filter(Boolean).join("\n");
 }
 
-function buildItemAnalysisHint(item = {}, preset = {}) {
+function buildItemAnalysisHint(item = {}, preset = {}, profile = getProductProfile("general")) {
   return [
-    buildBulkAnalysisHint(preset),
+    buildBulkAnalysisHint(preset, profile),
     String(item.description || "").trim() ? `Note deja saisie sur cet article: ${String(item.description).trim()}` : "",
     String(item.name || "").trim() ? `Nom provisoire actuel: ${String(item.name).trim()}` : "",
   ].filter(Boolean).join("\n");
@@ -1916,10 +2043,11 @@ function applyAnalysisToProduct(product, analysis) {
   const suggestedSizes = Array.isArray(analysis?.suggested_sizes)
     ? analysis.suggested_sizes.filter(Boolean).map(String).slice(0, 8)
     : [];
+  const safeName = sanitizeAiProductName(analysis?.name);
 
   return {
     ...product,
-    name: analysis?.name || product.name,
+    name: safeName || product.name,
     description: analysis?.description || product.description,
     category: analysis?.category || product.category || "",
     colors: Array.isArray(analysis?.colors) ? analysis.colors.filter(Boolean).map(String).slice(0, 5) : (product.colors || []),
@@ -1927,6 +2055,26 @@ function applyAnalysisToProduct(product, analysis) {
     size: product.size || analysis?.size || "",
     suggested_sizes: suggestedSizes,
   };
+}
+
+function getFallbackProductName(item, profile = getProductProfile("general"), index = 0) {
+  const currentName = sanitizeAiProductName(item?.name);
+  if (currentName) return currentName;
+
+  const base = profile?.shortLabel && profile.shortLabel !== "Articles"
+    ? profile.shortLabel
+    : profile?.categorySuggestions?.[0] || "Article";
+  return `${base} ${Math.max(Number(index) + 1, 1)}`;
+}
+
+function sanitizeAiProductName(name) {
+  const clean = String(name || "").trim().replace(/\s+/g, " ");
+  if (!clean) return "";
+  const lower = clean.toLowerCase();
+  if (/(fleur|jardin|plante|decor|arriere-plan|background|photo whatsapp|image whatsapp)/i.test(lower)) {
+    return "";
+  }
+  return clean.split(" ").slice(0, 5).join(" ");
 }
 
 function buildDescription(description, size, extraImages = []) {
@@ -1989,7 +2137,7 @@ function inferProductKind(product) {
   return "general";
 }
 
-function getProductFieldCopy(product) {
+function getProductFieldCopy(product, profile = getProductProfile("general")) {
   const kind = inferProductKind(product);
 
   if (kind === "shoes") {
@@ -2033,11 +2181,11 @@ function getProductFieldCopy(product) {
   }
 
   return {
-    sizeLabel: "Option",
-    sizePlaceholder: "Couleur, taille, format...",
-    quantityLabel: "Stock",
-    categorySuggestions: ["Accessoires", "Beaute", "Chaussures", "Maison"],
-    priceSuggestions: ["5000", "10000", "15000"],
+    sizeLabel: profile.sizeLabel,
+    sizePlaceholder: profile.sizePlaceholder,
+    quantityLabel: profile.quantityLabel,
+    categorySuggestions: profile.categorySuggestions,
+    priceSuggestions: profile.priceSuggestions,
   };
 }
 
@@ -2458,16 +2606,21 @@ function getMobileProductCopy(mode) {
   };
 }
 
-function MobileBulkPrepCard({ preset, hasPhotos, onChange, onApplyIncomplete, onOpenGallery }) {
-  const presets = [
-    "Tout type",
-    "Chaussures",
-    "Sacs",
-    "Cosmetiques",
-    "Accessoires",
-    "Alimentation",
-  ];
-  const sizePresets = ["Unique", "Petit moyen grand", "S M L XL"];
+function MobileBulkPrepCard({
+  preset,
+  productProfile,
+  productProfileId,
+  hasPhotos,
+  canRename = false,
+  renamingAll = false,
+  onChange,
+  onProfileChange,
+  onApplyIncomplete,
+  onOpenGallery,
+  onRenameAll,
+}) {
+  const presets = productProfile?.presets || [];
+  const optionPresets = productProfile?.optionPresets || [];
 
   return (
     <section className="rounded-[24px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(0,143,90,0.13)] md:hidden">
@@ -2476,31 +2629,105 @@ function MobileBulkPrepCard({ preset, hasPhotos, onChange, onApplyIncomplete, on
           <ImagePlus size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-black text-[var(--text-main)]">Lot photos</p>
-          <p className="text-xs font-bold text-[var(--text-dim)]">Prix obligatoire</p>
+          <p className="truncate text-sm font-black text-[var(--text-main)]">Photos du lot</p>
+          <p className="truncate text-xs font-bold text-[var(--text-dim)]">
+            {hasPhotos ? "Corrigez les fiches une par une" : "Choisissez depuis la galerie"}
+          </p>
         </div>
+        <span className="shrink-0 rounded-full bg-[#fbf9f4] px-2.5 py-1 text-[0.62rem] font-black text-[#008f5a] ring-1 ring-[#07120d]/7">
+          {productProfile?.shortLabel || "Articles"}
+        </span>
+        {hasPhotos && (
+          <button
+            type="button"
+            onClick={onOpenGallery}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#07120d] text-[var(--primary-bright)]"
+            aria-label="Ajouter des photos"
+          >
+            <ImagePlus size={19} />
+          </button>
+        )}
       </div>
 
+      {hasPhotos && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onRenameAll}
+            disabled={!canRename || renamingAll}
+            className="flex min-h-[48px] min-w-0 items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white disabled:opacity-55"
+          >
+            {renamingAll ? <Loader2 className="animate-spin" size={15} /> : <Sparkles size={15} />}
+            <span className="truncate">{renamingAll ? "Analyse..." : "Renommer"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenGallery}
+            className="flex min-h-[48px] min-w-0 items-center justify-center gap-2 rounded-2xl bg-[#e9fff1] px-3 text-xs font-black text-[#008f5a] ring-1 ring-[#008f5a]/10"
+          >
+            <ImagePlus size={15} />
+            <span className="truncate">Ajouter photos</span>
+          </button>
+        </div>
+      )}
+
       {!hasPhotos && (
-        <button
-          type="button"
-          onClick={onOpenGallery}
-          className="mt-3 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-4 text-sm font-black text-white"
-        >
-          <ImagePlus size={17} />
-          Ouvrir la galerie
-        </button>
+        <div className="mt-3 space-y-3">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+            {PRODUCT_PROFILES.map((profile) => {
+              const active = productProfileId === profile.id;
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  onClick={() => onProfileChange(profile.id)}
+                  className={`min-h-[38px] shrink-0 rounded-full px-3 text-xs font-black ${
+                    active ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+                  }`}
+                >
+                  {profile.label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={onOpenGallery}
+            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-4 text-sm font-black text-white"
+          >
+            <ImagePlus size={17} />
+            Ouvrir la galerie
+          </button>
+        </div>
       )}
 
       {hasPhotos && (
       <details className="mt-3 rounded-[20px] bg-[var(--surface-soft)] p-3">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-          <span className="text-sm font-black text-[var(--text-main)]">Reglage IA</span>
+          <span className="text-sm font-black text-[var(--text-main)]">Aide IA</span>
           <ChevronDown size={18} className="shrink-0 text-[var(--primary)]" />
         </summary>
 
         <div className="mt-3 border-t border-[rgba(0,143,90,0.08)] pt-3">
-          <div className="mt-3 no-scrollbar flex gap-2 overflow-x-auto pb-1">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+            {PRODUCT_PROFILES.map((profile) => {
+              const active = productProfileId === profile.id;
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  onClick={() => onProfileChange(profile.id)}
+                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
+                    active ? "bg-[#07120d] text-white" : "bg-white text-[var(--text-main)] ring-1 ring-[rgba(0,143,90,0.10)]"
+                  }`}
+                >
+                  {profile.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-2 no-scrollbar flex gap-2 overflow-x-auto pb-1">
             {presets.map((label) => (
               <button
                 key={label}
@@ -2516,7 +2743,7 @@ function MobileBulkPrepCard({ preset, hasPhotos, onChange, onApplyIncomplete, on
           <input
             value={preset.product_keywords}
             onChange={(event) => onChange((current) => ({ ...current, product_keywords: event.target.value }))}
-            placeholder="Ex: chaussures, sacs, cosmetiques, accessoires"
+            placeholder={`Ex: ${(presets || []).slice(0, 3).join(", ").toLowerCase() || "articles"}`}
             className="mt-2 min-h-[50px] w-full rounded-2xl border border-[rgba(0,143,90,0.12)] bg-white px-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-[var(--primary)]"
           />
 
@@ -2524,7 +2751,7 @@ function MobileBulkPrepCard({ preset, hasPhotos, onChange, onApplyIncomplete, on
             <input
               value={preset.size}
               onChange={(event) => onChange((current) => ({ ...current, size: event.target.value }))}
-              placeholder="Options habituelles"
+              placeholder={productProfile?.sizePlaceholder || "Option commune"}
               className="min-h-[48px] rounded-2xl border border-[rgba(0,143,90,0.12)] bg-white px-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-[var(--primary)]"
             />
             {hasPhotos && (
@@ -2539,7 +2766,7 @@ function MobileBulkPrepCard({ preset, hasPhotos, onChange, onApplyIncomplete, on
           </div>
 
           <div className="mt-2 no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {sizePresets.map((label) => (
+            {optionPresets.map((label) => (
               <button
                 key={label}
                 type="button"
@@ -2624,58 +2851,18 @@ function AngleDecisionCard({ index, extraCount, onAttachPrevious, onSeparateLast
 
 function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyCount, selectedCount, totalCount }) {
   const photosDone = selectedCount > 0;
-  const pricesDone = readyCount > 0;
   const total = totalCount || selectedCount || 0;
-  const copy = getMobileProductCopy(mode);
+  const progress = photosDone ? Math.max(8, Math.round((readyCount / Math.max(total || selectedCount, 1)) * 100)) : 0;
   const mobileModes = [
-    { value: "BULK", label: "Lot", icon: <ImagePlus size={18} strokeWidth={2.7} /> },
-    { value: "MANUAL", label: "Simple", icon: <Camera size={18} strokeWidth={2.7} /> },
+    { value: "BULK", label: "Lot", icon: <ImagePlus size={17} strokeWidth={2.7} /> },
+    { value: "MANUAL", label: "Simple", icon: <Camera size={17} strokeWidth={2.7} /> },
   ];
 
-  if (photosDone) {
-    return (
-      <section className="rounded-[30px] bg-[#fbf7ed] p-3 shadow-[0_18px_45px_rgb(58_47_30_/_0.10)] ring-1 ring-[#e8dcc8] md:hidden">
-        <div className="flex items-center gap-3">
-          <span className="tk-icon-badge flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#07120d] text-[var(--primary-bright)] shadow-[0_12px_26px_rgb(7_18_13_/_0.18)]">
-            <ImagePlus size={21} strokeWidth={2.75} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-[#008f5a]">Studio</p>
-            <h1 className="font-display text-[1.55rem] font-black leading-7 text-[#07120d]">
-              {selectedCount} article{selectedCount > 1 ? "s" : ""}
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={assistant.onClick}
-            disabled={assistant.disabled}
-            className="flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-[18px] bg-[#07120d] px-3 text-sm font-black text-white shadow-[0_12px_26px_rgb(7_18_13_/_0.16)] disabled:opacity-60"
-          >
-            {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
-            {canSubmit ? "Publier" : "Suivant"}
-          </button>
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Articles" value={photosDone ? selectedCount : "0"} done={photosDone} />
-          <MobileProductStep icon={<CircleDollarSign size={16} strokeWidth={2.7} />} label="Prix" value={pricesDone ? `${readyCount}/${total || readyCount}` : "0"} done={pricesDone} warn={photosDone && !pricesDone} />
-          <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "A finir"} done={canSubmit} />
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="space-y-3 md:hidden">
-      <div className="relative overflow-hidden rounded-[36px] bg-[#fbf7ed] p-4 text-[#07120d] shadow-[0_28px_70px_rgb(58_47_30_/_0.14)] ring-1 ring-[#e8dcc8]">
-        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[var(--primary-bright)]/35 blur-2xl" />
-        <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-[#07120d]/8 blur-2xl" />
-        <div className="relative z-10">
-        <div className="flex items-center justify-between gap-3">
-          <span className="tk-icon-badge flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[22px] bg-[#07120d] text-[var(--primary-bright)] shadow-[0_15px_32px_rgb(7_18_13_/_0.18)]">
-            <Camera size={24} strokeWidth={2.75} />
-          </span>
-          <div className="grid grid-cols-2 gap-1 rounded-[20px] bg-white p-1 shadow-sm ring-1 ring-[#e8dcc8]">
+    <section className="md:hidden">
+      <div className="rounded-[26px] bg-white p-3 shadow-[0_10px_28px_rgb(7_18_13_/_0.045)] ring-1 ring-[#07120d]/6">
+        <div className="flex items-center gap-2">
+          <div className="grid flex-1 grid-cols-2 gap-1 rounded-[18px] bg-[#f7fbf8] p-1 ring-1 ring-[#07120d]/6">
             {mobileModes.map((option) => {
               const active = mode === option.value;
 
@@ -2686,9 +2873,9 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
                   onClick={() => onModeChange(option.value)}
                   aria-label={`Mode ${option.label}`}
                   title={`Mode ${option.label}`}
-                  className={`flex min-h-[46px] min-w-[86px] items-center justify-center gap-2 rounded-[16px] px-2 text-sm font-black transition active:scale-[0.98] ${
+                  className={`flex min-h-[44px] min-w-0 items-center justify-center gap-2 rounded-[15px] px-2 text-sm font-black transition active:scale-[0.98] ${
                     active
-                      ? "bg-[#07120d] text-white"
+                      ? "bg-[#008f5a] text-white shadow-[0_8px_18px_rgb(0_143_90_/_0.16)]"
                       : "bg-transparent text-[#5b615b]"
                   }`}
                 >
@@ -2698,48 +2885,28 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
               );
             })}
           </div>
+          <button
+            type="button"
+            onClick={assistant.onClick}
+            disabled={assistant.disabled}
+            className="flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-[17px] bg-[#008f5a] px-3 text-sm font-black text-white shadow-[0_10px_22px_rgb(0_143_90_/_0.18)] disabled:opacity-60"
+          >
+            {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
+            {canSubmit ? "Publier" : photosDone ? "Suivant" : "Photos"}
+          </button>
         </div>
 
-        <div className="mt-7">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#008f5a]">Tikchop studio</p>
-          <h1 className="mt-2 font-display text-[2.7rem] font-black leading-[2.62rem] text-[#07120d]">
-            {copy.title}
-          </h1>
-        </div>
-
-        <div className="mt-5 rounded-[28px] bg-[#07120d] p-3 text-white shadow-[0_18px_42px_rgb(7_18_13_/_0.18)]">
-          <div className="flex items-center justify-between gap-3">
-            <span>
-              <span className="block text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--primary-bright)]">Galerie</span>
-              <strong className="mt-1 block text-base font-black leading-5">Photos puis prix</strong>
-            </span>
-            <span className="tk-icon-badge flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[#07120d]">
-              <ImagePlus size={22} strokeWidth={2.75} />
-            </span>
+        {photosDone && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-3 text-xs font-black text-[#07120d]">
+              <span>{readyCount}/{total || selectedCount} pret</span>
+              <span className="text-[#008f5a]">{Math.round(progress)}%</span>
+            </div>
+            <div className="mt-2 overflow-hidden rounded-full bg-[#07120d]/7">
+              <span className="block h-2 rounded-full bg-[#008f5a]" style={{ width: `${progress}%` }} />
+            </div>
           </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={assistant.onClick}
-          disabled={assistant.disabled}
-          className="mt-3 flex min-h-[60px] w-full items-center justify-between gap-3 rounded-[24px] bg-[#07120d] px-4 text-base font-black text-white shadow-[0_18px_40px_rgb(7_18_13_/_0.18)] disabled:opacity-70"
-        >
-          <span className="flex items-center gap-3">
-            <span className="tk-icon-badge flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[#07120d]">
-              {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
-            </span>
-            {assistant.label}
-          </span>
-          {!assistant.disabled && <ArrowRight className="text-[var(--primary-bright)]" size={20} />}
-        </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <MobileProductStep icon={<ImagePlus size={16} strokeWidth={2.7} />} label="Articles" value={photosDone ? selectedCount : "0"} done={photosDone} />
-        <MobileProductStep icon={<CircleDollarSign size={16} strokeWidth={2.7} />} label="Prix" value={pricesDone ? `${readyCount}/${total || readyCount}` : "0"} done={pricesDone} warn={photosDone && !pricesDone} />
-        <MobileProductStep icon={<BadgeCheck size={16} strokeWidth={2.7} />} label="Pret" value={canSubmit ? "OK" : "A finir"} done={canSubmit} />
+        )}
       </div>
     </section>
   );
@@ -2757,7 +2924,7 @@ function MobileProductStep({ icon, label, value, done, warn = false, dark = fals
         : "bg-white text-[#07120d] ring-[#e8dcc8]";
 
   return (
-    <div className={`rounded-[22px] p-2.5 text-center shadow-[0_12px_28px_rgb(58_47_30_/_0.07)] ring-1 ${className}`}>
+    <div className={`flex-1 rounded-[18px] p-2 text-center ring-1 ${className}`}>
       <span className="tk-icon-badge mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-xl bg-white/70 text-current">
         {icon}
       </span>
@@ -2806,9 +2973,7 @@ function ImageQualitySwitch({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">Rendu boutique</p>
-          <p className="mt-1 text-sm font-bold leading-5 text-[var(--text-dim)]">
-            Tikchop garde la photo originale. Vous choisissez le rendu avant publication.
-          </p>
+          <p className="mt-1 text-sm font-bold leading-5 text-[var(--text-dim)]">Choisissez la photo visible.</p>
         </div>
         <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[0.68rem] font-black text-[var(--primary)]">
           Photo
@@ -2915,10 +3080,22 @@ function BulkItemMoreOptions({
   onReanalyze,
   onAttachPrevious,
   onSeparateLast,
+  onImageVersionChange,
+  onCleanBackground,
+  backgroundBusy = false,
   onUpdate,
 }) {
   return (
     <div className="mt-3 space-y-3">
+      <ImageQualitySwitch
+        cleanAvailable={Boolean(item.clean_image_url && item.original_image_url && item.clean_image_url !== item.original_image_url)}
+        backgroundAvailable={Boolean(item.background_image_url)}
+        backgroundBusy={backgroundBusy}
+        value={item.image_version || "clean"}
+        onChange={(version) => onImageVersionChange?.(item.id, version)}
+        onCleanBackground={onCleanBackground ? () => onCleanBackground(item.id) : null}
+      />
+
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"

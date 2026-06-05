@@ -17,7 +17,9 @@ import { activateSellerPayoutSubaccount, getSellerPaymentSettings, saveSellerPay
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
-import { getPaymentOption, LOCAL_PAYMENT_OPTIONS, normalizeAcceptedPaymentMethods, paymentMethodsNeedDirectPhone } from "../../lib/local-commerce";
+import { getPaymentOption, LOCAL_PAYMENT_OPTIONS, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone } from "../../lib/local-commerce";
+
+const ONLINE_PAYMENTS_ENABLED = onlinePaymentsEnabled();
 
 const payoutOptions = [
   {
@@ -58,12 +60,13 @@ function paymentChoiceText(method) {
   if (method === "WAVE") return "Le client paie avant sur Wave.";
   if (method === "ORANGE_MONEY") return "Le client paie avant sur Orange Money.";
   if (method === "MTN_MONEY") return "Le client paie avant sur MTN MoMo.";
-  if (method === "PAYSTACK") return "Carte ou Djamo, option plus tard.";
+  if (method === "PAYSTACK") return "Option plus tard.";
   return "Moyen de paiement";
 }
 
 function normalizeSettingsFromSeller(sellerData) {
-  const accepted = normalizeAcceptedPaymentMethods(sellerData.accepted_payment_methods);
+  const accepted = normalizeAcceptedPaymentMethods(sellerData.accepted_payment_methods)
+    .filter((method) => ONLINE_PAYMENTS_ENABLED || method !== "PAYSTACK");
   const payoutNetwork = payoutOptions.some((option) => option.key === sellerData.payout_network)
     ? sellerData.payout_network
     : "WAVE";
@@ -84,7 +87,7 @@ function normalizeSettingsFromSeller(sellerData) {
 function statusCopy(seller) {
   const status = String(seller?.payout_status || "").toLowerCase();
   const hasDirectPhone = normalizeLocalPhone(seller?.payout_phone).length >= 8;
-  if (seller?.paystack_subaccount_code || status === "paystack_ready") {
+  if (ONLINE_PAYMENTS_ENABLED && (seller?.paystack_subaccount_code || status === "paystack_ready")) {
     return {
       tone: "ready",
       title: "Paiements prets",
@@ -146,8 +149,8 @@ export default function PaymentSettingsPage() {
   );
   const directPhoneNeeded = paymentMethodsNeedDirectPhone(acceptedMethods);
   const status = statusCopy(seller);
-  const fallbackEligible = seller?.id && settings.payout_network !== "WAVE";
-  const fallbackActive = Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
+  const fallbackEligible = ONLINE_PAYMENTS_ENABLED && seller?.id && settings.payout_network !== "WAVE";
+  const fallbackActive = ONLINE_PAYMENTS_ENABLED && Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
   const canActivateFallback = fallbackEligible && !fallbackActive;
   const defaultPaymentOption = getPaymentOption(settings.default_payment_method);
   const acceptedSummary = acceptedMethods
@@ -331,7 +334,7 @@ export default function PaymentSettingsPage() {
               </span>
             </div>
             <div className="space-y-2 p-3">
-              {LOCAL_PAYMENT_OPTIONS.map((option) => {
+              {LOCAL_PAYMENT_OPTIONS.filter((option) => ONLINE_PAYMENTS_ENABLED || !option.online).map((option) => {
                 const checked = acceptedMethods.includes(option.value);
                 const disabled = option.online && !fallbackActive;
                 const isDefault = settings.default_payment_method === option.value;
@@ -477,6 +480,7 @@ export default function PaymentSettingsPage() {
               </button>
 
               {/* Carte / Djamo collapsible */}
+              {ONLINE_PAYMENTS_ENABLED && (
               <details className="rounded-2xl bg-white ring-1 ring-[#07120d]/8">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 text-sm font-black text-[#07120d]">
                   <span className="flex items-center gap-2.5">
@@ -515,6 +519,7 @@ export default function PaymentSettingsPage() {
                   )}
                 </div>
               </details>
+              )}
             </div>
           </section>
         </main>

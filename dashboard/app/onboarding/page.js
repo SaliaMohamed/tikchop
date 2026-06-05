@@ -8,6 +8,7 @@ import { createSellerAccount, createSellerAccountAndShop, createSellerFromOnboar
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 import { friendlyError } from "../../lib/user-facing-error";
+import { PRODUCT_PROFILES, storeProductProfileId } from "../../lib/product-profiles";
 
 function slugify(value) {
   return String(value || "")
@@ -232,6 +233,7 @@ export default function OnboardingPage() {
     delivery_mode: "BOTH",
     fixed_delivery_fee: "1000",
     delivery_payment_timing: "AT_RECEPTION",
+    product_profile: "general",
   });
 
   const suggestedSlug = useMemo(() => slugify(form.slug || form.name), [form.name, form.slug]);
@@ -487,6 +489,7 @@ export default function OnboardingPage() {
 
         account = signInData.user || created.account;
         setSellerAccount(account);
+        storeProductProfileId(form.product_profile, created.seller?.slug || "default");
         writeActiveSeller(created.seller);
         setCreatedSeller(created.seller);
         setNotice("Boutique creee. Ouverture de votre espace vendeur...");
@@ -510,6 +513,7 @@ export default function OnboardingPage() {
         32000,
       );
       writeActiveSeller(seller);
+      storeProductProfileId(form.product_profile, seller?.slug || "default");
       setCreatedSeller(seller);
       setNotice("Boutique creee. Ouverture de votre espace vendeur...");
       window.location.replace("/dashboard?created=1");
@@ -971,6 +975,10 @@ export default function OnboardingPage() {
                 icon={<MessageCircle size={19} />}
                 value={form.phone_number}
                 onValueChange={(nextPhone) => updateField("phone_number", nextPhone)}
+              />
+              <ProductProfilePicker
+                value={form.product_profile}
+                onChange={(value) => updateField("product_profile", value)}
               />
               <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-[22px] bg-[var(--surface-soft)] p-3 ring-1 ring-[var(--outline)]/45">
                 <div className="min-w-0">
@@ -1571,6 +1579,36 @@ function AuthTrustPill({ icon, label }) {
   );
 }
 
+function ProductProfilePicker({ value, onChange }) {
+  return (
+    <div className="rounded-[22px] bg-white p-3 shadow-[0_4px_18px_rgba(13,23,18,0.04)] ring-1 ring-[#07120d]/7">
+      <div className="mb-2 flex items-center gap-2">
+        <Package size={15} className="text-[#008f5a]" />
+        <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#4e6055]">Vous vendez</p>
+      </div>
+      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+        {PRODUCT_PROFILES.map((profile) => {
+          const active = value === profile.id;
+          return (
+            <button
+              key={profile.id}
+              type="button"
+              onClick={() => onChange(profile.id)}
+              className={`min-h-[40px] shrink-0 rounded-full px-3 text-xs font-black transition active:scale-[0.98] ${
+                active
+                  ? "bg-[#07120d] text-white"
+                  : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+              }`}
+            >
+              {profile.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function MobileAccountPanel({
   accountMode,
   accountMethod,
@@ -1720,6 +1758,13 @@ function MobileAccountPanel({
                   onChange={(event) => updateField("name", event.target.value)}
                   placeholder="Ex: Amina Boutique"
                   autoComplete="organization"
+                />
+              )}
+
+              {!isSignIn && (
+                <ProductProfilePicker
+                  value={form.product_profile}
+                  onChange={(value) => updateField("product_profile", value)}
                 />
               )}
 

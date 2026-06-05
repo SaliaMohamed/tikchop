@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
+import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Plus, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
 import { getSellerByOwner } from "./seller-actions";
 import BrandLogo from "./components/BrandLogo";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
@@ -163,10 +163,10 @@ export default function AppChrome({ children }) {
         </Link>
         <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
           <span className="mobile-tabbar-icon"><ClipboardList size={19} strokeWidth={2.65} /></span>
-          <span>Commandes</span>
+          <span>Ventes</span>
         </Link>
         <Link href="/add-product" className={`mobile-tabbar-action ${publishActive ? "is-active" : ""}`} aria-label="Publier un article">
-          <span className="mobile-tabbar-icon"><Camera size={22} strokeWidth={2.75} /></span>
+          <span className="mobile-tabbar-icon"><Plus size={22} strokeWidth={2.75} /></span>
           <span>Publier</span>
         </Link>
         <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>

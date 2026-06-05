@@ -21,7 +21,7 @@ const DEFAULT_SCHEMA = {
 loadEnvLocal();
 
 const args = parseArgs(process.argv.slice(2));
-const imageUrl = args.image || process.env.TEST_VISION_IMAGE_URL || DEFAULT_IMAGE;
+const imageUrl = args.image || args._?.[0] || process.env.TEST_VISION_IMAGE_URL || DEFAULT_IMAGE;
 const providers = (args.provider || "all").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
 const providerList = providers.includes("all") ? ["gemini", "openrouter", "openai"] : providers;
 
@@ -59,7 +59,7 @@ async function analyzeGemini(imageUrl) {
   if (!apiKey) throw new Error("GEMINI_API_KEY manquant.");
 
   const image = await readImageAsBase64(imageUrl);
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -79,7 +79,7 @@ async function analyzeGemini(imageUrl) {
         maxOutputTokens: 1200,
       },
     }),
-  });
+  }, 22000, "Gemini trop lent.");
 
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error?.message || "Gemini impossible.");
@@ -92,7 +92,7 @@ async function analyzeOpenRouter(imageUrl) {
   const model = process.env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-32b-instruct";
   if (!apiKey) throw new Error("OPENROUTER_API_KEY manquant.");
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -113,7 +113,7 @@ async function analyzeOpenRouter(imageUrl) {
       temperature: 0.15,
       max_tokens: 900,
     }),
-  });
+  }, 24000, "OpenRouter trop lent.");
 
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error?.message || "OpenRouter impossible.");
@@ -127,7 +127,7 @@ async function analyzeOpenAI(imageUrl) {
   const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
   if (!apiKey) throw new Error("OPENAI_API_KEY manquant.");
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetchWithTimeout("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -152,7 +152,7 @@ async function analyzeOpenAI(imageUrl) {
       },
       max_output_tokens: 900,
     }),
-  });
+  }, 24000, "OpenAI trop lent.");
 
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error?.message || "OpenAI impossible.");
@@ -162,7 +162,20 @@ async function analyzeOpenAI(imageUrl) {
 }
 
 async function readImageAsBase64(imageUrl) {
-  const response = await fetch(optimizeImageUrl(imageUrl));
+  if (existsSync(imageUrl)) {
+    const ext = imageUrl.toLowerCase().split(".").pop();
+    const mimeType = ext === "png"
+      ? "image/png"
+      : ext === "webp"
+        ? "image/webp"
+        : "image/jpeg";
+    return {
+      mimeType,
+      base64: readFileSync(imageUrl).toString("base64"),
+    };
+  }
+
+  const response = await fetchWithTimeout(optimizeImageUrl(imageUrl), {}, 12000, "Image trop lente a lire.");
   if (!response.ok) throw new Error("Image impossible a lire.");
   const mimeType = response.headers.get("content-type")?.startsWith("image/")
     ? response.headers.get("content-type")
@@ -171,11 +184,32 @@ async function readImageAsBase64(imageUrl) {
   return { mimeType, base64 };
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 22000, timeoutMessage = "Service trop lent.") {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(timeoutMessage);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function productAnalysisPrompt() {
   return [
     "Analyse cette photo de produit pour une boutique en ligne Tikchop a Abidjan.",
     "Retourne un nom usuel court en francais simple, comme une vendeuse l'ecrirait sur WhatsApp.",
     "Pense comme une assistante catalogue: le resultat doit aider a publier vite un article.",
+    "Regarde d'abord l'objet au centre, l'objet tenu, porte ou pose pour la vente. Ignore le decor, les fleurs, le sol, le lit, le mur et les mains sauf s'ils sont le produit.",
+    "Si un bijou, une montre, un sac, une paire de chaussures ou un accessoire est petit dans l'image, privilegie cet objet plutot que l'arriere-plan.",
     "Si une personne porte le produit, nomme le vetement ou l'accessoire visible, pas la personne.",
     "Retourne une petite description vendeuse, la categorie, les couleurs visibles, et les tailles possibles si c'est un vetement ou une chaussure.",
     "Ne devine pas de marque si elle n'est pas clairement visible.",
@@ -222,10 +256,16 @@ function optimizeImageUrl(imageUrl) {
 }
 
 function parseArgs(argv) {
-  return Object.fromEntries(argv.map((arg) => {
+  const parsed = { _: [] };
+  for (const arg of argv) {
+    if (!arg.startsWith("--")) {
+      parsed._.push(arg);
+      continue;
+    }
     const [key, ...rest] = arg.replace(/^--/, "").split("=");
-    return [key, rest.join("=") || "1"];
-  }));
+    parsed[key] = rest.join("=") || "1";
+  }
+  return parsed;
 }
 
 function loadEnvLocal() {

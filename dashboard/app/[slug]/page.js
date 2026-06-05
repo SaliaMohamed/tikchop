@@ -57,7 +57,7 @@ export default async function SellerShopPage({ params, searchParams }) {
     <div className="public-shop mx-auto max-w-[480px] pb-8 md:max-w-6xl">
       <ShopClient seller={seller} products={products} deliveryZones={deliveryZones} initialProductId={query?.product || ""} />
 
-      <footer className="mt-8 text-center text-xs font-bold text-zinc-400">
+      <footer className="mt-8 hidden text-center text-xs font-bold text-zinc-400 md:block">
         Boutique publique propulsee par <span className="text-zinc-700">Tikchop</span>
       </footer>
     </div>

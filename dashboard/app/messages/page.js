@@ -297,16 +297,24 @@ export default function MessagesPage() {
   const waitingCount = conversations.filter((conversation) => !conversation.bot_paused && getConversationStats(conversation).inbound > 0).length;
   const pausedCount = conversations.filter((conversation) => conversation.bot_paused).length;
   const orderConversationCount = conversations.filter((conversation) => conversation.last_order || (conversation.orders || []).length > 0).length;
+  const headerLabel = conversations.length > 0
+    ? `${conversations.length} client${conversations.length > 1 ? "s" : ""}`
+    : "Clients";
 
   return (
-    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:max-w-[1180px]">
-      <header className={`mobile-top ${showChatOnMobile ? "hidden md:block" : ""}`}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="quiet-label text-[#008f5a]">WhatsApp</p>
-            <h1 className="mt-1 font-display text-3xl font-black leading-10 text-[#07120d]">Clients</h1>
+    <div className="app-shell mx-auto max-w-[430px] pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:max-w-[1180px]">
+      <header className={`${showChatOnMobile ? "hidden md:block" : ""} hidden md:block`}>
+        <div className="flex items-center justify-between gap-3 px-1 pt-1 md:px-0 md:pt-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#07120d] text-[#39f58e] shadow-[0_12px_28px_rgb(7_18_13_/_0.12)]">
+              <MessageCircle size={22} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">WhatsApp</p>
+              <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#07120d]">{headerLabel}</h1>
+            </div>
           </div>
-          <button onClick={fetchConversations} className="app-icon-button bg-white text-[#008f5a] shadow-sm ring-1 ring-[#07120d]/8" aria-label="Actualiser les discussions">
+          <button onClick={fetchConversations} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#008f5a] shadow-[0_12px_28px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/8" aria-label="Actualiser les discussions">
             <RefreshCw className={loading ? "animate-spin" : ""} size={19} />
           </button>
         </div>
@@ -318,23 +326,16 @@ export default function MessagesPage() {
         </div>
       )}
 
-      <main className="mt-5 grid gap-4 md:grid-cols-[370px_minmax(0,1fr)]">
-        <section className={`${showChatOnMobile ? "hidden md:block" : ""}`}>
-          <MobileMessagesFocus
-            total={conversations.length}
-            waitingCount={waitingCount}
-            pausedCount={pausedCount}
-            orderCount={orderConversationCount}
-            onFilter={setInboxFilter}
-          />
-          <div className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <label className="flex min-h-[50px] items-center gap-2 border-b border-[#07120d]/8 px-4">
+      <main className="mt-2 grid min-w-0 gap-4 md:mt-4 md:grid-cols-[370px_minmax(0,1fr)]">
+        <section className={`${showChatOnMobile ? "hidden md:block" : ""} min-w-0`}>
+          <div className="max-w-full overflow-hidden rounded-[30px] bg-white shadow-[0_12px_32px_rgb(7_18_13_/_0.055)] ring-1 ring-[#07120d]/8">
+            <label className="flex min-h-[52px] items-center gap-2 border-b border-[#07120d]/6 px-4">
               <Search size={17} className="shrink-0 text-[#008f5a]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/35"
-                placeholder="Nom ou numero..."
+                className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/32"
+                placeholder="Chercher un client"
               />
             </label>
             <div className="px-3 py-2">
@@ -349,26 +350,26 @@ export default function MessagesPage() {
               }}
             />
             </div>
-          </div>
 
-          <div className="mt-3 space-y-2">
-            {loading ? (
-              <LoadingState />
-            ) : filteredConversations.length === 0 ? (
-              <EmptyMessages />
-            ) : (
-              filteredConversations.map((conversation) => (
-                <ConversationCard
-                  key={conversation.key}
-                  conversation={conversation}
-                  active={selectedConversation?.key === conversation.key}
-                  onClick={() => {
-                    setSelectedKey(conversation.key);
-                    setMobileChatOpen(true);
-                  }}
-                />
-              ))
-            )}
+            <div className="min-w-0 divide-y divide-[#07120d]/6 border-t border-[#07120d]/6">
+              {loading ? (
+                <LoadingState />
+              ) : filteredConversations.length === 0 ? (
+                <EmptyMessages />
+              ) : (
+                filteredConversations.map((conversation) => (
+                  <ConversationCard
+                    key={conversation.key}
+                    conversation={conversation}
+                    active={selectedConversation?.key === conversation.key}
+                    onClick={() => {
+                      setSelectedKey(conversation.key);
+                      setMobileChatOpen(true);
+                    }}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </section>
 
@@ -389,31 +390,16 @@ export default function MessagesPage() {
   );
 }
 
-function MobileMessagesFocus({ total, waitingCount, pausedCount, orderCount, onFilter }) {
-  const activeCount = waitingCount + pausedCount + orderCount;
-
-  return (
-    <section className="mb-3 rounded-[24px] bg-white p-2 shadow-[var(--shadow-sm)] ring-1 ring-[#07120d]/8 md:hidden">
-      <div className="grid grid-cols-4 gap-1.5">
-        <MobileMessageMetric label="Tous" value={total} active={activeCount === 0} onClick={() => onFilter("ALL")} />
-        <MobileMessageMetric label="A lire" value={waitingCount} active={waitingCount > 0} onClick={() => onFilter("WAITING")} />
-        <MobileMessageMetric label="Vous" value={pausedCount} active={pausedCount > 0} onClick={() => onFilter("HUMAN")} />
-        <MobileMessageMetric label="Ventes" value={orderCount} active={orderCount > 0} onClick={() => onFilter(orderCount > 0 ? "ORDERS" : "ALL")} />
-      </div>
-    </section>
-  );
-}
-
 function InboxFilterRail({ value, onChange, counts }) {
   const items = [
     { key: "ALL", label: "Tous" },
-    { key: "WAITING", label: "A lire" },
-    { key: "HUMAN", label: "Vous" },
-    { key: "ORDERS", label: "Ventes" },
+    { key: "WAITING", label: "Lire" },
+    { key: "HUMAN", label: "Moi" },
+    { key: "ORDERS", label: "Vente" },
   ];
 
   return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+    <div className="grid grid-cols-4 gap-1.5">
       {items.map((item) => {
         const active = value === item.key;
         return (
@@ -421,14 +407,14 @@ function InboxFilterRail({ value, onChange, counts }) {
             key={item.key}
             type="button"
             onClick={() => onChange(item.key)}
-            className={`flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-black transition-colors ${
+            className={`flex min-h-[38px] min-w-0 items-center justify-center gap-1 rounded-[15px] px-1 text-[0.68rem] font-black transition-colors ${
               active
-                ? "bg-[#07120d] text-white"
-                : "bg-white text-[#07120d] ring-1 ring-[#07120d]/10"
+                ? "bg-[#07120d] text-white shadow-[0_10px_20px_rgb(7_18_13_/_0.12)]"
+                : "bg-[#f5fbf7] text-[#07120d] ring-1 ring-[#07120d]/6"
             }`}
           >
-            {item.label}
-            <span className={`rounded-full px-1.5 py-0.5 text-[0.58rem] font-black ${active ? "bg-white/15 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
+            <span>{item.label}</span>
+            <span className={`rounded-full px-1 py-0.5 text-[0.55rem] font-black ${active ? "bg-white/18 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
               {counts[item.key] || 0}
             </span>
           </button>
@@ -438,88 +424,59 @@ function InboxFilterRail({ value, onChange, counts }) {
   );
 }
 
-function MobileMessageMetric({ label, value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`min-h-[70px] rounded-[18px] p-2 text-center ring-1 active:scale-[0.98] ${
-        active ? "bg-[#07120d] text-white ring-[#07120d]" : "bg-[#f3fbf6] text-[#07120d] ring-[#07120d]/5"
-      }`}
-    >
-      <strong className={`block font-display text-xl font-black leading-none ${active ? "text-[#39f58e]" : "text-[#008f5a]"}`}>{value}</strong>
-      <small className={`mt-1 block text-[0.6rem] font-black uppercase leading-3 ${active ? "text-white/62" : "text-[#4e6055]"}`}>{label}</small>
-    </button>
-  );
-}
-
 function LoadingState() {
   return (
-    <div className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] bg-[#fbf9f4] p-6 text-center ring-1 ring-[#07120d]/8">
+    <div className="flex min-h-[220px] flex-col items-center justify-center bg-white p-6 text-center">
       <Loader2 className="animate-spin text-[#008f5a]" size={30} />
-      <p className="mt-3 text-sm font-black text-[#07120d]/50">Chargement des discussions...</p>
+      <p className="mt-3 text-sm font-black text-[#07120d]/50">Chargement...</p>
     </div>
   );
 }
 
 function EmptyMessages() {
   return (
-    <div className="rounded-[24px] bg-[#fbf9f4] p-6 text-center ring-1 ring-[#07120d]/8">
+    <div className="bg-white p-8 text-center">
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-[#008f5a] shadow-sm">
         <MessageCircle size={26} />
       </span>
-      <h2 className="mt-4 font-display text-xl font-black text-[#07120d]">Pas encore de discussion</h2>
-      <p className="mt-2 text-sm font-semibold leading-5 text-[#07120d]/50">
-        Les prochaines discussions apparaitront ici.
-      </p>
+      <h2 className="mt-4 font-display text-xl font-black text-[#07120d]">Aucun client</h2>
+      <p className="mt-2 text-sm font-semibold leading-5 text-[#07120d]/50">Les messages arriveront ici.</p>
     </div>
   );
 }
 
 function ConversationCard({ conversation, active, onClick }) {
   const lastOrder = conversation.last_order;
-  const stats = getConversationStats(conversation);
   const action = getConversationAction(conversation);
   const total = Number(lastOrder?.total_amount || 0) + Number(lastOrder?.delivery_fee || 0);
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-[24px] p-3 text-left shadow-[0_12px_28px_rgb(7_18_13_/_0.04)] ring-1 active:scale-[0.99] transition-colors ${
-        active ? "bg-[#07120d] text-white ring-[#07120d]" : "bg-white text-[#07120d] ring-[#07120d]/8"
+      className={`w-full px-4 py-3.5 text-left transition-colors active:bg-[#f2fbf6] ${
+        active ? "bg-[#f2fbf6]" : "bg-white"
       }`}
     >
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
-        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${active ? "bg-white/10 text-[#39f58e]" : "bg-[#f3fbf6] text-[#008f5a]"}`}>
-          <UserRound size={19} />
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        <span className={`flex h-11 w-11 items-center justify-center rounded-full ${
+          active ? "bg-[#07120d] text-[#39f58e]" : "bg-[#f2fbf6] text-[#008f5a]"
+        }`}>
+          <UserRound size={18} />
         </span>
         <span className="min-w-0">
-          <span className="block truncate font-display text-base font-black">{getConversationTitle(conversation)}</span>
-          <span className={`mt-0.5 block truncate text-xs font-bold ${active ? "text-white/55" : "text-[#07120d]/50"}`}>
-            {lastOrder ? `Commande ${lastOrder.order_ref || lastOrder.id?.slice(0, 8)}` : getPreview(conversation)}
+          <span className="block truncate text-[0.96rem] font-extrabold leading-5 text-[#07120d]">{getConversationTitle(conversation)}</span>
+          <span className="mt-0.5 block truncate text-[0.78rem] font-semibold text-[#07120d]/48">
+            {lastOrder ? `Vente ${lastOrder.order_ref || lastOrder.id?.slice(0, 8)}` : getPreview(conversation)}
           </span>
         </span>
-        <span className={`rounded-full px-2 py-1 text-[0.63rem] font-black ${active ? "bg-white/12 text-white" : action.chipClass}`}>
-          {action.label}
+        <span className="flex shrink-0 flex-col items-end gap-1">
+          <span className={`rounded-full px-2 py-0.5 text-[0.56rem] font-black ${action.chipClass}`}>
+            {action.label}
+          </span>
+          {lastOrder && (
+            <span className="text-xs font-black text-[#008f5a]">{formatPrice(total)}</span>
+          )}
         </span>
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#07120d]/6 pt-2.5">
-        <span className={`flex items-center gap-2 text-[0.65rem] font-bold ${active ? "text-white/40" : "text-[#07120d]/35"}`}>
-          <span className="inline-flex items-center gap-1">
-            <MessageCircle size={11} />
-            {stats.inbound}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <ShoppingBag size={11} />
-            {stats.orderCount}
-          </span>
-          {formatDateTime(conversation.last_at)}
-        </span>
-        {lastOrder && (
-          <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${active ? "bg-white/10 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
-            {formatPrice(total)}
-          </span>
-        )}
       </div>
     </button>
   );
@@ -546,58 +503,56 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
     sellerName,
   });
   const responseTemplates = playbookTemplates.length ? playbookTemplates : getDefaultResponseTemplates(sellerName);
-  const pauseHelp = conversation.bot_paused ? "Mode humain actif." : "Envoi = bot en pause.";
+  const pauseHelp = conversation.bot_paused ? "Mode humain." : "Envoi = bot pause.";
 
   return (
-    <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#fbf9f4] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#fbf9f4] md:ring-1 md:ring-[#07120d]/10`}>
-      <div className="border-b border-[#07120d]/8 bg-[#fbf9f4] px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top,0px))] md:p-5">
+    <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#efeae2] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#efeae2] md:ring-1 md:ring-[#07120d]/10`}>
+      <div className="border-b border-[#07120d]/8 bg-[#f0f2f5] px-3 pb-2.5 pt-[calc(0.7rem+env(safe-area-inset-top,0px))] md:p-4">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={onBack} className="app-icon-button bg-white text-[#07120d] shadow-sm md:hidden" aria-label="Retour aux discussions">
-            <ArrowLeft size={18} />
+          <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full text-[#54656f] md:hidden" aria-label="Retour aux discussions">
+            <ArrowLeft size={20} />
           </button>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#008f5a] shadow-sm">
-            <UserRound size={20} />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d9fdd3] text-[#008f5a]">
+            <UserRound size={19} />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-lg font-black text-[#07120d]">{getConversationTitle(conversation)}</h2>
-            <p className="mt-0.5 truncate text-xs font-bold text-[#07120d]/50">{conversation.display_phone || "Numero client inconnu"}</p>
+            <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#111b21]">{getConversationTitle(conversation)}</h2>
+            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#667781]">{conversation.display_phone || "Numero inconnu"}</p>
           </div>
-          <BotStatus paused={conversation.bot_paused} />
-        </div>
-
-        {canReply && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {canReply && (
             <button
               type="button"
               onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
               disabled={busy === "pause" || busy === "resume"}
-              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white disabled:opacity-50"
+              className="flex h-9 min-w-12 items-center justify-center gap-1 rounded-full bg-white px-2 text-[0.7rem] font-extrabold text-[#008f5a] shadow-sm disabled:opacity-50"
             >
-              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={16} /> : conversation.bot_paused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
-              {conversation.bot_paused ? "Rendre au bot" : "Repondre moi"}
+              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+              {conversation.bot_paused ? "Bot" : "Moi"}
             </button>
+            )}
+            {canReply && (
             <a
               href={`tel:${cleanPhone(conversation.customer_phone)}`}
-              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-xs font-black text-[#07120d] no-underline ring-1 ring-[#07120d]/12"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#54656f] no-underline shadow-sm"
+              aria-label="Appeler"
             >
-              <Phone size={15} />
-              Appeler
+              <Phone size={16} />
             </a>
+            )}
           </div>
-        )}
+        </div>
 
-        <SellerConversationHint paused={conversation.bot_paused} canReply={canReply} />
-        <ConversationStatusStrip conversation={conversation} />
+        {!canReply && <SellerConversationHint paused={conversation.bot_paused} canReply={canReply} />}
       </div>
 
-      <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-5">
+      <div className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto bg-[#efeae2] px-3 py-3 md:px-5">
         {lastOrder && <OrderContext order={lastOrder} />}
-        <QuickReplyRail templates={responseTemplates} onUseTemplate={setReply} />
         {(conversation.messages || []).length === 0 ? (
-          <div className="rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-[rgba(191,206,197,0.42)]">
+          <div className="mx-auto mt-4 max-w-[78%] rounded-[16px] bg-[#fff6c4] px-4 py-3 text-center text-[#54656f] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
             <MessageCircle className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="mt-3 text-sm font-black text-[var(--text-main)]">{canReply ? "Discussion prete" : "Client sans numero"}</p>
-            <p className="mt-1 text-xs font-bold leading-4 text-[var(--text-dim)]">{canReply ? "Ecrivez en bas si vous voulez reprendre la main." : "Ouvrez la vente pour completer le contact."}</p>
+            <p className="mt-2 text-sm font-extrabold text-[#111b21]">{canReply ? "Pret a repondre" : "Numero manquant"}</p>
+            <p className="mt-1 text-xs font-semibold leading-4">{canReply ? "Ecrivez en bas." : "Completez la vente."}</p>
           </div>
         ) : (
           (conversation.messages || []).map((message) => (
@@ -606,26 +561,27 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
         )}
       </div>
 
-      <div className="border-t border-[#07120d]/8 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:p-4">
-        <div className="grid grid-cols-[1fr_auto] items-end gap-2 overflow-hidden rounded-[22px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 p-2">
+      <div className="bg-[#f0f2f5] p-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] md:p-3">
+        {canReply && <QuickReplyRail templates={responseTemplates} onUseTemplate={setReply} compact />}
+        <div className="mt-2 grid grid-cols-[1fr_auto] items-end gap-2">
           <textarea
             value={reply}
             onChange={(event) => setReply(event.target.value)}
-            placeholder={canReply ? "Ecrire au client..." : "Numero client indisponible"}
+            placeholder={canReply ? "Message..." : "Numero indisponible"}
             disabled={!canReply || busy === "send"}
-            className="max-h-32 min-h-[46px] resize-none bg-transparent px-3 py-3 text-sm font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/35 disabled:opacity-60"
+            className="max-h-32 min-h-[44px] resize-none rounded-[22px] bg-white px-4 py-3 text-[0.92rem] font-medium leading-5 text-[#111b21] shadow-sm outline-none placeholder:text-[#667781]/70 disabled:opacity-60"
           />
           <button
             type="button"
             onClick={onSend}
             disabled={!canReply || !reply.trim() || busy === "send"}
-            className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#008f5a] text-white shadow-sm disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#008f5a] text-white shadow-sm disabled:bg-[#b9c7bf] disabled:opacity-70"
             aria-label="Envoyer le message"
           >
             {busy === "send" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
           </button>
         </div>
-        <p className="mt-1.5 px-1 text-[0.68rem] font-bold leading-4 text-[#07120d]/40">
+        <p className="mt-1 px-2 text-[0.64rem] font-semibold leading-4 text-[#667781]">
           {pauseHelp}
         </p>
       </div>
@@ -660,47 +616,6 @@ function SellerConversationHint({ paused, canReply }) {
   );
 }
 
-function ConversationStatusStrip({ conversation }) {
-  const stats = getConversationStats(conversation);
-  const items = [
-    {
-      label: "Mode",
-      value: conversation.bot_paused ? "Vous" : "Auto",
-      icon: Bot,
-      className: conversation.bot_paused ? "bg-amber-50 text-amber-900" : "bg-emerald-50 text-emerald-900",
-    },
-    {
-      label: "Messages",
-      value: `${stats.inbound}/${stats.outbound}`,
-      icon: MessageCircle,
-      className: "bg-[var(--surface-soft)] text-[var(--text-main)]",
-    },
-    {
-      label: "Ventes",
-      value: String(stats.orderCount),
-      icon: ShoppingBag,
-      className: "bg-[var(--surface-soft)] text-[var(--text-main)]",
-    },
-  ];
-
-  return (
-    <div className="mt-3 grid grid-cols-3 gap-2">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <div key={item.label} className={`min-w-0 rounded-2xl px-3 py-2 ${item.className}`}>
-            <div className="flex items-center gap-1 text-[0.64rem] font-black uppercase tracking-[0.08em] opacity-70">
-              <Icon size={12} />
-              <span className="truncate">{item.label}</span>
-            </div>
-            <p className="mt-1 truncate font-display text-sm font-black">{item.value}</p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function BotStatus({ paused }) {
   return (
     <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-black ${
@@ -712,31 +627,21 @@ function BotStatus({ paused }) {
   );
 }
 
-function QuickReplyRail({ templates, onUseTemplate }) {
+function QuickReplyRail({ templates, onUseTemplate, compact = false }) {
   if (!templates?.length) return null;
 
   return (
-    <div className="overflow-hidden rounded-[22px] bg-[#fbf9f4] ring-1 ring-[#07120d]/8">
-      <div className="flex items-center justify-between gap-3 border-b border-[#07120d]/8 px-4 py-2.5">
-        <p className="flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">
-          <MessageCircle size={13} />
-          Messages prets
-        </p>
-        <span className="text-[0.65rem] font-black text-[#07120d]/35">1 touche</span>
-      </div>
-      <div className="no-scrollbar flex gap-2 overflow-x-auto p-3 pb-3">
+    <div className={`no-scrollbar flex gap-1.5 overflow-x-auto ${compact ? "pb-0.5" : ""}`}>
         {templates.slice(0, 6).map((template) => (
           <button
             key={template.id}
             type="button"
             onClick={() => onUseTemplate(template.text)}
-            className={`min-w-[136px] rounded-[18px] p-3 text-left text-xs font-black ring-1 active:scale-[0.98] ${getTemplateToneClasses(template.tone)}`}
+            className={`min-h-[34px] shrink-0 rounded-full px-3 text-[0.72rem] font-bold ring-1 active:scale-[0.98] ${getTemplateToneClasses(template.tone)}`}
           >
-            <span className="block truncate font-display text-sm">{template.shortTitle || template.title}</span>
-            <span className="mt-1 line-clamp-2 block text-[0.65rem] font-bold leading-4 opacity-70">{template.scenario || "Message pret"}</span>
+            {template.shortTitle || template.title}
           </button>
         ))}
-      </div>
     </div>
   );
 }
@@ -744,21 +649,20 @@ function QuickReplyRail({ templates, onUseTemplate }) {
 function OrderContext({ order }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   return (
-    <div className="rounded-[24px] bg-[#07120d] p-4 text-white shadow-sm">
+    <div className="mx-auto w-full max-w-[92%] rounded-[14px] bg-white/90 p-3 text-[#111b21] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary-bright)]">
+          <p className="flex items-center gap-2 text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-[#008f5a]">
             <ShoppingBag size={15} />
-            Vente liee
+            Vente
           </p>
-          <p className="mt-2 font-display text-xl font-black">{order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}</p>
-          <p className="mt-1 text-xs font-bold text-white/58">{order.delivery_zone || order.delivery_address || "Livraison a confirmer"}</p>
+          <p className="mt-1 text-[1rem] font-extrabold">{order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}</p>
+          <p className="mt-0.5 text-xs font-semibold text-[#667781]">{order.delivery_zone || order.delivery_address || "Livraison a confirmer"}</p>
         </div>
         <div className="text-right">
-          <p className="font-display text-lg font-black text-[var(--primary-bright)]">{formatPrice(total)}</p>
-          <p className="mt-1 rounded-full bg-white/10 px-2 py-1 text-[0.65rem] font-black text-white">{order.status || "Statut"}</p>
-          <Link href="/orders" className="mt-2 inline-flex rounded-full bg-white px-3 py-1.5 text-[0.68rem] font-black text-[#07120d] no-underline">
-            Voir vente
+          <p className="text-[0.95rem] font-extrabold text-[#008f5a]">{formatPrice(total)}</p>
+          <Link href="/orders" className="mt-2 inline-flex rounded-full bg-[#eafff3] px-3 py-1.5 text-[0.68rem] font-extrabold text-[#008f5a] no-underline">
+            Voir
           </Link>
         </div>
       </div>
@@ -772,22 +676,22 @@ function MessageBubble({ message }) {
   const hasText = Boolean(String(message.text || "").trim());
   return (
     <div className={`flex ${isOut || isBot ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[82%] rounded-[24px] px-4 py-3 shadow-sm ${
+      <div className={`max-w-[82%] px-3 py-2 shadow-[0_1px_1px_rgba(17,27,33,0.12)] ${
         isOut
-          ? "rounded-br-md bg-[var(--primary)] text-white"
+          ? "rounded-[12px] rounded-br-sm bg-[#d9fdd3] text-[#111b21]"
           : isBot
-            ? "rounded-br-md bg-[#07120d] text-white"
-            : "rounded-bl-md bg-white text-[var(--text-main)] ring-1 ring-[rgba(191,206,197,0.42)]"
+            ? "rounded-[12px] rounded-br-sm bg-[#e7f8ee] text-[#111b21]"
+            : "rounded-[12px] rounded-bl-sm bg-white text-[#111b21]"
       }`}
       >
         {message.media && <MessageMedia media={message.media} dark={isOut || isBot} />}
-        {hasText && <p className={`${message.media ? "mt-2" : ""} whitespace-pre-wrap text-sm font-semibold leading-5`}>{message.text}</p>}
+        {hasText && <p className={`${message.media ? "mt-2" : ""} whitespace-pre-wrap text-[0.92rem] font-medium leading-5`}>{message.text}</p>}
         {!hasText && message.media?.caption && (
-          <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-5">{message.media.caption}</p>
+          <p className="mt-2 whitespace-pre-wrap text-[0.92rem] font-medium leading-5">{message.media.caption}</p>
         )}
-        <div className={`mt-2 flex items-center gap-1 text-[0.66rem] font-black ${isOut || isBot ? "text-white/58" : "text-[var(--outline)]"}`}>
+        <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#667781]">
           {isOut ? "Vous" : isBot ? "Bot" : "Client"}
-          <span>-</span>
+          <span>·</span>
           <Clock3 size={11} />
           {formatDateTime(message.created_at)}
         </div>

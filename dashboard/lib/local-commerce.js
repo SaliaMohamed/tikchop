@@ -68,6 +68,10 @@ export const DEFAULT_ACCEPTED_PAYMENT_METHODS = [
   "MTN_MONEY",
 ];
 
+export function onlinePaymentsEnabled() {
+  return String(process.env.NEXT_PUBLIC_TIKCHOP_ONLINE_PAYMENTS_ENABLED || "").toLowerCase() === "true";
+}
+
 export function normalizeAcceptedPaymentMethods(input, fallback = DEFAULT_ACCEPTED_PAYMENT_METHODS) {
   let values = [];
 
@@ -102,9 +106,11 @@ export function getSellerDefaultPaymentMethod(seller, acceptedMethods) {
 
 export function getSellerAcceptedPaymentOptions(seller, { includeUnavailableOnline = false } = {}) {
   const accepted = normalizeAcceptedPaymentMethods(seller?.accepted_payment_methods);
-  const paystackReady = Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
+  const onlineEnabled = onlinePaymentsEnabled();
+  const paystackReady = onlineEnabled && Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
   const filtered = LOCAL_PAYMENT_OPTIONS.filter((option) => {
     if (!accepted.includes(option.value)) return false;
+    if (option.online && !onlineEnabled) return false;
     if (option.online && !includeUnavailableOnline && !paystackReady) return false;
     return true;
   });

@@ -226,49 +226,99 @@ export default function SellerMenuPage() {
 }
 
 function MobileMenuCockpit({ seller, stats, hasProducts, payoutReady, whatsappConnected, workCount, onSignOut }) {
+  const shopName = seller.name || "Tikchop";
+  const shopLink = seller.slug ? `/${seller.slug}` : "/onboarding";
+  const nextAction = !hasProducts
+    ? { href: "/add-product", label: "Publier", icon: <Camera size={20} /> }
+    : workCount > 0
+      ? { href: "/orders", label: "Voir ventes", icon: <ClipboardList size={20} /> }
+      : !whatsappConnected
+        ? { href: "/whatsapp", label: "Brancher WhatsApp", icon: <Bot size={20} /> }
+        : { href: shopLink, label: "Voir boutique", icon: <Eye size={20} /> };
+
   return (
-    <section className="mt-3 space-y-3 md:hidden">
-      <section className="rounded-[28px] bg-[#07120d] p-4 text-white shadow-[var(--shadow-lg)] ring-1 ring-black/10">
-        <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]">Menu</p>
-        <h1 className="mt-1 truncate font-display text-2xl font-black">{seller.name || "Tikchop"}</h1>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <MobileStatusTile label="Articles" value={stats.products || 0} dark />
-          <MobileStatusTile label="Commandes" value={workCount} dark active={workCount > 0} />
-          <MobileStatusTile label="WhatsApp" value={whatsappConnected ? "OK" : "Non"} dark active={whatsappConnected} warn={!whatsappConnected && hasProducts} />
-        </div>
-      </section>
-
-      <section className="rounded-[26px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(0,143,90,0.14)]">
-        <div className="grid grid-cols-2 gap-2">
-          <MobileMenuItem href="/add-product" icon={<Camera size={21} />} title="Publier" text="Ajouter des articles" primary={!hasProducts} />
-          <MobileMenuItem href="/orders" icon={<ClipboardList size={21} />} title="Commandes" text={`${workCount} ouverte${workCount > 1 ? "s" : ""}`} warn={workCount > 0} />
-          <MobileMenuItem href={whatsappConnected ? "/messages" : "/whatsapp"} icon={<MessageCircle size={21} />} title="Clients" text={whatsappConnected ? "Discussions" : "WhatsApp a brancher"} warn={!whatsappConnected && hasProducts} />
-          <MobileMenuItem href={seller.slug ? `/${seller.slug}` : "/onboarding"} icon={<Eye size={21} />} title="Boutique" text="Voir le lien client" />
-        </div>
-      </section>
-
-      <section className="rounded-[26px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(0,143,90,0.14)]">
-        <div className="grid gap-2">
-          <MobileMenuItem href="/whatsapp" icon={<Bot size={21} />} title="WhatsApp" text={whatsappConnected ? "Connecte" : "A connecter"} />
-          <MobileMenuItem href="/delivery-settings" icon={<Truck size={21} />} title="Livraison" text="Zones et livreurs" />
-          <MobileMenuItem href="/payment-settings" icon={<Wallet size={21} />} title="Paiement" text={payoutReady ? "Pret" : "A regler"} />
-          <MobileMenuItem href="/shop-info" icon={<Store size={21} />} title="Boutique" text="Nom, logo, adresse" />
-          <MobileMenuItem href="/social-sharing" icon={<Share2 size={21} />} title="Partager" text="Lien et textes prets" />
-          <MobileMenuItem href="/install" icon={<Download size={21} />} title="Installer" text="Ajouter sur le telephone" />
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="grid min-h-[62px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[20px] bg-red-50 p-3 text-left text-red-700 ring-1 ring-red-100 active:scale-[0.99]"
+    <section className="mx-auto mt-3 w-full max-w-[430px] space-y-4 px-1 md:hidden">
+      <section className="rounded-[30px] bg-white p-4 shadow-[0_18px_50px_rgb(7_18_13_/_0.08)] ring-1 ring-[#07120d]/8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#07120d] font-display text-lg font-black text-[#39f58e] shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]">
+            {(shopName || "T").slice(0, 1).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.13em] text-[var(--primary)]">Boutique</p>
+            <h1 className="mt-0.5 truncate font-display text-[1.55rem] font-black leading-7 text-[#07120d]">{shopName}</h1>
+          </div>
+          <Link
+            href={nextAction.href}
+            aria-label={nextAction.label}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#39f58e] text-[#07120d] no-underline shadow-[0_16px_34px_rgb(57_245_142_/_0.32)] active:scale-[0.97]"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-red-600 shadow-sm">
-              <LogOut size={19} />
-            </span>
-            <strong className="block text-sm font-black leading-5">Se deconnecter</strong>
-            <ChevronRight className="text-red-500" size={18} />
-          </button>
+            {nextAction.icon}
+          </Link>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <MobileMiniStat label="Articles" value={stats.products || 0} />
+          <MobileMiniStat label="Ventes" value={workCount} active={workCount > 0} />
+          <MobileMiniStat label="WhatsApp" value={whatsappConnected ? "OK" : "Off"} active={whatsappConnected} warn={!whatsappConnected && hasProducts} />
         </div>
       </section>
+
+      {!whatsappConnected && hasProducts && (
+        <Link
+          href="/whatsapp"
+          className="grid min-h-[68px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] bg-[#eafff3] px-4 text-[#07120d] no-underline ring-1 ring-[#39f58e]/35 active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#008f5a] text-white">
+            <Bot size={20} />
+          </span>
+          <span className="min-w-0">
+            <strong className="block truncate text-base font-black">Brancher WhatsApp</strong>
+            <small className="block truncate text-xs font-bold text-[#4a6055]">Vente auto inactive</small>
+          </span>
+          <ChevronRight size={19} className="text-[var(--primary)]" />
+        </Link>
+      )}
+
+      <MobileMenuSection title="Vendre">
+        <MobileMenuItem href="/add-product" icon={<Camera size={21} />} title="Publier" text={hasProducts ? `${stats.products || 0} articles` : "Ajouter"} primary={!hasProducts} />
+        <MobileMenuItem href="/orders" icon={<ClipboardList size={21} />} title="Ventes" text={workCount > 0 ? `${workCount} a faire` : "Aucune"} warn={workCount > 0} />
+        <MobileMenuItem href={whatsappConnected ? "/messages" : "/whatsapp"} icon={<MessageCircle size={21} />} title="Clients" text={whatsappConnected ? "Messages" : "WhatsApp"} />
+        <MobileMenuItem href={shopLink} icon={<Eye size={21} />} title="Boutique" text="Voir" />
+      </MobileMenuSection>
+
+      <MobileMenuSection title="Reglages">
+        <MobileMenuItem href="/whatsapp" icon={<Bot size={21} />} title="WhatsApp" text={whatsappConnected ? "Connecte" : "Off"} />
+        <MobileMenuItem href="/delivery-settings" icon={<Truck size={21} />} title="Livraison" text="Zones" />
+        <MobileMenuItem href="/payment-settings" icon={<Wallet size={21} />} title="Paiement" text={payoutReady ? "Pret" : "Au choix"} />
+        <MobileMenuItem href="/shop-info" icon={<Store size={21} />} title="Infos boutique" text="Modifier" />
+        <MobileMenuItem href="/social-sharing" icon={<Share2 size={21} />} title="Partager" text="Lien" />
+        <MobileMenuItem href="/install" icon={<Download size={21} />} title="Installer" text="Optionnel" />
+      </MobileMenuSection>
+
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-transparent text-sm font-black text-red-600 active:scale-[0.99]"
+      >
+        <LogOut size={18} />
+        Sortir
+      </button>
     </section>
+  );
+}
+
+function MobileMiniStat({ label, value, active = false, warn = false }) {
+  return (
+    <div className={`min-w-0 rounded-[18px] px-2.5 py-3 text-center ring-1 ${
+      warn
+        ? "bg-[#fff7dc] text-[#7a4b00] ring-[#ffcf3d]/45"
+        : active
+          ? "bg-[#39f58e] text-[#07120d] ring-[#39f58e]"
+          : "bg-[#f4fbf7] text-[#07120d] ring-[#07120d]/6"
+    }`}>
+      <strong className="block truncate font-display text-lg font-black leading-none">{value}</strong>
+      <small className="mt-1 block truncate text-[0.62rem] font-black uppercase leading-3 text-current opacity-70">{label}</small>
+    </div>
   );
 }
 
@@ -310,58 +360,90 @@ function MobileIconTile({ href, icon, label, value, active = false, warn = false
 function MobileStatusTile({ label, value, active, warn = false, dark = false }) {
   if (dark) {
     return (
-      <div className={`rounded-2xl p-2.5 text-center ring-1 ${warn ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/50" : active ? "bg-[#39f58e] text-[#07120d] ring-[#39f58e]" : "bg-white/8 text-white ring-white/10"}`}>
-        <strong className="block font-display text-lg font-black leading-none">{value}</strong>
-        <small className={`mt-1 block text-[0.62rem] font-black uppercase leading-3 ${warn || active ? "text-[#365247]" : "text-white/48"}`}>{label}</small>
+      <div className={`min-w-0 rounded-2xl p-2 text-center ring-1 ${warn ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/50" : active ? "bg-[#39f58e] text-[#07120d] ring-[#39f58e]" : "bg-white/8 text-white ring-white/10"}`}>
+        <strong className="block truncate font-display text-lg font-black leading-none">{value}</strong>
+        <small className={`mt-1 block truncate text-[0.56rem] font-black uppercase leading-3 tracking-normal ${warn || active ? "text-[#365247]" : "text-white/48"}`}>{label}</small>
       </div>
     );
   }
 
   return (
-    <div className={`rounded-2xl p-2.5 text-center ring-1 ${warn ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/50" : active ? "bg-[#dffff0] text-[#07120d] ring-emerald-200/50" : "bg-white text-[var(--text-main)] ring-[rgba(0,143,90,0.12)]"}`}>
-      <strong className="block font-display text-lg font-black leading-none">{value}</strong>
-      <small className={`mt-1 block text-[0.62rem] font-black uppercase leading-3 ${warn || active ? "text-[#365247]" : "text-[var(--text-dim)]"}`}>{label}</small>
+    <div className={`min-w-0 rounded-2xl p-2 text-center ring-1 ${warn ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/50" : active ? "bg-[#dffff0] text-[#07120d] ring-emerald-200/50" : "bg-white text-[var(--text-main)] ring-[rgba(0,143,90,0.12)]"}`}>
+      <strong className="block truncate font-display text-lg font-black leading-none">{value}</strong>
+      <small className={`mt-1 block truncate text-[0.56rem] font-black uppercase leading-3 tracking-normal ${warn || active ? "text-[#365247]" : "text-[var(--text-dim)]"}`}>{label}</small>
     </div>
   );
 }
 
 function MobileMenuSection({ title, children }) {
   return (
-    <section className="rounded-[26px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(0,143,90,0.14)]">
-      <p className="px-1 text-[0.72rem] font-black uppercase tracking-[0.12em] text-[var(--primary)]">{title}</p>
-      <div className="mt-2 grid gap-2">
+    <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_18px_44px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/8">
+      <p className="px-4 pb-2 pt-4 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">{title}</p>
+      <div className="divide-y divide-[#07120d]/8">
         {children}
       </div>
     </section>
   );
 }
 
-function MobileMenuItem({ href, icon, title, text, primary = false, warn = false }) {
+function MobileMenuItem({ href, icon, title, text, primary = false, warn = false, compact = false }) {
+  if (compact) {
+    return (
+      <Link
+        href={href}
+        className={`flex min-h-[104px] min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3 text-[var(--text-main)] no-underline ring-1 active:scale-[0.99] ${
+          primary
+            ? "bg-[#07120d] text-white ring-[#07120d]"
+            : warn
+              ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/60"
+              : "bg-[var(--surface-soft)] ring-[rgba(0,143,90,0.08)]"
+        }`}
+      >
+        <span className="flex min-w-0 items-start justify-between gap-2">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+            primary
+              ? "bg-[var(--primary-bright)] text-[#07120d]"
+              : warn
+                ? "bg-[#07120d] text-[#ffcf3d]"
+                : "bg-white text-[var(--primary)] shadow-sm"
+          }`}>
+            {icon}
+          </span>
+          <ChevronRight className={`${primary ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"} shrink-0`} size={17} />
+        </span>
+        <span className="min-w-0">
+          <strong className={`block truncate text-[0.98rem] font-black leading-5 ${primary ? "text-white" : "text-[var(--text-main)]"}`}>{title}</strong>
+          <small className={`mt-0.5 block truncate text-[0.72rem] font-black leading-4 ${primary ? "text-white/62" : "text-[var(--text-dim)]"}`}>{text}</small>
+        </span>
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={href}
-      className={`grid min-h-[68px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[20px] p-3 text-[var(--text-main)] no-underline ring-1 active:scale-[0.99] ${
+      className={`grid min-h-[64px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden px-4 py-3 text-[var(--text-main)] no-underline active:bg-[#f7fbf8] ${
         primary
-          ? "bg-[#07120d] text-white ring-[#07120d]"
+          ? "bg-[#07120d] text-white"
           : warn
-            ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/60"
-            : "bg-[var(--surface-soft)] ring-[rgba(0,143,90,0.08)]"
+            ? "bg-[#fff7dc] text-[#171006]"
+            : "bg-white"
       }`}
     >
-      <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
         primary
           ? "bg-[var(--primary-bright)] text-[#07120d]"
-          : warn
-            ? "bg-[#07120d] text-[#ffcf3d]"
-            : "bg-white text-[var(--primary)] shadow-sm"
+        : warn
+            ? "bg-white text-[#7a4b00] shadow-sm"
+            : "bg-[#eafff3] text-[var(--primary)]"
       }`}>
         {icon}
       </span>
       <span className="min-w-0">
-        <strong className={`block text-sm font-black leading-5 ${primary ? "text-white" : "text-[var(--text-main)]"}`}>{title}</strong>
+        <strong className={`block truncate text-[0.96rem] font-black leading-5 ${primary ? "text-white" : "text-[var(--text-main)]"}`}>{title}</strong>
         <small className={`mt-0.5 block truncate text-xs font-bold ${primary ? "text-white/62" : "text-[var(--text-dim)]"}`}>{text}</small>
       </span>
-      <ChevronRight className={primary ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"} size={18} />
+      <ChevronRight className={`${primary ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"} shrink-0`} size={18} />
     </Link>
   );
 }

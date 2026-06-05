@@ -63,13 +63,20 @@ const statusLabels = {
   ALL: "Toutes",
   WORK: "Ouvertes",
   PENDING: "Nouvelles",
-  PAID: "Preparer",
+  PAID: "Colis",
   DELIVERY: "Livreur",
   PREPARED: "Livreur",
   IN_DELIVERY: "En route",
-  DELIVERED: "Terminees",
+  DELIVERED: "Finies",
   CANCELLED: "Annulees",
 };
+
+const orderTabs = [
+  { key: "PENDING", label: "Nouvelles" },
+  { key: "PAID", label: "Colis" },
+  { key: "DELIVERY", label: "Livreur" },
+  { key: "DELIVERED", label: "Finies" },
+];
 
 const statusHints = {
   PENDING: "Confirmer le client",
@@ -107,7 +114,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [loadingNote, setLoadingNote] = useState("Chargement des commandes...");
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [filter, setFilter] = useState("WORK");
+  const [filter, setFilter] = useState("PENDING");
   const [demoBusy, setDemoBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -219,7 +226,7 @@ export default function OrdersPage() {
       )));
       setSelectedOrder((current) => current?.id === order.id ? { ...current, ...result } : current);
     } catch (err) {
-      setError(friendlyError(err, "Commande partagée, mais le statut livraison n'a pas été mis à jour."));
+      setError(friendlyError(err, "Commande partagee, mais le statut livraison n'a pas ete mis a jour."));
     }
   }
 
@@ -276,7 +283,7 @@ export default function OrdersPage() {
       const token = await getSellerAccessToken();
       const demoOrder = await createDemoOrder(seller.slug, token);
       await fetchOrders();
-      setFilter("WORK");
+      setFilter("PENDING");
       if (demoOrder?.id) {
         setSelectedOrder(demoOrder);
       }
@@ -303,6 +310,10 @@ export default function OrdersPage() {
   const doneCount = orders.filter((order) => getSimpleOrderStatus(order) === "DELIVERED").length;
   const nextOrder = getNextOrder(orders);
   const sessionExpired = /Session vendeur expiree/i.test(error);
+  const headerCount = activeCount + toFinishCount;
+  const headerLabel = headerCount > 0
+    ? `${headerCount} vente${headerCount > 1 ? "s" : ""}`
+    : "Ventes";
 
   function getFilterCount(item) {
     if (item === "WORK") return activeCount + toFinishCount;
@@ -317,13 +328,10 @@ export default function OrdersPage() {
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
-      {/* 1. Header Pur et Aéré */}
-      <header className="py-8 flex items-center justify-between border-b border-[#07120d]/5">
+      <header className="flex items-center justify-between pb-5 pt-6">
         <div>
-          <h1 className="font-display text-3xl font-black text-[#07120d] leading-none">Commandes</h1>
-          <p className="mt-2 text-xs font-semibold text-[#4e6055]/60">
-            {getFilterCount("WORK")} en cours
-          </p>
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">Aujourd'hui</p>
+          <h1 className="mt-1 font-display text-3xl font-black leading-none text-[#07120d]">{headerLabel}</h1>
         </div>
         <button 
           onClick={fetchOrders} 
@@ -334,24 +342,20 @@ export default function OrdersPage() {
         </button>
       </header>
 
-      {/* 2. Filtres Minimalistes (Aynid Aesthetic Tabs) */}
-      <nav className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4 pb-2">
-        <div className="flex gap-6 border-b border-[#07120d]/5 pb-1 min-w-max">
-          {["WORK", "PENDING", "PAID", "DELIVERY", "DELIVERED"].map((item) => (
+      <nav className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-2">
+        <div className="flex min-w-max gap-2">
+          {orderTabs.map(({ key, label }) => (
             <button
-              key={item}
-              onClick={() => setFilter(item)}
-              className={`pb-2 text-sm font-black transition relative ${
-                filter === item ? "text-[#07120d]" : "text-[#4e6055]/50 hover:text-[#07120d]/70"
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`min-h-[42px] rounded-full px-4 text-sm font-black transition ${
+                filter === key ? "bg-[#07120d] text-white" : "bg-white text-[#4e6055] ring-1 ring-[#07120d]/8"
               }`}
             >
-              {statusLabels[item]}
-              <span className="ml-1 text-[10px] opacity-60 font-semibold">
-                ({getFilterCount(item)})
+              {label}
+              <span className={`ml-1 text-[10px] font-black ${filter === key ? "text-[#39f58e]" : "text-[#008f5a]"}`}>
+                {getFilterCount(key)}
               </span>
-              {filter === item && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#008f5a] rounded-full" />
-              )}
             </button>
           ))}
         </div>
@@ -371,18 +375,17 @@ export default function OrdersPage() {
               onClick={fetchOrders}
               className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
             >
-              Réessayer
+              Reessayer
             </button>
           </div>
         </div>
       )}
 
-      {/* 3. Liste des Commandes (Ultra-Sleek & Space-Aéré) */}
-      <main className="mt-8">
+      <main className="mt-5">
         {loading ? (
           <div className="space-y-3 pt-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="skeleton h-[88px] w-full rounded-[24px]" style={{ animationDelay: `${i * 0.06}s` }} />
+              <div key={i} className="skeleton h-[78px] w-full rounded-[22px]" style={{ animationDelay: `${i * 0.06}s` }} />
             ))}
           </div>
         ) : error ? null : filteredOrders.length === 0 ? (
@@ -448,7 +451,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
       try {
         await navigator.share({
           title: seller.name || "Ma boutique Tikchop",
-          text: "Découvrez mes articles sur ma boutique Tikchop !",
+          text: "Decouvrez mes articles sur ma boutique Tikchop !",
           url: shopUrl,
         });
       } catch (err) {
@@ -470,9 +473,9 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a] mb-4">
         <ReceiptText size={28} />
       </div>
-      <h3 className="font-display text-xl font-bold text-[#07120d]">Aucune commande</h3>
+      <h3 className="font-display text-xl font-bold text-[#07120d]">Aucune vente</h3>
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
-        Partagez le lien de votre boutique pour commencer à recevoir des commandes sur WhatsApp.
+        Partagez votre boutique pour recevoir les premieres ventes.
       </p>
       
       <button
@@ -481,7 +484,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)]"
       >
         <Share2 size={16} />
-        {copied ? "Lien copié !" : "Partager ma boutique"}
+        {copied ? "Lien copie !" : "Partager ma boutique"}
       </button>
 
       <button
@@ -490,7 +493,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         disabled={creating}
         className="mt-4 text-xs font-bold text-[#07120d]/40 hover:text-[#07120d]/80 py-1 transition disabled:opacity-60"
       >
-        {creating ? "Création en cours..." : "Créer une commande exemple (test)"}
+        {creating ? "Creation en cours..." : "Creer une vente test"}
       </button>
     </div>
   );
@@ -522,49 +525,65 @@ function OrderCard({ order, onClick, index = 0 }) {
   };
 
   const statusLabel = statusLabels[simpleStatus] || simpleStatus;
+  const actionLabel = getCardActionLabel(simpleStatus);
   const itemCount = getOrderItemCount(order);
   const dateStr = new Date(order.created_at).toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "short",
   });
-  // stagger delay up to 5 items
   const delay = `${Math.min(index, 5) * 0.06}s`;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="animate-rise-in w-full text-left rounded-[24px] bg-white border border-[#07120d]/5 p-4 md:p-5 hover:shadow-[0_8px_30px_rgba(7,18,13,0.03)] active:scale-[0.99] transition"
+      className="animate-rise-in w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(7_18_13_/_0.035)] ring-1 ring-[#07120d]/7 active:scale-[0.99] transition"
       style={{ animationDelay: delay }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <h3 className="font-display text-base font-black text-[#07120d] truncate">
-              #{order.order_ref || order.id?.slice(0, 8).toUpperCase()}
+              {order.order_ref || order.id?.slice(0, 8).toUpperCase()}
             </h3>
             <span className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${statusColors[simpleStatus] || "bg-zinc-50 text-zinc-600"}`}>
               {statusLabel}
             </span>
           </div>
-          <p className="mt-1.5 text-sm font-semibold text-[#4e6055] truncate">
-            {demoOrder ? "Client de démonstration" : primaryLine}
+          <p className="mt-1 text-sm font-semibold text-[#4e6055] truncate">
+            {demoOrder ? "Client test" : primaryLine}
           </p>
-          <p className="mt-0.5 text-xs font-medium text-[#4e6055]/60">
-            {itemCount} article{itemCount > 1 ? "s" : ""} • {dateStr}
+          <p className="mt-0.5 text-xs font-bold text-[#4e6055]/50">
+            {itemCount} article{itemCount > 1 ? "s" : ""} - {dateStr}
           </p>
         </div>
         <div className="text-right shrink-0">
           <p className="font-display text-base font-black text-[#07120d] whitespace-nowrap">
             {demoOrder ? "TEST" : formatPrice(total)}
           </p>
-          <p className="mt-1.5 text-xs font-black text-[#008f5a] flex items-center justify-end gap-1">
-            Gérer <ChevronRight size={11} strokeWidth={1.5} />
-          </p>
+          <span className={`mt-1.5 inline-flex min-h-[30px] items-center justify-center rounded-full px-3 text-[0.68rem] font-black ${getCardActionTone(simpleStatus)}`}>
+            {actionLabel}
+          </span>
         </div>
       </div>
     </button>
   );
+}
+
+function getCardActionLabel(status) {
+  if (status === "PENDING") return "Confirmer";
+  if (status === "PAID") return "Colis";
+  if (status === "PREPARED") return "Livreur";
+  if (status === "IN_DELIVERY") return "Livree";
+  if (status === "DELIVERED") return "Finie";
+  if (status === "CANCELLED") return "Annulee";
+  return "Voir";
+}
+
+function getCardActionTone(status) {
+  if (status === "DELIVERED") return "bg-[#07120d]/7 text-[#07120d]/45";
+  if (status === "CANCELLED") return "bg-rose-50 text-rose-800";
+  return "bg-[#07120d] text-white";
 }
 
 function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery) {
@@ -678,6 +697,30 @@ function OrderSheet({
       onManualDriverShare(order);
     }
   }
+
+  return (
+    <SimpleOrderSheet
+      order={order}
+      items={items}
+      total={total}
+      displayClientPhone={displayClientPhone}
+      availableDrivers={availableDrivers}
+      clientHref={clientHref}
+      receiptUrl={receiptUrl}
+      isPending={isPending}
+      isPaid={isPaid}
+      isPrepared={isPrepared}
+      isInDelivery={isInDelivery}
+      isDone={isDone}
+      isCancelled={isCancelled}
+      onClose={onClose}
+      onPaid={onPaid}
+      onPrepared={onPrepared}
+      onDelivered={onDelivered}
+      onCancel={onCancel}
+      onShareDriver={openDriverWhatsapp}
+    />
+  );
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
@@ -907,6 +950,163 @@ function DriverSharePanel({ availableDrivers, order, onShare }) {
         <Share2 size={17} />
         Ouvrir WhatsApp sans choisir
       </button>
+    </div>
+  );
+}
+
+function SimpleOrderSheet({
+  order,
+  items,
+  total,
+  displayClientPhone,
+  availableDrivers,
+  clientHref,
+  receiptUrl,
+  isPending,
+  isPaid,
+  isPrepared,
+  isInDelivery,
+  isDone,
+  isCancelled,
+  onClose,
+  onPaid,
+  onPrepared,
+  onDelivered,
+  onCancel,
+  onShareDriver,
+}) {
+  const action = getNextAction(order);
+  const status = getSimpleOrderStatus(order);
+  const canShareDriver = isPrepared || isInDelivery || isDone;
+  const primary = isCancelled
+    ? { label: "Commande annulee", icon: <X size={19} />, disabled: true, onClick: null, tone: "muted" }
+    : isPending
+      ? { label: "Confirmer", icon: <CheckCircle2 size={19} />, onClick: onPaid, tone: "green" }
+      : isPaid
+        ? { label: "Colis pret", icon: <Package size={19} />, onClick: onPrepared, tone: "dark" }
+        : isPrepared || isInDelivery
+          ? { label: "Livree", icon: <CheckCircle2 size={19} />, onClick: onDelivered, tone: "green" }
+          : isDone
+            ? { label: "Livree", icon: <CheckCircle2 size={19} />, disabled: true, onClick: null, tone: "muted" }
+            : { label: "Partager livreur", icon: <Truck size={19} />, onClick: () => onShareDriver(), tone: "dark" };
+
+  return (
+    <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/35 px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
+      <div className="animate-slide-up mx-auto max-h-[88vh] w-full max-w-[440px] overflow-hidden rounded-[30px] bg-[#fbf9f4] shadow-[0_28px_70px_rgb(7_18_13_/_0.28)] ring-1 ring-white/70">
+        <header className="flex items-start justify-between gap-4 border-b border-[#07120d]/8 bg-white px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">{statusLabels[status] || status}</p>
+            <h2 className="mt-1 truncate font-display text-2xl font-black leading-7 text-[#07120d]">
+              {order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}
+            </h2>
+            <p className="mt-1 text-xs font-bold text-[#4e6055]/60">{action.title}</p>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8" aria-label="Fermer">
+            <X size={17} />
+          </button>
+        </header>
+
+        <div className="no-scrollbar max-h-[58vh] space-y-3 overflow-y-auto px-4 py-4">
+          <div className="rounded-[24px] bg-[#07120d] p-4 text-white">
+            <div className="flex items-end justify-between gap-3">
+              <span>
+                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#39f58e]">Total</span>
+                <strong className="mt-1 block font-display text-3xl font-black leading-none">{formatPrice(total)}</strong>
+              </span>
+              <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white/80">
+                {getOrderItemCount(order)} article{getOrderItemCount(order) > 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+
+          <section className="rounded-[22px] bg-white p-3 ring-1 ring-[#07120d]/7">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#008f5a]">
+              <Package size={14} />
+              Sachet
+            </div>
+            <div className="mt-3 space-y-2">
+              {(items || []).map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-[#fbf9f4] px-3 py-2.5">
+                  <span className="min-w-0">
+                    <strong className="block truncate text-sm font-black text-[#07120d]">{item.products?.name || "Article"}</strong>
+                    <small className="text-xs font-bold text-[#4e6055]/55">A mettre dans le sachet</small>
+                  </span>
+                  <strong className="rounded-full bg-white px-3 py-1.5 text-sm font-black text-[#07120d] ring-1 ring-[#07120d]/6">x{item.quantity}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-2">
+            <MiniInfo icon={<Phone size={16} />} label="Client" value={displayClientPhone} />
+            <MiniInfo icon={<MapPin size={16} />} label="Adresse" value={order.delivery_address || order.delivery_zone || "A confirmer"} />
+            <MiniInfo icon={<Truck size={16} />} label="Livreur" value={order.delivery_drivers?.name || (canShareDriver ? "A choisir" : "Apres colis pret")} />
+          </section>
+
+          {canShareDriver && availableDrivers.length > 0 && (
+            <div className="no-scrollbar flex gap-2 overflow-x-auto">
+              {availableDrivers.map((driver) => (
+                <button
+                  key={driver.id}
+                  type="button"
+                  onClick={() => onShareDriver(driver)}
+                  className="min-h-[46px] shrink-0 rounded-full bg-white px-4 text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/8"
+                >
+                  {driver.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <footer className="space-y-2 border-t border-[#07120d]/8 bg-white p-4">
+          <button
+            type="button"
+            onClick={primary.onClick || undefined}
+            disabled={primary.disabled}
+            className={`flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-black shadow-sm disabled:opacity-70 ${
+              primary.tone === "green"
+                ? "bg-[#008f5a] text-white"
+                : primary.tone === "dark"
+                  ? "bg-[#07120d] text-white"
+                  : "bg-[#f1f1ee] text-[#4e6055]"
+            }`}
+          >
+            {primary.icon}
+            {primary.label}
+          </button>
+          <div className="grid grid-cols-3 gap-2">
+            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[46px] items-center justify-center rounded-[18px] text-xs font-black no-underline ring-1 ${clientHref ? "bg-[#fbf9f4] text-[#07120d] ring-[#07120d]/8" : "pointer-events-none bg-[#f1f1ee] text-[#4e6055]/45 ring-transparent"}`}>
+              Client
+            </a>
+            <button type="button" onClick={() => onShareDriver()} disabled={!canShareDriver} className="min-h-[46px] rounded-[18px] bg-[#fbf9f4] text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/8 disabled:opacity-40">
+              Livreur
+            </button>
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[46px] items-center justify-center rounded-[18px] bg-[#fbf9f4] text-xs font-black text-[#07120d] no-underline ring-1 ring-[#07120d]/8">
+              Recu
+            </a>
+          </div>
+          {!isDone && !isCancelled && (
+            <button type="button" onClick={onCancel} className="mx-auto block px-4 py-2 text-xs font-black text-rose-600">
+              Annuler la commande
+            </button>
+          )}
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function MiniInfo({ icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[20px] bg-white px-3 py-3 ring-1 ring-[#07120d]/7">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] text-[#008f5a]">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <small className="block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#4e6055]/45">{label}</small>
+        <strong className="block truncate text-sm font-black text-[#07120d]">{value}</strong>
+      </span>
     </div>
   );
 }
@@ -1359,3 +1559,4 @@ function InfoBlock({ icon, label, value }) {
     </div>
   );
 }
+

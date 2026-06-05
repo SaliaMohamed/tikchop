@@ -2,17 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
   Bot,
   Camera,
   ChevronRight,
   ClipboardList,
-  Eye,
-  Loader2,
+  PackageCheck,
+  ShoppingBag,
+  Store,
 } from "lucide-react";
 import { getDashboardData } from "../actions";
-import BrandLogo from "../components/BrandLogo";
 import { getSellerInitials, useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
@@ -32,7 +31,6 @@ const emptyStats = {
 };
 
 export default function Dashboard() {
-  const searchParams = useSearchParams();
   const seller = useActiveSeller();
   const sellerInitials = getSellerInitials(seller);
   const [stats, setStats] = useState(emptyStats);
@@ -60,40 +58,67 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="app-shell px-4 pt-6 pb-32">
-        {/* Skeleton Header */}
-        <div className="flex items-center justify-between py-6">
+      <div className="app-shell px-4 pb-32 pt-5">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="skeleton h-11 w-11 rounded-[16px]" />
+            <div className="skeleton h-12 w-12 rounded-[18px]" />
             <div className="space-y-2">
+              <div className="skeleton skeleton-text w-24" />
               <div className="skeleton skeleton-text w-32" />
-              <div className="skeleton skeleton-text w-24" style={{ height: '0.7em' }} />
             </div>
           </div>
-          <div className="skeleton h-10 w-10 rounded-[14px]" />
+          <div className="skeleton h-11 w-11 rounded-[17px]" />
         </div>
-        {/* Skeleton CA */}
-        <div className="py-10 text-center">
-          <div className="skeleton skeleton-text mx-auto w-20 mb-3" style={{ height: '0.7em' }} />
-          <div className="skeleton skeleton-text mx-auto w-48" style={{ height: '2.8rem' }} />
-          <div className="skeleton skeleton-text mx-auto w-32 mt-3" style={{ height: '0.7em' }} />
-        </div>
-        {/* Skeleton Actions */}
-        <div className="space-y-2">
-          <div className="skeleton h-[58px] w-full rounded-[22px]" />
-          <div className="skeleton h-[58px] w-full rounded-[22px]" />
-          <div className="skeleton h-[58px] w-full rounded-[22px]" />
+        <div className="mt-6 skeleton h-[190px] rounded-[34px]" />
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="skeleton h-[116px] rounded-[28px]" />
+          <div className="skeleton h-[116px] rounded-[28px]" />
+          <div className="skeleton h-[116px] rounded-[28px]" />
+          <div className="skeleton h-[116px] rounded-[28px]" />
         </div>
       </div>
     );
   }
 
+  const openOrders = Number(stats.pendingOrders || 0) + Number(stats.paidOrders || 0) + Number(stats.preparedOrders || 0);
+  const hasProducts = Number(stats.products || 0) > 0;
+  const mainAction = !hasProducts
+    ? {
+        kicker: "A faire",
+        title: "Ajoutez votre premier article",
+        href: "/add-product",
+        cta: "Publier",
+        icon: <Camera size={20} />,
+      }
+    : openOrders > 0
+      ? {
+          kicker: "Aujourd'hui",
+          title: `${openOrders} vente${openOrders > 1 ? "s" : ""} en cours`,
+          href: "/orders",
+          cta: "Traiter",
+          icon: <ClipboardList size={20} />,
+        }
+      : !stats.whatsappConnected
+        ? {
+            kicker: "WhatsApp",
+            title: "Connectez WhatsApp",
+            href: "/whatsapp",
+            cta: "Connecter",
+            icon: <Bot size={20} />,
+          }
+        : {
+            kicker: "Pret",
+            title: "Boutique active",
+            href: seller.slug ? `/${seller.slug}` : "/shop-info",
+            cta: "Voir",
+            icon: <Store size={20} />,
+          };
+
   return (
-    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4">
-      {/* 1. Header minimaliste */}
-      <header className="flex items-center justify-between py-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#07120d] font-display text-sm font-extrabold text-white overflow-hidden shadow-sm">
+    <div className="app-shell mx-auto max-w-[430px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-4">
+      <header className="flex items-center justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgb(7_18_13_/_0.14)]">
             {seller.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
@@ -102,130 +127,113 @@ export default function Dashboard() {
             )}
           </span>
           <div className="min-w-0">
-            <h1 className="font-display text-2xl font-black text-[#07120d] leading-none truncate">{seller.name}</h1>
-            <a href={`/${seller.slug}`} target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-[#008f5a] hover:underline mt-1 truncate">
-              tikchop.com/{seller.slug}
-            </a>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">Accueil</p>
+            <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#07120d]">{seller.name || "Boutique Tikchop"}</h1>
           </div>
         </div>
-        <Link href={`/${seller.slug}`} target="_blank" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#07120d]/5 text-[#07120d] active:scale-95 transition">
-          <Eye size={18} strokeWidth={1.5} />
+        <Link
+          href={`/${seller.slug}`}
+          target="_blank"
+          className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#008f5a] shadow-[0_12px_30px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/8"
+          aria-label="Voir la boutique"
+        >
+          <Store size={20} strokeWidth={2.4} />
+          {openOrders > 0 && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-500" />}
         </Link>
       </header>
 
-      {/* 2. CA Géant (Extreme Contrast) */}
-      <section className="py-10 text-center animate-rise-in stagger-1">
-        <span className="text-[0.7rem] font-black uppercase tracking-[0.15em] text-[#4e6055]">Chiffre d'affaires</span>
-        <h2 className="mt-2 font-display text-5xl font-black text-[#07120d] leading-none tracking-[-0.04em] md:text-6xl">
-          {money(stats.sales)}
-        </h2>
-        <p className="mt-3 text-xs font-semibold text-[#4e6055]/70">
-          {stats.orders || 0} commande{stats.orders > 1 ? "s" : ""} au total
-        </p>
-      </section>
-
-      {/* 3. Actions Rapides — Stagger */}
-      <section className="space-y-2 pt-2">
-        <Link
-          href="/add-product"
-          className="animate-rise-in stagger-2 flex min-h-[58px] w-full items-center justify-between rounded-[22px] bg-[#07120d] px-5 text-white active:scale-[0.98] transition shadow-[0_12px_32px_rgba(7,18,13,0.1)]"
-        >
-          <span className="flex items-center gap-3">
-            <Camera size={18} strokeWidth={1.5} className="text-[#39f58e]" />
-            <span className="font-display text-[0.95rem] font-black">Publier un article</span>
+      <section className="mt-6 overflow-hidden rounded-[30px] bg-white p-4 shadow-[0_18px_50px_rgb(7_18_13_/_0.08)] ring-1 ring-[#07120d]/8">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="min-w-0 pt-1">
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">{mainAction.kicker}</p>
+            <h2 className="mt-2 max-w-[16rem] font-display text-[2rem] font-black leading-[2.1rem] tracking-[-0.03em] text-[#07120d]">
+              {mainAction.title}
+            </h2>
+          </div>
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[#eafff3] text-[#008f5a] ring-1 ring-[#39f58e]/20">
+            <ShoppingBagIcon />
           </span>
-          <ChevronRight size={16} strokeWidth={1.5} className="text-[#39f58e]" />
-        </Link>
-
-        <Link
-          href="/orders"
-          className="animate-rise-in stagger-3 flex min-h-[58px] w-full items-center justify-between rounded-[22px] bg-white border border-[#07120d]/10 px-5 text-[#07120d] active:scale-[0.98] transition"
-        >
-          <span className="flex items-center gap-3 min-w-0">
-            <ClipboardList size={18} strokeWidth={1.5} className="shrink-0 text-[#008f5a]" />
-            <span className="font-display text-[0.95rem] font-black truncate">Gérer mes commandes</span>
-          </span>
-          <span className="flex shrink-0 items-center gap-2 ml-2">
-            {stats.pendingOrders > 0 && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[0.65rem] font-extrabold text-amber-800 whitespace-nowrap">
-                {stats.pendingOrders} nouvelle{stats.pendingOrders > 1 ? "s" : ""}
-              </span>
-            )}
-            <ChevronRight size={16} strokeWidth={1.5} className="text-[#07120d]/30" />
-          </span>
-        </Link>
-
-        <Link
-          href="/whatsapp"
-          className="animate-rise-in stagger-4 flex min-h-[58px] w-full items-center justify-between rounded-[22px] bg-white border border-[#07120d]/10 px-5 text-[#07120d] active:scale-[0.98] transition"
-        >
-          <span className="flex items-center gap-3 min-w-0">
-            <Bot size={18} strokeWidth={1.5} className="shrink-0 text-[#008f5a]" />
-            <span className="font-display text-[0.95rem] font-black">Assistant WhatsApp</span>
-          </span>
-          <span className="flex shrink-0 items-center gap-2 ml-2">
-            <span className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-extrabold whitespace-nowrap ${stats.whatsappConnected ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-600"}`}>
-              {stats.whatsappConnected ? "Actif" : "À brancher"}
-            </span>
-            <ChevronRight size={16} strokeWidth={1.5} className="text-[#07120d]/30" />
-          </span>
-        </Link>
-      </section>
-
-      {/* 4. Commandes Récentes (Strict Minimalist List) */}
-      <section className="mt-10 animate-fade-in">
-        <div className="flex items-center justify-between px-1 mb-4">
-          <h3 className="font-display text-base font-black text-[#07120d]">Suivi des commandes</h3>
-          {recentOrders.length > 0 && (
-            <Link href="/orders" className="text-xs font-black text-[#008f5a] hover:underline">
-              Tout voir
-            </Link>
-          )}
         </div>
+        <Link
+          href={mainAction.href}
+          className="mt-5 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-full bg-[#008f5a] px-5 text-base font-black text-white no-underline shadow-[0_18px_36px_rgb(0_143_90_/_0.22)] active:scale-[0.98]"
+        >
+          {mainAction.icon}
+          {mainAction.cta}
+          <ChevronRight size={18} />
+        </Link>
+      </section>
 
-        <div className="space-y-2">
-          {recentOrders.length > 0 ? (
-            recentOrders.slice(0, 3).map((order) => {
-              const isPaid = ["PAID", "PREPARED", "DELIVERED"].includes(order.status);
-              return (
-                <Link
-                  key={order.id}
-                  href="/orders"
-                  className="flex items-center justify-between gap-3 rounded-[22px] bg-white border border-[#07120d]/6 p-4 active:scale-[0.99] transition no-underline"
-                >
-                  <div className="min-w-0">
-                    <p className="font-display text-sm font-black text-[#07120d] truncate">
-                      #{order.order_ref || order.id?.slice(0, 8).toUpperCase()}
-                    </p>
-                    <p className="text-xs font-semibold text-[#4e6055]/70 mt-1 truncate">
-                      {order.customer_phone || "Client"}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-display text-sm font-black text-[#07120d]">{money(order.total_amount)}</p>
-                    <span className={`inline-block mt-1 rounded-full px-2 py-0.5 text-[0.62rem] font-extrabold uppercase whitespace-nowrap ${isPaid ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
-                      {isPaid ? "Confirmée" : "À valider"}
+      <section className="mt-4 grid grid-cols-3 gap-2.5">
+        <MiniStat value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} />
+        <MiniStat value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} dot={openOrders > 0} />
+        <MiniStat value={stats.whatsappConnected ? "On" : "Off"} label="WhatsApp" icon={<Bot size={15} />} />
+      </section>
+
+      <section className="mt-7">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-display text-lg font-black text-[#07120d]">A suivre</h3>
+          {recentOrders.length > 0 && <Link href="/orders" className="text-xs font-black text-[#008f5a] no-underline">Tout voir</Link>}
+        </div>
+        {recentOrders.length > 0 && (
+          <div className="space-y-2">
+            {recentOrders.slice(0, 2).map((order) => {
+                const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
+                return (
+                  <Link
+                    key={order.id}
+                    href="/orders"
+                    className="grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] bg-white p-4 text-[#07120d] no-underline shadow-[0_12px_30px_rgb(7_18_13_/_0.04)] ring-1 ring-[#07120d]/6"
+                  >
+                    <span className="min-w-0">
+                      <strong className="block truncate text-sm font-black">{order.order_ref || order.id?.slice(0, 8).toUpperCase()}</strong>
+                      <small className="text-xs font-semibold text-[#4e6055]/55">{order.customer_phone || "Client WhatsApp"}</small>
                     </span>
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="rounded-[22px] bg-white border border-[#07120d]/6 p-5 text-center">
-              <p className="text-sm font-bold text-[#4e6055]">Aucune commande pour l'instant.</p>
-              <p className="text-[0.7rem] font-semibold text-[#4e6055]/60 mt-1">
-                Les commandes apparaissent ici dès que vos clients achètent.
-              </p>
-            </div>
-          )}
-        </div>
+                    <span className="shrink-0 text-right">
+                      <strong className="block text-sm font-black">{money(total)}</strong>
+                      <small className="text-[0.62rem] font-black uppercase text-[#008f5a]">Vente</small>
+                    </span>
+                  </Link>
+                );
+              })}
+          </div>
+        )}
+        {recentOrders.length === 0 && (
+          <Link
+            href={seller.slug ? `/${seller.slug}` : "/shop-info"}
+            className="grid min-h-[78px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] bg-white p-4 text-[#07120d] no-underline shadow-[0_12px_30px_rgb(7_18_13_/_0.04)] ring-1 ring-[#07120d]/6"
+          >
+            <span className="min-w-0">
+              <strong className="block text-sm font-black">Aucune vente</strong>
+              <small className="block truncate text-xs font-semibold text-[#4e6055]/60">Partagez la boutique.</small>
+            </span>
+            <ChevronRight className="text-[#008f5a]" size={18} />
+          </Link>
+        )}
       </section>
 
       {offlineMode && (
-        <div className="mt-8 rounded-2xl bg-amber-50 p-4 text-xs font-semibold text-amber-900 text-center ring-1 ring-amber-100 animate-pulse">
-          Mode hors-ligne. Les données peuvent mettre quelques secondes à s'actualiser.
+        <div className="mt-5 rounded-2xl bg-amber-50 p-3 text-center text-xs font-bold text-amber-900 ring-1 ring-amber-100">
+          Connexion lente. Les chiffres peuvent arriver dans quelques secondes.
         </div>
       )}
     </div>
   );
+}
+
+function MiniStat({ value, label, icon, dot = false }) {
+  return (
+    <div className="relative rounded-[22px] bg-white px-2.5 py-4 text-center shadow-[0_10px_26px_rgb(7_18_13_/_0.04)] ring-1 ring-[#07120d]/6">
+      {dot && <span className="absolute right-4 top-3 h-1.5 w-1.5 rounded-full bg-[#008f5a]" />}
+      <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#eafff3] text-[#008f5a]">
+        {icon}
+      </span>
+      <strong className="mt-2 block font-display text-lg font-black leading-5 text-[#07120d]">{value}</strong>
+      <span className="mt-1 block text-[0.65rem] font-black text-[#4e6055]">{label}</span>
+    </div>
+  );
+}
+
+function ShoppingBagIcon() {
+  return <ShoppingBag size={42} strokeWidth={1.9} />;
 }

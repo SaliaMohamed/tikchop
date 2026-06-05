@@ -5,7 +5,7 @@ import { supabaseAdmin } from "../lib/supabase-admin";
 import { createPaystackSubaccount, getPayoutNetworkConfig, initializeTransaction, normalizePayoutNetwork, normalizePayoutPhone } from "../lib/paystack";
 import { savePaystackInitialization, sendOrderLifecycleMessage } from "../lib/order-payments";
 import { sendEvolutionText } from "../lib/evolution";
-import { getPaymentOption, getSellerDefaultPaymentMethod, normalizeAcceptedPaymentMethods, paymentMethodsNeedDirectPhone } from "../lib/local-commerce";
+import { getPaymentOption, getSellerDefaultPaymentMethod, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone } from "../lib/local-commerce";
 import { createClient } from "../lib/supabase/server";
 
 // Auth basée sur les cookies HttpOnly (@supabase/ssr) — accessToken ignoré intentionnellement.
@@ -978,7 +978,7 @@ async function analyzeProductImageWithOpenAI(imageUrl, voiceHint = "") {
 
 async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const model = process.env.OPENROUTER_VISION_MODEL;
+  const model = process.env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-32b-instruct";
 
   if (!apiKey || !model) {
     throw new Error("OpenRouter vision non configure.");
@@ -1041,16 +1041,25 @@ async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
 function getVisionProviderOrder() {
   const configured = [
     process.env.GEMINI_API_KEY ? "gemini" : "",
+    process.env.OPENROUTER_API_KEY ? "openrouter" : "",
     process.env.OPENAI_API_KEY ? "openai" : "",
-    process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_VISION_MODEL ? "openrouter" : "",
   ].filter(Boolean);
 
-  const preferred = String(process.env.AI_VISION_PROVIDER || "").trim().toLowerCase();
-  if (!preferred || !configured.includes(preferred)) {
+  const preferred = String(process.env.AI_VISION_PROVIDER || "")
+    .toLowerCase()
+    .split(/[,\s>]+/)
+    .map((provider) => provider.trim())
+    .filter(Boolean);
+
+  if (preferred.length === 0) {
     return configured;
   }
 
-  return [preferred, ...configured.filter((provider) => provider !== preferred)];
+  const ordered = preferred.filter((provider, index) => (
+    configured.includes(provider) && preferred.indexOf(provider) === index
+  ));
+
+  return [...ordered, ...configured.filter((provider) => !ordered.includes(provider))];
 }
 
 function getAiOptimizedImageUrl(imageUrl) {
@@ -1101,8 +1110,12 @@ function productAnalysisPrompt(voiceHint = "") {
     "Analyse cette photo de produit pour une boutique en ligne Tikchop a Abidjan.",
     "Retourne une fiche directement utile a une vendeuse: nom court, rayon clair, couleurs visibles, tailles possibles.",
     "Pense comme une assistante de catalogue WhatsApp: le resultat doit aider a publier vite, pas seulement decrire l'image.",
-    "Noms utiles: Robe moulante, Ensemble pantalon, Chemise homme, Sandales femme, Sac a main, Perruque lace, Parfum, Baskets, Jean friperie, Top femme, Pagne, Lunettes.",
-    "Categories simples a privilegier: Vetements, Chaussures, Sacs, Beaute, Accessoires, Bijoux, Telephones, Maison, Alimentation, Autre.",
+    "Si l'indication vendeur contient Type de boutique ou Contexte du lot, utilise-la comme priorite forte pour identifier l'objet vendu.",
+    "Regarde d'abord l'objet au centre, l'objet tenu, porte ou pose pour la vente. Ignore le decor, les fleurs, le sol, le lit, le mur et les mains sauf s'ils sont le produit.",
+    "Ne nomme jamais le decor comme produit: fleurs, jardin, plante, table, sol, mur, lit, cintre, mannequin ou main ne sont pas l'article sauf indication vendeur explicite.",
+    "Si un bijou, une montre, un sac, une paire de chaussures ou un accessoire est petit dans l'image, privilegie cet objet plutot que l'arriere-plan.",
+    "Exemples de noms utiles selon le type: Collier femme, Bracelet, Montre, Sac a main, Parfum, Creme visage, Chargeur USB-C, Ecouteurs, Plat attieke, Ustensile cuisine, Robe, Sandales.",
+    "Categories simples a privilegier: Accessoires, Bijoux, Beaute, Telephones, Maison, Alimentation, Vetements, Chaussures, Sacs, Autre.",
     "Le nom doit etre vendable en francais simple, sans phrase longue, sans emoji et sans marque inventee.",
     "Si une personne porte le produit, nomme le vetement ou l'accessoire visible, pas la personne.",
     "La description doit etre courte, concrete et rassurante: 8 a 16 mots, avec coupe, couleur, matiere apparente ou usage si visible.",
@@ -1122,8 +1135,12 @@ function productBatchAnalysisPrompt(count, voiceHint = "") {
     "Retourne exactement une fiche par image, dans le meme ordre: IMAGE 1, IMAGE 2, etc.",
     "Chaque fiche doit avoir un nom court et vendable en francais simple.",
     "Fais comme une assistante catalogue: tu dois aider a publier vite un lot de photos, pas ecrire une description vague.",
-    "Noms utiles pour Abidjan: robe, ensemble, top, jean friperie, chemise homme, sandales, talons, baskets, sac a main, perruque, parfum, pagne, lunettes.",
-    "Categories simples a privilegier: Vetements, Chaussures, Sacs, Beaute, Accessoires, Bijoux, Telephones, Maison, Alimentation, Autre.",
+    "Si l'indication vendeur contient Type de boutique ou Contexte du lot, utilise-la comme priorite forte pour nommer les articles.",
+    "Dans chaque image, identifie l'objet vendu au centre, tenu, porte ou pose pour la vente. Ignore le decor et l'arriere-plan.",
+    "Ne nomme jamais le decor comme produit: fleurs, jardin, plante, table, sol, mur, lit, cintre, mannequin ou main ne sont pas l'article sauf indication vendeur explicite.",
+    "Si un accessoire est petit devant un decor charge, nomme l'accessoire et non le decor.",
+    "Exemples de noms utiles selon le type: collier femme, bracelet, montre, sac a main, parfum, creme visage, chargeur USB-C, ecouteurs, plat attieke, ustensile cuisine, robe, sandales.",
+    "Categories simples a privilegier: Accessoires, Bijoux, Beaute, Telephones, Maison, Alimentation, Vetements, Chaussures, Sacs, Autre.",
     "Si une personne porte un article, identifie l'article vendu visible, pas la personne.",
     "La description de chaque fiche doit etre courte et vendeuse: coupe, couleur, matiere apparente ou usage si visible.",
     "Ne mets jamais le prix: le vendeur le saisira lui-meme.",
@@ -1238,10 +1255,10 @@ export async function createOrder(sellerId, cartItems, options = {}) {
 
   const acceptedMethods = normalizeAcceptedPaymentMethods(seller?.accepted_payment_methods);
   const requestedPayment = getPaymentOption(paymentMethod);
-  const paystackReady = Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
+  const paystackReady = onlinePaymentsEnabled() && Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
   const availableMethods = acceptedMethods.filter((method) => method !== "PAYSTACK" || paystackReady);
   const safeAcceptedMethods = availableMethods.length > 0 ? availableMethods : ["CASH_ON_DELIVERY"];
-  const requestedAllowed = acceptedMethods.includes(requestedPayment.value) && (!requestedPayment.online || paystackReady);
+  const requestedAllowed = availableMethods.includes(requestedPayment.value) && (!requestedPayment.online || paystackReady);
   const normalizedPaymentMethod = requestedAllowed
     ? requestedPayment.value
     : getSellerDefaultPaymentMethod(seller, safeAcceptedMethods);
@@ -1470,6 +1487,10 @@ export async function createOrder(sellerId, cartItems, options = {}) {
 
 export async function initiatePayment(orderId) {
   try {
+    if (!onlinePaymentsEnabled()) {
+      throw new Error("Paiement en ligne indisponible pour le moment.");
+    }
+
     if (!supabaseAdmin) {
       throw new Error("Supabase admin client not initialized.");
     }
@@ -2295,7 +2316,8 @@ export async function saveSellerPaymentSettings(sellerId, settings, accessToken)
   const payoutNetwork = normalizePayoutNetwork(settings?.payout_network);
   const network = getPayoutNetworkConfig(payoutNetwork);
   const payoutPhone = normalizePayoutPhone(settings?.payout_phone);
-  const acceptedPaymentMethods = normalizeAcceptedPaymentMethods(settings?.accepted_payment_methods);
+  const acceptedPaymentMethods = normalizeAcceptedPaymentMethods(settings?.accepted_payment_methods)
+    .filter((method) => method !== "PAYSTACK" || onlinePaymentsEnabled());
   const requestedDefaultPaymentMethod = String(settings?.default_payment_method || "").trim().toUpperCase();
   const defaultPaymentMethod = acceptedPaymentMethods.includes(requestedDefaultPaymentMethod)
     ? requestedDefaultPaymentMethod
@@ -2348,6 +2370,10 @@ export async function saveSellerPaymentSettings(sellerId, settings, accessToken)
 }
 
 export async function activateSellerPayoutSubaccount(sellerId, accessToken) {
+  if (!onlinePaymentsEnabled()) {
+    throw new Error("Paiement carte indisponible pour le moment. Gardez Wave, Orange, MTN ou paiement a la livraison.");
+  }
+
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }

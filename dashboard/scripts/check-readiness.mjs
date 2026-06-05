@@ -1,13 +1,11 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
-const REQUIRED_ENV = [
+const BASE_REQUIRED_ENV = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_APP_URL",
-  "PAYSTACK_SECRET_KEY",
-  "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
@@ -15,6 +13,11 @@ const REQUIRED_ENV = [
   "EVOLUTION_API_URL",
   "EVOLUTION_API_KEY",
   "N8N_TIKCHOP_EVOLUTION_WEBHOOK_URL",
+];
+
+const ONLINE_PAYMENT_ENV = [
+  "PAYSTACK_SECRET_KEY",
+  "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY",
 ];
 
 const DB_CHECKS = [
@@ -105,6 +108,9 @@ function statusLine(ok, label, detail = "") {
 }
 
 function getPaymentMode(env) {
+  if (String(env.NEXT_PUBLIC_TIKCHOP_ONLINE_PAYMENTS_ENABLED || "").toLowerCase() !== "true") {
+    return "off";
+  }
   const key = env.PAYSTACK_SECRET_KEY || env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "";
   if (/live/i.test(key)) return "live";
   if (/test/i.test(key)) return "test";
@@ -114,12 +120,14 @@ function getPaymentMode(env) {
 function getVisionProviders(env) {
   return [
     env.GEMINI_API_KEY ? "gemini" : "",
+    env.OPENROUTER_API_KEY ? "openrouter" : "",
     env.OPENAI_API_KEY ? "openai" : "",
-    env.OPENROUTER_API_KEY && env.OPENROUTER_VISION_MODEL ? "openrouter" : "",
   ].filter(Boolean);
 }
 
 const env = loadEnv();
+const onlinePayments = String(env.NEXT_PUBLIC_TIKCHOP_ONLINE_PAYMENTS_ENABLED || "").toLowerCase() === "true";
+const REQUIRED_ENV = onlinePayments ? [...BASE_REQUIRED_ENV, ...ONLINE_PAYMENT_ENV] : BASE_REQUIRED_ENV;
 
 console.log("Tikchop readiness check");
 console.log("-----------------------");
@@ -131,14 +139,26 @@ for (const name of REQUIRED_ENV) {
   statusLine(ok, `env ${name}`);
 }
 
-statusLine(getPaymentMode(env) === "live", "paiement live", `mode ${getPaymentMode(env)}`);
+if (onlinePayments) {
+  statusLine(getPaymentMode(env) === "live", "paiement live", `mode ${getPaymentMode(env)}`);
+} else {
+  statusLine(true, "paiement local", "Wave, Orange, MTN et paiement a la livraison");
+}
 
 const visionProviders = getVisionProviders(env);
-const preferredVisionProvider = String(env.AI_VISION_PROVIDER || "").trim().toLowerCase();
-const preferredVisionReady = !preferredVisionProvider || visionProviders.includes(preferredVisionProvider);
+const preferredVisionProviders = String(env.AI_VISION_PROVIDER || "")
+  .toLowerCase()
+  .split(/[,\s>]+/)
+  .map((provider) => provider.trim())
+  .filter(Boolean);
+const missingPreferredProviders = preferredVisionProviders.filter((provider) => !visionProviders.includes(provider));
 statusLine(visionProviders.length > 0, "IA analyse photo", visionProviders.length ? `active: ${visionProviders.join(", ")}` : "aucun provider");
-if (preferredVisionProvider) {
-  statusLine(preferredVisionReady, `provider IA prefere ${preferredVisionProvider}`, preferredVisionReady ? "pret" : "variable ou modele manquant, fallback automatique");
+if (preferredVisionProviders.length > 0) {
+  statusLine(
+    missingPreferredProviders.length === 0,
+    `ordre IA prefere ${preferredVisionProviders.join(", ")}`,
+    missingPreferredProviders.length === 0 ? "pret" : `manquant: ${missingPreferredProviders.join(", ")}`,
+  );
 }
 
 if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {

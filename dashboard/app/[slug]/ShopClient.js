@@ -18,6 +18,7 @@ import {
   ReceiptText,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   ShoppingBag,
   Sparkles,
   Store,
@@ -75,8 +76,30 @@ function getDirectPaymentInstruction(seller, selectedPayment, amountToPay, deliv
   return `${method}: payez ${amountText} directement au ${phone}, puis envoyez la preuve sur WhatsApp.${deliveryText}`;
 }
 
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800";
+const FALLBACK_IMAGE = "";
 const EXTRA_IMAGES_PATTERN = /\n?\[\[TIKCHOP_EXTRA_IMAGES:([^\]]*)\]\]/i;
+const CLOUDINARY_CARD_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_520,h_640/f_auto,q_auto:eco";
+const CLOUDINARY_FEATURED_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_460,h_560/f_auto,q_auto:eco";
+const CLOUDINARY_DETAIL_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_900,h_680/f_auto,q_auto:good";
+const CLOUDINARY_THUMB_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_128,h_128/f_auto,q_auto:eco";
+
+function getCloudinaryOptimizedUrl(src, transform) {
+  const value = String(src || "").trim();
+  if (!value || !transform || !value.includes("/image/upload/")) return value;
+
+  const marker = "/image/upload/";
+  const markerIndex = value.indexOf(marker);
+  const prefix = value.slice(0, markerIndex + marker.length);
+  const rest = value.slice(markerIndex + marker.length);
+  const versionMatch = rest.match(/\/?v\d+\//);
+
+  if (!versionMatch || versionMatch.index === undefined) {
+    return `${prefix}${transform}/${rest}`;
+  }
+
+  const versionStart = versionMatch.index + (versionMatch[0].startsWith("/") ? 1 : 0);
+  return `${prefix}${transform}/${rest.slice(versionStart)}`;
+}
 
 function getCleanProductDescription(description) {
   return String(description || "").replace(EXTRA_IMAGES_PATTERN, "").trim();
@@ -123,6 +146,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
   const initialPaymentOptions = getSellerAcceptedPaymentOptions(seller);
   const initialPaymentMethod = getSellerDefaultPaymentMethod(seller, initialPaymentOptions.map((option) => option.value));
   const [query, setQuery] = useState("");
+  const [priceSort, setPriceSort] = useState("default");
   const [isOwnerView, setIsOwnerView] = useState(false);
   const [category, setCategory] = useState("Tout");
   const [selectedProduct, setSelectedProduct] = useState(() => (
@@ -155,12 +179,22 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return products.filter((product) => {
+    const matchingProducts = products.filter((product) => {
       const matchesSearch = !normalizedQuery || `${product.name} ${getCleanProductDescription(product.description)}`.toLowerCase().includes(normalizedQuery);
       const matchesCategory = category === "Tout" || productCategory(product) === category;
       return matchesSearch && matchesCategory;
     });
-  }, [category, products, query]);
+
+    if (priceSort === "low") {
+      return [...matchingProducts].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    }
+
+    if (priceSort === "high") {
+      return [...matchingProducts].sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    }
+
+    return matchingProducts;
+  }, [category, priceSort, products, query]);
 
   const cartItems = useMemo(() => {
     return Object.entries(cart)
@@ -185,6 +219,11 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
   const availableProductsLabel = `${availableProducts} article${availableProducts > 1 ? "s" : ""}`;
   const shopReady = availableProducts > 0;
   const singleProductLayout = filteredProducts.length === 1;
+  const featuredProducts = filteredProducts
+    .filter((product) => String(product?.image_url || "").trim())
+    .sort((a, b) => Number(b.stock_quantity || 0) - Number(a.stock_quantity || 0))
+    .slice(0, 8);
+  const gridProducts = filteredProducts;
   const paymentOptions = useMemo(() => getSellerAcceptedPaymentOptions(seller), [seller]);
   const effectivePaymentMethod = paymentOptions.some((option) => option.value === paymentMethod)
     ? paymentMethod
@@ -367,38 +406,32 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       <section className="shop-topbar sticky top-0 z-40 -mx-4 px-4 py-3 md:mx-0 md:rounded-[24px] md:px-4 md:py-3.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[var(--text-main)] font-display text-[0.72rem] font-extrabold text-white shadow-[var(--shadow-sm)] md:h-11 md:w-11 md:rounded-[15px] overflow-hidden">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[0.72rem] font-black text-[var(--primary)] shadow-[0_8px_18px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/7 md:h-12 md:w-12">
               {seller.logo_url ? (
                 <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
               ) : (
                 seller.name?.slice(0, 2).toUpperCase() || "TC"
               )}
-              <span className={`absolute -right-1 -top-1 h-3 w-3 rounded-full border-[1.5px] border-white ${shopReady ? "bg-[var(--primary-bright)]" : "bg-orange-400"}`} />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-[0.95rem] font-extrabold text-[var(--text-main)] md:text-base">{seller.name}</h1>
-              <p className="mt-0.5 flex items-center gap-1.5 truncate text-[0.65rem] font-semibold text-[var(--text-dim)]">
-                <span className={`inline-block h-1.5 w-1.5 rounded-full ${shopReady ? "bg-[var(--primary-bright)]" : "bg-orange-400"}`} />
-                {shopReady ? `${availableProductsLabel} disponible${availableProducts > 1 ? "s" : ""}` : "Préparation en cours"}
+              <h1 className="truncate text-[1.1rem] font-black leading-5 text-[var(--text-main)] md:text-2xl">{seller.name}</h1>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[0.68rem] font-bold leading-3 text-[var(--primary)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+                Boutique ouverte
               </p>
             </div>
           </div>
-          {cartCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className="relative flex h-11 min-w-11 items-center justify-center gap-2 rounded-[16px] bg-[var(--text-main)] px-3 text-sm font-extrabold text-white shadow-[var(--shadow-sm)] active:scale-[0.97] transition"
-              aria-label="Voir le panier"
-            >
-              <ShoppingBag size={18} />
-              <span>{cartCount}</span>
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[var(--primary-bright)] px-1 text-[0.56rem] font-extrabold text-[#06100a]">{cartCount}</span>
-            </button>
-          ) : (
-            <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1.5 text-[0.66rem] font-extrabold text-[var(--primary)] ring-1 ring-[rgba(0,143,90,0.1)]">
-              Gratuit
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/7 active:scale-[0.97]"
+            aria-label="Voir le panier"
+          >
+            <ShoppingBag size={19} />
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-[#fbf9f4] bg-[var(--primary-bright)] px-1 text-[0.52rem] font-black text-[#06100a]">
+              {cartCount}
             </span>
-          )}
+          </button>
         </div>
       </section>
 
@@ -408,7 +441,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
         </div>
       )}
 
-      <main className="shop-main pt-3 md:pt-5">
+      <main className="shop-main pt-5 md:pt-5">
         {products.length === 0 ? (
           <section className="mt-1 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]">
             <EmptyShopState seller={seller} isOwnerView={isOwnerView} />
@@ -417,75 +450,68 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           <div className="md:grid md:grid-cols-[minmax(0,1fr)_360px] md:items-start md:gap-6">
             <div className="min-w-0">
               {/* Hero boutique compact et épuré style Aynid */}
-              <section className="shop-hero relative overflow-hidden rounded-[26px] p-4 text-white shadow-[var(--shadow-lg)] md:rounded-[32px] md:p-6">
-                {/* Bande couleur en haut */}
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] to-[#008f5a]" />
-                
-                <div className="relative z-10">
-                  {/* Badge boutique */}
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-[0.08em] text-[var(--primary-bright)]">
-                      <Sparkles size={11} />
-                      Boutique {seller.name}
+              <section className="space-y-4">
+                <div className="flex min-h-[56px] items-center gap-3 rounded-[28px] bg-white px-4 text-[var(--text-main)] shadow-[0_4px_40px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.035)]">
+                  <Search className="shrink-0 text-[var(--primary)]" size={22} />
+                  <input
+                    value={query.trimStart()}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Rechercher un article..."
+                    className="min-w-0 flex-1 bg-transparent text-base font-semibold text-[var(--text-main)] outline-none placeholder:font-semibold placeholder:text-[#8b9a92]"
+                  />
+                  {query ? (
+                    <button type="button" onClick={() => setQuery("")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2fbf6] text-[var(--text-dim)]" aria-label="Effacer la recherche">
+                      <X size={16} />
+                    </button>
+                  ) : (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2fbf6] text-[var(--primary)]">
+                      <Sparkles size={17} />
                     </span>
-                    {deliveryZones.length > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white/8 px-2.5 py-1 text-[0.62rem] font-bold text-white/70">
-                        <Truck size={11} />
-                        {deliveryZones.length} zones
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Titre principal ultra concis */}
-                  <h2 className="mt-3 font-display text-[1.45rem] font-extrabold leading-[1.5rem] text-white md:mt-4 md:text-4xl md:leading-tight">
-                    Choisissez,<br className="md:hidden" /> commandez,<br className="md:hidden" /> recevez.
-                  </h2>
-
-                  {/* Barre de recherche flottante */}
-                  <div className="mt-3.5 flex min-h-[50px] items-center gap-3 rounded-[18px] bg-white px-3.5 text-[var(--text-main)] shadow-[0_8px_24px_rgba(0,0,0,0.14)] md:mt-4">
-                    <Search className="shrink-0 text-[var(--primary)]" size={18} />
-                    <input
-                      value={query.trimStart()}
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder={`Chercher dans ${seller.name}...`}
-                      className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[var(--text-main)] outline-none placeholder:font-normal placeholder:text-[var(--outline)]"
-                    />
-                    {query && (
-                      <button type="button" onClick={() => setQuery("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)] transition hover:bg-gray-100" aria-label="Effacer la recherche">
-                        <X size={14} />
+                  )}
+                </div>
+                <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[rgba(7,18,13,0.08)] bg-white text-[var(--primary)]">
+                    <SlidersHorizontal size={16} />
+                  </span>
+                  <div className="flex min-w-0 gap-2">
+                    {[
+                      { value: "default", label: "Defaut" },
+                      { value: "low", label: "Moins cher" },
+                      { value: "high", label: "Plus cher" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setPriceSort(option.value)}
+                        className={`min-h-[40px] shrink-0 rounded-full border-2 px-4 text-[0.72rem] font-black transition active:scale-[0.97] ${
+                          priceSort === option.value
+                            ? "border-[var(--primary)] bg-[var(--primary)] text-white shadow-[0_10px_22px_rgba(0,143,90,0.18)]"
+                            : "border-[rgba(7,18,13,0.08)] bg-white text-[var(--text-dim)]"
+                        }`}
+                      >
+                        <span className="block truncate">{option.label}</span>
                       </button>
-                    )}
+                    ))}
                   </div>
-
-                  {/* Trust rail mobile compact */}
-                  <ShopMobileTrustRail availableProducts={availableProducts} deliveryZones={deliveryZones} paymentLabels={paymentLabels} />
                 </div>
               </section>
 
               {/* Filtre catégories - horizontal scroll épuré */}
-              <section className="mt-3 rounded-[22px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.3)] md:mt-4 md:rounded-[26px] md:p-4">
-                <div className="mb-3 flex items-center justify-between gap-2 px-0.5">
-                  <h3 className="text-sm font-black text-[var(--text-main)]">
-                    {filteredProducts.length} article{filteredProducts.length > 1 ? "s" : ""}
-                  </h3>
-                  {query && (
-                    <button onClick={() => setQuery("")} className="text-[0.68rem] font-bold text-[var(--primary)] underline" type="button">Effacer filtre</button>
-                  )}
-                </div>
-                <div className="no-scrollbar -mx-3 flex gap-1.5 overflow-x-auto px-3 pb-0.5 md:-mx-4 md:px-4">
+              <section className="mt-5 md:mt-4">
+                <div className="no-scrollbar mx-0 flex max-w-full gap-3 overflow-x-auto px-0 pb-2 md:-mx-2 md:px-2">
                   {categories.map((item) => (
                     <button
                       key={item.value}
                       type="button"
                       onClick={() => setCategory(item.value)}
-                      className={`inline-flex min-h-[36px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[0.8rem] font-extrabold transition active:scale-[0.97] md:min-h-[40px] md:px-4 ${
+                      className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 text-[0.72rem] font-black transition active:scale-[0.97] ${
                         item.value === category
-                          ? "bg-[var(--text-main)] text-white shadow-sm"
-                          : "bg-[var(--surface-soft)] text-[var(--text-main)] hover:bg-gray-100"
+                          ? "bg-[var(--primary)] text-white shadow-[0_10px_22px_rgba(0,143,90,0.18)]"
+                          : "bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(7,18,13,0.025)] ring-1 ring-[rgba(7,18,13,0.045)]"
                       }`}
                     >
                       {item.label}
-                      <span className={`rounded-full px-1.5 py-0.5 text-[0.62rem] ${item.value === category ? "bg-white/15 text-white" : "bg-white text-[var(--primary)]"}`}>
+                      <span className={`rounded-full px-2 py-1 text-[0.58rem] ${item.value === category ? "bg-white/18 text-white" : "bg-[#f2fbf6] text-[var(--primary)]"}`}>
                         {item.value === "Tout" ? products.length : products.filter((product) => productCategory(product) === item.value).length}
                       </span>
                     </button>
@@ -493,24 +519,43 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
                 </div>
               </section>
 
-              <section className="mt-3 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
+              <section className="mt-8 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
                 {filteredProducts.length > 0 ? (
-                  <div className={`grid gap-2.5 md:gap-3 xl:grid-cols-3 ${
-                    singleProductLayout
-                      ? "grid-cols-1 justify-items-center sm:grid-cols-2"
-                      : "grid-cols-2 sm:grid-cols-3"
-                  }`}>
-                    {filteredProducts.map((product) => (
-                      <div key={product.id} className={singleProductLayout ? "w-full max-w-[360px] sm:max-w-none" : "w-full"}>
-                        <ProductTile
-                          product={product}
-                          quantity={cart[product.id] || 0}
-                          onOpen={() => setSelectedProduct(product)}
-                          onAdd={() => addToCart(product)}
-                          onMinus={() => decrement(product.id)}
-                        />
+                  <div className="space-y-3">
+                    {featuredProducts.length > 0 && (
+                      <FeaturedProductsCarousel
+                        products={featuredProducts}
+                        cart={cart}
+                        onOpen={setSelectedProduct}
+                        onAdd={addToCart}
+                        onMinus={decrement}
+                      />
+                    )}
+                    {gridProducts.length > 0 && (
+                      <div className="flex items-center justify-between px-1 pt-3">
+                        <h3 className="font-display text-2xl font-black leading-7 text-[var(--text-main)]">Tous les produits</h3>
+                        {query && (
+                          <button onClick={() => setQuery("")} className="text-xs font-black text-[var(--primary)]" type="button">Tout voir</button>
+                        )}
                       </div>
-                    ))}
+                    )}
+                    <div className={`grid gap-4 md:gap-5 xl:grid-cols-3 ${
+                      singleProductLayout
+                        ? "grid-cols-1 justify-items-center sm:grid-cols-2"
+                        : "grid-cols-2 sm:grid-cols-3"
+                    }`}>
+                      {gridProducts.map((product) => (
+                        <div key={product.id} className={singleProductLayout ? "w-full max-w-[360px] sm:max-w-none" : "w-full"}>
+                          <ProductTile
+                            product={product}
+                            quantity={cart[product.id] || 0}
+                            onOpen={() => setSelectedProduct(product)}
+                            onAdd={() => addToCart(product)}
+                            onMinus={() => decrement(product.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-[24px] bg-white p-10 text-center shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.3)]">
@@ -728,22 +773,22 @@ function ShopMobileTrustRail({ availableProducts, deliveryZones, paymentLabels }
     <div className="relative z-10 mt-2.5 space-y-1.5 md:hidden">
       <div className="grid grid-cols-3 gap-1.5">
         {chips.map((chip) => (
-          <div key={chip.label} className="flex min-w-0 min-h-[38px] items-center gap-1.5 rounded-full bg-white/10 px-1.5 ring-1 ring-white/10">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary-bright)] text-[#06100a]">
+          <div key={chip.label} className="flex min-w-0 min-h-[38px] items-center gap-1.5 rounded-full bg-white px-1.5 ring-1 ring-[rgba(7,18,13,0.06)]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-white">
               {chip.icon}
             </span>
-            <span className="block min-w-0 text-[0.56rem] font-extrabold leading-3 text-white/76">{chip.label}</span>
+            <span className="block min-w-0 text-[0.56rem] font-extrabold leading-3 text-[var(--text-main)]">{chip.label}</span>
           </div>
         ))}
       </div>
-      <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
+      <div className="flex max-w-full flex-wrap gap-1.5 overflow-hidden pb-0.5">
         {cashOnDelivery && (
           <span className="shrink-0 rounded-full bg-[var(--primary-bright)] px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[#06100a]">
             Paiement a la livraison
           </span>
         )}
-        {paymentLabels.slice(0, 5).map((option) => (
-          <span key={option.value} className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[var(--text-main)]">
+        {paymentLabels.slice(0, 2).map((option) => (
+          <span key={option.value} className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[var(--text-main)] ring-1 ring-[rgba(7,18,13,0.06)]">
             {option.shortLabel || option.label}
           </span>
         ))}
@@ -795,7 +840,7 @@ function DesktopCartDock({ cartItems, cartTotal, displayedDeliveryFee, orderGran
           cartItems.slice(0, 4).map(({ product, quantity }) => (
             <div key={product.id} className="flex items-center gap-3 rounded-[18px] bg-[var(--surface-soft)] p-2">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-white">
-                <SafeProductImage src={product.image_url} alt={product.name} sizes="48px" className="object-cover" />
+                <SafeProductImage src={product.image_url} alt={product.name} sizes="48px" className="object-cover" transform={CLOUDINARY_THUMB_TRANSFORM} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-extrabold text-[var(--text-main)]">{product.name}</p>
@@ -839,33 +884,141 @@ function DesktopCartDock({ cartItems, cartTotal, displayedDeliveryFee, orderGran
   );
 }
 
+function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <h3 className="font-display text-2xl font-black leading-7 text-[var(--text-main)]">Populaire</h3>
+        </div>
+        <span className="rounded-full bg-white px-4 py-2 text-[0.68rem] font-black text-[var(--text-dim)] shadow-[0_8px_18px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.055)]">
+          Swipe
+        </span>
+      </div>
+
+      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-8">
+        {products.map((product) => {
+          const stock = Number(product.stock_quantity || 0);
+          const quantity = cart[product.id] || 0;
+
+          return (
+            <article
+              key={product.id}
+              className="relative w-[280px] shrink-0 snap-center overflow-hidden rounded-[32px] bg-white p-4 shadow-[0_20px_40px_rgba(7,18,13,0.045)] ring-1 ring-[rgba(7,18,13,0.045)] md:w-[320px]"
+            >
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpen(product)}
+                onKeyDown={(event) => event.key === "Enter" && onOpen(product)}
+                className="block w-full text-left"
+              >
+                <div className="relative h-[300px] overflow-hidden rounded-[24px] bg-[#f0eee9]">
+                  <SafeProductImage
+                    src={product.image_url}
+                    alt={product.name}
+                    sizes="280px"
+                    className="object-cover transition duration-700 active:scale-105"
+                    transform={CLOUDINARY_FEATURED_TRANSFORM}
+                  />
+                  <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#07120d] shadow-sm">
+                    En stock
+                  </span>
+                </div>
+                <div className="flex min-h-[72px] items-end justify-between gap-3 pt-4">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-base font-bold leading-5 text-[var(--text-main)]">
+                      {product.name}
+                    </h3>
+                    <p className="mt-1 font-display text-[0.78rem] font-black text-[var(--text-dim)]">
+                      {formatPrice(product.price)}
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <CartControl
+                      quantity={quantity}
+                      stock={stock}
+                      onAdd={() => onAdd(product)}
+                      onMinus={() => onMinus(product.id)}
+                      compact
+                    />
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function FeaturedProductCard({ product, quantity, onOpen, onAdd, onMinus }) {
+  const stock = Number(product.stock_quantity || 0);
+  const category = productCategory(product);
+  const displayCategory = category === "Tout" ? "Article" : category;
+
+  return (
+    <article className="overflow-hidden rounded-[32px] bg-white shadow-[0_20px_48px_rgba(7,18,13,0.10)] ring-1 ring-[rgba(7,18,13,0.06)]">
+      <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="relative block w-full text-left">
+        <div className="relative aspect-[0.92/1] overflow-hidden bg-[#edf6f1] md:aspect-[16/9]">
+          <SafeProductImage
+            src={product.image_url}
+            alt={product.name}
+            sizes="(max-width: 768px) 100vw, 720px"
+            className="object-cover"
+            transform={CLOUDINARY_DETAIL_TRANSFORM}
+          />
+          <span className="absolute left-4 top-4 rounded-full bg-white/92 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--primary)] shadow-sm backdrop-blur">
+            Populaire
+          </span>
+          <span className="absolute right-4 top-4 rounded-full bg-[#07120d] px-3.5 py-2 text-[0.7rem] font-black text-white shadow-sm">
+            {stock > 0 ? `${stock} dispo` : "Indispo"}
+          </span>
+        </div>
+        <div className="flex items-end justify-between gap-3 px-4 pb-4 pt-3">
+          <div className="min-w-0">
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--primary)]">
+              {displayCategory}
+            </p>
+            <h3 className="mt-1 line-clamp-2 font-display text-[1.45rem] font-black leading-7 text-[var(--text-main)]">
+              {product.name}
+            </h3>
+            <p className="mt-1.5 font-display text-[1.35rem] font-black text-[var(--primary)]">
+              {formatPrice(product.price)}
+            </p>
+          </div>
+          <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} large />
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
   const stock = Number(product.stock_quantity || 0);
   const lowStock = stock > 0 && stock < 4;
   const extraImageCount = getExtraProductImages(product.description).length;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-[20px] bg-white shadow-[0_2px_16px_rgba(13,23,18,0.07)] ring-1 ring-[rgba(191,206,197,0.35)] transition active:scale-[0.98] md:rounded-[24px] md:hover:-translate-y-0.5 md:hover:shadow-[0_8px_28px_rgba(13,23,18,0.12)]">
+    <article className="group flex flex-col overflow-hidden rounded-[24px] bg-white p-3 shadow-[0_10px_30px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.045)] transition active:scale-[0.98] md:hover:-translate-y-0.5">
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="block w-full text-left">
         {/* Image */}
-        <div className="relative aspect-square overflow-hidden bg-[var(--surface-mid)] md:aspect-[4/5]">
+        <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f0eee9]">
           <SafeProductImage
             src={product.image_url}
             alt={product.name}
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition duration-500 group-active:scale-105 md:group-hover:scale-[1.04]"
+            transform={CLOUDINARY_CARD_TRANSFORM}
           />
           {/* Gradient bas */}
-          <span className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
+          <span className="hidden" />
           
           {/* Badge catégorie */}
-          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[0.58rem] font-extrabold text-[var(--text-main)] shadow-sm backdrop-blur-sm">
-            {productCategory(product)}
-          </span>
-
           {/* Stock faible */}
           {lowStock && (
-            <span className="absolute right-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[0.58rem] font-extrabold text-white shadow-sm">
+            <span className="absolute right-2 top-2 rounded-full bg-white/92 px-2 py-0.5 text-[0.5rem] font-black text-amber-600 shadow-sm">
               Bientôt fini
             </span>
           )}
@@ -885,28 +1038,17 @@ function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
           )}
 
           {/* Bouton panier flottant en bas à droite */}
-          <div className="absolute bottom-2 right-2">
-            <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} compact />
-          </div>
         </div>
 
         {/* Infos produit */}
-        <div className="flex flex-grow flex-col gap-1.5 p-2.5 md:p-3">
-          <h3 className="text-[0.8rem] font-extrabold leading-[1.1rem] text-[var(--text-main)] line-clamp-2 md:text-[0.88rem] md:leading-5">
-            {product.name}
-          </h3>
-          <div className="flex items-center justify-between gap-1">
-            <p className="font-display text-[1rem] font-extrabold leading-none text-[var(--primary)] md:text-[1.05rem]">{formatPrice(product.price)}</p>
-            {stock > 0 ? (
-              <p className="rounded-full bg-[var(--surface-soft)] px-1.5 py-0.5 text-[0.58rem] font-extrabold text-[var(--text-dim)]">
-                {stock} dispo
-              </p>
-            ) : (
-              <p className="rounded-full bg-red-50 px-1.5 py-0.5 text-[0.58rem] font-extrabold text-red-500">
-                Indispo
-              </p>
-            )}
+        <div className="flex flex-grow items-start justify-between gap-2 pt-3">
+          <div className="min-w-0 pr-1">
+            <h3 className="line-clamp-2 text-sm font-bold leading-tight text-[var(--text-main)] md:text-[0.95rem] md:leading-5">
+              {product.name}
+            </h3>
+            <p className="mt-1 font-display text-[0.72rem] font-black leading-none text-[var(--text-dim)] md:text-[1.05rem]">{formatPrice(product.price)}</p>
           </div>
+          <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} compact />
         </div>
       </div>
     </article>
@@ -917,13 +1059,13 @@ function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
 function CartControl({ quantity, stock, large = false, compact = false, onAdd, onMinus }) {
   if (quantity > 0) {
     return (
-      <div className={`flex items-center gap-2 rounded-full bg-[var(--primary)] px-2 text-white shadow-sm ${large ? "h-12" : compact ? "h-9" : "h-10"}`}>
+      <div className={`flex items-center gap-1 rounded-full bg-[var(--primary)] px-1.5 text-white shadow-sm ${large ? "h-12" : compact ? "h-10" : "h-10"}`}>
         <button type="button" onClick={(event) => { event.stopPropagation(); onMinus(); }} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10" aria-label="Retirer">
-          <Minus size={14} />
+          <Minus size={13} />
         </button>
-        <span className="text-sm font-bold">{quantity}</span>
+        <span className="text-xs font-bold">{quantity}</span>
         <button type="button" onClick={(event) => { event.stopPropagation(); onAdd(); }} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10" aria-label="Ajouter">
-          <Plus size={14} />
+          <Plus size={13} />
         </button>
       </div>
     );
@@ -938,13 +1080,13 @@ function CartControl({ quantity, stock, large = false, compact = false, onAdd, o
         large
           ? "h-12 w-12 bg-[var(--primary)] text-white shadow-lg disabled:bg-[var(--surface-mid)]"
           : compact
-            ? "h-10 min-w-[5.7rem] gap-1.5 bg-[var(--text-main)] px-3 text-white shadow-lg disabled:bg-[var(--surface-mid)]"
+            ? "h-10 w-10 rounded-full bg-[var(--primary)] text-white shadow-[0_8px_18px_rgba(0,143,90,0.22)] disabled:bg-[var(--surface-mid)]"
             : "h-11 min-w-[5.25rem] gap-1 bg-[var(--text-main)] px-3 text-white disabled:bg-[var(--surface-mid)]"
       }`}
       aria-label="Ajouter"
     >
-      <Plus size={large ? 22 : 17} />
-      {!large && <span className="text-xs font-extrabold">Ajouter</span>}
+      <Plus size={large ? 22 : compact ? 18 : 17} />
+      {!large && !compact && <span className="text-xs font-extrabold">Ajouter</span>}
     </button>
   );
 }
@@ -965,6 +1107,7 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus }) {
             alt={product.name}
             sizes="430px"
             className="object-cover"
+            transform={CLOUDINARY_DETAIL_TRANSFORM}
           />
           <span className="absolute left-3 top-3 rounded-full bg-white/94 px-3 py-1 text-xs font-extrabold text-[var(--text-main)] shadow-sm">
             {stock > 0 ? `Stock ${stock}` : "Rupture"}
@@ -984,7 +1127,7 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus }) {
                   }`}
                   aria-label={`Voir photo ${index + 1}`}
                 >
-                  <SafeProductImage src={image} alt="" sizes="56px" className="object-cover" />
+                  <SafeProductImage src={image} alt="" sizes="56px" className="object-cover" transform={CLOUDINARY_THUMB_TRANSFORM} />
                 </button>
               ))}
             </div>
@@ -1152,6 +1295,7 @@ function CartSheet({
                           alt={product.name}
                           sizes="48px"
                           className="object-cover"
+                          transform={CLOUDINARY_THUMB_TRANSFORM}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1526,8 +1670,24 @@ function OrderSuccessSheet({ order, sellerSlug, onClose }) {
   );
 }
 
-function SafeProductImage({ src, alt, sizes, className }) {
-  const [imageSrc, setImageSrc] = useState(src || FALLBACK_IMAGE);
+function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
+  const initialSrc = getCloudinaryOptimizedUrl(src, transform);
+  const [imageSrc, setImageSrc] = useState(initialSrc);
+
+  useEffect(() => {
+    setImageSrc(getCloudinaryOptimizedUrl(src, transform));
+  }, [src, transform]);
+
+  if (!imageSrc) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[linear-gradient(145deg,#edf6f1,#fffdf8)] text-[var(--primary)]">
+        <ShoppingBag size={30} />
+        <span className="mt-2 max-w-[80%] truncate text-xs font-black uppercase tracking-[0.08em] text-[var(--text-dim)]">
+          {alt || "Article"}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <Image
@@ -1537,7 +1697,7 @@ function SafeProductImage({ src, alt, sizes, className }) {
       sizes={sizes}
       className={className}
       unoptimized
-      onError={() => setImageSrc(FALLBACK_IMAGE)}
+      onError={() => setImageSrc("")}
     />
   );
 }
