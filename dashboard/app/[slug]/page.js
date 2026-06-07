@@ -5,12 +5,40 @@ import { supabaseAdmin } from "../../lib/supabase-admin";
 
 export const revalidate = 60;
 
+const PUBLIC_SELLER_SELECT = [
+  "id",
+  "name",
+  "slug",
+  "phone_number",
+  "owner_user_id",
+  "brand_color",
+  "logo_url",
+  "delivery_enabled",
+  "pickup_enabled",
+  "fixed_delivery_fee",
+  "delivery_payment_timing",
+  "accepted_payment_methods",
+  "default_payment_method",
+  "payout_phone",
+].join(", ");
+
+const PUBLIC_PRODUCT_SELECT = [
+  "id",
+  "seller_id",
+  "name",
+  "description",
+  "price",
+  "stock_quantity",
+  "image_url",
+  "created_at",
+].join(", ");
+
 async function getSellerData(slug) {
   const supabase = supabaseAdmin;
 
   const { data: seller, error } = await supabase
     .from("sellers")
-    .select("*")
+    .select(PUBLIC_SELLER_SELECT)
     .eq("slug", slug)
     .single();
 
@@ -18,7 +46,7 @@ async function getSellerData(slug) {
 
   let { data: products, error: productsError } = await supabase
     .from("products")
-    .select("*")
+    .select(PUBLIC_PRODUCT_SELECT)
     .eq("seller_id", seller.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
@@ -26,7 +54,7 @@ async function getSellerData(slug) {
   if (productsError && /is_active|schema cache|column/i.test(productsError.message || "")) {
     const fallback = await supabase
       .from("products")
-      .select("*")
+      .select(PUBLIC_PRODUCT_SELECT)
       .eq("seller_id", seller.id)
       .order("created_at", { ascending: false });
     products = fallback.data;

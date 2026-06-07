@@ -2903,8 +2903,55 @@ export async function getDashboardData(slug, accessToken) {
     throw new Error("Supabase admin client not initialized.");
   }
 
-  const seller = await requireSellerBySlug(slug, accessToken, "id");
+  const seller = await requireSellerBySlug(slug, accessToken, "id, slug");
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const sellerStateQuery = () => supabaseAdmin
+    .from("sellers")
+    .select("whatsapp_provider, whatsapp_status, evolution_instance, payout_status, payout_network, payout_phone, payout_bank_name, paystack_subaccount_code")
+    .eq("id", seller.id)
+    .maybeSingle()
+    .then((result) => (/whatsapp_status|evolution_instance|payout_status|payout_network|payout_phone|payout_bank_name|paystack_subaccount_code|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result));
+
+  const [{ data: fastStats, error: fastStatsError }, { data: fastSellerState }] = await Promise.all([
+    supabaseAdmin
+      .rpc("get_seller_dashboard_stats", {
+        p_seller_id: seller.id,
+        p_seller_slug: seller.slug,
+        p_week_ago: weekAgo,
+      })
+      .then((result) => (/get_seller_dashboard_stats|schema cache|function/i.test(result.error?.message || "") ? { data: null, error: result.error } : result)),
+    sellerStateQuery(),
+  ]);
+
+  if (!fastStatsError && fastStats) {
+    return {
+      stats: {
+        sales: Number(fastStats.sales || 0),
+        orders: Number(fastStats.order_count || 0),
+        products: Number(fastStats.product_count || 0),
+        messagesReceived: Number(fastStats.order_count || 0),
+        confirmedOrders: Number(fastStats.confirmed_order_count || 0),
+        clientsFollowedUp: Number(fastStats.followup_count || 0),
+        weeklyClientsHandled: Number(fastStats.weekly_order_count || 0),
+        pendingOrders: Number(fastStats.pending_order_count || 0),
+        paidOrders: Number(fastStats.paid_order_count || 0),
+        preparedOrders: Number(fastStats.prepared_order_count || 0),
+        deliveredOrders: Number(fastStats.delivered_order_count || 0),
+        whatsappStatus: fastSellerState?.whatsapp_status || "unknown",
+        whatsappConnected: fastSellerState?.whatsapp_provider === "tikchop_standard"
+          || fastSellerState?.whatsapp_status === "standard_active"
+          || fastSellerState?.whatsapp_status === "connected"
+          || fastSellerState?.whatsapp_status === "open",
+        evolutionInstance: fastSellerState?.evolution_instance || "",
+        payoutStatus: fastSellerState?.payout_status || (fastSellerState?.paystack_subaccount_code ? "paystack_ready" : fastSellerState?.payout_phone ? "direct_ready" : "not_configured"),
+        payoutReady: Boolean(fastSellerState?.paystack_subaccount_code || fastSellerState?.payout_status === "paystack_ready" || fastSellerState?.payout_phone),
+        payoutNetwork: fastSellerState?.payout_network || "",
+        payoutBankName: fastSellerState?.payout_bank_name || "",
+      },
+      recentOrders: Array.isArray(fastStats.recent_orders) ? fastStats.recent_orders : [],
+    };
+  }
 
   const [
     { count: productCount },
@@ -2951,12 +2998,7 @@ export async function getDashboardData(slug, accessToken) {
     .reduce((total, order) => total + Number(order.total_amount || 0) + Number(order.delivery_fee || 0), 0);
 
   const [{ data: sellerState }, { count: followupCount }] = await Promise.all([
-    supabaseAdmin
-      .from("sellers")
-      .select("whatsapp_provider, whatsapp_status, evolution_instance, payout_status, payout_network, payout_phone, payout_bank_name, paystack_subaccount_code")
-      .eq("id", seller.id)
-      .maybeSingle()
-      .then((result) => (/whatsapp_status|evolution_instance|payout_status|payout_network|payout_phone|payout_bank_name|paystack_subaccount_code|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result)),
+    sellerStateQuery(),
     supabaseAdmin
       .from("messages")
       .select("*", { count: "exact", head: true })

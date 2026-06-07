@@ -40,6 +40,23 @@ const cspDirectives = [
 const nextConfig = {
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: supabaseHost,
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+    formats: ["image/avif", "image/webp"],
+  },
   async headers() {
     return [
       {

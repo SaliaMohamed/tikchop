@@ -20,7 +20,6 @@ export default function ProductCard({ product, sellerPhone }) {
           fill
           sizes="(max-width: 768px) 50vw, 25vw"
           className="object-cover"
-          unoptimized
         />
         <div className="absolute left-2 top-2">
           {stock > 0 && stock < 5 && (

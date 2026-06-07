@@ -1696,7 +1696,6 @@ function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
       fill
       sizes={sizes}
       className={className}
-      unoptimized
       onError={() => setImageSrc("")}
     />
   );
