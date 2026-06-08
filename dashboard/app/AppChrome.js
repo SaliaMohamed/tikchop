@@ -61,9 +61,9 @@ const sellerNavGroups = [
 const mobilePageMeta = {
   "/add-product": { title: "Publier", subtitle: "Photos et prix" },
   "/products": { title: "Articles", subtitle: "Stock et boutique" },
-  "/orders": { title: "Commandes", subtitle: "A preparer et livrer" },
-  "/messages": { title: "Clients", subtitle: "Lire et repondre" },
-  "/crm": { title: "Clients", subtitle: "Relances simples" },
+  "/orders": { title: "Ventes", subtitle: "" },
+  "/messages": { title: "Clients", subtitle: "" },
+  "/crm": { title: "Clients", subtitle: "" },
   "/whatsapp": { title: "WhatsApp", subtitle: "Assistant de vente" },
   "/delivery-settings": { title: "Livraison", subtitle: "Zones et livreurs" },
   "/payment-settings": { title: "Paiement", subtitle: "Choix vendeur" },
@@ -141,7 +141,7 @@ export default function AppChrome({ children }) {
           <Link href="/dashboard" className="nav-link">Accueil</Link>
           <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/products" className="nav-link">Articles</Link>
-          <Link href="/orders" className="nav-link">Commandes</Link>
+          <Link href="/orders" className="nav-link">Ventes</Link>
           <Link href="/messages" className="nav-link">Clients</Link>
           <Link href="/app" className="nav-link">Plus</Link>
         </div>

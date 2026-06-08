@@ -43,6 +43,7 @@ import {
   getOrderCaseNotes,
   getOrderResponseTemplates,
 } from "../../lib/customer-response-playbook";
+import { TkScreen } from "../components/TikchopUI";
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("fr-FR")} F`;
@@ -62,20 +63,20 @@ function getSimpleOrderStatus(order) {
 const statusLabels = {
   ALL: "Toutes",
   WORK: "Ouvertes",
-  PENDING: "Nouvelles",
+  PENDING: "New",
   PAID: "Colis",
   DELIVERY: "Livreur",
   PREPARED: "Livreur",
   IN_DELIVERY: "En route",
-  DELIVERED: "Finies",
+  DELIVERED: "OK",
   CANCELLED: "Annulees",
 };
 
 const orderTabs = [
-  { key: "PENDING", label: "Nouvelles" },
-  { key: "PAID", label: "Colis" },
-  { key: "DELIVERY", label: "Livreur" },
-  { key: "DELIVERED", label: "Finies" },
+  { key: "PENDING", label: "New", icon: MessageCircle },
+  { key: "PAID", label: "Colis", icon: Package },
+  { key: "DELIVERY", label: "Livreur", icon: Truck },
+  { key: "DELIVERED", label: "OK", icon: CheckCircle2 },
 ];
 
 const statusHints = {
@@ -112,7 +113,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingNote, setLoadingNote] = useState("Chargement des commandes...");
+  const [loadingNote, setLoadingNote] = useState("Chargement des ventes...");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filter, setFilter] = useState("PENDING");
   const [demoBusy, setDemoBusy] = useState(false);
@@ -123,13 +124,13 @@ export default function OrdersPage() {
       setOrders([]);
       setDrivers([]);
       setLoading(false);
-      setError("Aucune boutique active. Reconnectez-vous pour ouvrir vos commandes.");
+      setError("Reconnectez-vous pour voir vos ventes.");
       return;
     }
 
     try {
       setLoading(true);
-      setLoadingNote("Chargement des commandes...");
+      setLoadingNote("Chargement des ventes...");
       setError("");
       const slowTimer = setTimeout(() => {
         setLoadingNote("La connexion est lente. On essaie encore quelques secondes...");
@@ -138,7 +139,7 @@ export default function OrdersPage() {
       try {
         const token = await withTimeout(
           getSellerAccessToken(),
-          "Session trop lente a verifier. Actualisez ou reconnectez-vous.",
+          "Reconnectez-vous pour voir vos ventes.",
           8000,
         );
 
@@ -167,10 +168,10 @@ export default function OrdersPage() {
       console.warn("Orders unavailable:", err);
       const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
       setError(sessionExpired
-        ? "Session vendeur expiree. Reconnectez-vous pour voir vos commandes."
+        ? "Reconnectez-vous pour voir vos ventes."
         : friendlyError(err, "Commandes non chargees. Verifiez la connexion puis actualisez."));
     } finally {
-      setLoadingNote("Chargement des commandes...");
+      setLoadingNote("Chargement des ventes...");
       setLoading(false);
     }
   }, [seller.slug]);
@@ -309,12 +310,7 @@ export default function OrdersPage() {
   const toFinishCount = readyCount + deliveryCount;
   const doneCount = orders.filter((order) => getSimpleOrderStatus(order) === "DELIVERED").length;
   const nextOrder = getNextOrder(orders);
-  const sessionExpired = /Session vendeur expiree/i.test(error);
-  const headerCount = activeCount + toFinishCount;
-  const headerLabel = headerCount > 0
-    ? `${headerCount} vente${headerCount > 1 ? "s" : ""}`
-    : "Ventes";
-
+  const sessionExpired = /reconnectez-vous/i.test(error);
   function getFilterCount(item) {
     if (item === "WORK") return activeCount + toFinishCount;
     if (item === "PENDING") return verifyCount;
@@ -327,55 +323,53 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
-      <header className="flex items-center justify-between pb-5 pt-6">
-        <div>
-          <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">Aujourd'hui</p>
-          <h1 className="mt-1 font-display text-3xl font-black leading-none text-[#07120d]">{headerLabel}</h1>
-        </div>
-        <button 
-          onClick={fetchOrders} 
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#07120d]/5 text-[#07120d] active:scale-95 transition"
-          aria-label="Actualiser"
-        >
-          <RefreshCw size={16} strokeWidth={1.5} className={loading ? "animate-spin text-[#008f5a]" : ""} />
-        </button>
-      </header>
-
+    <TkScreen className="md:max-w-[1180px] md:px-8">
       <nav className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-2">
         <div className="flex min-w-max gap-2">
-          {orderTabs.map(({ key, label }) => (
+          {orderTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`min-h-[42px] rounded-full px-4 text-sm font-black transition ${
+              aria-label={label}
+              title={label}
+              className={`flex min-h-[44px] items-center gap-2 rounded-full px-3 text-sm font-black transition ${
                 filter === key ? "bg-[#07120d] text-white" : "bg-white text-[#4e6055] ring-1 ring-[#07120d]/8"
               }`}
             >
-              {label}
-              <span className={`ml-1 text-[10px] font-black ${filter === key ? "text-[#39f58e]" : "text-[#008f5a]"}`}>
+              <Icon size={16} />
+              <span className={filter === key ? "" : "sr-only"}>{label}</span>
+              <span className={`text-[10px] font-black ${filter === key ? "text-[#39f58e]" : "text-[#008f5a]"}`}>
                 {getFilterCount(key)}
               </span>
             </button>
           ))}
+          <button
+            type="button"
+            onClick={fetchOrders}
+            aria-label="Actualiser"
+            title="Actualiser"
+            className="flex min-h-[44px] w-12 items-center justify-center rounded-full bg-white text-[#07120d] ring-1 ring-[#07120d]/8"
+          >
+            <RefreshCw size={17} strokeWidth={2.35} className={loading ? "animate-spin text-[#008f5a]" : ""} />
+          </button>
         </div>
       </nav>
 
       {error && (
-        <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-xs font-semibold text-amber-900 ring-1 ring-amber-100/50">
+        <div className="mt-4 rounded-[22px] bg-[#fff8dd] p-3 text-xs font-black text-[#5b3b00] ring-1 ring-[#ffd966]/45">
           <p>{error}</p>
           <div className="mt-3 flex gap-2">
             {sessionExpired && (
-              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-[#07120d] px-4 text-xs font-black text-white no-underline">
-                Se reconnecter
+              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[#07120d] px-4 text-xs font-black text-white no-underline">
+                Connexion
               </Link>
             )}
             <button
               type="button"
               onClick={fetchOrders}
-              className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
+              className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white px-4 text-xs font-black text-[#5b3b00] ring-1 ring-[#ffd966]/60"
             >
-              Reessayer
+              Actualiser
             </button>
           </div>
         </div>
@@ -433,7 +427,7 @@ export default function OrdersPage() {
           onManualReply={handleManualReply}
         />
       )}
-    </div>
+    </TkScreen>
   );
 }
 
@@ -474,9 +468,6 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         <ReceiptText size={28} />
       </div>
       <h3 className="font-display text-xl font-bold text-[#07120d]">Aucune vente</h3>
-      <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
-        Partagez votre boutique pour recevoir les premieres ventes.
-      </p>
       
       <button
         type="button"
@@ -484,7 +475,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)]"
       >
         <Share2 size={16} />
-        {copied ? "Lien copie !" : "Partager ma boutique"}
+        {copied ? "Copie" : "Partager"}
       </button>
 
       <button
@@ -493,7 +484,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         disabled={creating}
         className="mt-4 text-xs font-bold text-[#07120d]/40 hover:text-[#07120d]/80 py-1 transition disabled:opacity-60"
       >
-        {creating ? "Creation en cours..." : "Creer une vente test"}
+        {creating ? "..." : "Vente test"}
       </button>
     </div>
   );
@@ -553,8 +544,8 @@ function OrderCard({ order, onClick, index = 0 }) {
           <p className="mt-1 text-sm font-semibold text-[#4e6055] truncate">
             {demoOrder ? "Client test" : primaryLine}
           </p>
-          <p className="mt-0.5 text-xs font-bold text-[#4e6055]/50">
-            {itemCount} article{itemCount > 1 ? "s" : ""} - {dateStr}
+          <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-[#4e6055]/50">
+            <Package size={12} /> {itemCount} · {dateStr}
           </p>
         </div>
         <div className="text-right shrink-0">

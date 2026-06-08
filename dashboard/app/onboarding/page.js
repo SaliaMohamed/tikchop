@@ -671,7 +671,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className={`app-shell onboarding-shell ${step === 0 ? "pb-0 md:min-h-0 md:w-full md:max-w-[1320px]" : "min-h-screen"}`}>
+    <div className={`app-shell onboarding-shell ${step === 0 ? "pb-0 md:min-h-0 md:w-full md:max-w-[1320px]" : step === 1 ? "min-h-screen !max-w-none !w-full" : "min-h-screen"}`}>
       <main className={`${step === 0 ? "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))] md:flex md:min-h-[calc(100vh-1.5rem)] md:items-center md:justify-center md:px-4 md:py-2" : "mt-0 pt-[calc(0.45rem+env(safe-area-inset-top,0px))]"} ${isLoginStep ? "flex min-h-[calc(100vh-4.9rem)] flex-col justify-center gap-2.5 md:min-h-[calc(100vh-1.5rem)]" : "space-y-2.5"} ${footerSpacerClass}`}>
         {step === 0 && (
           <OnboardingLandingHero onStart={() => {
@@ -1154,58 +1154,60 @@ export default function OnboardingPage() {
 function OnboardingLandingHero({ onStart, onSignIn }) {
   return (
     <>
-    <section className="flex h-[100dvh] flex-col justify-between p-5 text-white md:hidden bg-[#07120d] relative overflow-hidden">
-      <div className="absolute inset-0 bg-radial-gradient from-[rgba(0,143,90,0.15)] to-transparent pointer-events-none" />
-      <header className="flex items-center justify-between z-10">
+    <section className="relative flex h-[100dvh] flex-col justify-between overflow-hidden bg-[#fbf9f4] p-5 text-[#07120d] md:hidden">
+      <div className="pointer-events-none absolute -right-20 top-20 h-56 w-56 rounded-full bg-[#39f58e]/20 blur-3xl" />
+      <header className="relative z-10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#008f5a] font-display text-base font-black text-[#fbf9f4]" aria-hidden="true">T</span>
-          <span className="font-display text-lg font-bold tracking-tight text-[#fbf9f4]">Tikchop</span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#07120d] font-display text-base font-black text-[#39f58e]" aria-hidden="true">T</span>
+          <span className="font-display text-xl font-black tracking-tight">Tikchop</span>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-[#fbf9f4]/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--primary-bright)]">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--primary-bright)]" />
-          Live
-        </span>
+        <button
+          type="button"
+          onClick={onSignIn}
+          className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#07120d] shadow-[0_10px_24px_rgba(7,18,13,0.08)] ring-1 ring-[#07120d]/8"
+        >
+          Connexion
+        </button>
       </header>
 
-      <div className="my-auto py-3 flex flex-col gap-4 z-10">
-        <div className="relative mx-auto h-[175px] w-full max-w-[340px] overflow-hidden rounded-[20px]">
+      <div className="relative z-10 my-auto flex flex-col gap-4 py-3">
+        <div className="relative mx-auto h-[210px] w-full max-w-[350px] overflow-hidden rounded-[32px] bg-[#07120d] shadow-[0_26px_58px_rgba(7,18,13,0.18)]">
           <img
             src="/landing/fatim-jeune-friperie.jpg"
             alt="Vendre en ligne"
             className="h-full w-full object-cover object-[center_22%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07120d] via-[#07120d]/40 to-transparent" />
-          <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl bg-[#07120d]/80 px-2.5 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm">
-            <Bot size={13} className="text-[#008f5a]" />
-            Assistant 24h/24
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07120d]/84 via-[#07120d]/20 to-transparent" />
+          <div className="absolute left-4 top-4 rounded-full bg-[#07120d]/86 px-3 py-1.5 text-xs font-black text-[#39f58e] backdrop-blur-md">
+            24h/24
+          </div>
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-[24px] bg-white/94 p-2 shadow-[0_16px_34px_rgba(0,0,0,0.16)] backdrop-blur-md">
+            <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
+            <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
+            <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
+            <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
           </div>
         </div>
 
-        <div className="text-center">
-          <h1 className="font-display text-[1.75rem] font-bold leading-[2.1rem] tracking-tight text-[#fbf9f4]">
-            Laissez WhatsApp<br />vendre à votre place.
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#008f5a]">Boutique en ligne + WhatsApp</p>
+          <h1 className="mt-2 max-w-[350px] font-display text-[2.35rem] font-black leading-[0.98] tracking-tight text-[#07120d]">
+            Vendez sans perdre vos messages.
           </h1>
-          <p className="mt-2 text-xs font-semibold leading-relaxed text-[#fbf9f4]/75 px-4">
-            Ajoutez vos articles. Tikchop répond à vos clients, encaisse Wave/Orange et gère la livraison.
+          <p className="mt-3 max-w-[330px] text-sm font-bold leading-6 text-[#4a6055]">
+            Publiez vos articles, recevez les ventes et suivez les clients depuis votre téléphone.
           </p>
-        </div>
-
-        <div className="flex items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4]/5 p-2">
-          <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
-          <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
-          <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
-          <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 z-10">
+      <div className="relative z-10 flex flex-col gap-2.5">
         <Link
           href="/onboarding?step=account"
           onClick={(event) => {
             event.preventDefault();
             onStart();
           }}
-          className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-[#fbf9f4] no-underline transition active:scale-[0.98]"
+          className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#008f5a] text-base font-black text-white no-underline shadow-[0_18px_34px_rgba(0,143,90,0.24)] transition active:scale-[0.98]"
         >
           Créer ma boutique
           <ArrowRight size={17} />
@@ -1213,7 +1215,7 @@ function OnboardingLandingHero({ onStart, onSignIn }) {
         <button
           type="button"
           onClick={onSignIn}
-          className="text-center text-xs font-bold text-[#fbf9f4]/60 hover:text-white py-1"
+          className="py-1 text-center text-xs font-black text-[#07120d]/55"
         >
           J&apos;ai déjà un compte
         </button>
@@ -1581,12 +1583,12 @@ function AuthTrustPill({ icon, label }) {
 
 function ProductProfilePicker({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-white p-3 shadow-[0_4px_18px_rgba(13,23,18,0.04)] ring-1 ring-[#07120d]/7">
-      <div className="mb-2 flex items-center gap-2">
+    <div className="rounded-[18px] bg-[#fbf9f4] p-2.5 ring-1 ring-[#07120d]/8">
+      <div className="mb-1.5 flex items-center gap-2">
         <Package size={15} className="text-[#008f5a]" />
-        <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#4e6055]">Vous vendez</p>
+        <p className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-[#4e6055]">Type d'articles</p>
       </div>
-      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+      <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
         {PRODUCT_PROFILES.map((profile) => {
           const active = value === profile.id;
           return (
@@ -1594,7 +1596,7 @@ function ProductProfilePicker({ value, onChange }) {
               key={profile.id}
               type="button"
               onClick={() => onChange(profile.id)}
-              className={`min-h-[40px] shrink-0 rounded-full px-3 text-xs font-black transition active:scale-[0.98] ${
+              className={`min-h-[36px] shrink-0 rounded-full px-3 text-xs font-black transition active:scale-[0.98] ${
                 active
                   ? "bg-[#07120d] text-white"
                   : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
@@ -1631,75 +1633,86 @@ function MobileAccountPanel({
   const isPhone = accountMethod === "PHONE";
 
   return (
-    <section className="md:hidden">
-      <div className="flex min-h-[100dvh] flex-col justify-between pb-4 bg-[#fbf9f4]">
-        {/* Premium Header Block */}
-        <div>
-          <div className="relative overflow-hidden bg-gradient-to-b from-[#07120d] to-[#122b1f] px-5 pb-6 pt-[calc(1.2rem+env(safe-area-inset-top,0px))] text-white shadow-md">
-            {/* Background glowing pattern */}
-            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[#008f5a]/10 blur-3xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#008f5a] font-display text-base font-black text-white shadow-lg" aria-hidden="true">T</span>
-                <strong className="font-display text-lg font-black tracking-tight">Tikchop</strong>
-              </div>
-              <Link
-                href="/"
-                aria-label="Fermer"
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/80 transition active:bg-white/20 no-underline"
-              >
-                <X size={16} />
-              </Link>
-            </div>
-
-            <div className="mt-5">
-              <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">Tikchop Seller</p>
-              <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white">
-                {isSignIn ? "Bon retour parmi nous" : "Créer ma boutique en 10s"}
-              </h1>
-              <p className="mt-1 text-xs text-white/60 font-semibold leading-relaxed">
-                {isSignIn ? "Connectez-vous pour gérer votre boutique mobile." : "Pas besoin d'ordinateur. Tout se gère depuis WhatsApp."}
-              </p>
-            </div>
-
-            {/* Trust Signal Badges */}
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <AuthTrustPill icon="⚡" label="En 10 secondes" />
-              <AuthTrustPill icon="📱" label="100% Mobile" />
-              <AuthTrustPill icon="🆓" label="Gratuit & sans carte" />
-            </div>
+    <section className="md:hidden -mt-[calc(0.45rem+env(safe-area-inset-top,0px))] ml-[calc(50%-50vw)] w-screen overflow-x-hidden bg-[#fbf9f4]">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col bg-[#fbf9f4] px-5 pb-[calc(0.85rem+env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+        <header className="flex items-center justify-between">
+          <Link
+            href="/"
+            aria-label="Retour"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#07120d] no-underline shadow-[0_10px_22px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/8"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#07120d] font-display text-sm font-black text-[#39f58e]" aria-hidden="true">T</span>
+            <strong className="font-display text-lg font-black text-[#07120d]">Tikchop</strong>
           </div>
+          <span className="h-11 w-11" aria-hidden="true" />
+        </header>
 
-          {/* Form Content */}
-          <div className="px-5 pt-5">
-            {/* Tab switchers */}
-            <div className="flex rounded-2xl bg-[#07120d]/5 p-0.5 ring-1 ring-[#07120d]/5">
+        <div className="mt-5">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#008f5a]">
+            {isSignIn ? "Accès vendeur" : "Nouvelle boutique"}
+          </p>
+          <h1 className="mt-1.5 font-display text-[1.78rem] font-black leading-[1.03] tracking-tight text-[#07120d]">
+            {isSignIn ? "Connectez-vous." : "Créez votre accès."}
+          </h1>
+          <p className="mt-1.5 max-w-[300px] text-[0.82rem] font-bold leading-5 text-[#4a6055]">
+            {isSignIn ? "Numéro WhatsApp ou email." : "Un compte, puis votre boutique."}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 rounded-[20px] bg-white p-1 shadow-[0_12px_28px_rgba(7,18,13,0.05)] ring-1 ring-[#07120d]/8">
+          <button
+            type="button"
+            onClick={() => {
+              setAccountMode("SIGN_UP");
+              switchAccountMethod("PHONE");
+            }}
+            className={`min-h-[42px] rounded-[16px] text-sm font-black transition ${
+              !isSignIn ? "bg-[#07120d] text-white shadow-[0_12px_22px_rgba(7,18,13,0.16)]" : "text-[#07120d]/50"
+            }`}
+          >
+            Créer
+          </button>
+          <button
+            type="button"
+            onClick={() => setAccountMode("SIGN_IN")}
+            className={`min-h-[42px] rounded-[16px] text-sm font-black transition ${
+              isSignIn ? "bg-[#07120d] text-white shadow-[0_12px_22px_rgba(7,18,13,0.16)]" : "text-[#07120d]/50"
+            }`}
+          >
+            Connexion
+          </button>
+        </div>
+
+        <div className="mt-3 rounded-[24px] bg-white p-3.5 shadow-[0_16px_38px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/8">
+          <div className="flex rounded-[18px] bg-[#07120d]/5 p-1">
               <button
                 type="button"
                 onClick={() => switchAccountMethod("PHONE")}
-                className={`flex-1 flex min-h-[38px] items-center justify-center gap-1.5 rounded-[14px] text-xs font-bold transition-all duration-250 ${
+                className={`flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-[14px] text-xs font-black transition-all duration-250 ${
                   isPhone ? "bg-white text-[#07120d] shadow-sm" : "text-[#07120d]/60"
                 }`}
               >
                 <MessageCircle size={14} />
-                Numéro WhatsApp
+                WhatsApp
               </button>
               <button
                 type="button"
                 onClick={() => switchAccountMethod("EMAIL")}
-                className={`flex-1 flex min-h-[38px] items-center justify-center gap-1.5 rounded-[14px] text-xs font-bold transition-all duration-250 ${
+                className={`flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-[14px] text-xs font-black transition-all duration-250 ${
                   !isPhone ? "bg-white text-[#07120d] shadow-sm" : "text-[#07120d]/60"
                 }`}
               >
                 <Mail size={14} />
-                Adresse Email
+                Email
               </button>
             </div>
 
-            <div className="mt-5 space-y-3.5">
+            <div className="mt-3 space-y-2.5">
               {sellerAccount?.id && (
-                <div className="rounded-[22px] bg-white p-4 shadow-[0_4px_18px_rgba(13,23,18,0.06)] ring-1 ring-[#07120d]/5">
+                <div className="rounded-[22px] bg-[#ecfff4] p-4 ring-1 ring-[#008f5a]/18">
                   <p className="text-xs font-bold text-[#07120d] text-center">Compte déjà connecté</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
@@ -1734,13 +1747,10 @@ function MobileAccountPanel({
                     }}
                     autoComplete="tel"
                   />
-                  <p className="mt-1.5 px-1 text-[0.68rem] font-bold text-[#07120d]/40">
-                    Sera utilisé comme identifiant de votre boutique.
-                  </p>
                 </div>
               ) : (
                 <AuthInput
-                  label="Adresse Email"
+                  label="Email"
                   icon={<Mail size={17} />}
                   value={form.email}
                   onChange={(event) => updateField("email", event.target.value)}
@@ -1788,19 +1798,17 @@ function MobileAccountPanel({
                 autoComplete={isSignIn ? "current-password" : "new-password"}
               />
             </div>
-          </div>
         </div>
 
-        {/* Action Panel */}
-        <div className="mt-6 px-5 space-y-3">
+        <div className="mt-4 space-y-2.5">
           <button
             type="button"
             disabled={!canContinue || saving}
             onClick={onPrimary}
-            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#008f5a] text-sm font-extrabold text-white shadow-lg shadow-[#008f5a]/20 hover:bg-[#007a4d] disabled:bg-[#07120d]/20 disabled:shadow-none disabled:text-[#07120d]/40 transition active:scale-[0.98]"
+            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#008f5a] text-base font-black text-white shadow-[0_16px_30px_rgba(0,143,90,0.22)] transition active:scale-[0.98] disabled:bg-[#07120d]/16 disabled:text-[#07120d]/35 disabled:shadow-none"
           >
             {saving ? <Loader2 className="animate-spin" size={16} /> : null}
-            {saving ? (isSignIn ? "Connexion en cours..." : "Création de la boutique...") : (isSignIn ? "Se connecter" : "Lancer ma boutique")}
+            {saving ? (isSignIn ? "Connexion..." : "Création...") : (isSignIn ? "Se connecter" : "Créer ma boutique")}
           </button>
 
           {googleAuthEnabled && (
@@ -1832,7 +1840,7 @@ function MobileAccountPanel({
             </p>
           )}
 
-          <div className="pt-2 text-center">
+          <div className="pt-1 text-center">
             <button
               type="button"
               onClick={() => {
@@ -1843,9 +1851,9 @@ function MobileAccountPanel({
                   setAccountMode("SIGN_IN");
                 }
               }}
-              className="text-xs font-black text-[#008f5a] hover:text-[#007a4d]"
+              className="text-xs font-black text-[#008f5a]"
             >
-              {isSignIn ? "Créer une nouvelle boutique →" : "J'ai déjà un compte vendeur →"}
+              {isSignIn ? "Créer une boutique" : "J'ai déjà un compte"}
             </button>
           </div>
         </div>
@@ -2120,12 +2128,12 @@ function AuthMethodButton({ active, icon, title, text, onClick }) {
 function AuthInput({ className = "", label, icon, ...props }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1.5 block text-sm font-extrabold text-[var(--text-main)]">{label}</span>
-      <div className="flex min-h-[58px] items-center gap-3 rounded-[18px] border border-[var(--outline)]/65 bg-white px-4 shadow-[0_12px_28px_rgba(13,23,18,0.06)] transition focus-within:border-[var(--primary)] focus-within:shadow-[0_0_0_4px_rgba(0,143,90,0.12)]">
+      <span className="mb-1 block text-[0.84rem] font-extrabold text-[var(--text-main)]">{label}</span>
+      <div className="flex min-h-[52px] items-center gap-3 rounded-[17px] border border-[var(--outline)]/60 bg-white px-4 shadow-[0_10px_22px_rgba(13,23,18,0.045)] transition focus-within:border-[var(--primary)] focus-within:shadow-[0_0_0_4px_rgba(0,143,90,0.12)]">
         <span className="shrink-0 text-[var(--primary)]">{icon}</span>
         <input
           {...props}
-          className="min-w-0 flex-1 bg-transparent text-base font-extrabold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
+          className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-extrabold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
         />
       </div>
     </label>
@@ -2135,10 +2143,10 @@ function AuthInput({ className = "", label, icon, ...props }) {
 function PhoneInput({ className = "", label, icon, value, onValueChange, autoComplete = "tel" }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1.5 block text-sm font-extrabold text-[var(--text-main)]">{label}</span>
-      <div className="flex min-h-[58px] items-center gap-2 rounded-[18px] border border-[var(--outline)]/65 bg-white px-3 shadow-[0_12px_28px_rgba(13,23,18,0.06)] transition focus-within:border-[var(--primary)] focus-within:shadow-[0_0_0_4px_rgba(0,143,90,0.12)]">
+      <span className="mb-1 block text-[0.84rem] font-extrabold text-[var(--text-main)]">{label}</span>
+      <div className="flex min-h-[52px] items-center gap-2 rounded-[17px] border border-[var(--outline)]/60 bg-white px-3 shadow-[0_10px_22px_rgba(13,23,18,0.045)] transition focus-within:border-[var(--primary)] focus-within:shadow-[0_0_0_4px_rgba(0,143,90,0.12)]">
         <span className="shrink-0 text-[var(--primary)]">{icon}</span>
-        <span className="flex h-9 shrink-0 items-center rounded-xl bg-[var(--surface-soft)] px-3 text-sm font-black text-[var(--primary)] ring-1 ring-[var(--primary)]/12">
+        <span className="flex h-8 shrink-0 items-center rounded-xl bg-[var(--surface-soft)] px-3 text-sm font-black text-[var(--primary)] ring-1 ring-[var(--primary)]/12">
           +225
         </span>
         <input
@@ -2147,7 +2155,7 @@ function PhoneInput({ className = "", label, icon, value, onValueChange, autoCom
           placeholder="07 00 00 00 00"
           inputMode="tel"
           autoComplete={autoComplete}
-          className="min-w-0 flex-1 bg-transparent text-base font-extrabold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
+          className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-extrabold text-[var(--text-main)] outline-none placeholder:text-[var(--outline)]"
         />
       </div>
     </label>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getDashboardData } from "../actions";
 import { getSellerInitials, useActiveSeller } from "../components/sellerContext";
+import { TkActionCard, TkIconButton, TkMetric, TkPrimary, TkScreen, TkTop } from "../components/TikchopUI";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
 const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
@@ -115,109 +116,88 @@ export default function Dashboard() {
           };
 
   return (
-    <div className="app-shell mx-auto max-w-[430px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-4">
-      <header className="flex items-center justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgb(7_18_13_/_0.14)]">
+    <TkScreen>
+      <TkTop
+        eyebrow="Accueil"
+        title={seller.name || "Boutique"}
+        avatar={(
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgba(7,18,13,0.14)]">
             {seller.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
-            ) : (
-              sellerInitials
-            )}
+            ) : sellerInitials}
           </span>
-          <div className="min-w-0">
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">Accueil</p>
-            <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#07120d]">{seller.name || "Boutique Tikchop"}</h1>
-          </div>
-        </div>
-        <Link
-          href={`/${seller.slug}`}
-          target="_blank"
-          className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#008f5a] shadow-[0_12px_30px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/8"
-          aria-label="Voir la boutique"
-        >
-          <Store size={20} strokeWidth={2.4} />
-          {openOrders > 0 && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-500" />}
-        </Link>
-      </header>
+        )}
+        action={(
+          <TkIconButton
+            href={`/${seller.slug}`}
+            label="Voir boutique"
+            icon={<Store size={20} strokeWidth={2.5} />}
+          />
+        )}
+      />
 
-      <section className="mt-6 overflow-hidden rounded-[30px] bg-white p-4 shadow-[0_18px_50px_rgb(7_18_13_/_0.08)] ring-1 ring-[#07120d]/8">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
-          <div className="min-w-0 pt-1">
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">{mainAction.kicker}</p>
-            <h2 className="mt-2 max-w-[16rem] font-display text-[2rem] font-black leading-[2.1rem] tracking-[-0.03em] text-[#07120d]">
+      <section className="mt-5 rounded-[32px] bg-[#07120d] p-4 text-white shadow-[0_24px_60px_rgba(7,18,13,0.18)]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.15em] text-[#39f58e]">{mainAction.kicker}</p>
+            <h2 className="mt-2 max-w-[15rem] font-display text-[2.15rem] font-black leading-[0.98] tracking-tight text-white">
               {mainAction.title}
             </h2>
           </div>
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[#eafff3] text-[#008f5a] ring-1 ring-[#39f58e]/20">
-            <ShoppingBagIcon />
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] bg-white/10 text-[#39f58e]">
+            <ShoppingBag size={30} strokeWidth={2.1} />
           </span>
         </div>
-        <Link
-          href={mainAction.href}
-          className="mt-5 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-full bg-[#008f5a] px-5 text-base font-black text-white no-underline shadow-[0_18px_36px_rgb(0_143_90_/_0.22)] active:scale-[0.98]"
-        >
-          {mainAction.icon}
-          {mainAction.cta}
-          <ChevronRight size={18} />
-        </Link>
+        <TkPrimary href={mainAction.href} icon={mainAction.icon} label={mainAction.cta} className="mt-5" />
       </section>
 
-      <section className="mt-4 grid grid-cols-3 gap-2.5">
-        <MiniStat value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} />
-        <MiniStat value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} dot={openOrders > 0} />
-        <MiniStat value={stats.whatsappConnected ? "On" : "Off"} label="WhatsApp" icon={<Bot size={15} />} />
+      <section className="mt-3 grid grid-cols-3 gap-2.5">
+        <TkMetric value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} active={hasProducts} />
+        <TkMetric value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} warn={openOrders > 0} />
+        <TkMetric value={stats.whatsappConnected ? "OK" : "Off"} label="WhatsApp" icon={<Bot size={15} />} active={stats.whatsappConnected} />
       </section>
 
-      <section className="mt-7">
-        <div className="mb-3 flex items-center justify-between">
+      <section className="mt-5">
+        <div className="mb-2 flex items-center justify-between">
           <h3 className="font-display text-lg font-black text-[#07120d]">A suivre</h3>
-          {recentOrders.length > 0 && <Link href="/orders" className="text-xs font-black text-[#008f5a] no-underline">Tout voir</Link>}
+          {recentOrders.length > 0 && <Link href="/orders" aria-label="Toutes les ventes" className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#008f5a] no-underline ring-1 ring-[#07120d]/8"><ChevronRight size={17} /></Link>}
         </div>
         {recentOrders.length > 0 && (
           <div className="space-y-2">
             {recentOrders.slice(0, 2).map((order) => {
                 const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
                 return (
-                  <Link
+                  <TkActionCard
                     key={order.id}
                     href="/orders"
-                    className="grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] bg-white p-4 text-[#07120d] no-underline shadow-[0_12px_30px_rgb(7_18_13_/_0.04)] ring-1 ring-[#07120d]/6"
-                  >
-                    <span className="min-w-0">
-                      <strong className="block truncate text-sm font-black">{order.order_ref || order.id?.slice(0, 8).toUpperCase()}</strong>
-                      <small className="text-xs font-semibold text-[#4e6055]/55">{order.customer_phone || "Client WhatsApp"}</small>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <strong className="block text-sm font-black">{money(total)}</strong>
-                      <small className="text-[0.62rem] font-black uppercase text-[#008f5a]">Vente</small>
-                    </span>
-                  </Link>
+                    icon={<ClipboardList size={19} />}
+                    title={order.order_ref || order.id?.slice(0, 8).toUpperCase()}
+                    label={order.customer_phone || "Client"}
+                    value={money(total)}
+                  />
                 );
               })}
           </div>
         )}
         {recentOrders.length === 0 && (
-          <Link
+          <TkActionCard
             href={seller.slug ? `/${seller.slug}` : "/shop-info"}
-            className="grid min-h-[78px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] bg-white p-4 text-[#07120d] no-underline shadow-[0_12px_30px_rgb(7_18_13_/_0.04)] ring-1 ring-[#07120d]/6"
-          >
-            <span className="min-w-0">
-              <strong className="block text-sm font-black">Aucune vente</strong>
-              <small className="block truncate text-xs font-semibold text-[#4e6055]/60">Partagez la boutique.</small>
-            </span>
-            <ChevronRight className="text-[#008f5a]" size={18} />
-          </Link>
+            icon={<Store size={19} />}
+            title="Aucune vente"
+            label="Partager"
+            value=""
+            tone="mint"
+          />
         )}
       </section>
 
       {offlineMode && (
-        <div className="mt-5 rounded-2xl bg-amber-50 p-3 text-center text-xs font-bold text-amber-900 ring-1 ring-amber-100">
-          Connexion lente. Les chiffres peuvent arriver dans quelques secondes.
+        <div className="mt-5 rounded-2xl bg-white p-3 text-center text-xs font-black text-[#07120d]/45 ring-1 ring-[#07120d]/7">
+          Chiffres indisponibles
         </div>
       )}
-    </div>
+    </TkScreen>
   );
 }
 

@@ -378,7 +378,7 @@ function MobileStatusTile({ label, value, active, warn = false, dark = false }) 
 function MobileMenuSection({ title, children }) {
   return (
     <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_18px_44px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/8">
-      <p className="px-4 pb-2 pt-4 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">{title}</p>
+      <p className="px-4 pb-1 pt-4 text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--primary)]">{title}</p>
       <div className="divide-y divide-[#07120d]/8">
         {children}
       </div>
@@ -422,7 +422,8 @@ function MobileMenuItem({ href, icon, title, text, primary = false, warn = false
   return (
     <Link
       href={href}
-      className={`grid min-h-[64px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden px-4 py-3 text-[var(--text-main)] no-underline active:bg-[#f7fbf8] ${
+      aria-label={`${title} ${text || ""}`.trim()}
+      className={`grid min-h-[58px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden px-4 py-2.5 text-[var(--text-main)] no-underline active:bg-[#f7fbf8] ${
         primary
           ? "bg-[#07120d] text-white"
           : warn
@@ -441,7 +442,7 @@ function MobileMenuItem({ href, icon, title, text, primary = false, warn = false
       </span>
       <span className="min-w-0">
         <strong className={`block truncate text-[0.96rem] font-black leading-5 ${primary ? "text-white" : "text-[var(--text-main)]"}`}>{title}</strong>
-        <small className={`mt-0.5 block truncate text-xs font-bold ${primary ? "text-white/62" : "text-[var(--text-dim)]"}`}>{text}</small>
+        <small className={`sr-only ${primary ? "text-white/62" : "text-[var(--text-dim)]"}`}>{text}</small>
       </span>
       <ChevronRight className={`${primary ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"} shrink-0`} size={18} />
     </Link>

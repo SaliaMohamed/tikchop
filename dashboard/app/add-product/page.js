@@ -1079,7 +1079,7 @@ export default function AddProductPage() {
                 onOpenGallery={() => bulkFileInputRef.current?.click()}
                 onRenameAll={reanalyzeAllBulkPhotos}
               />
-            <div className={`rounded-[26px] border border-white/80 bg-white/95 p-4 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.34)] ${
+            <div className={`md:rounded-[26px] md:border md:border-white/80 md:bg-white/95 md:p-4 md:shadow-[var(--shadow-sm)] md:ring-1 md:ring-[rgba(191,206,197,0.34)] ${
               bulkPhotoItems.length === 0 && bulkProducts.length === 0 ? "hidden md:block" : ""
             }`}>
               <div className="hidden items-center gap-3 md:flex">
@@ -1102,7 +1102,7 @@ export default function AddProductPage() {
                   </span>
                   <span>
                     <span className="block">{bulkUploading ? "Envoi des photos..." : "Choisir les photos"}</span>
-                    <span className="block text-xs font-semibold text-white/58">Selection multiple depuis votre appareil</span>
+                    <span className="block text-xs font-semibold text-white/58">Depuis votre téléphone</span>
                   </span>
                 </span>
                 <span className="rounded-full bg-[var(--primary-bright)] px-3 py-1 text-xs font-extrabold text-[var(--text-main)]">Recommande</span>
@@ -1161,7 +1161,7 @@ export default function AddProductPage() {
                       ? getBackgroundProgressLabel(bulkBackgroundProgress, "Nettoyage du lot...")
                       : cleanableBulkPhotos.length > 0
                         ? `Nettoyer le lot (${cleanableBulkPhotos.length})`
-                        : `Lot deja propre (${backgroundCleanedBulkPhotos.length})`}
+                        : `Photos prêtes (${backgroundCleanedBulkPhotos.length})`}
                   </button>
                 )}
               </div>
@@ -1239,14 +1239,14 @@ export default function AddProductPage() {
                     const previousItem = bulkPhotoItems[index - 1] || null;
                     const duplicateHint = getLikelyDuplicateHint(item, previousItem);
                     return (
-                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} rounded-[24px] bg-white p-3 shadow-[0_10px_26px_rgb(7_18_13_/_0.045)] ring-1 ring-[#07120d]/8`}>
+                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} overflow-hidden rounded-[28px] bg-white shadow-[0_18px_42px_rgb(7_18_13_/_0.07)] ring-1 ring-[#07120d]/8 md:rounded-[24px] md:p-3 md:shadow-[0_10px_26px_rgb(7_18_13_/_0.045)]`}>
                       <button
                         type="button"
                         onClick={() => setExpandedBulkItemId((current) => current === item.id ? "" : item.id)}
-                        className="w-full text-left"
+                        className="w-full p-3 text-left md:p-0"
                       >
                         <div className="flex gap-3">
-                          <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-[20px] bg-[var(--surface-mid)]">
+                          <div className="relative h-32 w-28 shrink-0 overflow-hidden rounded-[24px] bg-[var(--surface-mid)] md:h-28 md:w-24 md:rounded-[20px]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={item.preview} alt="" className="h-full w-full object-cover" />
                             {item.uploading && (
@@ -1270,7 +1270,7 @@ export default function AddProductPage() {
                                   {item.name || `Article ${index + 1}`}
                                 </h3>
                                 <p className={`mt-1 text-sm font-extrabold ${item.price ? "text-[var(--primary)]" : "text-[var(--accent)]"}`}>
-                                  {item.price ? formatPrice(item.price) : "Prix a ajouter"}
+                                  {item.price ? formatPrice(item.price) : "Prix"}
                                 </p>
                               </div>
                               <div className="flex flex-col items-end gap-2">
@@ -1282,11 +1282,15 @@ export default function AddProductPage() {
                                 </span>
                               </div>
                             </div>
+                            <div className="mt-3 flex flex-wrap gap-2 md:hidden">
+                              <ItemPill label={`Stock ${item.stock_quantity || 1}`} active />
+                              {item.size ? <ItemPill label={item.size} active /> : null}
+                            </div>
                             <div className="mt-3 hidden flex-wrap gap-2 md:flex">
                               <ItemPill label={item.size ? `Option ${item.size}` : "Option facultative"} active={Boolean(item.size)} />
                               <ItemPill label={`Stock ${item.stock_quantity || 1}`} active />
                               {item.category ? <ItemPill label={item.category} active tone="info" /> : null}
-                              {item.product_keywords ? <ItemPill label="Infos auto" active tone="info" /> : null}
+                              {item.product_keywords ? <ItemPill label="IA" active tone="info" /> : null}
                               {item.image_version === "clean" ? <ItemPill label="Photo claire" active tone="info" /> : null}
                               {item.image_version === "background" ? <ItemPill label="Fond propre" active tone="info" /> : null}
                               {(item.extra_images || []).length > 0 ? <ItemPill label={`+${item.extra_images.length} angle${item.extra_images.length > 1 ? "s" : ""}`} active tone="info" /> : null}
@@ -1298,12 +1302,12 @@ export default function AddProductPage() {
 
                       {expandedBulkItemId === item.id && (
                         <div className="mt-4 space-y-3 border-t border-[var(--outline)]/20 pt-4">
-                          <div className="flex items-center justify-between gap-3 rounded-[20px] bg-[var(--surface-soft)] px-3 py-2">
-                            <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
-                              Fiche {index + 1}
+                          <div className="flex items-center justify-between gap-3 px-1">
+                            <span className="flex h-9 items-center rounded-full bg-[#e9fff1] px-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
+                              #{index + 1}
                             </span>
-                            <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-black text-red-600">
-                              Retirer
+                            <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600" aria-label="Retirer cette photo">
+                              <Trash2 size={17} />
                             </button>
                           </div>
                           <BulkQuickPricePanel
@@ -1314,7 +1318,7 @@ export default function AddProductPage() {
                           />
                           <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#07120d]/7 md:hidden">
                             <label className="block">
-                              <span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.13em] text-[#008f5a]">Nom article</span>
+                              <span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.13em] text-[#008f5a]">Nom</span>
                               <input
                                 value={item.name}
                                 onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
@@ -1439,7 +1443,7 @@ export default function AddProductPage() {
                             className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-extrabold text-white shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]"
                           >
                             <CheckCircle2 size={16} />
-                            Valider cette fiche
+                            Suivant
                             <ArrowRight size={16} />
                           </button>
                           <details className="rounded-2xl bg-[var(--surface-soft)] p-3 md:hidden">
@@ -2623,164 +2627,139 @@ function MobileBulkPrepCard({
   const optionPresets = productProfile?.optionPresets || [];
 
   return (
-    <section className="rounded-[24px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(0,143,90,0.13)] md:hidden">
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e9fff1] text-[var(--primary)]">
-          <ImagePlus size={20} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-black text-[var(--text-main)]">Photos du lot</p>
-          <p className="truncate text-xs font-bold text-[var(--text-dim)]">
-            {hasPhotos ? "Corrigez les fiches une par une" : "Choisissez depuis la galerie"}
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full bg-[#fbf9f4] px-2.5 py-1 text-[0.62rem] font-black text-[#008f5a] ring-1 ring-[#07120d]/7">
-          {productProfile?.shortLabel || "Articles"}
-        </span>
-        {hasPhotos && (
-          <button
-            type="button"
-            onClick={onOpenGallery}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#07120d] text-[var(--primary-bright)]"
-            aria-label="Ajouter des photos"
-          >
-            <ImagePlus size={19} />
-          </button>
+    <section className="relative md:hidden">
+      <div className="rounded-[28px] bg-white p-3 shadow-[0_14px_34px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/7">
+        {!hasPhotos ? (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={onOpenGallery}
+              className="flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[24px] bg-[#07120d] px-4 text-left text-white shadow-[0_16px_34px_rgb(7_18_13_/_0.18)] active:scale-[0.99]"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#39f58e] text-[#07120d]">
+                  <ImagePlus size={23} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-lg font-black">Choisir photos</span>
+                  <span className="mt-0.5 block text-xs font-bold text-white/52">Galerie du téléphone</span>
+                </span>
+              </span>
+              <ArrowRight size={20} className="shrink-0 text-[#39f58e]" />
+            </button>
+
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+              {PRODUCT_PROFILES.map((profile) => {
+                const active = productProfileId === profile.id;
+                return (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    onClick={() => onProfileChange(profile.id)}
+                    className={`min-h-[38px] shrink-0 rounded-full px-3 text-xs font-black ${
+                      active ? "bg-[#008f5a] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+                    }`}
+                  >
+                    {profile.shortLabel || profile.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              <StudioMiniButton icon={<ImagePlus size={17} />} label="Photos" onClick={onOpenGallery} />
+              <StudioMiniButton
+                icon={renamingAll ? <Loader2 className="animate-spin" size={17} /> : <Sparkles size={17} />}
+                label="IA"
+                onClick={onRenameAll}
+                disabled={!canRename || renamingAll}
+                dark
+              />
+              <details className="group">
+                <summary className="flex min-h-[58px] cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-[20px] bg-[#fbf9f4] text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/7">
+                  <ListChecks size={17} className="text-[#008f5a]" />
+                  Type
+                </summary>
+                <div className="absolute left-4 right-4 z-20 mt-2 rounded-[24px] bg-white p-3 shadow-[0_20px_44px_rgb(7_18_13_/_0.16)] ring-1 ring-[#07120d]/8">
+                  <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+                    {PRODUCT_PROFILES.map((profile) => {
+                      const active = productProfileId === profile.id;
+                      return (
+                        <button
+                          key={profile.id}
+                          type="button"
+                          onClick={() => onProfileChange(profile.id)}
+                          className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
+                            active ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+                          }`}
+                        >
+                          {profile.shortLabel || profile.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    value={preset.product_keywords}
+                    onChange={(event) => onChange((current) => ({ ...current, product_keywords: event.target.value }))}
+                    placeholder={`Ex: ${(presets || []).slice(0, 2).join(", ").toLowerCase() || "articles"}`}
+                    className="mt-2 min-h-[46px] w-full rounded-2xl bg-[#fbf9f4] px-3 text-sm font-bold text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                  />
+                  <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                    <input
+                      value={preset.size}
+                      onChange={(event) => onChange((current) => ({ ...current, size: event.target.value }))}
+                      placeholder={productProfile?.sizePlaceholder || "Option"}
+                      className="min-h-[46px] rounded-2xl bg-[#fbf9f4] px-3 text-sm font-bold text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                    />
+                    <button
+                      type="button"
+                      onClick={onApplyIncomplete}
+                      className="min-h-[46px] rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white"
+                    >
+                      OK
+                    </button>
+                  </div>
+                  {optionPresets.length > 0 && (
+                    <div className="mt-2 no-scrollbar flex gap-2 overflow-x-auto pb-1">
+                      {optionPresets.map((label) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => onChange((current) => ({ ...current, size: label }))}
+                          className="shrink-0 rounded-full bg-[#e9fff1] px-3 py-2 text-xs font-black text-[#008f5a]"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </details>
+            </div>
+          </>
         )}
       </div>
-
-      {hasPhotos && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onRenameAll}
-            disabled={!canRename || renamingAll}
-            className="flex min-h-[48px] min-w-0 items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white disabled:opacity-55"
-          >
-            {renamingAll ? <Loader2 className="animate-spin" size={15} /> : <Sparkles size={15} />}
-            <span className="truncate">{renamingAll ? "Analyse..." : "Renommer"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenGallery}
-            className="flex min-h-[48px] min-w-0 items-center justify-center gap-2 rounded-2xl bg-[#e9fff1] px-3 text-xs font-black text-[#008f5a] ring-1 ring-[#008f5a]/10"
-          >
-            <ImagePlus size={15} />
-            <span className="truncate">Ajouter photos</span>
-          </button>
-        </div>
-      )}
-
-      {!hasPhotos && (
-        <div className="mt-3 space-y-3">
-          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {PRODUCT_PROFILES.map((profile) => {
-              const active = productProfileId === profile.id;
-              return (
-                <button
-                  key={profile.id}
-                  type="button"
-                  onClick={() => onProfileChange(profile.id)}
-                  className={`min-h-[38px] shrink-0 rounded-full px-3 text-xs font-black ${
-                    active ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
-                  }`}
-                >
-                  {profile.label}
-                </button>
-              );
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={onOpenGallery}
-            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-4 text-sm font-black text-white"
-          >
-            <ImagePlus size={17} />
-            Ouvrir la galerie
-          </button>
-        </div>
-      )}
-
-      {hasPhotos && (
-      <details className="mt-3 rounded-[20px] bg-[var(--surface-soft)] p-3">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-          <span className="text-sm font-black text-[var(--text-main)]">Aide IA</span>
-          <ChevronDown size={18} className="shrink-0 text-[var(--primary)]" />
-        </summary>
-
-        <div className="mt-3 border-t border-[rgba(0,143,90,0.08)] pt-3">
-          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {PRODUCT_PROFILES.map((profile) => {
-              const active = productProfileId === profile.id;
-              return (
-                <button
-                  key={profile.id}
-                  type="button"
-                  onClick={() => onProfileChange(profile.id)}
-                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
-                    active ? "bg-[#07120d] text-white" : "bg-white text-[var(--text-main)] ring-1 ring-[rgba(0,143,90,0.10)]"
-                  }`}
-                >
-                  {profile.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-2 no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {presets.map((label) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => onChange((current) => ({ ...current, product_keywords: mergeKeywords(current.product_keywords, label) }))}
-                className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[var(--text-main)] ring-1 ring-[rgba(0,143,90,0.10)]"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <input
-            value={preset.product_keywords}
-            onChange={(event) => onChange((current) => ({ ...current, product_keywords: event.target.value }))}
-            placeholder={`Ex: ${(presets || []).slice(0, 3).join(", ").toLowerCase() || "articles"}`}
-            className="mt-2 min-h-[50px] w-full rounded-2xl border border-[rgba(0,143,90,0.12)] bg-white px-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-[var(--primary)]"
-          />
-
-          <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-            <input
-              value={preset.size}
-              onChange={(event) => onChange((current) => ({ ...current, size: event.target.value }))}
-              placeholder={productProfile?.sizePlaceholder || "Option commune"}
-              className="min-h-[48px] rounded-2xl border border-[rgba(0,143,90,0.12)] bg-white px-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-[var(--primary)]"
-            />
-            {hasPhotos && (
-              <button
-                type="button"
-                onClick={onApplyIncomplete}
-                className="min-h-[48px] rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white"
-              >
-                Appliquer
-              </button>
-            )}
-          </div>
-
-          <div className="mt-2 no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {optionPresets.map((label) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => onChange((current) => ({ ...current, size: label }))}
-                className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[var(--primary)] shadow-sm ring-1 ring-[rgba(0,143,90,0.12)]"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </details>
-      )}
     </section>
+  );
+}
+
+function StudioMiniButton({ icon, label, onClick, disabled = false, dark = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-[20px] text-xs font-black transition active:scale-[0.98] disabled:opacity-45 ${
+        dark
+          ? "bg-[#07120d] text-white"
+          : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/7"
+      }`}
+    >
+      <span className={dark ? "text-[#39f58e]" : "text-[#008f5a]"}>{icon}</span>
+      <span className="max-w-full truncate px-1">{label}</span>
+    </button>
   );
 }
 
@@ -2854,15 +2833,15 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
   const total = totalCount || selectedCount || 0;
   const progress = photosDone ? Math.max(8, Math.round((readyCount / Math.max(total || selectedCount, 1)) * 100)) : 0;
   const mobileModes = [
-    { value: "BULK", label: "Lot", icon: <ImagePlus size={17} strokeWidth={2.7} /> },
-    { value: "MANUAL", label: "Simple", icon: <Camera size={17} strokeWidth={2.7} /> },
+    { value: "BULK", label: "Plusieurs", icon: <ImagePlus size={18} strokeWidth={2.8} /> },
+    { value: "MANUAL", label: "Simple", icon: <Camera size={18} strokeWidth={2.8} /> },
   ];
 
   return (
     <section className="md:hidden">
-      <div className="rounded-[26px] bg-white p-3 shadow-[0_10px_28px_rgb(7_18_13_/_0.045)] ring-1 ring-[#07120d]/6">
+      <div className="rounded-[30px] bg-[#07120d] p-3 text-white shadow-[0_22px_48px_rgb(7_18_13_/_0.18)]">
         <div className="flex items-center gap-2">
-          <div className="grid flex-1 grid-cols-2 gap-1 rounded-[18px] bg-[#f7fbf8] p-1 ring-1 ring-[#07120d]/6">
+          <div className="grid flex-1 grid-cols-2 gap-1 rounded-[20px] bg-white/8 p-1 ring-1 ring-white/10">
             {mobileModes.map((option) => {
               const active = mode === option.value;
 
@@ -2875,8 +2854,8 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
                   title={`Mode ${option.label}`}
                   className={`flex min-h-[44px] min-w-0 items-center justify-center gap-2 rounded-[15px] px-2 text-sm font-black transition active:scale-[0.98] ${
                     active
-                      ? "bg-[#008f5a] text-white shadow-[0_8px_18px_rgb(0_143_90_/_0.16)]"
-                      : "bg-transparent text-[#5b615b]"
+                      ? "bg-[#39f58e] text-[#07120d] shadow-[0_12px_28px_rgb(57_245_142_/_0.18)]"
+                      : "bg-transparent text-white/58"
                   }`}
                 >
                   {option.icon}
@@ -2889,24 +2868,25 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
             type="button"
             onClick={assistant.onClick}
             disabled={assistant.disabled}
-            className="flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-[17px] bg-[#008f5a] px-3 text-sm font-black text-white shadow-[0_10px_22px_rgb(0_143_90_/_0.18)] disabled:opacity-60"
+            className="flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-[18px] bg-white px-3 text-sm font-black text-[#07120d] shadow-[0_12px_24px_rgb(0_0_0_/_0.16)] disabled:opacity-60"
           >
             {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
             {canSubmit ? "Publier" : photosDone ? "Suivant" : "Photos"}
           </button>
         </div>
 
-        {photosDone && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between gap-3 text-xs font-black text-[#07120d]">
-              <span>{readyCount}/{total || selectedCount} pret</span>
-              <span className="text-[#008f5a]">{Math.round(progress)}%</span>
-            </div>
-            <div className="mt-2 overflow-hidden rounded-full bg-[#07120d]/7">
-              <span className="block h-2 rounded-full bg-[#008f5a]" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        )}
+        <div className="mt-3 flex items-center justify-between gap-3 px-1">
+          <span className="flex min-w-0 items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-white/52">
+            <Camera size={14} />
+            Articles
+          </span>
+          <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-black text-[#39f58e]">
+            {photosDone ? `${readyCount}/${total || selectedCount}` : "0"}
+          </span>
+        </div>
+        <div className="mt-2 overflow-hidden rounded-full bg-white/10">
+          <span className="block h-2 rounded-full bg-[#39f58e]" style={{ width: `${progress}%` }} />
+        </div>
       </div>
     </section>
   );
@@ -3013,7 +2993,7 @@ function ImageQualitySwitch({
           className="mt-2 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-white px-3 text-xs font-black text-[var(--primary)] ring-1 ring-[rgba(0,143,90,0.14)] disabled:opacity-60"
         >
           {backgroundBusy ? <Loader2 className="animate-spin" size={15} /> : <Sparkles size={15} />}
-          {backgroundAvailable ? "Refaire le fond propre" : "Creer un fond propre"}
+          {backgroundAvailable ? "Refaire" : "Fond propre"}
         </button>
       )}
     </div>
@@ -3023,18 +3003,18 @@ function ImageQualitySwitch({
 function BulkQuickPricePanel({ item, itemFieldCopy, onUpdate, onNext }) {
   const hasPrice = Boolean(normalizeMoneyInput(item.price));
   return (
-    <section className="rounded-[26px] bg-[#fbf7ed] p-3 shadow-[0_16px_36px_rgb(58_47_30_/_0.10)] ring-1 ring-[#e8dcc8]">
+    <section className="rounded-[26px] bg-[#07120d] p-3 text-white shadow-[0_18px_40px_rgb(7_18_13_/_0.18)]">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[#008f5a]">Prix</p>
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-white/48">Prix</p>
           <p className="mt-1 hidden text-xs font-bold leading-4 text-[var(--text-dim)] md:block">Le prix suffit pour publier cette fiche.</p>
         </div>
         {hasPrice ? (
-          <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-[var(--primary)] shadow-sm">
+          <span className="rounded-full bg-[#39f58e] px-3 py-1.5 text-xs font-black text-[#07120d] shadow-sm">
             OK
           </span>
         ) : (
-          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-black text-[var(--accent)]">
+          <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white/60">
             ?
           </span>
         )}
@@ -3045,12 +3025,12 @@ function BulkQuickPricePanel({ item, itemFieldCopy, onUpdate, onNext }) {
           onChange={(event) => onUpdate(item.id, "price", event.target.value)}
           placeholder="15000"
           inputMode="numeric"
-          className="min-h-[60px] w-full rounded-[22px] border border-[#d9ccb9] bg-white px-4 font-display text-2xl font-extrabold text-[#008f5a] outline-none focus:border-[#07120d] focus:shadow-[0_0_0_4px_rgb(5_122_85_/_0.13)]"
+          className="min-h-[60px] w-full rounded-[22px] border border-white/10 bg-white px-4 font-display text-2xl font-extrabold text-[#008f5a] outline-none focus:border-[#39f58e] focus:shadow-[0_0_0_4px_rgb(57_245_142_/_0.16)]"
         />
         <button
           type="button"
           onClick={() => onNext(item.id)}
-          className="flex min-h-[60px] items-center justify-center rounded-[22px] bg-[#07120d] text-[var(--primary-bright)] shadow-[0_14px_30px_rgb(7_18_13_/_0.16)] disabled:opacity-50"
+          className="flex min-h-[60px] items-center justify-center rounded-[22px] bg-[#39f58e] text-[#07120d] shadow-[0_14px_30px_rgb(57_245_142_/_0.18)] disabled:opacity-50"
           disabled={!hasPrice}
           aria-label="Valider cette fiche et passer a la suivante"
         >

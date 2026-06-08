@@ -29,6 +29,9 @@ export async function proxy(request) {
     return NextResponse.redirect(appUrl);
   }
 
+  const uiPreviewBypass = process.env.NODE_ENV === "development"
+    && request.nextUrl.searchParams.get("ui") === "1";
+
   let supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -55,7 +58,7 @@ export async function proxy(request) {
     const { data } = await supabase.auth.getUser()
     const user = data?.user || null;
 
-    if (!user && isSellerRoute(request.nextUrl.pathname)) {
+    if (!user && isSellerRoute(request.nextUrl.pathname) && !uiPreviewBypass) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/onboarding";
       redirectUrl.search = "?mode=signin&method=phone";

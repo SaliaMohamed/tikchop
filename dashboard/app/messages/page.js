@@ -203,7 +203,8 @@ export default function MessagesPage() {
       ));
     } catch (err) {
       console.error("Messages fetch error:", err);
-      setError(friendlyError(err, "Les discussions ne se chargent pas. Reessayez dans quelques secondes."));
+      const message = friendlyError(err, "Reconnectez-vous pour voir vos clients.");
+      setError(/session vendeur/i.test(message) ? "Reconnectez-vous pour voir vos clients." : message);
     } finally {
       setLoading(false);
     }
@@ -321,24 +322,23 @@ export default function MessagesPage() {
       </header>
 
       {(error || notice) && (
-        <div className={`mt-4 rounded-[22px] p-4 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#eafff1] text-[#005f3d] ring-1 ring-emerald-200"}`}>
+        <div className={`mt-3 rounded-[18px] px-3 py-2 text-xs font-black leading-4 ${error ? "bg-[#fff8dd] text-[#5b3b00] ring-1 ring-[#ffd966]/45" : "bg-[#eafff1] text-[#005f3d] ring-1 ring-emerald-200"}`}>
           {error || notice}
         </div>
       )}
 
       <main className="mt-2 grid min-w-0 gap-4 md:mt-4 md:grid-cols-[370px_minmax(0,1fr)]">
         <section className={`${showChatOnMobile ? "hidden md:block" : ""} min-w-0`}>
-          <div className="max-w-full overflow-hidden rounded-[30px] bg-white shadow-[0_12px_32px_rgb(7_18_13_/_0.055)] ring-1 ring-[#07120d]/8">
-            <label className="flex min-h-[52px] items-center gap-2 border-b border-[#07120d]/6 px-4">
+          <div className="space-y-2.5">
+            <label className="flex min-h-[50px] items-center gap-2 rounded-full bg-white px-4 shadow-[0_10px_24px_rgb(7_18_13_/_0.045)] ring-1 ring-[#07120d]/7">
               <Search size={17} className="shrink-0 text-[#008f5a]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/32"
-                placeholder="Chercher un client"
+                placeholder="Rechercher"
               />
             </label>
-            <div className="px-3 py-2">
             <InboxFilterRail
               value={inboxFilter}
               onChange={setInboxFilter}
@@ -349,9 +349,8 @@ export default function MessagesPage() {
                 ORDERS: orderConversationCount,
               }}
             />
-            </div>
 
-            <div className="min-w-0 divide-y divide-[#07120d]/6 border-t border-[#07120d]/6">
+            <div className="min-w-0 overflow-hidden rounded-[26px] bg-white shadow-[0_12px_30px_rgb(7_18_13_/_0.05)] ring-1 ring-[#07120d]/7">
               {loading ? (
                 <LoadingState />
               ) : filteredConversations.length === 0 ? (
@@ -392,28 +391,32 @@ export default function MessagesPage() {
 
 function InboxFilterRail({ value, onChange, counts }) {
   const items = [
-    { key: "ALL", label: "Tous" },
-    { key: "WAITING", label: "Lire" },
-    { key: "HUMAN", label: "Moi" },
-    { key: "ORDERS", label: "Vente" },
+    { key: "ALL", label: "Tous", icon: MessageCircle },
+    { key: "WAITING", label: "Lire", icon: Search },
+    { key: "HUMAN", label: "Moi", icon: PauseCircle },
+    { key: "ORDERS", label: "Vente", icon: ShoppingBag },
   ];
 
   return (
     <div className="grid grid-cols-4 gap-1.5">
       {items.map((item) => {
         const active = value === item.key;
+        const Icon = item.icon;
         return (
           <button
             key={item.key}
             type="button"
             onClick={() => onChange(item.key)}
-            className={`flex min-h-[38px] min-w-0 items-center justify-center gap-1 rounded-[15px] px-1 text-[0.68rem] font-black transition-colors ${
+            aria-label={item.label}
+            title={item.label}
+            className={`flex min-h-[40px] min-w-0 items-center justify-center gap-1 rounded-[15px] px-1 text-[0.66rem] font-black transition-colors ${
               active
                 ? "bg-[#07120d] text-white shadow-[0_10px_20px_rgb(7_18_13_/_0.12)]"
-                : "bg-[#f5fbf7] text-[#07120d] ring-1 ring-[#07120d]/6"
+                : "bg-white text-[#07120d] ring-1 ring-[#07120d]/7"
             }`}
           >
-            <span>{item.label}</span>
+            <Icon size={15} />
+            <span className="min-w-0 truncate">{item.label}</span>
             <span className={`rounded-full px-1 py-0.5 text-[0.55rem] font-black ${active ? "bg-white/18 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
               {counts[item.key] || 0}
             </span>
@@ -440,7 +443,6 @@ function EmptyMessages() {
         <MessageCircle size={26} />
       </span>
       <h2 className="mt-4 font-display text-xl font-black text-[#07120d]">Aucun client</h2>
-      <p className="mt-2 text-sm font-semibold leading-5 text-[#07120d]/50">Les messages arriveront ici.</p>
     </div>
   );
 }
@@ -449,33 +451,36 @@ function ConversationCard({ conversation, active, onClick }) {
   const lastOrder = conversation.last_order;
   const action = getConversationAction(conversation);
   const total = Number(lastOrder?.total_amount || 0) + Number(lastOrder?.delivery_fee || 0);
+  const lastTime = conversation.last_message?.created_at || lastOrder?.created_at || conversation.updated_at;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full px-4 py-3.5 text-left transition-colors active:bg-[#f2fbf6] ${
+      className={`w-full border-b border-[#07120d]/5 px-3.5 py-3 text-left transition-colors last:border-b-0 active:bg-[#f2fbf6] ${
         active ? "bg-[#f2fbf6]" : "bg-white"
       }`}
     >
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-full ${
+        <span className={`relative flex h-12 w-12 items-center justify-center rounded-full ${
           active ? "bg-[#07120d] text-[#39f58e]" : "bg-[#f2fbf6] text-[#008f5a]"
         }`}>
           <UserRound size={18} />
+          {conversation.bot_paused && (
+            <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full bg-amber-400 ring-2 ring-white" />
+          )}
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-[0.96rem] font-extrabold leading-5 text-[#07120d]">{getConversationTitle(conversation)}</span>
-          <span className="mt-0.5 block truncate text-[0.78rem] font-semibold text-[#07120d]/48">
-            {lastOrder ? `Vente ${lastOrder.order_ref || lastOrder.id?.slice(0, 8)}` : getPreview(conversation)}
+          <span className="block truncate text-[0.96rem] font-black leading-5 text-[#07120d]">{getConversationTitle(conversation)}</span>
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.78rem] font-semibold text-[#07120d]/50">
+            {lastOrder ? <ShoppingBag size={13} className="shrink-0 text-[#008f5a]" /> : null}
+            <span className="min-w-0 truncate">{lastOrder ? `Vente ${formatPrice(total)}` : getPreview(conversation)}</span>
           </span>
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-1">
+        <span className="flex shrink-0 flex-col items-end gap-1.5">
+          <span className="text-[0.64rem] font-bold text-[#07120d]/35">{formatDateTime(lastTime).split(",").pop()?.trim() || ""}</span>
           <span className={`rounded-full px-2 py-0.5 text-[0.56rem] font-black ${action.chipClass}`}>
             {action.label}
           </span>
-          {lastOrder && (
-            <span className="text-xs font-black text-[#008f5a]">{formatPrice(total)}</span>
-          )}
         </span>
       </div>
     </button>
@@ -491,7 +496,6 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
             <MessageCircle size={30} />
           </span>
           <h2 className="mt-5 font-display text-2xl font-black text-[#07120d]">Choisis une discussion</h2>
-          <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[#07120d]/50">Touchez un client pour ouvrir la discussion.</p>
         </div>
       </section>
     );
@@ -503,7 +507,7 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
     sellerName,
   });
   const responseTemplates = playbookTemplates.length ? playbookTemplates : getDefaultResponseTemplates(sellerName);
-  const pauseHelp = conversation.bot_paused ? "Mode humain." : "Envoi = bot pause.";
+  const pauseHelp = conversation.bot_paused ? "Mode humain" : "Bot actif";
 
   return (
     <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#efeae2] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#efeae2] md:ring-1 md:ring-[#07120d]/10`}>
@@ -525,10 +529,10 @@ function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen
               type="button"
               onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
               disabled={busy === "pause" || busy === "resume"}
-              className="flex h-9 min-w-12 items-center justify-center gap-1 rounded-full bg-white px-2 text-[0.7rem] font-extrabold text-[#008f5a] shadow-sm disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#008f5a] shadow-sm disabled:opacity-50"
+              aria-label={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
             >
-              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
-              {conversation.bot_paused ? "Bot" : "Moi"}
+              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
             </button>
             )}
             {canReply && (
