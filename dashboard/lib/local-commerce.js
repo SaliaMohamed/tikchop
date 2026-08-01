@@ -69,7 +69,7 @@ export const DEFAULT_ACCEPTED_PAYMENT_METHODS = [
 ];
 
 export function onlinePaymentsEnabled() {
-  return String(process.env.NEXT_PUBLIC_TIKCHOP_ONLINE_PAYMENTS_ENABLED || "").toLowerCase() === "true";
+  return false;
 }
 
 export function normalizeAcceptedPaymentMethods(input, fallback = DEFAULT_ACCEPTED_PAYMENT_METHODS) {

@@ -3167,3 +3167,24 @@ export async function deleteDeliveryDriver(driverId, accessToken) {
 
   return { ok: true };
 }
+
+export async function getPendingOrdersCount(slug, accessToken) {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not initialized.");
+  }
+
+  const seller = await requireSellerBySlug(slug, accessToken, "id");
+
+  const { count, error } = await supabaseAdmin
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+    .eq("seller_id", seller.id)
+    .in("status", ["PENDING", "PAID", "PREPARED"]);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count || 0;
+}
+

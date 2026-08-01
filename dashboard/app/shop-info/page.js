@@ -20,6 +20,7 @@ import { getSellerBusinessProfile, saveSellerBusinessProfile, uploadSellerLogo }
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import { IllustrationBrandPulse } from "../components/TikchopIllustrations";
 import { getPaymentOption } from "../../lib/local-commerce";
 import { compressImage } from "../../lib/image-compressor";
 
@@ -194,7 +195,7 @@ export default function ShopInfoPage() {
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
       <header className="overflow-hidden rounded-[26px] bg-[#07120d] p-5 text-white shadow-[0_4px_28px_rgba(7,18,13,0.25)] md:p-7">
-        <div className="grid gap-5 lg:grid-cols-[1fr_280px] lg:items-center">
+        <div className="grid gap-5 lg:grid-cols-[1fr_120px_280px] lg:items-center">
           <div>
             <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]/80">Informations boutique</p>
             <h1 className="mt-2 font-display text-3xl font-black leading-tight text-white md:text-4xl">
@@ -203,6 +204,9 @@ export default function ShopInfoPage() {
             <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-white/55">
               Nom, WhatsApp, paiements, zones, livreurs et consignes du bot. Si cette fiche est claire, Tikchop vend mieux.
             </p>
+          </div>
+          <div className="hidden lg:flex items-center justify-center">
+            <IllustrationBrandPulse size={90} />
           </div>
           <div className="rounded-[20px] bg-white/8 p-4 ring-1 ring-white/10">
             <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]/70">Fiche complete</p>
@@ -287,7 +291,10 @@ export default function ShopInfoPage() {
                         <span className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white text-[10px] font-black">Changer</span>
                       </>
                     ) : (
-                      <span className="text-xs font-bold text-[#685f4f]">Choisir</span>
+                      <div className="flex flex-col items-center justify-center text-[#008f5a]">
+                        <Store size={22} className="opacity-80" />
+                        <span className="mt-1 text-[10px] font-black uppercase tracking-wider text-[#07120d]/50">Choisir</span>
+                      </div>
                     )}
                     {logoUploading && (
                       <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-[#008f5a]">

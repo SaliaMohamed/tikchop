@@ -1,35 +1,45 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&display=swap");
 @import "tailwindcss";
 
 :root {
-  /* === Aynid-aligned Tikchop design tokens === */
+  /* === Tikchop Premium Design Tokens === */
   --primary: #008f5a;
   --primary-hover: #006f47;
+  --primary-vivid: #00b86e;
   --primary-bright: #39f58e;
   --accent: #008f5a;
   --accent-soft: #e8f8ef;
+  --gold: #ffb000;
+  --gold-soft: #fff8dd;
   --info: #2459e6;
   --info-soft: #eef5ff;
+  --danger: #e03e3e;
+  --danger-soft: #fff0f0;
   --secondary: #4a5568;
-  /* Aynid cream palette */
+  /* Cream palette */
   --background: #fbf9f4;
   --surface: #ffffff;
   --surface-soft: #f0faf5;
+  --surface-raised: #ffffff;
   --surface-mid: #f4f1e9;
-  /* Aynid charcoal */
+  /* Charcoal */
   --text-main: #07120d;
   --text-dim: #4e6055;
+  --text-muted: #8fa499;
   --outline: rgba(7, 18, 13, 0.07);
   --line: rgba(7, 18, 13, 0.05);
   /* Shadows with charcoal tint */
-  --shadow-sm: 0 10px 30px rgba(7, 18, 13, 0.03);
-  --shadow-md: 0 20px 48px rgba(7, 18, 13, 0.06);
-  --shadow-lg: 0 32px 76px rgba(7, 18, 13, 0.09);
+  --shadow-sm: 0 4px 16px rgba(7, 18, 13, 0.04), 0 1px 3px rgba(7, 18, 13, 0.03);
+  --shadow-md: 0 12px 32px rgba(7, 18, 13, 0.07), 0 3px 8px rgba(7, 18, 13, 0.04);
+  --shadow-lg: 0 24px 64px rgba(7, 18, 13, 0.10), 0 8px 20px rgba(7, 18, 13, 0.05);
+  --shadow-green: 0 12px 32px rgba(0, 143, 90, 0.22);
+  --shadow-glow: 0 16px 40px rgba(57, 245, 142, 0.28);
+  --radius-sm: 14px;
   --radius-md: 22px;
+  --radius-lg: 30px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* Typography */
-  --font-display: "Plus Jakarta Sans";
-  --font-sans: "Inter";
+  --font-display: var(--font-plus-jakarta);
+  --font-sans: var(--font-inter);
 }
 
 * {
@@ -80,6 +90,73 @@ img {
   to   { opacity: 1; }
 }
 
+@keyframes tkFloatSoft {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+@keyframes tkReveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tkSpring {
+  0%   { opacity: 0; transform: scale(0.94) translateY(10px); }
+  65%  { transform: scale(1.015) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tkSlideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tkDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.72); }
+}
+
+.tk-float-soft {
+  animation: tkFloatSoft 6s ease-in-out infinite;
+}
+
+.tk-float-slow {
+  animation: tkFloatSoft 4.5s ease-in-out infinite;
+}
+
+.tk-reveal {
+  animation: tkReveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-spring {
+  animation: tkSpring 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-slide-down {
+  animation: tkSlideDown 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-dot-1 { animation: tkDotPulse 1.4s ease-in-out infinite; }
+.tk-dot-2 { animation: tkDotPulse 1.4s ease-in-out 0.22s infinite; }
+.tk-dot-3 { animation: tkDotPulse 1.4s ease-in-out 0.44s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-float-soft,
+  .tk-float-slow,
+  .tk-reveal,
+  .tk-spring,
+  .tk-slide-down,
+  .tk-dot-1, .tk-dot-2, .tk-dot-3 {
+    animation: none !important;
+  }
+}
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0%   { background-position: -400px 0; }
@@ -102,6 +179,64 @@ img {
 @keyframes imgReveal {
   from { opacity: 0; transform: scale(1.03); }
   to   { opacity: 1; transform: scale(1); }
+}
+
+/* Pulse glow – pour les CTA et boutons d'action importants */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(57, 245, 142, 0.35); }
+  50%       { box-shadow: 0 0 0 10px rgba(57, 245, 142, 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.2s ease-in-out infinite;
+}
+
+/* Shimmer texte – pour les métriques importantes */
+@keyframes shimmerText {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer-text {
+  background: linear-gradient(90deg, #39f58e 0%, #fff 45%, #39f58e 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerText 3s linear infinite;
+}
+
+/* Pop-in – pour les badges et alertes */
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.8); }
+  70%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-pop-in {
+  animation: popIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slide-in-left pour les menus */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .animate-shimmer-text,
+  .animate-pop-in,
+  .animate-slide-in-left {
+    animation: none !important;
+    -webkit-text-fill-color: inherit;
+    background: none;
+    color: inherit;
+  }
 }
 
 .animate-fade-in {
@@ -322,22 +457,22 @@ img {
 
 .mobile-tabbar {
   align-items: center;
-  background: rgba(255, 255, 255, 0.985);
-  backdrop-filter: blur(22px) saturate(1.18);
-  -webkit-backdrop-filter: blur(22px) saturate(1.18);
-  border: 1px solid rgb(7 18 13 / 0.055);
-  border-radius: 28px;
-  bottom: calc(0.58rem + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 10px 28px rgb(7 18 13 / 0.085);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(28px) saturate(1.25);
+  -webkit-backdrop-filter: blur(28px) saturate(1.25);
+  border: 1px solid rgb(7 18 13 / 0.06);
+  border-radius: 32px;
+  bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 4px 6px rgb(7 18 13 / 0.03), 0 12px 30px rgb(7 18 13 / 0.09), 0 0 0 1px rgb(255 255 255 / 0.7) inset;
   display: none;
-  gap: 0.02rem;
+  gap: 0;
   justify-content: space-around;
-  left: 0.75rem;
+  left: 0.65rem;
   margin: 0 auto;
-  max-width: 410px;
-  padding: 0.38rem 0.5rem;
+  max-width: 430px;
+  padding: 0.32rem 0.45rem;
   position: fixed;
-  right: 0.75rem;
+  right: 0.65rem;
   transform: none;
   width: auto;
   z-index: 30;
@@ -345,16 +480,16 @@ img {
 
 .mobile-seller-topbar {
   align-items: center;
-  background: rgb(255 255 255 / 0.975);
-  backdrop-filter: blur(22px) saturate(1.14);
-  -webkit-backdrop-filter: blur(22px) saturate(1.14);
-  border-bottom: 1px solid rgb(7 18 13 / 0.055);
-  box-shadow: 0 8px 24px rgb(7 18 13 / 0.055);
+  background: rgb(255 255 255 / 0.96);
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+  border-bottom: 1px solid rgb(7 18 13 / 0.045);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 8px 28px rgb(7 18 13 / 0.065);
   display: none;
-  height: calc(3.72rem + env(safe-area-inset-top, 0px));
+  height: calc(3.85rem + env(safe-area-inset-top, 0px));
   justify-content: space-between;
   left: 0;
-  padding: calc(env(safe-area-inset-top, 0px) + 0.58rem) 0.85rem 0.58rem;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.62rem) 1rem 0.62rem;
   position: fixed;
   top: 0;
   width: 100%;
@@ -433,42 +568,46 @@ img {
 .mobile-tabbar-action {
   align-items: center;
   background: transparent;
-  border-radius: 20px;
+  border-radius: 22px;
+  border: 0;
   box-shadow: none;
-  color: #66736b;
+  color: #7a8f82;
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
-  font-size: 0.58rem;
-  font-weight: 950;
-  gap: 0.04rem;
-  min-height: 56px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  gap: 0.18rem;
+  min-height: 60px;
   min-width: 0;
-  padding: 0.2rem 0.16rem;
+  padding: 0.28rem 0.2rem;
   width: 100%;
+  transition: color 0.22s ease, background 0.22s ease;
 }
 
 .mobile-tabbar-item > span:last-child,
 .mobile-tabbar-action > span:last-child {
   display: block;
-  line-height: 1.05;
+  line-height: 1.1;
   max-width: 100%;
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .mobile-tabbar-icon {
   align-items: center;
-  background: #f7fbf8;
-  border: 1px solid rgb(7 18 13 / 0.045);
-  border-radius: 16px;
-  color: #07120d;
+  background: #f2f7f4;
+  border: 1.5px solid rgb(7 18 13 / 0.05);
+  border-radius: 17px;
+  color: #8fa499;
   display: flex;
-  height: 34px;
+  height: 36px;
   justify-content: center;
-  width: 34px;
+  width: 36px;
+  transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
 .mobile-tabbar-icon svg {
@@ -477,41 +616,77 @@ img {
   stroke-linejoin: round;
 }
 
+.mobile-tabbar-item:active .mobile-tabbar-icon {
+  transform: scale(0.88);
+}
+
+.mobile-tabbar-action:active .mobile-tabbar-icon {
+  transform: translateY(-1.45rem) scale(0.88);
+}
+
 .mobile-tabbar-action {
   border: 0;
   color: #07120d;
-  height: 54px;
+  height: 60px;
   justify-content: center;
   margin-top: 0;
   transform: none;
 }
 
 .mobile-tabbar-action .mobile-tabbar-icon {
-  background: #39f58e;
+  background: linear-gradient(145deg, #39f58e, #00cc7a);
   border-color: transparent;
   color: #07120d;
-  height: 52px;
-  margin-top: -1.35rem;
-  width: 52px;
-  box-shadow: 0 12px 28px rgb(0 143 90 / 0.24);
+  height: 56px;
+  margin-top: -1.55rem;
+  width: 56px;
+  box-shadow: 0 8px 20px rgb(0 143 90 / 0.28), 0 2px 6px rgb(0 143 90 / 0.18), 0 0 0 3px rgb(57 245 142 / 0.18);
+}
+
+.mobile-tabbar-action .mobile-tabbar-icon svg {
+  stroke-width: 2.8;
 }
 
 .mobile-tabbar-action.is-active {
   background: transparent;
   box-shadow: none;
-  color: #008f5a;
+  color: #007a4d;
+}
+
+.mobile-tabbar-action.is-active .mobile-tabbar-icon {
+  box-shadow: 0 4px 14px rgb(0 143 90 / 0.32), 0 0 0 4px rgb(57 245 142 / 0.22);
 }
 
 .mobile-tabbar-item.is-active {
-  background: #eafff3;
-  color: #008f5a;
-  box-shadow: inset 0 0 0 1px rgb(0 143 90 / 0.08);
+  background: linear-gradient(180deg, #edfff5, #f4fff8);
+  color: #007a4d;
+  box-shadow: inset 0 0 0 1px rgb(0 143 90 / 0.1);
 }
 
 .mobile-tabbar-item.is-active .mobile-tabbar-icon {
   background: #ffffff;
+  border-color: rgb(0 143 90 / 0.14);
   color: #008f5a;
-  box-shadow: 0 8px 16px rgb(0 143 90 / 0.11);
+  box-shadow: 0 6px 16px rgb(0 143 90 / 0.14);
+}
+
+/* Badge compteur sur la tabbar */
+.mobile-tabbar-badge {
+  align-items: center;
+  background: #e03e3e;
+  border: 2px solid white;
+  border-radius: 999px;
+  color: white;
+  display: flex;
+  font-size: 0.52rem;
+  font-weight: 900;
+  height: 16px;
+  justify-content: center;
+  min-width: 16px;
+  padding: 0 3px;
+  position: absolute;
+  right: -4px;
+  top: -3px;
 }
 
 .tk-icon-badge svg {
@@ -700,12 +875,14 @@ img {
   gap: 0.7rem;
   min-height: 46px;
   padding: 0 0.85rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .seller-desktop-link svg,
 .seller-desktop-store-link svg {
   color: #006d44;
   stroke-width: 2.45;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s ease;
 }
 
 .seller-desktop-link:hover,
@@ -713,6 +890,10 @@ img {
   background: #08120d;
   color: white;
   box-shadow: 0 14px 30px rgb(8 18 13 / 0.16);
+}
+
+.seller-desktop-link:hover svg {
+  transform: translateX(3px) scale(1.08);
 }
 
 .seller-desktop-link:hover svg,

@@ -30,7 +30,7 @@
     "@supabase/supabase-js": "^2.105.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
-    "next": "16.2.4",
+    "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -39,7 +39,7 @@
     "@types/node": "25.6.2",
     "@types/react": "19.2.14",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "16.2.9",
     "playwright": "^1.59.1",
     "postcss": "8.5.13",
     "tailwindcss": "^4.2.4"

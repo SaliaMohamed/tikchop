@@ -20,6 +20,7 @@ import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { fetchSellerProductsFromMobileApi, withClientTimeout } from "../../lib/seller-products-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import { IllustrationShare } from "../components/TikchopIllustrations";
 
 function formatPrice(value) {
   const amount = Number(value || 0);
@@ -151,8 +152,8 @@ export default function SocialSharingPage() {
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
       <section className="overflow-hidden rounded-[30px] bg-[#07120d] text-white shadow-[var(--shadow-lg)] ring-1 ring-black/10 md:rounded-[34px]">
-        <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="p-4 md:p-7">
+        <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_200px_360px]">
+          <div className="p-4 md:p-7 flex flex-col justify-center">
             <p className="quiet-label text-[var(--primary-bright)]">Partage</p>
             <h1 className="mt-2 font-display text-[2.05rem] font-black leading-[2.15rem] md:text-5xl md:leading-[1.02]">
               Publier vite. Vendre clair.
@@ -175,6 +176,9 @@ export default function SocialSharingPage() {
                 Copier le lien
               </button>
             </div>
+          </div>
+          <div className="hidden md:flex items-center justify-center p-4">
+            <IllustrationShare size={140} />
           </div>
           <div className="grid grid-cols-3 gap-2 border-t border-white/10 bg-white/6 p-3 md:grid-cols-1 md:border-l md:border-t-0 md:p-4">
             <ShareStat label="Articles" value={publishedProducts.length} active={publishedProducts.length > 0} />
@@ -332,7 +336,7 @@ export default function SocialSharingPage() {
               </span>
               <div>
                 <h2 className="font-display text-xl font-black text-[#171006]">Partagez. Tikchop suit.</h2>
-                <p className="mt-1 text-sm font-bold leading-6 text-[#5f4a13]">Commande et livraison restent dans l'app.</p>
+                <p className="mt-1 text-sm font-bold leading-6 text-[#5f4a13]">Commande et livraison restent dans l&apos;app.</p>
               </div>
             </div>
           </section>
@@ -362,10 +366,16 @@ function ShareStat({ label, value, active }) {
 }
 
 function PlatformCard({ icon, title, text, actionLabel, onAction }) {
+  const brandKey = String(title || "").toLowerCase();
+  let pillStyle = "bg-[#fbf9f4] text-[#008f5a] ring-[#07120d]/5";
+  if (brandKey === "whatsapp") pillStyle = "bg-[#e2fbe9] text-[#25d366] ring-[#25d366]/10";
+  if (brandKey === "tiktok") pillStyle = "bg-[#09090b] text-white ring-white/10 shadow-[1px_1px_4px_rgba(255,0,80,0.4)]";
+  if (brandKey === "instagram") pillStyle = "bg-[linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7)] text-white ring-purple-500/10";
+
   return (
     <article className="rounded-[24px] bg-white p-4 ring-1 ring-[#07120d]/8">
       <div className="flex items-start gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#fbf9f4] text-[#008f5a] ring-1 ring-[#07120d]/5">
+        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] ring-1 ${pillStyle}`}>
           {icon}
         </span>
         <div className="min-w-0">

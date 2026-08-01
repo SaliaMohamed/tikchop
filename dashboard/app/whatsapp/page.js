@@ -35,6 +35,7 @@ import {
 import { useActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
+import { IllustrationWhatsApp, IllustrationSuccess } from "../components/TikchopIllustrations";
 
 function formatPairingCode(code) {
   return String(code || "").match(/.{1,4}/g)?.join(" ") || code || "";
@@ -462,6 +463,9 @@ export default function WhatsAppPage() {
               <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/72">
                 Ouvrez cette page sur un ordinateur ou un autre telephone, puis scannez le QR avec WhatsApp. Sur un seul telephone, utilisez le code WhatsApp temporaire ou activez le numero Tikchop Standard.
               </p>
+              <div className="mt-6 hidden lg:flex justify-start items-center opacity-85">
+                <IllustrationWhatsApp size={160} />
+              </div>
             </div>
 
             <div className="mt-6 grid gap-3 md:max-w-[560px]">
@@ -530,24 +534,7 @@ export default function WhatsAppPage() {
           <InfoTile icon={<Truck size={20} />} title="Livre" text="Recap clair au livreur." />
         </section>
 
-        <section className="hidden rounded-[28px] bg-white p-5 shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.42)] md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-5">
-          <div>
-            <p className="quiet-label text-[var(--primary)]">Alternative simple</p>
-            <h2 className="mt-1 font-display text-2xl font-black text-[var(--text-main)]">Pas envie de scanner maintenant ?</h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[var(--text-dim)]">
-              Active le numero Tikchop Standard. Les clients passent par Tikchop, et tes commandes arrivent dans ton dashboard.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={activateStandardAssistant}
-            disabled={busy === "standard" || connection?.provider === "tikchop_standard"}
-            className="mt-4 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-60 md:mt-0"
-          >
-            {busy === "standard" ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-            {connection?.provider === "tikchop_standard" ? "Standard actif" : "Activer Standard"}
-          </button>
-        </section>
+        {/* Section Assistant Standard supprimée */}
 
         <section className="hidden djassa-command p-5">
           <div className="flex items-start justify-between gap-4">
@@ -823,9 +810,12 @@ function QrConnectionPanel({
         <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
           {isConnected ? (
             <div className="flex min-h-[270px] flex-col items-center justify-center text-center">
-              <span className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-emerald-100 text-emerald-700">
-                <CheckCircle2 size={34} />
-              </span>
+              <div className="relative mx-auto w-24 h-24 mb-4 flex items-center justify-center">
+                <IllustrationWhatsApp size={96} />
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
+                  <IllustrationSuccess size={32} />
+                </div>
+              </div>
               <h3 className="mt-4 font-display text-2xl font-black text-[var(--text-main)]">WhatsApp est connecte</h3>
               <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[var(--text-dim)]">
                 Tikchop peut maintenant recevoir les messages et vendre depuis ce numero.
@@ -1281,12 +1271,27 @@ function MobileWhatsAppPwaPanel({
           )}
         </div>
 
+        {/* Hero banner for disconnected state */}
+        {!connected && (
+          <div className="flex flex-col items-center justify-center bg-[#07120d] text-white p-5 text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#39f58e]/5 rounded-full blur-2xl" />
+            <IllustrationWhatsApp size={120} className="relative z-10" />
+            <h2 className="font-display text-lg font-black mt-2 text-[var(--primary-bright)]">Liez votre WhatsApp</h2>
+            <p className="text-xs text-white/60 max-w-[260px] mt-1 leading-relaxed">
+              Tikchop répondra automatiquement à vos clients, prendra les commandes et gérera les reçus.
+            </p>
+          </div>
+        )}
+
         <div className="p-4">
           {ownWhatsAppActive ? (
             <div className="text-center py-2">
-              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#eafff5] text-[#008f5a]">
-                <CheckCircle2 size={34} />
-              </span>
+              <div className="relative mx-auto w-24 h-24 mb-2 flex items-center justify-center">
+                <IllustrationWhatsApp size={96} />
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
+                  <IllustrationSuccess size={32} />
+                </div>
+              </div>
               <h3 className="mt-3 font-display text-2xl font-black text-[#07120d]">Connecte</h3>
               <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Tikchop repond depuis ce numero WhatsApp.</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -1430,33 +1435,7 @@ function MobileWhatsAppPwaPanel({
         </div>
       </section>
 
-      {/* Standard / sans QR collapsible */}
-      <details className="overflow-hidden rounded-[24px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-        <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4">
-          <span className="min-w-0">
-            <span className="block text-base font-black text-[#07120d]">Assistant Standard</span>
-            <span className="block text-xs font-bold text-[#07120d]/50">Tikchop repond a votre place.</span>
-          </span>
-          <MessageCircle className="text-[#008f5a]" size={21} />
-        </summary>
-        <div className={`border-t border-[#07120d]/8 p-4 ${standardActive ? "bg-[#eafff5]" : ""}`}>
-          {standardActive && (
-            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-[#005f3d]">
-              <CheckCircle2 size={16} />
-              Assistant Standard est actif.
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={onActivateStandard}
-            disabled={busy === "standard" || standardActive}
-            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#008f5a] px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(0,143,90,0.18)] disabled:opacity-60"
-          >
-            {busy === "standard" ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
-            {standardActive ? "Standard actif" : "Activer Standard"}
-          </button>
-        </div>
-      </details>
+      {/* Section Assistant Standard supprimée */}
     </section>
   );
 }

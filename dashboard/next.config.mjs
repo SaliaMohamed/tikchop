@@ -8,9 +8,9 @@ const cspDirectives = [
   // Scripts : self + inline nécessaire pour Next.js hydration
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co",
   // Styles : self + inline (CSS-in-JS, Tailwind)
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // Polices Google Fonts
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  // Polices Next/font auto-hebergees
+  "font-src 'self'",
   // Images : self, données base64, Cloudinary, Supabase Storage, Unsplash (fallback produits)
   `img-src 'self' data: blob: https://res.cloudinary.com https://${supabaseHost} https://images.unsplash.com`,
   // Connexions API : Supabase, Evolution API, n8n, Gemini, Paystack, Cloudinary

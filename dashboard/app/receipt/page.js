@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   CalendarDays,
   CheckCircle2,
@@ -208,9 +209,9 @@ export default async function ReceiptPage({ searchParams }) {
                 )}
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--text-main)] overflow-hidden">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white text-[var(--text-main)]">
               {order.sellers?.logo_url ? (
-                <img src={order.sellers.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                <Image src={order.sellers.logo_url} alt="Logo" fill sizes="48px" className="object-cover" />
               ) : (
                 <ReceiptText size={24} style={{ color: brandColor }} />
               )}

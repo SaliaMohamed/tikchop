@@ -1,7 +1,5 @@
-﻿"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   BarChart3,
@@ -220,43 +218,39 @@ function DesktopLanding() {
             </div>
           </div>
 
-          <motion.div
-            className="tk-screen-stage"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          >
+          <div className="tk-screen-stage tk-float-soft">
             <DesktopOpsPanel />
             <IphoneShopMockup />
             <FloatingPhotoCards />
             <DesktopFlowPills />
-            <motion.div className="tk-live-chip" animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+            <div className="tk-live-chip tk-float-slow">
               <span />
               Catalogue réel + assistant WhatsApp + commandes suivies
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </section>
 
         <ClaritySection />
 
         <section className="tk-product-section" id="demo">
-          <motion.div className="tk-section-copy" initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55 }}>
+          <div className="tk-section-copy tk-reveal">
             <p className="tk-eyebrow">Démo boutique</p>
             <h2>Une vitrine simple que vos clientes comprennent vite.</h2>
             <p>
               Photos propres, prix visibles, bouton WhatsApp et commande guidée. Le client voit l&apos;article, choisit, puis envoie sa demande sans chercher dans vos anciens statuts.
             </p>
-          </motion.div>
+          </div>
           <div>
             <ProductPhotoMarquee />
             <div className="tk-feature-grid">
               {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <motion.article className="tk-feature-card" key={feature.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45 }}>
+                  <article className="tk-feature-card tk-reveal" key={feature.title}>
                     <Icon size={24} />
                     <h3>{feature.title}</h3>
                     <p>{feature.text}</p>
-                  </motion.article>
+                  </article>
                 );
               })}
             </div>
@@ -325,11 +319,11 @@ function DesktopLanding() {
             {paymentSignals.map((item) => {
               const Icon = item.icon;
               return (
-                <motion.article className="tk-payment-card" key={item.title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45 }}>
+                <article className="tk-payment-card tk-reveal" key={item.title}>
                   <Icon size={22} />
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
-                </motion.article>
+                </article>
               );
             })}
           </div>
@@ -480,22 +474,22 @@ function WhatsappTrialButton({ className = "tk-dark-button tk-big-button", label
 function ClaritySection() {
   return (
     <section className="tk-clarity-section" id="utilite">
-      <motion.div className="tk-clarity-copy" initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55 }}>
+      <div className="tk-clarity-copy tk-reveal">
         <p className="tk-eyebrow">À quoi ça sert ?</p>
         <h2>Vous gardez WhatsApp, mais vous arrêtez de tout gérer dans le désordre.</h2>
         <p>
           Quand les demandes arrivent de TikTok, des statuts, des lives et des messages privés, tout se mélange vite. Tikchop vous aide à répondre, ranger, confirmer le paiement et organiser la livraison.
         </p>
-      </motion.div>
+      </div>
       <div className="tk-clarity-grid">
         {clarityCards.map((item, index) => {
           const Icon = item.icon;
           return (
-            <motion.article className="tk-clarity-card" key={item.title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
+            <article className="tk-clarity-card tk-reveal" key={item.title}>
               <Icon size={22} />
               <h3>{item.title}</h3>
               <p>{item.text}</p>
-            </motion.article>
+            </article>
           );
         })}
       </div>
@@ -585,7 +579,7 @@ function IphoneShopMockup({ compact = false }) {
         <div className="tk-shop-grid">
           {products.slice(1, 5).map((product) => (
             <article key={product.name} className="tk-shop-product">
-              <ProductPhoto product={product} priority />
+              <ProductPhoto product={product} />
               <small>{product.tag}</small>
               <strong>{product.name}</strong>
               <span>{product.price}</span>
@@ -601,9 +595,7 @@ function CaseStudySection({ id }) {
   return (
     <>
       <section className="fatim-section" id={id}>
-        <div className="fatim-photo-card">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/fatim-jeune-friperie.jpg" alt="Fatim, jeune vendeuse de friperie et textiles" />
+        <div className="fatim-photo-card">\n          <Image src="/landing/fatim-jeune-friperie.jpg" alt="Fatim, jeune vendeuse de friperie et textiles" width={720} height={540} sizes="(max-width: 760px) 92vw, 42vw" />
           <div className="fatim-photo-overlay">
             <span>Fatim</span>
             <strong>Friperie, lives TikTok, commandes WhatsApp</strong>
@@ -730,16 +722,11 @@ function FloatingPhotoCards() {
   return (
     <div className="tk-floating-products" aria-hidden="true">
       {products.slice(1).map((product, index) => (
-        <motion.div
-          className="tk-float-card"
-          key={product.name}
-          animate={{ y: [0, -12, 0], rotate: [-2, 2, -2] }}
-          transition={{ duration: 4 + index * 0.35, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <div className="tk-float-card tk-float-soft" key={product.name} style={{ animationDelay: `${index * 0.35}s` }}>
           <ProductPhoto product={product} priority />
           <strong>{product.name}</strong>
           <span>{product.price}</span>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
@@ -747,13 +734,7 @@ function FloatingPhotoCards() {
 
 function DesktopOpsPanel() {
   return (
-    <motion.aside
-      className="tk-ops-panel"
-      initial={{ opacity: 0, x: 42, rotate: 2 }}
-      animate={{ opacity: 1, x: 0, rotate: 0 }}
-      transition={{ duration: 0.7, delay: 0.18, ease: "easeOut" }}
-      aria-label="Aperçu espace vendeur Tikchop"
-    >
+    <aside className="tk-ops-panel tk-reveal" aria-label="Apercu espace vendeur Tikchop">
       <div className="tk-ops-top">
         <div>
           <span>Espace vendeur</span>
@@ -780,7 +761,7 @@ function DesktopOpsPanel() {
           </div>
         ))}
       </div>
-    </motion.aside>
+    </aside>
   );
 }
 
@@ -790,18 +771,13 @@ function DesktopFlowPills() {
       {desktopFlow.map((item, index) => {
         const Icon = item.icon;
         return (
-          <motion.div
-            className="tk-flow-pill"
-            key={item.label}
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 3.8, delay: index * 0.35, repeat: Infinity, ease: "easeInOut" }}
-          >
+          <div className="tk-flow-pill tk-float-slow" key={item.label} style={{ animationDelay: `${index * 0.35}s` }}>
             <Icon size={18} />
             <div>
               <strong>{item.label}</strong>
               <span>{item.text}</span>
             </div>
-          </motion.div>
+          </div>
         );
       })}
     </div>
@@ -828,9 +804,7 @@ function ProductPhotoMarquee() {
 
 function ProductPhoto({ product, priority = false }) {
   return (
-    <div className="tk-product-photo">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={product.image} alt={product.name} loading={priority ? "eager" : "lazy"} />
+    <div className="tk-product-photo">\n      <Image src={product.image} alt={product.name} width={360} height={280} sizes="(max-width: 760px) 44vw, 220px" priority={priority} />
     </div>
   );
 }

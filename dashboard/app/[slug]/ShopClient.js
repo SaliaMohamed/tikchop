@@ -25,6 +25,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import { IllustrationEmptyShop, IllustrationSearch, IllustrationSuccess, IllustrationCart } from "../components/TikchopIllustrations";
 
 function cleanPhone(phoneNumber) {
   return String(phoneNumber || "").replace(/[^\d]/g, "");
@@ -59,7 +60,7 @@ function getDirectPaymentInstruction(seller, selectedPayment, amountToPay, deliv
   }
 
   if (selectedPayment.value === "CASH_ON_DELIVERY") {
-    return `Paiement apres reception: prevoyez ${formatPrice(amountToPay)}.`;
+    return `Paiement apres reception: prevoyez ${formatPrice(amountToPay)}. (Note: le vendeur peut vous demander une avance pour valider la livraison)`;
   }
 
   const phone = formatPhoneDisplay(getSellerPaymentPhone(seller));
@@ -408,7 +409,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           <div className="flex min-w-0 items-center gap-3">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[0.72rem] font-black text-[var(--primary)] shadow-[0_8px_18px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/7 md:h-12 md:w-12">
               {seller.logo_url ? (
-                <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                <Image src={seller.logo_url} alt="Logo" fill sizes="48px" className="object-cover" />
               ) : (
                 seller.name?.slice(0, 2).toUpperCase() || "TC"
               )}
@@ -558,16 +559,14 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center rounded-[24px] bg-white p-10 text-center shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.3)]">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
-                      <Search size={24} />
-                    </span>
+                  <div className="flex flex-col items-center justify-center rounded-[28px] bg-white p-10 text-center shadow-[var(--shadow-sm)] ring-1 ring-[rgba(191,206,197,0.3)]">
+                    <IllustrationSearch size={100} />
                     <h3 className="mt-4 font-display text-lg font-extrabold text-[var(--text-main)]">Aucun article trouvé</h3>
                     <p className="mt-1.5 text-sm font-semibold text-[var(--text-dim)]">Essayez un autre mot ou une autre catégorie.</p>
                     <button
                       type="button"
                       onClick={() => { setQuery(""); setCategory("Tout"); }}
-                      className="mt-4 rounded-full bg-[var(--text-main)] px-5 py-2.5 text-sm font-extrabold text-white"
+                      className="mt-5 rounded-2xl bg-[#07120d] px-5 py-2.5 text-sm font-extrabold text-[#39f58e]"
                     >
                       Voir tous les articles
                     </button>
@@ -615,6 +614,8 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           onClose={() => setSelectedProduct(null)}
           onAdd={() => addToCart(selectedProduct)}
           onMinus={() => decrement(selectedProduct.id)}
+          products={products}
+          onProductSelect={setSelectedProduct}
         />
       )}
 
@@ -669,30 +670,35 @@ function EmptyShopState({ seller, isOwnerView = false }) {
 
   return (
     <div className="overflow-hidden rounded-[32px] bg-white shadow-[var(--shadow-md)] ring-1 ring-[rgba(191,206,197,0.42)] md:grid md:grid-cols-[1.1fr_0.9fr]">
-      <div className="relative min-h-[260px] bg-[var(--text-main)] p-5 text-white md:min-h-[420px] md:p-7">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[var(--info)]" />
-        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:34px_34px]" />
+      <div className="relative min-h-[280px] bg-[#07120d] p-5 text-white md:min-h-[440px] md:p-7">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#39f58e] via-[#008f5a] to-[#39f58e]" />
+        {/* Subtle grid texture */}
+        <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(90deg,rgba(57,245,142,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.05)_1px,transparent_1px)] [background-size:32px_32px]" />
+        {/* SVG Illustration */}
+        <div className="absolute bottom-0 right-0 opacity-12">
+          <IllustrationEmptyShop size={200} />
+        </div>
         <div className="relative z-10 flex h-full flex-col justify-between">
           <div className="flex items-center justify-between gap-3">
             {seller.logo_url ? (
               <div className="relative h-14 w-14 overflow-hidden rounded-[20px] bg-white ring-1 ring-white/10">
-                <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                <Image src={seller.logo_url} alt="Logo" fill sizes="56px" className="object-cover" />
               </div>
             ) : (
-              <span className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10 text-[var(--primary-bright)] ring-1 ring-white/10">
+              <span className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/8 text-[#39f58e] ring-1 ring-white/10">
                 <Store size={28} />
               </span>
             )}
-            <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-extrabold text-white/74 ring-1 ring-white/10">
+            <span className="rounded-full bg-[#39f58e]/15 px-3 py-1.5 text-xs font-extrabold text-[#39f58e] ring-1 ring-[#39f58e]/20">
               Bientot en ligne
             </span>
           </div>
           <div className="mt-10">
-            <p className="quiet-label text-white/52">{seller.name}</p>
+            <p className="quiet-label text-white/40">{seller.name}</p>
             <h3 className="mt-2 max-w-md font-display text-3xl font-extrabold leading-9 text-white md:text-5xl md:leading-[3.4rem]">
               Les articles arrivent.
             </h3>
-            <p className="mt-3 max-w-sm text-sm font-semibold leading-6 text-white/66 md:text-base">
+            <p className="mt-3 max-w-sm text-sm font-semibold leading-6 text-white/55 md:text-base">
               La boutique se prepare. Vous pouvez deja demander les photos, les tailles ou les prix directement sur WhatsApp.
             </p>
           </div>
@@ -701,7 +707,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
       <div className="grid content-between gap-4 p-4 md:p-6">
         <div className="grid gap-3">
           <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[var(--surface-soft)] p-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--primary)] shadow-sm">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07120d] text-[#39f58e] shadow-sm">
               <MessageCircle size={19} />
             </span>
             <span>
@@ -731,7 +737,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
           {isOwnerView && (
             <Link
               href="/add-product"
-              className="flex min-h-[58px] items-center justify-center gap-2 rounded-[20px] bg-[var(--text-main)] text-base font-extrabold text-white no-underline"
+              className="flex min-h-[58px] items-center justify-center gap-2 rounded-[20px] bg-[#07120d] text-base font-extrabold text-[#39f58e] no-underline shadow-[0_12px_28px_rgb(7_18_13_/_0.25)]"
             >
               <ShoppingBag size={20} />
               Ajouter le premier article
@@ -1001,55 +1007,57 @@ function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
   const extraImageCount = getExtraProductImages(product.description).length;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-[24px] bg-white p-3 shadow-[0_10px_30px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.045)] transition active:scale-[0.98] md:hover:-translate-y-0.5">
-      <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="block w-full text-left">
-        {/* Image */}
-        <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f0eee9]">
-          <SafeProductImage
-            src={product.image_url}
-            alt={product.name}
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition duration-500 group-active:scale-105 md:group-hover:scale-[1.04]"
-            transform={CLOUDINARY_CARD_TRANSFORM}
-          />
-          {/* Gradient bas */}
-          <span className="hidden" />
-          
-          {/* Badge catégorie */}
-          {/* Stock faible */}
-          {lowStock && (
-            <span className="absolute right-2 top-2 rounded-full bg-white/92 px-2 py-0.5 text-[0.5rem] font-black text-amber-600 shadow-sm">
-              Bientôt fini
-            </span>
-          )}
+    <article className="group relative aspect-square overflow-hidden rounded-[24px] bg-[#f0eee9] shadow-[0_10px_30px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.045)] transition active:scale-[0.98] md:hover:-translate-y-0.5">
+      <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="absolute inset-0 block h-full w-full text-left">
+        <SafeProductImage
+          src={product.image_url}
+          alt={product.name}
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="h-full w-full object-cover transition duration-500 group-active:scale-105 md:group-hover:scale-[1.04]"
+          transform={CLOUDINARY_CARD_TRANSFORM}
+        />
+        
+        {/* Calque dégradé sombre en bas */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-          {/* Photos supplémentaires */}
-          {extraImageCount > 0 && (
-            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[0.58rem] font-extrabold text-[var(--text-main)] shadow-sm">
-              +{extraImageCount} photo{extraImageCount > 1 ? "s" : ""}
-            </span>
-          )}
-
-          {/* Rupture */}
-          {stock === 0 && (
-            <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-black/60 py-2 text-center text-[0.68rem] font-extrabold uppercase tracking-wide text-white">
-              Rupture
-            </span>
-          )}
-
-          {/* Bouton panier flottant en bas à droite */}
-        </div>
-
-        {/* Infos produit */}
-        <div className="flex flex-grow items-start justify-between gap-2 pt-3">
-          <div className="min-w-0 pr-1">
-            <h3 className="line-clamp-2 text-sm font-bold leading-tight text-[var(--text-main)] md:text-[0.95rem] md:leading-5">
+        {/* Informations produit en superposition */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3.5">
+          <div className="min-w-0 pr-1 text-white">
+            <h3 className="line-clamp-2 text-xs font-bold leading-tight text-white md:text-[0.9rem] md:leading-5">
               {product.name}
             </h3>
-            <p className="mt-1 font-display text-[0.72rem] font-black leading-none text-[var(--text-dim)] md:text-[1.05rem]">{formatPrice(product.price)}</p>
+            <p className="mt-1 font-display text-[0.8rem] font-black leading-none text-[var(--primary-bright)] md:text-[0.95rem]">
+              {formatPrice(product.price)}
+            </p>
           </div>
-          <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} compact />
+          <div className="shrink-0" onClick={(event) => event.stopPropagation()}>
+            <CartControl quantity={quantity} stock={stock} onAdd={onAdd} onMinus={onMinus} compact />
+          </div>
         </div>
+
+        {/* Badge catégorie */}
+        {/* Stock faible */}
+        {lowStock && (
+          <span className="absolute right-3 top-3 rounded-full bg-white/92 px-2.5 py-0.5 text-[0.6rem] font-black text-amber-600 shadow-sm">
+            Bientôt fini
+          </span>
+        )}
+
+        {/* Photos supplémentaires */}
+        {extraImageCount > 0 && (
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[0.58rem] font-extrabold text-[var(--text-main)] shadow-sm">
+            +{extraImageCount} photo{extraImageCount > 1 ? "s" : ""}
+          </span>
+        )}
+
+        {/* Rupture */}
+        {stock === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[1px]">
+            <span className="rounded-full bg-white px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-wider text-black">
+              Rupture
+            </span>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -1091,12 +1099,23 @@ function CartControl({ quantity, stock, large = false, compact = false, onAdd, o
   );
 }
 
-function ProductSheet({ product, quantity, onClose, onAdd, onMinus }) {
+function ProductSheet({ product, quantity, onClose, onAdd, onMinus, products = [], onProductSelect }) {
   const stock = Number(product.stock_quantity || 0);
   const gallery = useMemo(() => getProductGallery(product), [product]);
   const description = getCleanProductDescription(product.description);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const activeImage = gallery[activeImageIndex] || gallery[0] || FALLBACK_IMAGE;
+
+  const category = productCategory(product);
+  const recommendations = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    const filtered = products.filter((p) => p.id !== product.id);
+    const sameCategory = filtered.filter((p) => productCategory(p) === category);
+    if (sameCategory.length > 0) {
+      return sameCategory.slice(0, 4);
+    }
+    return filtered.slice(0, 4);
+  }, [products, product, category]);
 
   return (
     <div className="fixed inset-0 z-[260] flex items-end bg-black/45 backdrop-blur-[3px] md:items-center md:px-3">
@@ -1178,6 +1197,41 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus }) {
               </button>
             )}
           </div>
+
+          {/* Section Recommandations */}
+          {recommendations.length > 0 && (
+            <div className="mt-8 border-t border-zinc-100 pt-6">
+              <h4 className="font-display text-xs font-black uppercase tracking-wider text-[var(--text-main)] mb-3">
+                Vous aimerez aussi
+              </h4>
+              <div className="no-scrollbar flex gap-3.5 overflow-x-auto pb-2">
+                {recommendations.map((rec) => (
+                  <button
+                    key={rec.id}
+                    type="button"
+                    onClick={() => onProductSelect && onProductSelect(rec)}
+                    className="w-[110px] shrink-0 text-left transition active:scale-95 group/rec"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-[16px] bg-[#f0eee9]">
+                      <SafeProductImage
+                        src={rec.image_url}
+                        alt={rec.name}
+                        sizes="110px"
+                        className="h-full w-full object-cover transition duration-300 group-hover/rec:scale-105"
+                        transform={CLOUDINARY_THUMB_TRANSFORM}
+                      />
+                    </div>
+                    <h5 className="mt-2 line-clamp-1 text-xs font-bold leading-tight text-[var(--text-main)]">
+                      {rec.name}
+                    </h5>
+                    <p className="mt-0.5 font-display text-[0.72rem] font-black text-[var(--primary)]">
+                      {formatPrice(rec.price)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1671,12 +1725,13 @@ function OrderSuccessSheet({ order, sellerSlug, onClose }) {
 }
 
 function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
-  const initialSrc = getCloudinaryOptimizedUrl(src, transform);
-  const [imageSrc, setImageSrc] = useState(initialSrc);
+  const [prevProps, setPrevProps] = useState({ src, transform });
+  const [imageSrc, setImageSrc] = useState(() => getCloudinaryOptimizedUrl(src, transform));
 
-  useEffect(() => {
+  if (src !== prevProps.src || transform !== prevProps.transform) {
+    setPrevProps({ src, transform });
     setImageSrc(getCloudinaryOptimizedUrl(src, transform));
-  }, [src, transform]);
+  }
 
   if (!imageSrc) {
     return (

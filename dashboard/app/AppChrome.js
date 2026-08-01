@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Plus, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
+import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
 import BrandLogo from "./components/BrandLogo";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import { clearActiveSeller, getSellerInitials, readActiveSeller, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
 import { supabase } from "../lib/supabase";
+import { getSellerAccessToken } from "../lib/seller-auth-client";
 
 const dashboardRoutes = new Set([
   "/dashboard",
@@ -23,6 +26,7 @@ const dashboardRoutes = new Set([
   "/social-sharing",
   "/whatsapp",
   "/app",
+  "/account",
 ]);
 
 const appEntryRoutes = new Set([
@@ -40,7 +44,7 @@ const sellerNavGroups = [
     items: [
       { href: "/dashboard", label: "Accueil", icon: Home },
       { href: "/add-product", label: "Publier", icon: Camera },
-      { href: "/orders", label: "Commandes", icon: ClipboardList },
+      { href: "/orders", label: "Ventes", icon: ClipboardList },
       { href: "/messages", label: "Clients", icon: MessageCircle },
     ],
   },
@@ -70,6 +74,7 @@ const mobilePageMeta = {
   "/shop-info": { title: "Boutique", subtitle: "Infos et bot" },
   "/social-sharing": { title: "Partager", subtitle: "Reseaux et boutique" },
   "/app": { title: "Plus", subtitle: "Boutique et reglages" },
+  "/account": { title: "Profil", subtitle: "Mon compte" },
 };
 
 function getMobilePageMeta(pathname) {
@@ -85,6 +90,33 @@ function accountSyncTimeout(promise, message = "Verification du compte trop long
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
+// Récupère le nombre de commandes en attente pour le badge
+function usePendingOrderCount(seller) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!seller?.slug) return;
+    let alive = true;
+
+    async function fetchCount() {
+      try {
+        const token = await getSellerAccessToken();
+        const { getPendingOrdersCount } = await import("./actions");
+        const pending = await getPendingOrdersCount(seller.slug, token);
+        if (!alive) return;
+        setCount(pending || 0);
+      } catch {
+        // silently ignore
+      }
+    }
+
+    fetchCount();
+    return () => { alive = false; };
+  }, [seller?.slug]);
+
+  return count;
+}
+
 export default function AppChrome({ children }) {
   const pathname = usePathname();
   const seller = useActiveSeller();
@@ -98,7 +130,8 @@ export default function AppChrome({ children }) {
   const mobileMeta = getMobilePageMeta(pathname);
   const publishActive = ["/add-product", "/products"].includes(pathname);
   const messagesActive = pathname === "/messages" || pathname === "/crm";
-  const menuActive = ["/app", "/delivery-settings", "/payment-settings", "/shop-info", "/social-sharing", "/whatsapp"].includes(pathname);
+  const menuActive = ["/app", "/delivery-settings", "/payment-settings", "/shop-info", "/social-sharing", "/whatsapp", "/account"].includes(pathname);
+  const pendingCount = usePendingOrderCount(showSellerChrome ? seller : null);
 
   if (showAdminChrome) {
     return <main className="admin-chrome">{children}</main>;
@@ -118,17 +151,17 @@ export default function AppChrome({ children }) {
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
           <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
-              <ArrowLeft size={18} strokeWidth={2.35} />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f7f4] text-[#008f5a]">
+              <ArrowLeft size={17} strokeWidth={2.5} />
             </span>
-            <span className="hidden md:inline">Accueil</span>
+            <span className="hidden md:inline text-sm font-black text-[#07120d]/60">Accueil</span>
           </Link>
           <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta.title}`}>
-            <strong>{mobileMeta.title}</strong>
+            <strong className="tk-slide-down">{mobileMeta.title}</strong>
           </div>
-          <Link href="/app" className="mobile-seller-topbar-avatar overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
+          <Link href="/app" className="mobile-seller-topbar-avatar relative overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
             {seller.logo_url ? (
-              <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+              <Image src={seller.logo_url} alt="Logo" fill sizes="40px" className="object-cover" />
             ) : (
               sellerInitials
             )}
@@ -158,23 +191,28 @@ export default function AppChrome({ children }) {
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
         <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><Home size={19} strokeWidth={2.65} /></span>
+          <span className="mobile-tabbar-icon"><Home size={19} strokeWidth={2.5} /></span>
           <span>Accueil</span>
         </Link>
         <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><ClipboardList size={19} strokeWidth={2.65} /></span>
+          <span className="mobile-tabbar-icon relative">
+            <ClipboardList size={19} strokeWidth={2.5} />
+            {pendingCount > 0 && (
+              <span className="mobile-tabbar-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>
+            )}
+          </span>
           <span>Ventes</span>
         </Link>
         <Link href="/add-product" className={`mobile-tabbar-action ${publishActive ? "is-active" : ""}`} aria-label="Publier un article">
-          <span className="mobile-tabbar-icon"><Plus size={22} strokeWidth={2.75} /></span>
+          <span className="mobile-tabbar-icon"><Plus size={24} strokeWidth={2.8} /></span>
           <span>Publier</span>
         </Link>
         <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><MessageCircle size={19} strokeWidth={2.65} /></span>
+          <span className="mobile-tabbar-icon"><MessageCircle size={19} strokeWidth={2.5} /></span>
           <span>Clients</span>
         </Link>
           <Link href="/app" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
-            <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={2.65} /></span>
+            <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={2.5} /></span>
             <span>Plus</span>
           </Link>
       </nav>
@@ -191,9 +229,9 @@ function DesktopSellerSidebar({ seller, sellerInitials, pathname }) {
         <BrandLogo href="/dashboard" subtitle="Espace vendeur" size="lg" className="seller-desktop-brand" />
 
         <div className="seller-desktop-shop">
-          <span className="seller-desktop-avatar overflow-hidden flex items-center justify-center">
+          <span className="seller-desktop-avatar relative overflow-hidden flex items-center justify-center">
             {seller.logo_url ? (
-              <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+              <Image src={seller.logo_url} alt="Logo" fill sizes="56px" className="object-cover" />
             ) : (
               sellerInitials
             )}
@@ -336,12 +374,21 @@ function SellerAccountGate({ children }) {
   if (checking || !clientReady) {
     return (
       <main className="container">
-        <div className="flex min-h-[70vh] flex-col items-center justify-center text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#fbf9f4] text-[#008f5a] ring-1 ring-[#07120d]/5">
-            <Loader2 className="animate-spin" size={26} />
+        <div className="flex min-h-[80vh] flex-col items-center justify-center text-center">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#07120d] shadow-[0_20px_48px_rgba(7,18,13,0.22)]">
+            <span
+              style={{ backgroundImage: "url('/icon.svg')" }}
+              className="h-12 w-12 rounded-[14px] bg-center bg-cover bg-no-repeat"
+              aria-hidden="true"
+            />
           </div>
-          <p className="mt-5 font-display text-2xl font-black text-[#07120d]">{message}</p>
-          <p className="mt-2 max-w-[18rem] text-sm font-bold leading-5 text-[#07120d]/50">
+          <p className="mt-6 font-display text-xl font-black text-[#07120d]">{message}</p>
+          <div className="mt-3 flex items-center justify-center gap-1.5" aria-label="Chargement en cours">
+            <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#008f5a]" />
+            <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#008f5a]" />
+            <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#008f5a]" />
+          </div>
+          <p className="mt-4 max-w-[18rem] text-sm font-bold leading-5 text-[#07120d]/40">
             Chaque boutique garde son propre espace Tikchop.
           </p>
         </div>

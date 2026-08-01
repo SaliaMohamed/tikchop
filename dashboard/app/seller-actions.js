@@ -478,21 +478,7 @@ export async function getSellerWhatsAppConnection(seller, accessToken) {
     .maybeSingle()
     .then((result) => (/whatsapp_provider|whatsapp_status|evolution_instance|schema cache|column/i.test(result.error?.message || "") ? { data: null } : result));
 
-  if (sellerState.data?.whatsapp_provider === "tikchop_standard") {
-    return {
-      provider: "tikchop_standard",
-      instanceName: sellerState.data.evolution_instance || "",
-      phone,
-      state: sellerState.data.whatsapp_status || "standard_active",
-      isConnected: true,
-      standardNumber: getStandardWhatsAppNumber(),
-      webhookUrl: "",
-      webhookEnabled: true,
-      webhookBase64: true,
-      webhookEvents: ["MESSAGES_UPSERT"],
-      error: sellerState.data.whatsapp_last_error || "",
-    };
-  }
+  // tikchop_standard n'est plus supporté, on passe directement à la vérification Evolution API propre du vendeur
 
   const { n8nWebhookUrl } = getEvolutionConfig();
   let instanceName = sellerState.data?.evolution_instance || slug;
@@ -551,26 +537,7 @@ export async function getSellerWhatsAppConnection(seller, accessToken) {
 }
 
 export async function activateSellerStandardAssistant(seller, accessToken) {
-  const ownedSeller = await requireOwnedSeller(seller, accessToken);
-  const standardNumber = getStandardWhatsAppNumber();
-
-  await saveSellerWhatsAppFields(ownedSeller, {
-    whatsapp_provider: "tikchop_standard",
-    evolution_instance: null,
-    whatsapp_status: "standard_active",
-    whatsapp_connected_at: new Date().toISOString(),
-    whatsapp_last_error: null,
-  });
-
-  return {
-    provider: "tikchop_standard",
-    state: "standard_active",
-    isConnected: true,
-    standardNumber,
-    message: standardNumber
-      ? "Assistant Standard active. Les clients peuvent passer par le numero Tikchop."
-      : "Assistant Standard active. Le support Tikchop ajoutera le numero central pour afficher le lien WhatsApp.",
-  };
+  throw new Error("L'assistant standard centralise n'est plus supporte. Vous devez connecter votre propre numero WhatsApp.");
 }
 
 export async function getSellerChatbotSettings(seller, accessToken) {

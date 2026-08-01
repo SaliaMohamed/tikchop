@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Bot,
@@ -10,13 +11,14 @@ import {
   PackageCheck,
   ShoppingBag,
   Store,
+  TrendingUp,
 } from "lucide-react";
 import { getDashboardData } from "../actions";
 import { getSellerInitials, useActiveSeller } from "../components/sellerContext";
 import { TkActionCard, TkIconButton, TkMetric, TkPrimary, TkScreen, TkTop } from "../components/TikchopUI";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 
-const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
+const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} F`;
 
 const emptyStats = {
   sales: 0,
@@ -121,10 +123,9 @@ export default function Dashboard() {
         eyebrow="Accueil"
         title={seller.name || "Boutique"}
         avatar={(
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgba(7,18,13,0.14)]">
+          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgba(7,18,13,0.14)]">
             {seller.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+              <Image src={seller.logo_url} alt="Logo" fill sizes="48px" className="object-cover" />
             ) : sellerInitials}
           </span>
         )}

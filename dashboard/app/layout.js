@@ -1,5 +1,20 @@
 import "./globals.css";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import AppChrome from "./AppChrome";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+  weight: ["500", "600", "700", "800"],
+});
 
 export const metadata = {
   title: "Tikchop · Vendre mieux sur WhatsApp",
@@ -35,7 +50,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={`${inter.variable} ${plusJakarta.variable}`}>
       <body>
         <AppChrome>{children}</AppChrome>
       </body>

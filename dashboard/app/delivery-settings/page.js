@@ -19,6 +19,7 @@ import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { ABIDJAN_DELIVERY_AREAS } from "../../lib/local-commerce";
+import { IllustrationDelivery } from "../components/TikchopIllustrations";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -491,10 +492,13 @@ export default function DeliverySettingsPage() {
                 </div>
 
                 {drivers.length === 0 ? (
-                  <div className="rounded-[22px] bg-[#fbf9f4] p-7 text-center ring-1 ring-[#07120d]/8">
-                    <Truck className="mx-auto text-[#07120d]/20" size={32} />
-                    <p className="mt-3 font-extrabold text-[#07120d]">Aucun livreur</p>
-                    <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Ajoutez les numeros WhatsApp des livreurs qui recoivent les fiches.</p>
+                  <div className="relative overflow-hidden rounded-[24px] bg-[#07120d] p-6 text-center">
+                    <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <IllustrationDelivery size={96} className="opacity-90" />
+                      <p className="mt-2 font-display text-base font-black text-white">Aucun livreur</p>
+                      <p className="mt-1 text-xs font-semibold text-white/50 max-w-[220px]">Ajoutez les numeros WhatsApp des livreurs pour envoyer automatiquement les fiches.</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">

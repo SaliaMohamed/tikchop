@@ -33,6 +33,7 @@ import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { fetchSellerProductsFromMobileApi, withClientTimeout } from "../../lib/seller-products-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { compressImage } from "../../lib/image-compressor";
+import { IllustrationEmptyShop } from "../components/TikchopIllustrations";
 
 const EXTRA_IMAGES_PATTERN = /\n?\[\[TIKCHOP_EXTRA_IMAGES:([^\]]*)\]\]/i;
 
@@ -535,22 +536,24 @@ function CatalogueFilters({ stats, filter, onFilter }) {
 
 function EmptyProductsState({ hasProducts }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf9f4] rounded-[24px] border border-[#07120d]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a] mb-4">
-        <Package size={28} />
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#07120d] rounded-[28px] my-6 relative overflow-hidden">
+      {/* Subtle grid */}
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="relative z-10 flex flex-col items-center">
+        <IllustrationEmptyShop size={120} className="opacity-90" />
+        <h3 className="mt-3 font-display text-xl font-bold text-white">
+          {hasProducts ? "Aucun article trouvé" : "Aucun article en ligne"}
+        </h3>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-white/55 max-w-[260px]">
+          {hasProducts
+            ? "Modifiez vos filtres ou écrivez un autre mot-clé dans la recherche."
+            : "Ajoutez une photo, un prix et un stock pour commencer à vendre en ligne."}
+        </p>
+        <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[240px] items-center justify-center gap-2 rounded-2xl bg-[#39f58e] text-sm font-extrabold text-[#07120d] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(57,245,142,0.25)] no-underline">
+          <Plus size={16} />
+          Ajouter un produit
+        </Link>
       </div>
-      <h3 className="font-display text-xl font-bold text-[#07120d]">
-        {hasProducts ? "Aucun article trouvé" : "Aucun article en ligne"}
-      </h3>
-      <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
-        {hasProducts
-          ? "Modifiez vos filtres ou écrivez un autre mot-clé dans la recherche."
-          : "Ajoutez une photo, un prix et un stock pour commencer à vendre en ligne."}
-      </p>
-      <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
-        <Plus size={16} />
-        Ajouter un produit
-      </Link>
     </div>
   );
 }

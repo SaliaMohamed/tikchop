@@ -44,30 +44,37 @@ async function getSellerData(slug) {
 
   if (error || !seller) return null;
 
-  let { data: products, error: productsError } = await supabase
-    .from("products")
-    .select(PUBLIC_PRODUCT_SELECT)
-    .eq("seller_id", seller.id)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  const [products, deliveryZones] = await Promise.all([
+    (async () => {
+      let { data, error: productsError } = await supabase
+        .from("products")
+        .select(PUBLIC_PRODUCT_SELECT)
+        .eq("seller_id", seller.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
 
-  if (productsError && /is_active|schema cache|column/i.test(productsError.message || "")) {
-    const fallback = await supabase
-      .from("products")
-      .select(PUBLIC_PRODUCT_SELECT)
-      .eq("seller_id", seller.id)
-      .order("created_at", { ascending: false });
-    products = fallback.data;
-  }
+      if (productsError && /is_active|schema cache|column/i.test(productsError.message || "")) {
+        const fallback = await supabase
+          .from("products")
+          .select(PUBLIC_PRODUCT_SELECT)
+          .eq("seller_id", seller.id)
+          .order("created_at", { ascending: false });
+        data = fallback.data;
+      }
+      return data || [];
+    })(),
+    (async () => {
+      const { data } = await supabase
+        .from("delivery_zones")
+        .select("id, name, fee")
+        .eq("seller_id", seller.id)
+        .eq("is_active", true)
+        .order("name");
+      return data || [];
+    })()
+  ]);
 
-  const { data: deliveryZones } = await supabase
-    .from("delivery_zones")
-    .select("id, name, fee")
-    .eq("seller_id", seller.id)
-    .eq("is_active", true)
-    .order("name");
-
-  return { seller, products: products || [], deliveryZones: deliveryZones || [] };
+  return { seller, products, deliveryZones };
 }
 
 export default async function SellerShopPage({ params, searchParams }) {

@@ -438,11 +438,18 @@ function LoadingState() {
 
 function EmptyMessages() {
   return (
-    <div className="bg-white p-8 text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-[#008f5a] shadow-sm">
-        <MessageCircle size={26} />
-      </span>
-      <h2 className="mt-4 font-display text-xl font-black text-[#07120d]">Aucun client</h2>
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf9f4] rounded-[24px] border border-[#07120d]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a] mb-4">
+        <MessageCircle size={28} />
+      </div>
+      <h3 className="font-display text-xl font-bold text-[#07120d]">Aucun client encore</h3>
+      <p className="mt-2 text-sm font-medium leading-relaxed text-[#07120d]/60 max-w-[280px]">
+        Vos conversations WhatsApp apparaissent ici quand les clients vous écrivent.
+      </p>
+      <Link href="/whatsapp" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#008f5a] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+        <Bot size={16} />
+        Connecter WhatsApp
+      </Link>
     </div>
   );
 }

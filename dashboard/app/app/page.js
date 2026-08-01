@@ -14,18 +14,21 @@ import {
   LogOut,
   MessageCircle,
   Package,
-  Settings2,
   Share2,
+  ShoppingBag,
   Store,
   Truck,
+  User,
   Users,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { getDashboardData } from "../actions";
 import LaunchProgressPanel from "../components/LaunchProgressPanel";
 import { clearActiveSeller, getSellerInitials, useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { supabase } from "../../lib/supabase";
+import { IllustrationWhatsApp, IllustrationCart, IllustrationEmptyShop } from "../components/TikchopIllustrations";
 
 const emptyStats = {
   products: 0,
@@ -185,6 +188,7 @@ export default function SellerMenuPage() {
               <MenuLink href="/payment-settings" icon={<Wallet size={20} />} title="Paiement" text="Dernier reglage vendeur." />
               <MenuLink href="/shop-info" icon={<Store size={20} />} title="Fiche boutique" text="Infos que Tikchop utilise." />
               <MenuLink href="/social-sharing" icon={<Share2 size={20} />} title="Reseaux sociaux" text="Textes et liens prets." />
+              <MenuLink href="/account" icon={<User size={20} />} title="Mon compte" text="Profil, email, securite." />
             </div>
           </section>
         </div>
@@ -238,10 +242,15 @@ function MobileMenuCockpit({ seller, stats, hasProducts, payoutReady, whatsappCo
 
   return (
     <section className="mx-auto mt-3 w-full max-w-[430px] space-y-4 px-1 md:hidden">
-      <section className="rounded-[30px] bg-white p-4 shadow-[0_18px_50px_rgb(7_18_13_/_0.08)] ring-1 ring-[#07120d]/8">
-        <div className="flex items-center gap-3">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#07120d] font-display text-lg font-black text-[#39f58e] shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]">
+      <section className="overflow-hidden rounded-[30px] bg-white shadow-[0_18px_50px_rgb(7_18_13_/_0.08)] ring-1 ring-[#07120d]/8">
+        {/* Top gradient stripe */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#008f5a] via-[#39f58e] to-[#008f5a]" />
+        <div className="flex items-center gap-3 p-4">
+          <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#07120d] to-[#0d2318] font-display text-lg font-black text-[#39f58e] shadow-[0_14px_30px_rgb(7_18_13_/_0.22)]">
             {(shopName || "T").slice(0, 1).toUpperCase()}
+            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#39f58e] text-[#07120d]">
+              <Zap size={10} strokeWidth={3} />
+            </span>
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[0.68rem] font-black uppercase tracking-[0.13em] text-[var(--primary)]">Boutique</p>
@@ -287,6 +296,7 @@ function MobileMenuCockpit({ seller, stats, hasProducts, payoutReady, whatsappCo
       </MobileMenuSection>
 
       <MobileMenuSection title="Reglages">
+        <MobileMenuItem href="/account" icon={<User size={21} />} title="Mon compte" text="Profil" />
         <MobileMenuItem href="/whatsapp" icon={<Bot size={21} />} title="WhatsApp" text={whatsappConnected ? "Connecte" : "Off"} />
         <MobileMenuItem href="/delivery-settings" icon={<Truck size={21} />} title="Livraison" text="Zones" />
         <MobileMenuItem href="/payment-settings" icon={<Wallet size={21} />} title="Paiement" text={payoutReady ? "Pret" : "Au choix"} />
@@ -483,8 +493,9 @@ function DesktopMenuHero({ seller, initials, stats, payoutReady, whatsappConnect
           </Link>
         </div>
       </div>
-      <div className="m-5 flex h-32 w-32 items-center justify-center rounded-[28px] bg-gradient-to-br from-[var(--primary)] to-[#06120d] font-display text-4xl font-black text-white shadow-[0_24px_54px_rgb(0_143_90_/_0.22)]">
-        {initials}
+      <div className="relative m-5 flex h-36 w-36 shrink-0 items-center justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-[#07120d] to-[#0d2318] shadow-[0_24px_54px_rgb(0_143_90_/_0.30)]">
+        <IllustrationEmptyShop size={96} className="absolute opacity-20" />
+        <span className="relative z-10 font-display text-4xl font-black text-[#39f58e]">{initials}</span>
       </div>
     </section>
   );
@@ -529,38 +540,37 @@ function FlowStep({ href, icon, title, text, done, urgent = false }) {
 function WhatsAppStatusPanel({ connected, loading }) {
   const title = loading ? "Verification WhatsApp..." : connected ? "WhatsApp connecte" : "WhatsApp non connecte";
   const text = connected
-    ? "L'assistant peut repondre, conseiller et prendre les commandes."
-    : "Sans connexion WhatsApp, Tikchop ne peut pas vendre automatiquement a votre place.";
+    ? "L'assistant repond, conseille et prend les commandes a votre place."
+    : "Sans WhatsApp, Tikchop ne peut pas vendre automatiquement pour vous.";
 
   return (
-    <section className={`rounded-[26px] p-5 shadow-[var(--shadow-md)] ring-1 md:block ${
+    <section className={`overflow-hidden rounded-[26px] shadow-[var(--shadow-md)] ring-1 md:block ${
       connected
-        ? "bg-[#052015] text-white ring-emerald-300/20"
-        : "bg-[#fff0bd] text-[#171006] ring-[#ffb000]/40"
+        ? "bg-[#07120d] text-white ring-[#39f58e]/15"
+        : "bg-gradient-to-br from-[#fff8dc] to-[#fff0bd] text-[#171006] ring-[#ffb000]/40"
     }`}>
-      <div className="flex items-start justify-between gap-4">
-        <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
-          connected ? "bg-[var(--primary-bright)] text-[#07120d]" : "bg-[#07120d] text-[#ffcf3d]"
-        }`}>
-          <Bot size={25} />
-        </span>
-        <span className={`rounded-full px-3 py-1 text-xs font-black ${
-          connected ? "bg-white/12 text-[var(--primary-bright)]" : "bg-[#07120d] text-[#ffcf3d]"
-        }`}>
-          {connected ? "ACTIF" : "A BRANCHER"}
-        </span>
+      <div className="flex items-start justify-between gap-2 p-5 pb-0">
+        <div className="min-w-0">
+          <span className={`inline-block rounded-full px-3 py-1 text-xs font-black ${
+            connected ? "bg-[#39f58e]/15 text-[#39f58e]" : "bg-[#07120d] text-[#ffcf3d]"
+          }`}>
+            {connected ? "● ACTIF" : "○ A BRANCHER"}
+          </span>
+          <h2 className="mt-3 font-display text-2xl font-black leading-7">{title}</h2>
+          <p className={`mt-2 text-sm font-bold leading-6 ${connected ? "text-white/62" : "text-[#4c3510]"}`}>{text}</p>
+          <Link
+            href="/whatsapp"
+            className={`mt-4 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-5 text-sm font-black no-underline ${
+              connected ? "bg-[#39f58e] text-[#07120d]" : "bg-[#07120d] text-white"
+            }`}
+          >
+            <Bot size={17} />
+            {connected ? "Verifier la connexion" : "Connecter WhatsApp"}
+          </Link>
+        </div>
+        <IllustrationWhatsApp size={80} className="shrink-0 opacity-80" />
       </div>
-      <h2 className="mt-4 font-display text-2xl font-black leading-8">{title}</h2>
-      <p className={`mt-2 text-sm font-bold leading-6 ${connected ? "text-white/70" : "text-[#4c3510]"}`}>{text}</p>
-      <Link
-        href="/whatsapp"
-        className={`mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-sm font-black no-underline ${
-          connected ? "bg-white text-[#07120d]" : "bg-[#07120d] text-white"
-        }`}
-      >
-        <Bot size={18} />
-        {connected ? "Verifier la connexion" : "Connecter WhatsApp"}
-      </Link>
+      <div className="h-5" />
     </section>
   );
 }

@@ -787,169 +787,6 @@ export default function OnboardingPage() {
                 {saving ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={19} />}
                 {accountMode === "SIGN_IN" ? "Entrer dans mon espace" : "Creer ma boutique"}
               </button>
-
-            {false && (
-            <>
-            <div className="mb-4 rounded-[24px] bg-[linear-gradient(135deg,#08120d,#075b3c)] p-4 text-white shadow-[var(--shadow-md)]">
-              <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/12 text-[var(--primary-bright)] ring-1 ring-white/10">
-                  {accountMode === "SIGN_IN" ? <LockKeyhole size={21} /> : <MessageCircle size={21} />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.68rem] font-black uppercase tracking-[0.13em] text-[var(--primary-bright)]">
-                    {accountMode === "SIGN_IN" ? "Retour vendeur" : "Inscription rapide"}
-                  </p>
-                  <h2 className="mt-1 font-display text-[1.42rem] font-bold leading-7">
-                    {accountMode === "SIGN_IN" ? "Ouvrez votre boutique existante." : "Un numero suffit pour demarrer."}
-                  </h2>
-                  <p className="mt-1.5 text-sm font-semibold leading-5 text-white/72">
-                    {accountMode === "SIGN_IN"
-                      ? "Retrouvez vos articles, commandes, paiements et livraisons au meme endroit."
-                      : "Creez l'acces, nommez la boutique, puis publiez vos premiers articles."}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <AuthTrustPill icon={<Store size={14} />} label="Boutique" />
-                <AuthTrustPill icon={<MessageCircle size={14} />} label="WhatsApp" />
-                <AuthTrustPill icon={<ShieldCheck size={14} />} label="Protege" />
-              </div>
-            </div>
-
-            <div className="mb-4 rounded-[22px] border border-[var(--outline)]/50 bg-white p-2 shadow-[var(--shadow-sm)]">
-              <p className="px-2 pb-2 pt-1 text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--text-dim)]">
-                Que voulez-vous faire ?
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <AuthModeButton
-                  active={accountMode === "SIGN_UP"}
-                  title="Créer"
-                  text="Nouvelle boutique"
-                  onClick={() => setAccountMode("SIGN_UP")}
-                />
-                <AuthModeButton
-                  active={accountMode === "SIGN_IN"}
-                  title="Entrer"
-                  text="J'ai deja un compte"
-                  onClick={() => setAccountMode("SIGN_IN")}
-                />
-              </div>
-            </div>
-
-            <div className="mb-4 rounded-[22px] bg-[var(--surface-soft)] p-2">
-              <p className="px-2 pb-2 pt-1 text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--text-dim)]">
-                Avec quoi voulez-vous revenir ?
-              </p>
-              <div className="grid gap-2 md:grid-cols-2">
-              <AuthMethodButton
-                active={accountMethod === "PHONE"}
-                icon={<MessageCircle size={18} />}
-                title="Numero WhatsApp"
-                text="Recommande a Abidjan"
-                onClick={() => switchAccountMethod("PHONE")}
-              />
-              <AuthMethodButton
-                active={accountMethod === "EMAIL"}
-                icon={<Mail size={18} />}
-                title="Email"
-                text="Si vous preferez"
-                onClick={() => switchAccountMethod("EMAIL")}
-              />
-              </div>
-            </div>
-
-            {accountMethod === "EMAIL" ? (
-              <AuthInput
-                label="Email vendeur"
-                icon={<Mail size={19} />}
-                value={form.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="vendeur@email.com"
-                inputMode="email"
-                autoComplete="email"
-              />
-            ) : (
-              <PhoneInput
-                label="Numero WhatsApp vendeur"
-                icon={<MessageCircle size={19} />}
-                value={form.account_phone}
-                onValueChange={(nextPhone) => {
-                  updateField("account_phone", nextPhone);
-                  if (!form.phone_number || form.phone_number === form.account_phone) {
-                    updateField("phone_number", nextPhone);
-                  }
-                }}
-                autoComplete="tel"
-              />
-            )}
-
-            <AuthInput
-              className="mt-3"
-              label="Mot de passe Tikchop"
-              icon={<LockKeyhole size={19} />}
-              value={form.password}
-              onChange={(event) => updateField("password", event.target.value)}
-              placeholder={accountMode === "SIGN_IN" ? "Votre mot de passe" : "Minimum 6 caracteres"}
-              type="password"
-              autoComplete={accountMode === "SIGN_UP" ? "new-password" : "current-password"}
-            />
-
-            {GOOGLE_AUTH_ENABLED && (
-              <div className="mt-3 rounded-[20px] border border-[var(--outline)]/45 bg-white p-2 shadow-[var(--shadow-sm)]">
-                <button
-                  type="button"
-                  onClick={handleGoogleAuth}
-                  disabled={saving}
-                  className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[16px] bg-[var(--surface-soft)] px-4 text-sm font-extrabold text-[var(--text-main)] disabled:opacity-60"
-                >
-                  <GoogleMark />
-                  Continuer avec Google
-                </button>
-                <p className="px-2 pb-1 pt-2 text-center text-xs font-semibold leading-4 text-[var(--text-dim)]">
-                  Optionnel. Le numero reste le plus simple pour les vendeurs WhatsApp.
-                </p>
-              </div>
-            )}
-
-            {accountMode === "SIGN_IN" && accountMethod === "EMAIL" && (
-              <div className="mt-3 rounded-[18px] bg-[var(--surface-soft)] p-3">
-                <button
-                  type="button"
-                  onClick={handlePasswordReset}
-                  disabled={saving}
-                  className="text-sm font-extrabold text-[var(--primary)] disabled:text-[var(--text-dim)]"
-                >
-                  Mot de passe oublie ? Envoyer un lien par email
-                </button>
-                {resetSent && (
-                  <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                    Si ce compte existe, un email de recuperation vient d&apos;etre envoye.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {accountMode === "SIGN_IN" && accountMethod === "PHONE" && (
-              <div className="mt-3 rounded-[18px] bg-[var(--surface-soft)] p-3">
-                <p className="text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                  Entrez le meme numero et le meme mot de passe que lors de votre inscription.
-                </p>
-                <p className="mt-2 text-sm font-semibold leading-5 text-[var(--text-dim)]">
-                  Si vous preferez recuperer votre acces par email plus tard, vous pourrez ajouter un email depuis votre espace vendeur.
-                </p>
-              </div>
-            )}
-
-            <div className="mt-3 flex items-start gap-2 rounded-[18px] border border-[var(--primary)]/15 bg-[var(--surface-soft)] p-3 text-xs font-bold leading-4 text-[var(--text-dim)]">
-              <ShieldCheck className="mt-0.5 shrink-0 text-[var(--primary)]" size={16} />
-              <p>
-                {accountMethod === "EMAIL"
-                  ? "Votre email sert a vous reconnecter et recuperer votre acces."
-                  : "Votre numero sert a vous reconnecter et configurer votre WhatsApp de vente."}
-              </p>
-            </div>
-            </>
-            )}
             </OnboardingCard>
             </div>
           </section>
@@ -1153,9 +990,9 @@ export default function OnboardingPage() {
 
 function OnboardingLandingHero({ onStart, onSignIn }) {
   return (
-    <>
-    <section className="relative flex h-[100dvh] flex-col justify-between overflow-hidden bg-[#fbf9f4] p-5 text-[#07120d] md:hidden">
+    <section className="relative flex h-[100dvh] md:h-auto md:min-h-[600px] flex-col justify-between overflow-hidden bg-[#fbf9f4] p-6 text-[#07120d] w-full max-w-[440px] mx-auto md:rounded-[32px] md:shadow-[0_24px_60px_rgba(7,18,13,0.06)] md:border md:border-[#07120d]/5 md:my-12 animate-fade-in">
       <div className="pointer-events-none absolute -right-20 top-20 h-56 w-56 rounded-full bg-[#39f58e]/20 blur-3xl" />
+      
       <header className="relative z-10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#07120d] font-display text-base font-black text-[#39f58e]" aria-hidden="true">T</span>
@@ -1170,32 +1007,24 @@ function OnboardingLandingHero({ onStart, onSignIn }) {
         </button>
       </header>
 
-      <div className="relative z-10 my-auto flex flex-col gap-4 py-3">
-        <div className="relative mx-auto h-[210px] w-full max-w-[350px] overflow-hidden rounded-[32px] bg-[#07120d] shadow-[0_26px_58px_rgba(7,18,13,0.18)]">
-          <img
-            src="/landing/fatim-jeune-friperie.jpg"
-            alt="Vendre en ligne"
-            className="h-full w-full object-cover object-[center_22%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07120d]/84 via-[#07120d]/20 to-transparent" />
-          <div className="absolute left-4 top-4 rounded-full bg-[#07120d]/86 px-3 py-1.5 text-xs font-black text-[#39f58e] backdrop-blur-md">
-            24h/24
-          </div>
-          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-[24px] bg-white/94 p-2 shadow-[0_16px_34px_rgba(0,0,0,0.16)] backdrop-blur-md">
-            <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
-            <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
-            <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
-            <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
-          </div>
-        </div>
+      <div className="relative z-10 my-auto flex flex-col items-center text-center gap-6 py-8">
+        <svg viewBox="0 0 200 200" className="w-40 h-40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="80" fill="#008f5a" fillOpacity="0.08" />
+          <rect x="60" y="80" width="80" height="60" rx="16" fill="white" stroke="#07120d" strokeWidth="6" />
+          <path d="M54 80C54 70 60 62 70 62H130C140 62 146 70 146 80" stroke="#07120d" strokeWidth="6" strokeLinecap="round" />
+          <circle cx="78" cy="110" r="8" fill="#39f58e" />
+          <circle cx="122" cy="110" r="8" fill="#008f5a" />
+          <rect x="90" y="102" width="20" height="24" rx="4" fill="#07120d" />
+          <path d="M130 50C130 40 140 32 152 32C164 32 174 40 174 50C174 60 164 68 152 68C146 68 142 66 138 62L130 68L132 58C130.8 55.6 130 53 130 50Z" fill="#39f58e" stroke="#07120d" strokeWidth="4" strokeLinejoin="round" />
+        </svg>
 
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#008f5a]">Boutique en ligne + WhatsApp</p>
-          <h1 className="mt-2 max-w-[350px] font-display text-[2.35rem] font-black leading-[0.98] tracking-tight text-[#07120d]">
-            Vendez sans perdre vos messages.
+          <h1 className="mt-3 font-display text-[2.5rem] font-black leading-[1.05] tracking-tight text-[#07120d]">
+            Créez votre boutique
           </h1>
-          <p className="mt-3 max-w-[330px] text-sm font-bold leading-6 text-[#4a6055]">
-            Publiez vos articles, recevez les ventes et suivez les clients depuis votre téléphone.
+          <p className="mt-3 max-w-[290px] text-sm font-medium leading-relaxed text-[#07120d]/60">
+            Publiez vos articles, recevez les ventes et suivez vos clients simplement.
           </p>
         </div>
       </div>
@@ -1215,179 +1044,12 @@ function OnboardingLandingHero({ onStart, onSignIn }) {
         <button
           type="button"
           onClick={onSignIn}
-          className="py-1 text-center text-xs font-black text-[#07120d]/55"
+          className="py-1 text-center text-xs font-black text-[#07120d]/55 hover:text-[#07120d]"
         >
           J&apos;ai déjà un compte
         </button>
       </div>
     </section>
-    <DesktopOnboardingHero onStart={onStart} onSignIn={onSignIn} />
-    </>
-  );
-}
-
-function DesktopOnboardingHero({ onStart, onSignIn }) {
-  return (
-    <section className="hidden h-[calc(100vh-3rem)] min-h-[720px] w-full overflow-hidden rounded-[28px] border border-[#d9e2dd] bg-[#f7faf8] shadow-[0_34px_90px_rgba(8,18,13,0.16)] md:block">
-      <header className="grid h-[68px] grid-cols-[auto_1fr_auto] items-center gap-5 border-b border-[#dfe7e2] bg-white px-6">
-        <div className="flex items-center gap-3">
-          <span className="tk-logo-mark flex h-12 w-12 items-center justify-center rounded-2xl bg-[#07120d] font-display text-lg font-black text-[var(--primary-bright)]" aria-hidden="true" />
-          <div>
-            <strong className="block font-display text-xl font-black text-[#07120d]">Tikchop Store</strong>
-            <span className="block text-xs font-bold text-[#6b7a72]">Assistant vendeur WhatsApp</span>
-          </div>
-        </div>
-        <div className="mx-auto flex h-11 w-full max-w-[420px] items-center justify-between rounded-xl bg-[#f0f3f1] px-4 text-sm font-bold text-[#7b8781]">
-          <span>Rechercher un article...</span>
-          <Package size={17} />
-        </div>
-        <nav className="flex items-center gap-2 text-sm font-extrabold text-[#34453c]" aria-label="Actions Tikchop">
-          <button type="button" onClick={onSignIn} className="h-11 rounded-xl px-4 hover:bg-[#f0f3f1]">
-            Connexion
-          </button>
-          <button type="button" onClick={onStart} className="h-11 rounded-xl bg-[#07120d] px-5 text-white shadow-[0_16px_30px_rgba(7,18,13,0.16)]">
-            Creer ma boutique
-          </button>
-        </nav>
-      </header>
-
-      <div className="grid h-[calc(100%-68px)] grid-cols-[360px_1fr]">
-        <aside className="relative overflow-hidden bg-[#101a15] p-6 text-white">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/landing/fatim-jeune-friperie.jpg"
-            alt="Fatim avec ses articles"
-            className="absolute inset-0 h-full w-full object-cover object-[48%_center] opacity-78"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,18,13,0.10),rgba(7,18,13,0.22)_42%,#07120d_100%)]" />
-          <div className="relative flex h-full flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="rounded-full bg-[#07120d]/76 px-4 py-2 text-sm font-black text-[var(--primary-bright)] ring-1 ring-white/10 backdrop-blur-md">24h/24</span>
-              <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-[#07120d] shadow-[0_18px_34px_rgba(0,0,0,0.18)]">
-                <Bot size={17} />
-                Il vend
-              </span>
-            </div>
-
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--primary-bright)]">Cas Fatim</p>
-              <h2 className="mt-3 font-display text-4xl font-black leading-[1.02]">La boutique reste ouverte meme quand elle prepare les colis.</h2>
-              <div className="mt-5 flex items-center gap-2 rounded-[22px] bg-white/14 p-2 ring-1 ring-white/14 backdrop-blur-md">
-                <PaymentLogo src="/payment-logos/wave.png" label="Wave" size="normal" />
-                <PaymentLogo src="/payment-logos/orange-money.svg" label="Orange Money" size="wide" />
-                <PaymentLogo src="/payment-logos/mtn-momo.png" label="MTN MoMo" size="large" />
-                <PaymentLogo src="/payment-logos/djamo.png" label="Djamo" size="large" />
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_300px] gap-5 p-6">
-          <main className="min-w-0">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary)]">Vendre mieux sur WhatsApp</p>
-                <h1 className="mt-2 max-w-[650px] font-display text-[2.65rem] font-black leading-[1.02] text-[#07120d]">
-                  Une boutique web claire, un vendeur WhatsApp automatique.
-                </h1>
-                <p className="mt-3 max-w-[660px] text-base font-semibold leading-6 text-[#4d6258]">
-                  Ajoutez photos et prix. Tikchop presente les articles, conseille le client, encaisse et prepare la livraison avec vos livreurs.
-                </p>
-              </div>
-              <div className="hidden grid-cols-3 gap-2 rounded-[18px] bg-white p-2 shadow-[0_18px_42px_rgba(8,18,13,0.07)] ring-1 ring-[#dfe7e2]">
-                <DesktopHeroMetric value="7j" label="essai" />
-                <DesktopHeroMetric value="24h" label="vente" />
-                <DesktopHeroMetric value="0 tuto" label="simple" />
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center gap-2 border-b border-[#dfe7e2] pb-3">
-              {["Tous les articles", "Pagne", "Sacs", "Beaute"].map((item, index) => (
-                <span key={item} className={`rounded-xl px-4 py-2 text-sm font-black ${index === 0 ? "bg-[#07120d] text-white" : "bg-white text-[#4d6258] ring-1 ring-[#dfe7e2]"}`}>
-                  {item}
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <DesktopProductCard image="/landing/raffia-bags.jpg" name="Sac raphia" price="10 000 F" tag="Disponible" />
-              <DesktopProductCard image="/landing/fabric-display.jpg" name="Pagne wax" price="15 000 F" tag="Top vente" />
-              <DesktopProductCard image="/landing/shea-butter.jpg" name="Karite naturel" price="4 500 F" tag="Livrable" />
-            </div>
-
-          </main>
-
-          <aside className="flex flex-col gap-4">
-            <div className="rounded-[24px] bg-white p-4 shadow-[0_18px_42px_rgba(8,18,13,0.08)] ring-1 ring-[#dfe7e2]">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#7b8781]">Menu boutique</p>
-              <div className="mt-4 grid gap-2">
-                <DesktopMenuItem icon={<Store size={18} />} label="Catalogue" active />
-                <DesktopMenuItem icon={<MessageCircle size={18} />} label="WhatsApp" />
-                <DesktopMenuItem icon={<Truck size={18} />} label="Livraison" />
-              </div>
-            </div>
-            <div className="rounded-[24px] bg-white p-4 shadow-[0_18px_42px_rgba(8,18,13,0.08)] ring-1 ring-[#dfe7e2]">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--primary)]">Lancement</p>
-              <h3 className="mt-2 font-display text-2xl font-black leading-7 text-[#07120d]">Dort tranquille, Tikchop gere.</h3>
-              <p className="mt-2 text-sm font-semibold leading-5 text-[#607469]">Le client voit les articles, pose ses questions, paie et recoit son recu.</p>
-              <div className="mt-4 space-y-2 rounded-2xl bg-[#07120d] p-3 text-xs font-bold text-white/78">
-                <DesktopOrderLine icon={<Package size={15} />} text="Commande creee" />
-                <DesktopOrderLine icon={<Banknote size={15} />} text="Paiement confirme" />
-                <DesktopOrderLine icon={<Truck size={15} />} text="Livreur notifie" />
-              </div>
-              <button type="button" onClick={onStart} className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-black text-white">
-                Creer ma boutique
-                <ArrowRight size={18} />
-              </button>
-              <button type="button" onClick={onSignIn} className="mt-2 flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#eef5f1] text-sm font-black text-[#07120d]">
-                Deja inscrit
-              </button>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DesktopHeroMetric({ value, label }) {
-  return (
-    <div className="min-w-[66px] rounded-xl bg-[#f7faf8] px-3 py-2 text-center">
-      <strong className="block font-display text-lg font-black text-[#07120d]">{value}</strong>
-      <span className="block text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#7b8781]">{label}</span>
-    </div>
-  );
-}
-
-function DesktopProductCard({ image, name, price, tag }) {
-  return (
-    <article className="overflow-hidden rounded-[22px] bg-white shadow-[0_18px_42px_rgba(8,18,13,0.07)] ring-1 ring-[#dfe7e2]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt={name} className="h-28 w-full object-cover" />
-      <div className="p-3">
-        <span className="rounded-full bg-[#e8f9ee] px-2.5 py-1 text-[0.68rem] font-black uppercase text-[var(--primary)]">{tag}</span>
-        <h3 className="mt-2 truncate font-display text-sm font-black text-[#07120d]">{name}</h3>
-        <p className="mt-1 whitespace-nowrap font-display text-lg font-black text-[var(--primary)]">{price}</p>
-      </div>
-    </article>
-  );
-}
-
-function DesktopOrderLine({ icon, text }) {
-  return (
-    <div className="grid grid-cols-[auto_1fr] items-center gap-2 rounded-2xl bg-white/10 p-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary-bright)] text-[#07120d]">{icon}</span>
-      <span>{text}</span>
-    </div>
-  );
-}
-
-function DesktopMenuItem({ icon, label, active = false }) {
-  return (
-    <div className={`grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl px-3 py-3 text-sm font-black ${active ? "bg-[#07120d] text-white" : "bg-[#f2f5f3] text-[#4d6258]"}`}>
-      <span className={active ? "text-[var(--primary-bright)]" : "text-[var(--primary)]"}>{icon}</span>
-      <span>{label}</span>
-    </div>
   );
 }
 
@@ -1586,7 +1248,7 @@ function ProductProfilePicker({ value, onChange }) {
     <div className="rounded-[18px] bg-[#fbf9f4] p-2.5 ring-1 ring-[#07120d]/8">
       <div className="mb-1.5 flex items-center gap-2">
         <Package size={15} className="text-[#008f5a]" />
-        <p className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-[#4e6055]">Type d'articles</p>
+        <p className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-[#4e6055]">Type d&apos;articles</p>
       </div>
       <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
         {PRODUCT_PROFILES.map((profile) => {
