@@ -85,6 +85,37 @@ export default function SellerMenuPage() {
   const workCount = (stats.pendingOrders || 0) + (stats.paidOrders || 0) + (stats.preparedOrders || 0);
   const hasProducts = Number(stats.products || 0) > 0;
 
+  if (!seller.slug) {
+    return (
+      <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8 px-4">
+        <div className="flex flex-col items-center justify-center text-center p-8 bg-[#07120d] rounded-[32px] my-6 relative overflow-hidden text-white shadow-2xl">
+          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+          <div className="relative z-10 flex flex-col items-center max-w-xs">
+            <IllustrationEmptyShop size={130} />
+            <h2 className="mt-4 font-display text-2xl font-black text-white">Aucune boutique active</h2>
+            <p className="mt-2 text-sm font-bold text-white/60 leading-relaxed">
+              Créez votre boutique en 2 minutes pour commencer à vendre sur WhatsApp.
+            </p>
+            <Link
+              href="/onboarding?new=1"
+              className="mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#39f58e] text-base font-black text-[#07120d] shadow-[0_16px_36px_rgba(57,245,142,0.3)] active:scale-[0.98] transition no-underline"
+            >
+              <Store size={18} />
+              Créer ma boutique
+            </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-4 text-xs font-bold text-white/40 hover:text-white/80 py-1 transition"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
       <MobileMenuCockpit
