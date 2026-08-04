@@ -530,11 +530,16 @@ function OrderCard({ order, onClick, index = 0 }) {
   });
   const delay = `${Math.min(index, 5) * 0.06}s`;
 
+  // Step active checks for mini progress bar
+  const stepConfirmActive = ["PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus);
+  const stepPackActive = ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus);
+  const stepDriverActive = ["PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus);
+  const stepDoneActive = ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus);
+
   return (
-    <button
-      type="button"
+    <div
       onClick={onClick}
-      className="animate-rise-in w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(7_18_13_/_0.035)] ring-1 ring-[#07120d]/7 active:scale-[0.99] transition"
+      className="animate-rise-in cursor-pointer w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(7_18_13_/_0.035)] ring-1 ring-[#07120d]/7 active:scale-[0.99] transition hover:shadow-md"
       style={{ animationDelay: delay }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -551,7 +556,7 @@ function OrderCard({ order, onClick, index = 0 }) {
             {demoOrder ? "Client test" : primaryLine}
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-[#4e6055]/50">
-            <Package size={12} /> {itemCount} · {dateStr}
+            <Package size={12} /> {itemCount} article{itemCount > 1 ? "s" : ""} · {dateStr}
           </p>
         </div>
         <div className="text-right shrink-0">
@@ -563,7 +568,25 @@ function OrderCard({ order, onClick, index = 0 }) {
           </span>
         </div>
       </div>
-    </button>
+
+      {/* Visual Stepper Bar on List Card */}
+      <div className="mt-3 flex items-center justify-between border-t border-[#07120d]/5 pt-2.5">
+        <div className="flex items-center gap-1.5">
+          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Reçue" />
+          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Colis prêt" />
+          <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Livreur" />
+          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Livré" />
+          <span className="ml-1 text-[0.6rem] font-black text-[#008f5a] uppercase tracking-wider">
+            {simpleStatus === "DELIVERED" ? "Livrée" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Prête" : simpleStatus === "PAID" ? "En prépa" : "Reçue"}
+          </span>
+        </div>
+        {order.delivery_zone && (
+          <span className="text-[0.64rem] font-extrabold text-[#4e6055]/60 flex items-center gap-1">
+            <MapPin size={11} className="text-[#008f5a]" /> {order.delivery_zone}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1470,22 +1493,36 @@ function OrderNextActionCard({ order }) {
 function OrderProgress({ status, deliveryStatus }) {
   const simpleStatus = getSimpleOrderStatus({ status, delivery_status: deliveryStatus });
   const steps = [
-    { key: "CONFIRM", label: "Client", active: ["PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
-    { key: "PACK", label: "Paquet", active: ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "CONFIRM", label: "Nouveau", active: ["PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "PACK", label: "Colis prêt", active: ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
     { key: "DRIVER", label: "Livreur", active: ["PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
-    { key: "DONE", label: "Finie", active: ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "DONE", label: "Livré", active: ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {steps.map((step, index) => (
-        <div key={step.key} className={`min-w-0 rounded-2xl border p-2 text-center ${step.active ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : "border-zinc-100 bg-zinc-50 text-zinc-400"}`}>
-          <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold ${step.active ? "bg-[var(--primary)] text-white" : "bg-white text-zinc-400"}`}>
-            {step.active ? <CheckCircle2 size={16} /> : index + 1}
-          </span>
-          <p className="mt-1 truncate text-[0.68rem] font-extrabold">{step.label}</p>
-        </div>
-      ))}
+    <div className="rounded-[22px] bg-[#07120d] p-3.5 text-white shadow-md">
+      <div className="grid grid-cols-4 gap-2">
+        {steps.map((step, index) => (
+          <div key={step.key} className="flex flex-col items-center text-center">
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-xl font-black text-xs transition-all ${
+                step.active
+                  ? "bg-[#39f58e] text-[#07120d] shadow-[0_0_12px_rgba(57,245,142,0.45)]"
+                  : "bg-white/10 text-white/35"
+              }`}
+            >
+              {step.active ? <CheckCircle2 size={16} strokeWidth={2.5} /> : index + 1}
+            </span>
+            <span
+              className={`mt-1.5 text-[0.62rem] font-black uppercase tracking-tight ${
+                step.active ? "text-[#39f58e]" : "text-white/35"
+              }`}
+            >
+              {step.label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
