@@ -382,15 +382,12 @@ function SellerAccountGate({ children }) {
               aria-hidden="true"
             />
           </div>
-          <p className="mt-6 font-display text-xl font-black text-[#07120d]">{message}</p>
+          <p className="mt-6 font-display text-lg font-black text-[#07120d]">{message}</p>
           <div className="mt-3 flex items-center justify-center gap-1.5" aria-label="Chargement en cours">
             <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#008f5a]" />
             <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#008f5a]" />
             <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#008f5a]" />
           </div>
-          <p className="mt-4 max-w-[18rem] text-sm font-bold leading-5 text-[#07120d]/40">
-            Chaque boutique garde son propre espace Tikchop.
-          </p>
         </div>
       </main>
     );

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Loader2, LockKeyhole, LogOut, Store, X } from "lucide-react";
+import { ArrowRight, Loader2, LockKeyhole, LogOut, Store, X } from "lucide-react";
 import { createSellerAccountAndShop, getSellerByOwner, createSellerFromOnboarding } from "../seller-actions";
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
   if (step === 0) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-[#07120d] px-5 py-10 text-white">
-        {/* Logo mark */}
+        {/* Logo */}
         <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#39f58e] shadow-[0_20px_50px_rgba(57,245,142,0.35)]">
           <Store size={36} className="text-[#07120d]" strokeWidth={2.5} />
         </div>
@@ -285,25 +285,9 @@ export default function OnboardingPage() {
           <span className="text-[#39f58e]">Automatiquement.</span>
         </h1>
 
-        <p className="mt-5 max-w-xs text-center text-base font-bold leading-7 text-white/60">
-          Tikchop gere vos commandes, vos clients et vos paiements. Vous n&apos;avez qu&apos;a vendre.
+        <p className="mt-4 max-w-[260px] text-center text-sm font-bold leading-6 text-white/50">
+          Boutique, commandes et bot en 2 minutes.
         </p>
-
-        {/* Features */}
-        <div className="mt-8 w-full max-w-xs space-y-3">
-          {[
-            "Boutique en ligne en 2 minutes",
-            "Bot WhatsApp qui repond 24h/24",
-            "Commandes et livraisons centralisees",
-          ].map((item) => (
-            <div key={item} className="flex items-center gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#39f58e]/15">
-                <CheckCircle2 size={13} className="text-[#39f58e]" />
-              </span>
-              <span className="text-sm font-bold text-white/80">{item}</span>
-            </div>
-          ))}
-        </div>
 
         {/* CTA */}
         <div className="mt-10 w-full max-w-xs space-y-3">
@@ -313,7 +297,7 @@ export default function OnboardingPage() {
             onClick={() => { setMode("SIGN_UP"); setStep(1); }}
             className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#39f58e] text-base font-black text-[#07120d] shadow-[0_18px_44px_rgba(57,245,142,0.32)] active:scale-[0.98] transition"
           >
-            Creer ma boutique
+            Créer ma boutique
             <ArrowRight size={18} />
           </button>
           <button
@@ -323,11 +307,11 @@ export default function OnboardingPage() {
             className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white/8 text-sm font-black text-white/80 ring-1 ring-white/10 active:scale-[0.98] transition"
           >
             <LockKeyhole size={16} />
-            J&apos;ai deja un compte
+            J&apos;ai déjà un compte
           </button>
         </div>
 
-        <p className="mt-8 text-center text-[0.65rem] font-bold text-white/25">
+        <p className="mt-8 text-center text-[0.62rem] font-bold text-white/20">
           Tikchop · Commerce local en Afrique
         </p>
       </div>
