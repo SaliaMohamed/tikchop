@@ -718,97 +718,102 @@ export async function createSellerAccount(payload) {
 }
 
 export async function createSellerAccountAndShop(payload) {
-  if (!supabaseAdmin) {
-    throw new Error("Supabase admin client not initialized.");
-  }
-
-  const method = payload?.method === "PHONE" ? "PHONE" : "EMAIL";
-  const email = String(payload?.email || "").trim().toLowerCase();
-  const accountPhone = cleanAuthPhone(payload?.phone || payload?.account_phone);
-  const password = String(payload?.password || "");
-  const displayName = String(payload?.display_name || payload?.name || "").trim();
-  const name = String(payload?.name || "").trim();
-  const shopPhone = cleanPhone(payload?.phone_number || accountPhone);
-  const requestedSlug = slugify(payload?.slug || name);
-  const deliveryMode = payload?.delivery_mode || "BOTH";
-  const deliveryFee = Number(payload?.fixed_delivery_fee || 0);
-  const deliveryPaymentTiming = payload?.delivery_payment_timing || "AT_RECEPTION";
-
-  if (method === "EMAIL" && !email.includes("@")) {
-    throw new Error("Ajoute un email valide.");
-  }
-
-  if (method === "PHONE" && accountPhone.replace(/\D/g, "").length < 8) {
-    throw new Error("Ajoute un numero de telephone valide avec indicatif pays.");
-  }
-
-  if (password.length < 6) {
-    throw new Error("Le mot de passe doit avoir au moins 6 caracteres.");
-  }
-
-  if (name.length < 2) {
-    throw new Error("Ajoute le nom de la boutique.");
-  }
-
-  if (shopPhone.length < 8) {
-    throw new Error("Ajoute un numero WhatsApp valide.");
-  }
-
-  await assertSafeSellerPassword(password);
-
-  const accountPayload = method === "PHONE"
-    ? {
-      email: getPhoneAliasEmail(accountPhone),
-      password,
-      email_confirm: true,
-      user_metadata: {
-        display_name: displayName || accountPhone,
-        account_phone: accountPhone,
-        store_name: name,
-        shop_name: name,
-        signup_method: "PHONE",
-      },
-    }
-    : {
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        display_name: displayName || email,
-        store_name: name,
-        shop_name: name,
-        account_phone: shopPhone,
-        signup_method: "EMAIL",
-      },
-    };
-
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser(accountPayload);
-
-  if (authError) {
-    if (/already|registered|exists|existe|duplicate/i.test(authError.message || "")) {
-      throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
-    }
-    throw new Error(authError.message || "Impossible de creer le compte vendeur.");
-  }
-
-  const user = authData?.user;
-  if (!user?.id) {
-    throw new Error("Compte vendeur non cree. Reessayez.");
-  }
-
-  const ownerEmail = method === "EMAIL" ? email : "";
-
+  let createdUserId = null;
   try {
+    if (!supabaseAdmin) {
+      throw new Error("Supabase admin client not initialized.");
+    }
+
+    const method = payload?.method === "PHONE" ? "PHONE" : "EMAIL";
+    const email = String(payload?.email || "").trim().toLowerCase();
+    const accountPhone = cleanAuthPhone(payload?.phone || payload?.account_phone);
+    const password = String(payload?.password || "");
+    const displayName = String(payload?.display_name || payload?.name || "").trim();
+    const name = String(payload?.name || "").trim();
+    const shopPhone = cleanPhone(payload?.phone_number || accountPhone);
+    const requestedSlug = slugify(payload?.slug || name);
+    const deliveryMode = payload?.delivery_mode || "BOTH";
+    const deliveryFee = Number(payload?.fixed_delivery_fee || 0);
+    const deliveryPaymentTiming = payload?.delivery_payment_timing || "AT_RECEPTION";
+
+    if (method === "EMAIL" && !email.includes("@")) {
+      throw new Error("Ajoute un email valide.");
+    }
+
+    if (method === "PHONE" && accountPhone.replace(/\D/g, "").length < 8) {
+      throw new Error("Ajoute un numero de telephone valide avec indicatif pays.");
+    }
+
+    if (password.length < 6) {
+      throw new Error("Le mot de passe doit avoir au moins 6 caracteres.");
+    }
+
+    if (name.length < 2) {
+      throw new Error("Ajoute le nom de la boutique.");
+    }
+
+    if (shopPhone.length < 8) {
+      throw new Error("Ajoute un numero WhatsApp valide.");
+    }
+
+    await assertSafeSellerPassword(password);
+
+    const accountPayload = method === "PHONE"
+      ? {
+        email: getPhoneAliasEmail(accountPhone),
+        password,
+        email_confirm: true,
+        user_metadata: {
+          display_name: displayName || accountPhone,
+          account_phone: accountPhone,
+          store_name: name,
+          shop_name: name,
+          signup_method: "PHONE",
+        },
+      }
+      : {
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          display_name: displayName || email,
+          store_name: name,
+          shop_name: name,
+          account_phone: shopPhone,
+          signup_method: "EMAIL",
+        },
+      };
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser(accountPayload);
+
+    if (authError) {
+      if (/already|registered|exists|existe|duplicate/i.test(authError.message || "")) {
+        throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
+      }
+      throw new Error(authError.message || "Impossible de creer le compte vendeur.");
+    }
+
+    const user = authData?.user;
+    if (!user?.id) {
+      throw new Error("Compte vendeur non cree. Reessayez.");
+    }
+    createdUserId = user.id;
+
+    const ownerEmail = method === "EMAIL" ? email : "";
+
     const existingSeller = await loadSellerByOwnerId(user.id);
     if (existingSeller) {
       return {
-        account: {
-          id: user.id,
-          email: user.email || (method === "PHONE" ? getPhoneAliasEmail(accountPhone) : email),
-          phone: user.phone || accountPhone,
-          method,
-        },
-        seller: existingSeller,
+        success: true,
+        data: {
+          account: {
+            id: user.id,
+            email: user.email || (method === "PHONE" ? getPhoneAliasEmail(accountPhone) : email),
+            phone: user.phone || accountPhone,
+            method,
+          },
+          seller: existingSeller,
+        }
       };
     }
 
@@ -880,131 +885,143 @@ export async function createSellerAccountAndShop(payload) {
     }
 
     return {
-      account: {
-        id: user.id,
-        email: user.email || (method === "PHONE" ? getPhoneAliasEmail(accountPhone) : email),
-        phone: user.phone || accountPhone,
-        method,
-      },
-      seller: sellerResult.data,
+      success: true,
+      data: {
+        account: {
+          id: user.id,
+          email: user.email || (method === "PHONE" ? getPhoneAliasEmail(accountPhone) : email),
+          phone: user.phone || accountPhone,
+          method,
+        },
+        seller: sellerResult.data,
+      }
     };
   } catch (error) {
-    await supabaseAdmin.auth.admin.deleteUser(user.id).catch(() => {});
-    throw error;
+    if (createdUserId) {
+      await supabaseAdmin.auth.admin.deleteUser(createdUserId).catch(() => {});
+    }
+    return {
+      success: false,
+      error: error.message || "Une erreur est survenue lors de la creation du compte."
+    };
   }
 }
 
 export async function createSellerFromOnboarding(payload) {
-  if (!supabaseAdmin) {
-    throw new Error("Supabase admin client not initialized.");
-  }
-
-  const user = await resolveSellerUser(payload?.access_token);
-  const name = String(payload?.name || "").trim();
-  const phone = cleanPhone(payload?.phone_number);
-  const requestedSlug = slugify(payload?.slug || name);
-  const deliveryMode = payload?.delivery_mode || "BOTH";
-  const deliveryFee = Number(payload?.fixed_delivery_fee || 0);
-  const deliveryPaymentTiming = payload?.delivery_payment_timing || "AT_RECEPTION";
-  const requestedOwnerUserId = String(payload?.owner_user_id || "").trim();
-  const ownerUserId = user.id;
-  const ownerEmail = String(
-    payload?.owner_email
-    || (/@phone\.tikchop\.local$/i.test(user.email || "") ? "" : user.email || ""),
-  ).trim().toLowerCase();
-
-  if (requestedOwnerUserId && requestedOwnerUserId !== ownerUserId) {
-    throw new Error("Session vendeur non autorisee pour cette boutique.");
-  }
-
-  if (name.length < 2) {
-    throw new Error("Ajoute le nom de la boutique.");
-  }
-
-  if (phone.length < 8) {
-    throw new Error("Ajoute un numero WhatsApp valide.");
-  }
-
-  const existingSeller = await loadSellerByOwnerId(ownerUserId);
-  if (existingSeller) {
-    return existingSeller;
-  }
-
-  const sellerWithPhone = await loadSellerByPhoneNumber(phone);
-  if (sellerWithPhone && sellerWithPhone.owner_user_id !== ownerUserId) {
-    throw new Error("Ce numero WhatsApp est deja utilise par une autre boutique.");
-  }
-
-  if (ownerEmail) {
-    const sellerWithEmail = await loadSellerByOwnerEmail(ownerEmail);
-    if (sellerWithEmail && sellerWithEmail.owner_user_id !== ownerUserId) {
-      throw new Error("Cet email est deja rattache a une autre boutique.");
+  try {
+    if (!supabaseAdmin) {
+      throw new Error("Supabase admin client not initialized.");
     }
-  }
 
-  const slug = await uniqueSlug(requestedSlug);
-  const sellerPayload = {
-    name,
-    slug,
-    phone_number: phone,
-    delivery_enabled: deliveryMode !== "PICKUP",
-    pickup_enabled: deliveryMode !== "DELIVERY",
-    fixed_delivery_fee: Number.isFinite(deliveryFee) ? deliveryFee : 0,
-    delivery_payment_timing: deliveryPaymentTiming,
-    auto_share_to_driver: false,
-    owner_user_id: ownerUserId,
-    ...(ownerEmail ? { owner_email: ownerEmail } : {}),
-  };
+    const user = await resolveSellerUser(payload?.access_token);
+    const name = String(payload?.name || "").trim();
+    const phone = cleanPhone(payload?.phone_number);
+    const requestedSlug = slugify(payload?.slug || name);
+    const deliveryMode = payload?.delivery_mode || "BOTH";
+    const deliveryFee = Number(payload?.fixed_delivery_fee || 0);
+    const deliveryPaymentTiming = payload?.delivery_payment_timing || "AT_RECEPTION";
+    const requestedOwnerUserId = String(payload?.owner_user_id || "").trim();
+    const ownerUserId = user.id;
+    const ownerEmail = String(
+      payload?.owner_email
+      || (/@phone\.tikchop\.local$/i.test(user.email || "") ? "" : user.email || ""),
+    ).trim().toLowerCase();
 
-  const { data, error } = await supabaseAdmin
-    .from("sellers")
-    .insert([sellerPayload])
-    .select("id, name, slug, phone_number")
-    .single();
+    if (requestedOwnerUserId && requestedOwnerUserId !== ownerUserId) {
+      throw new Error("Session vendeur non autorisee pour cette boutique.");
+    }
 
-  if (error && /idx_sellers_one_shop_per_owner|duplicate key|unique/i.test(error.message || "")) {
+    if (name.length < 2) {
+      throw new Error("Ajoute le nom de la boutique.");
+    }
+
+    if (phone.length < 8) {
+      throw new Error("Ajoute un numero WhatsApp valide.");
+    }
+
     const existingSeller = await loadSellerByOwnerId(ownerUserId);
     if (existingSeller) {
-      return existingSeller;
+      return { success: true, data: existingSeller };
     }
 
-    throw new Error("Ce compte possede deja une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
-  }
+    const sellerWithPhone = await loadSellerByPhoneNumber(phone);
+    if (sellerWithPhone && sellerWithPhone.owner_user_id !== ownerUserId) {
+      throw new Error("Ce numero WhatsApp est deja utilise par une autre boutique.");
+    }
 
-  if (isOwnerSchemaError(error)) {
-    throw new Error(OWNER_SCHEMA_MESSAGE);
-  }
+    if (ownerEmail) {
+      const sellerWithEmail = await loadSellerByOwnerEmail(ownerEmail);
+      if (sellerWithEmail && sellerWithEmail.owner_user_id !== ownerUserId) {
+        throw new Error("Cet email est deja rattache a une autre boutique.");
+      }
+    }
 
-  if (error && /delivery_|pickup_|fixed_delivery_fee|auto_share_to_driver/i.test(error.message || "")) {
-    const fallbackPayload = {
+    const slug = await uniqueSlug(requestedSlug);
+    const sellerPayload = {
       name,
       slug,
       phone_number: phone,
+      delivery_enabled: deliveryMode !== "PICKUP",
+      pickup_enabled: deliveryMode !== "DELIVERY",
+      fixed_delivery_fee: Number.isFinite(deliveryFee) ? deliveryFee : 0,
+      delivery_payment_timing: deliveryPaymentTiming,
+      auto_share_to_driver: false,
       owner_user_id: ownerUserId,
       ...(ownerEmail ? { owner_email: ownerEmail } : {}),
     };
-    const fallback = await supabaseAdmin
+
+    const { data, error } = await supabaseAdmin
       .from("sellers")
-      .insert([fallbackPayload])
+      .insert([sellerPayload])
       .select("id, name, slug, phone_number")
       .single();
 
-    if (isOwnerSchemaError(fallback.error)) {
+    if (error && /idx_sellers_one_shop_per_owner|duplicate key|unique/i.test(error.message || "")) {
+      const existingSeller = await loadSellerByOwnerId(ownerUserId);
+      if (existingSeller) {
+        return { success: true, data: existingSeller };
+      }
+
+      throw new Error("Ce compte possede deja une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
+    }
+
+    if (isOwnerSchemaError(error)) {
       throw new Error(OWNER_SCHEMA_MESSAGE);
     }
 
-    if (fallback.error) {
-      throw new Error(fallback.error.message);
+    if (error && /delivery_|pickup_|fixed_delivery_fee|auto_share_to_driver/i.test(error.message || "")) {
+      const fallbackPayload = {
+        name,
+        slug,
+        phone_number: phone,
+        owner_user_id: ownerUserId,
+        ...(ownerEmail ? { owner_email: ownerEmail } : {}),
+      };
+      const fallback = await supabaseAdmin
+        .from("sellers")
+        .insert([fallbackPayload])
+        .select("id, name, slug, phone_number")
+        .single();
+
+      if (isOwnerSchemaError(fallback.error)) {
+        throw new Error(OWNER_SCHEMA_MESSAGE);
+      }
+
+      if (fallback.error) {
+        throw new Error(fallback.error.message);
+      }
+
+      return { success: true, data: fallback.data };
     }
 
-    return fallback.data;
-  }
+    if (error) {
+      throw new Error(error.message);
+    }
 
-  if (error) {
-    throw new Error(error.message);
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message || "Impossible de créer la boutique." };
   }
-
-  return data;
 }
 
 export async function requestSellerWhatsAppPairing(seller, accessToken, whatsappNumber = "") {

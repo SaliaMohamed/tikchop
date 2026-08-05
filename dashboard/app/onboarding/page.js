@@ -191,13 +191,13 @@ export default function OnboardingPage() {
         return;
       }
 
-      let created;
+      let result;
       if (sellerAccount) {
         // User is already logged in but has no shop. Use active session token.
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData?.session?.access_token || "";
         
-        const seller = await withTimeout(
+        result = await withTimeout(
           createSellerFromOnboarding({
             access_token: accessToken,
             name: form.name.trim(),
@@ -210,10 +210,9 @@ export default function OnboardingPage() {
           "Creation boutique trop longue. Reessayez dans quelques secondes.",
           36000,
         );
-        created = { seller };
       } else {
         // Sign up + create shop in one call
-        created = await withTimeout(
+        result = await withTimeout(
           createSellerAccountAndShop({
             method: "PHONE",
             email: "",
@@ -231,6 +230,12 @@ export default function OnboardingPage() {
           36000,
         );
       }
+
+      if (!result?.success) {
+        throw new Error(result?.error || "Impossible de creer la boutique.");
+      }
+
+      const created = result.data;
 
       if (!created?.seller) {
         throw new Error("Impossible de recuperer la boutique creee.");
