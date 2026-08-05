@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Loader2, LockKeyhole, LogOut, Store, X } from "lucide-react";
-import { createSellerAccountAndShop, getSellerByOwner } from "../seller-actions";
+import { createSellerAccountAndShop, getSellerByOwner, createSellerFromOnboarding } from "../seller-actions";
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 import { friendlyError } from "../../lib/user-facing-error";
@@ -191,28 +191,57 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Sign up + create shop in one call
-      const created = await withTimeout(
-        createSellerAccountAndShop({
-          method: "PHONE",
-          email: "",
-          phone,
-          password,
-          display_name: form.name.trim(),
-          name: form.name.trim(),
-          phone_number: phone,
-          slug: suggestedSlug,
-          delivery_mode: "BOTH",
-          fixed_delivery_fee: "1000",
-          delivery_payment_timing: "AT_RECEPTION",
-        }),
-        "Creation boutique trop longue. Reessayez dans quelques secondes.",
-        36000,
-      );
+      let created;
+      if (sellerAccount) {
+        // User is already logged in but has no shop. Use active session token.
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token || "";
+        
+        const seller = await withTimeout(
+          createSellerFromOnboarding({
+            access_token: accessToken,
+            name: form.name.trim(),
+            phone_number: phone,
+            slug: suggestedSlug,
+            delivery_mode: "BOTH",
+            fixed_delivery_fee: "1000",
+            delivery_payment_timing: "AT_RECEPTION",
+          }),
+          "Creation boutique trop longue. Reessayez dans quelques secondes.",
+          36000,
+        );
+        created = { seller };
+      } else {
+        // Sign up + create shop in one call
+        created = await withTimeout(
+          createSellerAccountAndShop({
+            method: "PHONE",
+            email: "",
+            phone,
+            password,
+            display_name: form.name.trim(),
+            name: form.name.trim(),
+            phone_number: phone,
+            slug: suggestedSlug,
+            delivery_mode: "BOTH",
+            fixed_delivery_fee: "1000",
+            delivery_payment_timing: "AT_RECEPTION",
+          }),
+          "Creation boutique trop longue. Reessayez dans quelques secondes.",
+          36000,
+        );
+      }
 
-      const credentials = { email: created.account?.email || aliasEmail, password };
-      const { data: signInData, error: signInError } = await signInWithPasswordControlled(credentials, 16000);
-      if (signInError) throw new Error("Boutique creee. Appuyez sur J'ai deja un compte puis connectez-vous avec le meme numero.");
+      if (!created?.seller) {
+        throw new Error("Impossible de recuperer la boutique creee.");
+      }
+
+      // If we did a normal signup, login might be needed, but since we created the session, let's verify
+      if (!sellerAccount) {
+        const credentials = { email: created.account?.email || aliasEmail, password };
+        const { data: signInData, error: signInError } = await signInWithPasswordControlled(credentials, 16000);
+        if (signInError) throw new Error("Boutique creee. Appuyez sur J'ai deja un compte puis connectez-vous avec le meme numero.");
+      }
 
       writeActiveSeller(created.seller);
       setNotice("Boutique creee. Ouverture de votre espace vendeur...");
