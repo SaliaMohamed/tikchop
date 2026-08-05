@@ -2,285 +2,253 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle,
   Banknote,
   CheckCircle2,
-  ChevronRight,
-  CreditCard,
   Loader2,
   Save,
   ShieldCheck,
   Smartphone,
-  Wallet,
+  Truck,
 } from "lucide-react";
-import { activateSellerPayoutSubaccount, getSellerPaymentSettings, saveSellerPaymentSettings } from "../actions";
+import { getSellerPaymentSettings, saveSellerPaymentSettings } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
-import { getPaymentOption, LOCAL_PAYMENT_OPTIONS, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone } from "../../lib/local-commerce";
 
-const ONLINE_PAYMENTS_ENABLED = onlinePaymentsEnabled();
+// ─── Seul moyen de paiement disponible : à la livraison ──────────────────────
+// Le numéro de réception (Wave / Orange / MTN) est optionnel mais recommandé
+// pour que le bot puisse communiquer les coordonnées de paiement mobile au client.
 
-const payoutOptions = [
-  {
-    key: "WAVE",
-    label: "Wave",
-    text: "Recommande: le client paie directement ce numero.",
-    tone: "blue",
-  },
-  {
-    key: "ORANGE_MONEY",
-    label: "Orange Money",
-    text: "Le client paie directement le numero vendeur.",
-    tone: "orange",
-  },
-  {
-    key: "MTN_MOMO",
-    label: "MTN MoMo",
-    text: "Le client paie directement le numero vendeur.",
-    tone: "yellow",
-  },
+const PAYOUT_NETWORKS = [
+  { key: "WAVE", label: "Wave", color: "#007bff" },
+  { key: "ORANGE_MONEY", label: "Orange Money", color: "#ff6600" },
+  { key: "MTN_MOMO", label: "MTN MoMo", color: "#ffcc00" },
 ];
 
-const defaultSettings = {
+const DEFAULT_SETTINGS = {
   payout_network: "WAVE",
   payout_phone: "",
-  accepted_payment_methods: ["CASH_ON_DELIVERY", "WAVE", "ORANGE_MONEY", "MTN_MONEY"],
-  default_payment_method: "CASH_ON_DELIVERY",
 };
 
 function normalizeLocalPhone(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (digits.startsWith("225")) return digits.slice(3);
-  return digits;
+  return digits.slice(0, 10);
 }
 
-function paymentChoiceText(method) {
-  if (method === "CASH_ON_DELIVERY") return "Le client paie apres reception.";
-  if (method === "WAVE") return "Le client paie avant sur Wave.";
-  if (method === "ORANGE_MONEY") return "Le client paie avant sur Orange Money.";
-  if (method === "MTN_MONEY") return "Le client paie avant sur MTN MoMo.";
-  if (method === "PAYSTACK") return "Option plus tard.";
-  return "Moyen de paiement";
-}
-
-function normalizeSettingsFromSeller(sellerData) {
-  const accepted = normalizeAcceptedPaymentMethods(sellerData.accepted_payment_methods)
-    .filter((method) => ONLINE_PAYMENTS_ENABLED || method !== "PAYSTACK");
-  const payoutNetwork = payoutOptions.some((option) => option.key === sellerData.payout_network)
-    ? sellerData.payout_network
-    : "WAVE";
-  const defaultPayment = accepted.includes(sellerData.default_payment_method)
-    ? sellerData.default_payment_method
-    : accepted.includes("CASH_ON_DELIVERY")
-      ? "CASH_ON_DELIVERY"
-      : accepted[0] || "CASH_ON_DELIVERY";
-
-  return {
-    payout_network: payoutNetwork,
-    payout_phone: normalizeLocalPhone(sellerData.payout_phone || sellerData.phone_number || ""),
-    accepted_payment_methods: accepted,
-    default_payment_method: defaultPayment,
-  };
-}
-
-function statusCopy(seller) {
-  const status = String(seller?.payout_status || "").toLowerCase();
-  const hasDirectPhone = normalizeLocalPhone(seller?.payout_phone).length >= 8;
-  if (ONLINE_PAYMENTS_ENABLED && (seller?.paystack_subaccount_code || status === "paystack_ready")) {
-    return {
-      tone: "ready",
-      title: "Paiements prets",
-      text: "Vos clients voient uniquement les moyens que vous acceptez.",
-    };
-  }
-  if (hasDirectPhone) {
-    return {
-      tone: "ready",
-      title: "Numero enregistre",
-      text: "Le bot peut donner ce numero quand le client choisit un paiement mobile.",
-    };
-  }
-  if (status === "manual_review") {
-    return {
-      tone: "warn",
-      title: "A relire",
-      text: "Verifiez bien le numero avant de le montrer aux clients.",
-    };
-  }
-  if (status === "failed") {
-    return {
-      tone: "danger",
-      title: "Activation bloquee",
-      text: seller?.payout_last_error || "Verifiez le numero puis reessayez.",
-    };
-  }
-  if (status === "pending_confirmation") {
-    return {
-      tone: "pending",
-      title: "Numero a relire",
-      text: "Relisez le numero avant de le montrer aux clients.",
-    };
-  }
-  return {
-    tone: "pending",
-    title: "Choisissez vos paiements",
-    text: "Commencez par paiement a la livraison, puis ajoutez Wave, Orange ou MTN si besoin.",
-  };
+function hasValidPhone(phone) {
+  return phone.length >= 8 && phone.length <= 10;
 }
 
 export default function PaymentSettingsPage() {
   const activeSeller = useActiveSeller();
   const [seller, setSeller] = useState(null);
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activating, setActivating] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const selectedOption = useMemo(
-    () => payoutOptions.find((option) => option.key === settings.payout_network) || payoutOptions[0],
-    [settings.payout_network],
-  );
-  const acceptedMethods = useMemo(
-    () => normalizeAcceptedPaymentMethods(settings.accepted_payment_methods),
-    [settings.accepted_payment_methods],
-  );
-  const directPhoneNeeded = paymentMethodsNeedDirectPhone(acceptedMethods);
-  const status = statusCopy(seller);
-  const fallbackEligible = ONLINE_PAYMENTS_ENABLED && seller?.id && settings.payout_network !== "WAVE";
-  const fallbackActive = ONLINE_PAYMENTS_ENABLED && Boolean(seller?.paystack_subaccount_code || seller?.payout_status === "paystack_ready");
-  const canActivateFallback = fallbackEligible && !fallbackActive;
-  const defaultPaymentOption = getPaymentOption(settings.default_payment_method);
-  const acceptedSummary = acceptedMethods
-    .map((method) => getPaymentOption(method)?.shortLabel || getPaymentOption(method)?.label)
-    .filter(Boolean)
-    .join(", ");
+  const phoneValid = hasValidPhone(settings.payout_phone);
+  const selectedNetwork = PAYOUT_NETWORKS.find((n) => n.key === settings.payout_network) || PAYOUT_NETWORKS[0];
 
-  const fetchData = useCallback(async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
       const token = await getSellerAccessToken();
       const { seller: sellerData } = await getSellerPaymentSettings(activeSeller.slug, token);
       setSeller(sellerData);
-      setSettings(normalizeSettingsFromSeller(sellerData));
+      setSettings({
+        payout_network: PAYOUT_NETWORKS.some((n) => n.key === sellerData.payout_network)
+          ? sellerData.payout_network
+          : "WAVE",
+        payout_phone: normalizeLocalPhone(sellerData.payout_phone || sellerData.phone_number || ""),
+      });
     } catch (err) {
-      setError(friendlyError(err, "Paiement vendeur non charge. Reessayez avec une bonne connexion."));
+      setError(friendlyError(err, "Impossible de charger les paramètres. Vérifiez votre connexion."));
     } finally {
       setLoading(false);
     }
   }, [activeSeller.slug]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      fetchData();
-    }, 0);
-
-    return () => window.clearTimeout(timer);
+    const t = window.setTimeout(fetchData, 0);
+    return () => window.clearTimeout(t);
   }, [fetchData]);
 
-  async function saveSettings() {
-    if (!seller?.id) return null;
+  async function handleSave(e) {
+    e?.preventDefault();
+    if (!seller?.id) return;
     try {
       setSaving(true);
       setError("");
       setNotice("");
       const token = await getSellerAccessToken();
-      const updated = await saveSellerPaymentSettings(seller.id, settings, token);
-      setSeller((current) => ({ ...current, ...updated }));
-      setNotice("Paiement direct enregistre. Les clients verront ce moyen en priorite.");
-      return updated;
+      // Always fix payment method to CASH_ON_DELIVERY
+      const payload = {
+        ...settings,
+        accepted_payment_methods: ["CASH_ON_DELIVERY"],
+        default_payment_method: "CASH_ON_DELIVERY",
+      };
+      const updated = await saveSellerPaymentSettings(seller.id, payload, token);
+      setSeller((c) => ({ ...c, ...updated }));
+      setNotice("Paramètres enregistrés. Le bot WhatsApp indiquera ce numéro aux clients.");
     } catch (err) {
-      setError(friendlyError(err, "Infos non enregistrees. Verifiez le moyen de depot et le numero."));
-      return null;
+      setError(friendlyError(err, "Enregistrement impossible. Vérifiez le numéro et réessayez."));
     } finally {
       setSaving(false);
     }
   }
 
-  async function activatePayout() {
-    if (!seller?.id) return;
-    try {
-      setActivating(true);
-      setError("");
-      setNotice("");
-      const saved = await saveSettings();
-      if (!saved) return;
-      const token = await getSellerAccessToken();
-      await activateSellerPayoutSubaccount(seller.id, token);
-      setNotice("Carte / Djamo active pour les clients qui veulent payer en ligne.");
-      await fetchData();
-    } catch (err) {
-      setError(friendlyError(err, "Carte / Djamo indisponible pour le moment. Gardez Wave, Orange, MTN ou paiement a la livraison."));
-      await fetchData();
-    } finally {
-      setActivating(false);
-    }
-  }
-
-  function toggleAcceptedPayment(method) {
-    const option = getPaymentOption(method);
-    if (option.online && !fallbackActive) return;
-
-    setSettings((current) => {
-      const currentMethods = normalizeAcceptedPaymentMethods(current.accepted_payment_methods);
-      const exists = currentMethods.includes(method);
-      const nextMethods = exists
-        ? currentMethods.filter((item) => item !== method)
-        : [...currentMethods, method];
-      const safeMethods = nextMethods.length > 0 ? nextMethods : currentMethods;
-      const defaultMethod = safeMethods.includes(current.default_payment_method)
-        ? current.default_payment_method
-        : safeMethods.includes("CASH_ON_DELIVERY")
-          ? "CASH_ON_DELIVERY"
-          : safeMethods[0];
-
-      return {
-        ...current,
-        accepted_payment_methods: safeMethods,
-        default_payment_method: defaultMethod,
-      };
-    });
-  }
-
-  function setDefaultPayment(method) {
-    if (!acceptedMethods.includes(method)) return;
-    setSettings((current) => ({ ...current, default_payment_method: method }));
-  }
+  const hasPayoutPhone = hasValidPhone(
+    normalizeLocalPhone(seller?.payout_phone || seller?.phone_number || "")
+  );
 
   return (
     <div className="app-shell">
       {/* Desktop header */}
       <header className="mobile-top hidden md:block">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="quiet-label text-[#008f5a]">Paiement</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">Comment on vous paie</h1>
-            <p className="mt-1 text-base font-semibold leading-6 text-[#07120d]/55">
-              Cochez ce que vous acceptez. Tikchop et WhatsApp montreront seulement ces choix.
-            </p>
-          </div>
-          <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#07120d] text-white" aria-label="Enregistrer">
-            {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={19} />}
-          </button>
-        </div>
+        <p className="quiet-label text-[#008f5a]">Paiement</p>
+        <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">
+          Numéro de réception
+        </h1>
+        <p className="mt-1 text-base font-semibold leading-6 text-[#07120d]/55">
+          Le numéro sur lequel vos clients vous paient (Wave, Orange ou MTN).
+        </p>
       </header>
 
       {loading ? (
         <div className="flex min-h-[56vh] flex-col items-center justify-center text-center">
           <Loader2 className="animate-spin text-[#008f5a]" size={34} />
-          <p className="mt-4 font-display text-xl font-bold text-[#07120d]">Chargement...</p>
+          <p className="mt-4 font-display text-xl font-bold text-[#07120d]">Chargement…</p>
         </div>
       ) : (
-        <main className="mt-5 space-y-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+        <form onSubmit={handleSave} className="mt-5 space-y-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+
+          {/* Status banner */}
+          <section className={`overflow-hidden rounded-[26px] ${hasPayoutPhone ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] ring-1 ring-[#07120d]/10"}`}>
+            <div className="flex items-start gap-3 p-4">
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${hasPayoutPhone ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-[#008f5a]/10 text-[#008f5a]"}`}>
+                {hasPayoutPhone ? <CheckCircle2 size={22} /> : <Banknote size={22} />}
+              </span>
+              <div>
+                <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${hasPayoutPhone ? "text-[#39f58e]/80" : "text-[#008f5a]"}`}>
+                  Statut
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-black leading-7">
+                  {hasPayoutPhone ? "Numéro enregistré" : "Numéro manquant"}
+                </h2>
+                <p className={`mt-1.5 text-sm font-bold leading-5 ${hasPayoutPhone ? "text-white/60" : "text-[#07120d]/55"}`}>
+                  {hasPayoutPhone
+                    ? "Le bot WhatsApp communique ce numéro aux clients pour le paiement."
+                    : "Ajoutez votre numéro pour que les clients sachent où vous payer."}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Paiement à la livraison — info fixe */}
+          <section className="overflow-hidden rounded-[26px] bg-[#eafff3] ring-1 ring-[#39f58e]/30">
+            <div className="flex items-center gap-3 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#008f5a]/15 text-[#008f5a]">
+                <Truck size={19} />
+              </span>
+              <div>
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Mode de paiement</p>
+                <h2 className="font-display text-base font-black text-[#07120d]">Paiement à la livraison</h2>
+                <p className="text-xs font-bold text-[#07120d]/50 leading-4 mt-0.5">
+                  Le client paie à la réception de sa commande.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Numéro de réception */}
+          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
+            <div className="flex items-center gap-3 border-b border-[#07120d]/8 px-4 py-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a]">
+                <Smartphone size={19} />
+              </span>
+              <div>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Votre numéro de réception</p>
+                <h2 className="font-display text-lg font-black text-[#07120d]">
+                  Où recevoir l&apos;argent
+                  <span className="ml-1 text-[#008f5a]">*</span>
+                </h2>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {/* Réseau */}
+              <div>
+                <p className="mb-2 text-xs font-black text-[#07120d]/70">Réseau mobile <span className="text-[#008f5a]">*</span></p>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYOUT_NETWORKS.map((net) => (
+                    <button
+                      key={net.key}
+                      type="button"
+                      onClick={() => setSettings((c) => ({ ...c, payout_network: net.key }))}
+                      className={`min-h-[64px] rounded-[18px] p-2 text-center ring-1 transition-all active:scale-[0.98] ${
+                        settings.payout_network === net.key
+                          ? "bg-[#07120d] text-white ring-[#07120d]"
+                          : "bg-white text-[#07120d] ring-[#07120d]/10"
+                      }`}
+                    >
+                      <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl ${
+                        settings.payout_network === net.key ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-[#f0f0f0] text-[#008f5a]"
+                      }`}>
+                        <Smartphone size={16} />
+                      </span>
+                      <strong className={`mt-1 block text-[0.68rem] font-black leading-3 ${settings.payout_network === net.key ? "text-white" : "text-[#07120d]"}`}>
+                        {net.label}
+                      </strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Numéro */}
+              <div>
+                <p className="mb-1.5 text-xs font-black text-[#07120d]/70">
+                  Numéro {selectedNetwork.label} <span className="text-[#008f5a]">*</span>
+                </p>
+                <div className={`grid grid-cols-[72px_1fr] overflow-hidden rounded-[20px] bg-white ring-2 transition ${
+                  settings.payout_phone && !phoneValid
+                    ? "ring-amber-400"
+                    : phoneValid
+                    ? "ring-[#008f5a]/50"
+                    : "ring-[#07120d]/10"
+                }`}>
+                  <span className="flex items-center justify-center border-r border-[#07120d]/10 text-sm font-black text-[#008f5a]">+225</span>
+                  <input
+                    className="min-h-[56px] bg-transparent px-4 text-base font-black text-[#07120d] outline-none placeholder:text-[#07120d]/25"
+                    inputMode="numeric"
+                    placeholder="07 00 00 00 00"
+                    value={settings.payout_phone}
+                    onChange={(e) => setSettings((c) => ({ ...c, payout_phone: normalizeLocalPhone(e.target.value) }))}
+                  />
+                  {phoneValid && <CheckCircle2 size={18} className="self-center mr-3 text-[#008f5a]" />}
+                </div>
+                {settings.payout_phone && !phoneValid && (
+                  <p className="mt-1.5 text-[0.7rem] font-bold text-amber-600">
+                    Numéro CI : 8 à 10 chiffres (ex: 0712345678)
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl bg-[#fff7d8] p-3 text-xs font-bold leading-4 text-[#3c2a00] ring-1 ring-[#ffd86a]/60">
+                ⚠ Vérifiez bien ce numéro. Si incorrect, les clients ne peuvent pas vous payer.
+              </div>
+            </div>
+          </section>
+
+          {/* Errors / Notices */}
           {error && (
             <div className="rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-5 text-amber-950 ring-1 ring-amber-200">
               {error}
             </div>
           )}
-
           {notice && (
             <div className="flex items-center gap-2 rounded-2xl bg-[#eafff1] p-4 text-sm font-bold leading-5 text-[#005f3d] ring-1 ring-emerald-200">
               <CheckCircle2 size={17} />
@@ -288,241 +256,32 @@ export default function PaymentSettingsPage() {
             </div>
           )}
 
-          {/* Status Banner */}
-          <section className={`overflow-hidden rounded-[26px] ${
-            status.tone === "ready"
-              ? "bg-[#07120d] text-white"
-              : status.tone === "danger"
-                ? "bg-red-50 text-red-950 ring-1 ring-red-200"
-                : status.tone === "warn"
-                  ? "bg-amber-50 text-amber-950 ring-1 ring-amber-200"
-                  : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/10"
-          }`}>
-            <div className="p-4">
-              <div className="flex items-start gap-3">
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-                  status.tone === "ready" ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-[#008f5a]/10 text-[#008f5a]"
-                }`}>
-                  {status.tone === "ready" ? <CheckCircle2 size={22} /> : <Wallet size={22} />}
-                </span>
-                <div>
-                  <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${status.tone === "ready" ? "text-[#39f58e]/80" : "text-[#008f5a]"}`}>Statut</p>
-                  <h2 className="mt-1 font-display text-2xl font-black leading-7">{status.title}</h2>
-                  <p className={`mt-2 text-sm font-bold leading-5 ${status.tone === "ready" ? "text-white/65" : "text-[#07120d]/55"}`}>
-                    {status.text}
-                  </p>
-                  <div className={`mt-3 grid gap-1.5 rounded-2xl p-3 text-sm font-black ${
-                    status.tone === "ready" ? "bg-white/8 text-white" : "bg-white text-[#07120d]"
-                  }`}>
-                    <span>Premier choix: {defaultPaymentOption?.shortLabel || defaultPaymentOption?.label}</span>
-                    <span className={status.tone === "ready" ? "text-white/65" : "text-[#07120d]/55"}>{acceptedSummary || "Aucun moyen choisi"}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Accepted payment methods */}
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center justify-between border-b border-[#07120d]/8 px-4 py-3">
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Choix client</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">Moyens acceptes</h2>
-              </div>
-              <span className="rounded-full bg-[#008f5a]/10 px-3 py-1 text-xs font-black text-[#008f5a]">
-                {acceptedMethods.length}
-              </span>
-            </div>
-            <div className="space-y-2 p-3">
-              {LOCAL_PAYMENT_OPTIONS.filter((option) => ONLINE_PAYMENTS_ENABLED || !option.online).map((option) => {
-                const checked = acceptedMethods.includes(option.value);
-                const disabled = option.online && !fallbackActive;
-                const isDefault = settings.default_payment_method === option.value;
-
-                return (
-                  <div
-                    key={option.value}
-                    className={`overflow-hidden rounded-[20px] ring-1 transition-all ${
-                      isDefault
-                        ? "bg-[#07120d] ring-[#07120d]"
-                        : checked
-                          ? "bg-[#eafff5] ring-emerald-200/80"
-                          : "bg-white ring-[#07120d]/8"
-                    } ${disabled ? "opacity-55" : ""}`}
-                  >
-                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleAcceptedPayment(option.value)}
-                        disabled={disabled}
-                        className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-colors ${
-                          checked
-                            ? isDefault ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-[#008f5a]/10 text-[#008f5a]"
-                            : "bg-[#fbf9f4] text-[#07120d]/40 shadow-sm"
-                        } disabled:cursor-not-allowed`}
-                        aria-label={`${checked ? "Retirer" : "Accepter"} ${option.label}`}
-                      >
-                        {checked ? <CheckCircle2 size={20} /> : <Wallet size={20} />}
-                      </button>
-                      <div className="min-w-0">
-                        <strong className={`block text-sm font-black ${isDefault ? "text-white" : "text-[#07120d]"}`}>{option.label}</strong>
-                        <small className={`mt-0.5 block text-xs font-bold leading-4 ${isDefault ? "text-white/60" : "text-[#07120d]/50"}`}>
-                          {disabled ? "Option a activer plus tard." : paymentChoiceText(option.value)}
-                        </small>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setDefaultPayment(option.value)}
-                        disabled={!checked}
-                        className={`min-h-[34px] rounded-full px-2.5 text-[0.66rem] font-black transition-colors ${
-                          isDefault
-                            ? "bg-[#39f58e] text-[#07120d]"
-                            : checked ? "bg-white text-[#008f5a] shadow-sm" : "bg-[#fbf9f4] text-[#07120d]/30"
-                        } disabled:opacity-40`}
-                      >
-                        {isDefault ? "Premier" : "Choisir"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Payout phone number */}
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center gap-3 border-b border-[#07120d]/8 px-4 py-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a]">
-                <Banknote size={19} />
-              </span>
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Argent vendeur</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">Numero qui recoit</h2>
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              {!directPhoneNeeded && (
-                <div className="rounded-2xl bg-white p-3 text-sm font-bold leading-5 text-[#07120d]/55 ring-1 ring-[#07120d]/8">
-                  Vous avez choisi le paiement apres reception. Le numero reste optionnel.
-                </div>
-              )}
-
-              {/* Network selector — 3 columns */}
-              <div className="grid grid-cols-3 gap-2">
-                {payoutOptions.map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => setSettings((current) => ({ ...current, payout_network: option.key }))}
-                    className={`min-h-[70px] rounded-[18px] p-2.5 text-center ring-1 transition-all active:scale-[0.98] ${
-                      settings.payout_network === option.key
-                        ? "bg-[#07120d] text-white ring-[#07120d]"
-                        : "bg-white text-[#07120d] ring-[#07120d]/10"
-                    }`}
-                  >
-                    <span className={`mx-auto flex h-9 w-9 items-center justify-center rounded-xl ${
-                      settings.payout_network === option.key ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-[#fbf9f4] text-[#008f5a]"
-                    }`}>
-                      <Smartphone size={18} />
-                    </span>
-                    <strong className={`mt-1.5 block text-[0.7rem] font-black leading-4 ${settings.payout_network === option.key ? "text-white" : "text-[#07120d]"}`}>
-                      {option.label}
-                    </strong>
-                  </button>
-                ))}
-              </div>
-
-              {/* Phone input */}
-              <label className="block">
-                <span className="mb-2 block text-xs font-black text-[#07120d]">Numero {selectedOption.label}</span>
-                <div className="grid grid-cols-[74px_1fr] overflow-hidden rounded-[20px] bg-white ring-1 ring-[#07120d]/12">
-                  <span className="flex items-center justify-center border-r border-[#07120d]/10 text-sm font-black text-[#008f5a]">+225</span>
-                  <input
-                    className="min-h-[56px] bg-transparent px-4 text-base font-black text-[#07120d] outline-none"
-                    inputMode="numeric"
-                    placeholder="07 00 00 00 00"
-                    value={settings.payout_phone}
-                    onChange={(event) => setSettings((current) => ({ ...current, payout_phone: normalizeLocalPhone(event.target.value) }))}
-                  />
-                </div>
-              </label>
-
-              <div className="rounded-2xl bg-[#fff7d8] p-3 text-xs font-bold leading-4 text-[#3c2a00] ring-1 ring-[#ffd86a]/60">
-                Relisez bien. Si le numero est faux, l&apos;argent peut partir au mauvais contact.
-              </div>
-            </div>
-          </section>
-
-          {/* Save section */}
+          {/* Save */}
           <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
             <div className="flex items-center gap-3 border-b border-[#07120d]/8 px-4 py-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a]">
                 <ShieldCheck size={19} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Derniere etape</p>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Dernière étape</p>
                 <h2 className="font-display text-lg font-black text-[#07120d]">Enregistrer</h2>
               </div>
             </div>
             <div className="p-4 space-y-3">
               <p className="text-sm font-bold leading-5 text-[#07120d]/55">
-                Ces choix seront utilises dans la boutique et par le bot WhatsApp.
+                Ce numéro sera utilisé par le bot WhatsApp pour guider vos clients au moment du paiement.
               </p>
               <button
-                type="button"
-                onClick={saveSettings}
-                disabled={saving || activating}
-                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-4 text-sm font-black text-white active:scale-[0.99] disabled:bg-[#07120d]/30"
+                type="submit"
+                disabled={saving || !seller}
+                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-4 text-sm font-black text-white active:scale-[0.99] disabled:opacity-40"
               >
-                {saving || activating ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                {saving || activating ? "Enregistrement..." : "Enregistrer mes choix"}
-                {!saving && !activating && <ChevronRight size={17} />}
+                {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                {saving ? "Enregistrement…" : "Enregistrer"}
               </button>
-
-              {/* Carte / Djamo collapsible */}
-              {ONLINE_PAYMENTS_ENABLED && (
-              <details className="rounded-2xl bg-white ring-1 ring-[#07120d]/8">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 text-sm font-black text-[#07120d]">
-                  <span className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fbf9f4] text-[#008f5a]">
-                      <CreditCard size={17} />
-                    </span>
-                    Carte / Djamo
-                  </span>
-                  <ChevronRight size={17} className="text-[#008f5a]" />
-                </summary>
-
-                <div className="border-t border-[#07120d]/8 px-3 pb-3 pt-2">
-                  <p className="text-xs font-bold leading-4 text-[#07120d]/55">
-                    Utile pour les clients qui veulent payer par carte. A activer seulement quand vous en avez besoin.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={activatePayout}
-                    disabled={saving || activating || (!canActivateFallback && !fallbackActive)}
-                    className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4] px-4 text-sm font-black text-[#07120d] ring-1 ring-[#07120d]/10 disabled:opacity-50"
-                  >
-                    {activating ? <Loader2 className="animate-spin" size={17} /> : fallbackActive ? <CheckCircle2 size={17} /> : <ShieldCheck size={17} />}
-                    {fallbackActive
-                      ? "Carte / Djamo actif"
-                      : settings.payout_network === "WAVE"
-                        ? "Pas besoin pour le moment"
-                        : "Activer carte / Djamo"}
-                  </button>
-
-                  {settings.payout_network === "WAVE" && (
-                    <p className="mt-3 flex gap-2 rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-4 text-amber-950">
-                      <AlertCircle className="mt-0.5 shrink-0" size={15} />
-                      Wave suffit pour demarrer. Ajoutez Carte / Djamo plus tard si des clients vous le demandent.
-                    </p>
-                  )}
-                </div>
-              </details>
-              )}
             </div>
           </section>
-        </main>
+        </form>
       )}
     </div>
   );
