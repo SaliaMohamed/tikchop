@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Tikchop"
+description = "Une plateforme de commerce WhatsApp pour les boutiques d’Abidjan, avec catalogue, commandes, paiements locaux, livraison et suivi client."
+version = "1.0.0"
+id = "artifacts/tikchop"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23837
+
+[services.development]
+run = "pnpm --filter @workspace/tikchop run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tikchop", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tikchop/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23837"
+BASE_PATH = "/"
