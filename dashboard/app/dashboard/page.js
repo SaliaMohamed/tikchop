@@ -154,7 +154,14 @@ export default function Dashboard() {
         eyebrow="Accueil"
         title={seller.name || "Boutique"}
         avatar={(
-          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#07120d] font-display text-sm font-black text-[#39f58e] shadow-[0_12px_26px_rgba(7,18,13,0.14)]">
+          <span
+            className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[20px] font-display text-sm font-black"
+            style={{
+              background: "var(--text-main)",
+              color: "var(--primary)",
+              boxShadow: "0 12px 26px rgba(2, 9, 5, 0.14)",
+            }}
+          >
             {seller.logo_url ? (
               <Image src={seller.logo_url} alt="Logo" fill sizes="48px" className="object-cover" />
             ) : sellerInitials}
@@ -169,31 +176,48 @@ export default function Dashboard() {
         )}
       />
 
-      <section className="mt-5 rounded-[32px] bg-[#07120d] p-4 text-white shadow-[0_24px_60px_rgba(7,18,13,0.18)]">
-        <div className="flex items-start justify-between gap-4">
+      <section className="mt-5 app-dashboard-hero tk-fade-up-1">
+        <div className="flex items-start justify-between gap-4" style={{ position: "relative", zIndex: 1 }}>
           <div className="min-w-0">
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.15em] text-[#39f58e]">{mainAction.kicker}</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.15em]" style={{ color: "var(--primary)" }}>{mainAction.kicker}</p>
             <h2 className="mt-2 max-w-[15rem] font-display text-[2.15rem] font-black leading-[0.98] tracking-tight text-white">
               {mainAction.title}
             </h2>
           </div>
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] bg-white/10 text-[#39f58e]">
+          <span
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px]"
+            style={{ background: "rgba(255,255,255,0.08)", color: "var(--primary)" }}
+          >
             <ShoppingBag size={30} strokeWidth={2.1} />
           </span>
         </div>
         <TkPrimary href={mainAction.href} icon={mainAction.icon} label={mainAction.cta} className="mt-5" />
       </section>
 
-      <section className="mt-3 grid grid-cols-3 gap-2.5">
+      <section className="mt-3 grid grid-cols-3 gap-2.5 tk-fade-up-2">
         <TkMetric value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} active={hasProducts} />
         <TkMetric value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} warn={openOrders > 0} />
         <TkMetric value={stats.whatsappConnected ? "OK" : "Off"} label="WhatsApp" icon={<Bot size={15} />} active={stats.whatsappConnected} />
       </section>
 
-      <section className="mt-5">
+      <section className="mt-5 tk-fade-up-3">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="font-display text-lg font-black text-[#07120d]">A suivre</h3>
-          {recentOrders.length > 0 && <Link href="/orders" aria-label="Toutes les ventes" className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#008f5a] no-underline ring-1 ring-[#07120d]/8"><ChevronRight size={17} /></Link>}
+          <h3 className="font-display text-lg font-black" style={{ color: "var(--text-main)" }}>A suivre</h3>
+          {recentOrders.length > 0 && (
+            <Link
+              href="/orders"
+              aria-label="Toutes les ventes"
+              className="flex h-9 w-9 items-center justify-center rounded-full no-underline ring-1"
+              style={{
+                background: "var(--surface)",
+                color: "var(--primary-hover)",
+                ringColor: "rgba(2, 9, 5, 0.06)",
+                boxShadow: "0 4px 12px rgba(2, 9, 5, 0.04)",
+              }}
+            >
+              <ChevronRight size={17} />
+            </Link>
+          )}
         </div>
         {recentOrders.length > 0 && (
           <div className="space-y-2">
@@ -217,7 +241,7 @@ export default function Dashboard() {
             href={seller.slug ? `/${seller.slug}` : "/shop-info"}
             icon={<Store size={19} />}
             title="Aucune vente"
-            label="Partager"
+            label="Partager votre boutique"
             value=""
             tone="mint"
           />
@@ -225,7 +249,14 @@ export default function Dashboard() {
       </section>
 
       {offlineMode && (
-        <div className="mt-5 rounded-2xl bg-white p-3 text-center text-xs font-black text-[#07120d]/45 ring-1 ring-[#07120d]/7">
+        <div
+          className="mt-5 rounded-2xl p-3 text-center text-xs font-black ring-1 tk-fade-up-4"
+          style={{
+            background: "var(--surface)",
+            color: "rgba(2, 9, 5, 0.4)",
+            ringColor: "rgba(2, 9, 5, 0.05)",
+          }}
+        >
           Chiffres indisponibles
         </div>
       )}
