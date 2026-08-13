@@ -107,13 +107,21 @@ if (!failures) {
   console.log("\nn8n");
   console.log("---");
   try {
-    const response = await fetch(`${n8nBase}/api/v1/workflows?limit=100`, {
+    let target = null;
+    let response = await fetch(`${n8nBase}/api/v1/workflows/${EXPECTED_N8N_WORKFLOW_ID}`, {
       headers: { "X-N8N-API-KEY": env.N8N_API_KEY },
     });
-    const payload = await readJson(response);
-    const workflows = Array.isArray(payload?.data) ? payload.data : [];
-    const target = workflows.find((workflow) => workflow.id === EXPECTED_N8N_WORKFLOW_ID)
-      || workflows.find((workflow) => /Tikchop Sales Bot V2 - Evolution API/i.test(workflow.name || ""));
+    if (response.ok) {
+      target = await readJson(response);
+    } else {
+      const listResponse = await fetch(`${n8nBase}/api/v1/workflows?active=true&limit=100`, {
+        headers: { "X-N8N-API-KEY": env.N8N_API_KEY },
+      });
+      const payload = await readJson(listResponse);
+      const workflows = Array.isArray(payload?.data) ? payload.data : [];
+      target = workflows.find((workflow) => workflow.id === EXPECTED_N8N_WORKFLOW_ID)
+        || workflows.find((workflow) => /Tikchop Sales Bot V2 - Evolution API/i.test(workflow.name || ""));
+    }
     const ok = response.ok && Boolean(target?.active);
     if (!ok) failures += 1;
     statusLine(ok, "workflow Tikchop Evolution actif", target ? `${target.name} (${target.id}) active=${target.active}` : "introuvable");
