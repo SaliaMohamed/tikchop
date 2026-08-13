@@ -227,7 +227,7 @@ export function MessageBubble({ message }) {
           <p className="mt-2 whitespace-pre-wrap text-[0.92rem] font-medium leading-5">{message.media.caption}</p>
         )}
         <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#776d60]">
-          {isOut ? "Vous" : isBot ? "Bot" : "Client"}
+          {isOut ? "Vous" : isBot ? "DJASSAMAN" : "Client"}
           <span>Â·</span>
           <Clock3 size={11} />
           {formatDateTime(message.created_at)}

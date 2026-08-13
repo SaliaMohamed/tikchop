@@ -125,7 +125,7 @@ export default function SellerMenuPage() {
       {/* Action rapide si WhatsApp manquant */}
       {!whatsappConnected && hasProducts && (
         <Link
-          href="/whatsapp"
+          href="/crm"
           className="flex items-center gap-3 rounded-[22px] bg-[#fbefe0] px-4 py-3 text-[#2b2219] no-underline ring-1 ring-[#f0954c]/35 active:scale-[0.99]"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#c2572b] text-white shrink-0">
@@ -149,7 +149,7 @@ export default function SellerMenuPage() {
 
       {/* Réglages */}
       <MenuSection title="Réglages">
-        <MenuItem href="/whatsapp" icon={<Bot size={20} />} label="Assistant WhatsApp" sub={statusLoading ? "…" : whatsappConnected ? "Connecté" : "Non connecté"} />
+        <MenuItem href="/crm" icon={<Bot size={20} />} label="DJASSAMAN" sub={statusLoading ? "…" : whatsappConnected ? "Connecté" : "Non connecté"} />
         <MenuItem href="/delivery-settings" icon={<Truck size={20} />} label="Livraison" sub="Zones et frais" />
         <MenuItem href="/payment-settings" icon={<Wallet size={20} />} label="Paiement" sub={payoutReady ? "Configuré" : "À configurer"} />
         <MenuItem href="/shop-info" icon={<Store size={20} />} label="Infos boutique" sub="Nom, lien, bot" />

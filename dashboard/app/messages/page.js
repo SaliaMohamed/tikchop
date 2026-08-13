@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bot,
-  CheckCircle2,
   Loader2,
   MessageCircle,
   PauseCircle,
@@ -173,7 +172,7 @@ export default function MessagesPage() {
               <MessageCircle size={22} />
             </span>
             <div className="min-w-0">
-              <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#c2572b]">WhatsApp</p>
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#c2572b]">DJASSAMAN</p>
               <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#2b2219]">{headerLabel}</h1>
             </div>
           </div>
@@ -302,13 +301,13 @@ function EmptyMessages() {
   return (
     <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf6ee] rounded-[24px] border border-[#2b2219]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b] mb-4">
-        <MessageCircle size={28} />
+        <Bot size={28} />
       </div>
-      <h3 className="font-display text-xl font-bold text-[#2b2219]">Aucun client encore</h3>
+      <h3 className="font-display text-xl font-bold text-[#2b2219]">Aucun message encore</h3>
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#2b2219]/60 max-w-[280px]">
-        Vos conversations WhatsApp apparaissent ici quand les clients vous ?crivent.
+        Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement.
       </p>
-      <Link href="/whatsapp" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+      <Link href="/crm" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
         <Bot size={16} />
         Connecter WhatsApp
       </Link>
@@ -356,14 +355,4 @@ function ConversationCard({ conversation, active, onClick }) {
   );
 }
 
-function BotStatus({ paused }) {
-  return (
-    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-black ${
-      paused ? "bg-amber-100 text-amber-800" : "bg-[#fbefe2] text-[#96451f]"
-    }`}>
-      {paused ? <PauseCircle size={13} /> : <CheckCircle2 size={13} />}
-      {paused ? "Vous" : "Bot"}
-    </span>
-  );
-}
 

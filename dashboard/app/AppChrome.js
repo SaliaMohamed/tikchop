@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, MessageCircle, Package, Plus, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
+import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, Package, Plus, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
 import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
 import BrandLogo from "./components/BrandLogo";
@@ -45,7 +45,7 @@ const sellerNavGroups = [
       { href: "/dashboard", label: "Accueil", icon: Home },
       { href: "/add-product", label: "Publier", icon: Camera },
       { href: "/orders", label: "Ventes", icon: ClipboardList },
-      { href: "/messages", label: "Clients", icon: MessageCircle },
+      { href: "/crm", label: "DJASSAMAN", icon: Bot, badge: "IA" },
     ],
   },
   {
@@ -54,7 +54,6 @@ const sellerNavGroups = [
       { href: "/products", label: "Articles", icon: Package },
       { href: "/shop-info", label: "Boutique", icon: Store },
       { href: "/social-sharing", label: "Partager", icon: Share2 },
-      { href: "/whatsapp", label: "Assistant", icon: Bot, badge: "IA" },
       { href: "/delivery-settings", label: "Livraison", icon: Truck },
       { href: "/payment-settings", label: "Paiement", icon: Wallet },
       { href: "/plus", label: "Plus", icon: Settings2 },
@@ -67,8 +66,7 @@ const mobilePageMeta = {
   "/products": { title: "Articles", subtitle: "Stock et boutique" },
   "/orders": { title: "Ventes", subtitle: "" },
   "/messages": { title: "Clients", subtitle: "" },
-  "/crm": { title: "Clients", subtitle: "" },
-  "/whatsapp": { title: "WhatsApp", subtitle: "Assistant de vente" },
+  "/crm": { title: "DJASSAMAN", subtitle: "Assistant de vente" },
   "/delivery-settings": { title: "Livraison", subtitle: "Zones et livreurs" },
   "/payment-settings": { title: "Paiement", subtitle: "Choix vendeur" },
   "/shop-info": { title: "Boutique", subtitle: "Infos et bot" },
@@ -207,9 +205,9 @@ export default function AppChrome({ children }) {
           <span className="mobile-tabbar-icon"><Plus size={24} strokeWidth={2.8} /></span>
           <span>Publier</span>
         </Link>
-        <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><MessageCircle size={19} strokeWidth={2.5} /></span>
-          <span>Clients</span>
+        <Link href="/crm" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
+          <span className="mobile-tabbar-icon"><Bot size={19} strokeWidth={2.5} /></span>
+          <span>DJASSAMAN</span>
         </Link>
           <Link href="/plus" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
             <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={2.5} /></span>

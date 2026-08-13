@@ -373,11 +373,11 @@ export default function ShopInfoPage() {
         <aside className="space-y-4">
           <InfoStatusCard
             icon={<Phone size={20} />}
-            title="WhatsApp"
+            title="DJASSAMAN"
             ok={whatsappReady}
             text={whatsappReady ? "Assistant connecte." : "Connectez WhatsApp pour recevoir et repondre aux clients."}
-            href="/whatsapp"
-            action="Gerer WhatsApp"
+            href="/crm"
+            action="Gerer DJASSAMAN"
           />
           <InfoStatusCard
             icon={<Wallet size={20} />}
