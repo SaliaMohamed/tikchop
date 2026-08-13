@@ -21,10 +21,6 @@ dashboard/output/
 dashboard/tmp-*.png
 dashboard/tmp-*.log
 dashboard/.next-*.log
-mobile/tmp-*.png
-mobile/*.log
-mobile/.codex-logs/
-mobile/builds/*.apk
 **/__pycache__/
 *.pyc
 
