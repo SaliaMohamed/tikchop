@@ -9,6 +9,7 @@ import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
 import BrandLogo from "./components/BrandLogo";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
+import SetupResumeBanner from "./components/SetupResumeBanner";
 import { clearActiveSeller, getSellerInitials, readActiveSeller, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
 import { supabase } from "../lib/supabase";
 import { getSellerAccessToken } from "../lib/seller-auth-client";
@@ -187,7 +188,10 @@ export default function AppChrome({ children }) {
       </nav>
       <div className="seller-desktop-frame">
         <DesktopSellerSidebar seller={seller} sellerInitials={sellerInitials} pathname={pathname} />
-        <main className={`container ${sellerWorkspaceClass} seller-desktop-main ${showMobileTopbar ? "seller-chrome-main" : ""}`}>{children}</main>
+        <main className={`container ${sellerWorkspaceClass} seller-desktop-main ${showMobileTopbar ? "seller-chrome-main" : ""}`}>
+          {pathname !== "/setup" && <SetupResumeBanner />}
+          {children}
+        </main>
       </div>
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
