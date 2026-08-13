@@ -92,7 +92,7 @@
 
 .app-dashboard-hero::after {
   background: radial-gradient(ellipse at bottom right, rgba(194, 87, 43, 0.25), transparent 60%),
-              radial-gradient(ellipse at top left, rgba(20, 255, 141, 0.1), transparent 50%);
+              radial-gradient(ellipse at top left, rgba(242, 188, 50, 0.12), transparent 50%);
   content: "";
   inset: 0;
   pointer-events: none;

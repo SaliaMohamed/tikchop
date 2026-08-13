@@ -156,7 +156,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
   }
 
   return (
-    <div className="fixed inset-x-4 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] z-[160] mx-auto max-w-[390px] rounded-[22px] border border-[rgba(0,108,73,0.14)] bg-white/96 p-3 shadow-[0_16px_40px_rgba(13,23,18,0.14)] backdrop-blur-2xl md:bottom-5">
+    <div className="fixed inset-x-4 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] z-[160] mx-auto max-w-[390px] rounded-[22px] border border-[rgba(194, 87, 43, 0.18)] bg-white/96 p-3 shadow-[0_16px_40px_rgba(13,23,18,0.14)] backdrop-blur-2xl md:bottom-5">
       <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
         <span className="brand-logo-mark tk-logo-mark h-10 w-10 shrink-0 rounded-2xl" aria-hidden="true" />
         <div className="min-w-0">

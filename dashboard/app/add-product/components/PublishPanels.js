@@ -106,7 +106,7 @@ function PublishDock({ loading, canSubmit, mode, count }) {
         <button
           type="submit"
           disabled={loading || !canSubmit}
-          className={`flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-extrabold shadow-[0_14px_34px_rgba(0,108,73,0.22)] transition ${
+          className={`flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-extrabold shadow-[0_14px_34px_rgba(194, 87, 43, 0.26)] transition ${
             loading || !canSubmit ? "bg-[var(--outline)] text-white" : "bg-[var(--primary)] text-white active:scale-[0.98]"
           }`}
         >
