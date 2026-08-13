@@ -142,10 +142,10 @@ export default function Dashboard() {
           }
         : {
             kicker: "Pret",
-            title: "Boutique active",
-            href: seller.slug ? `/${seller.slug}` : "/shop-info",
-            cta: "Voir",
-            icon: <Store size={20} />,
+            title: "Discussions DJASSAMAN",
+            href: "/messages",
+            cta: "Voir les discussions",
+            icon: <Bot size={20} />,
           };
 
   return (

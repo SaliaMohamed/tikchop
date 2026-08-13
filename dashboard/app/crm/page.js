@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, RefreshCw, Settings2 } from "lucide-react";
+import { ArrowLeft, Bot, RefreshCw, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActiveSeller } from "../components/sellerContext";
 import WhatsAppConnector from "../components/WhatsAppConnector";
@@ -32,8 +32,8 @@ export default function CrmSettingsPage() {
           href="/messages"
           className="flex h-10 items-center gap-1.5 rounded-full bg-[#2b2219] px-3.5 text-xs font-black text-white no-underline"
         >
-          <MessageCircle size={14} />
-          Discussions
+          <Bot size={14} />
+          DJASSAMAN
         </Link>
       </header>
 

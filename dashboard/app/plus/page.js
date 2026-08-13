@@ -10,7 +10,6 @@ import {
   Download,
   Eye,
   LogOut,
-  MessageCircle,
   Package,
   Share2,
   Store,
@@ -143,13 +142,13 @@ export default function SellerMenuPage() {
       <MenuSection title="Vendre">
         <MenuItem href="/add-product" icon={<Camera size={20} />} label="Publier un article" sub={hasProducts ? `${stats.products} en ligne` : "Aucun article"} accent={!hasProducts} />
         <MenuItem href="/orders" icon={<ClipboardList size={20} />} label="Ventes" sub={workCount > 0 ? `${workCount} à traiter` : "Aucune"} warn={workCount > 0} />
-        <MenuItem href="/messages" icon={<MessageCircle size={20} />} label="Discussions" sub="Clients et reponses DJASSAMAN" />
+        <MenuItem href="/messages" icon={<Bot size={20} />} label="DJASSAMAN" sub="Discussions et reponses clients" />
         <MenuItem href={shopLink} icon={<Store size={20} />} label="Voir ma boutique" sub="Vue client" />
       </MenuSection>
 
       {/* Réglages */}
       <MenuSection title="Réglages">
-        <MenuItem href="/crm" icon={<Bot size={20} />} label="DJASSAMAN" sub={statusLoading ? "…" : whatsappConnected ? "Connecté" : "Non connecté"} />
+        <MenuItem href="/crm" icon={<Bot size={20} />} label="Parametres DJASSAMAN" sub={statusLoading ? "…" : whatsappConnected ? "Connecté" : "Non connecté"} />
         <MenuItem href="/delivery-settings" icon={<Truck size={20} />} label="Livraison" sub="Zones et frais" />
         <MenuItem href="/payment-settings" icon={<Wallet size={20} />} label="Paiement" sub={payoutReady ? "Configuré" : "À configurer"} />
         <MenuItem href="/shop-info" icon={<Store size={20} />} label="Infos boutique" sub="Nom, lien, bot" />

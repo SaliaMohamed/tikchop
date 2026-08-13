@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, MessageCircle, Store } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, Store } from "lucide-react";
 import { useActiveSeller } from "../components/sellerContext";
 import WhatsAppConnector from "../components/WhatsAppConnector";
 import StyleEditor from "../components/StyleEditor";
@@ -49,8 +49,8 @@ export default function SetupPage() {
           onClick={goToDiscussions}
           className="flex h-10 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-black text-[#c2572b] ring-1 ring-[#2b2219]/8"
         >
-          <MessageCircle size={14} />
-          Discussions
+          <Bot size={14} />
+          DJASSAMAN
         </button>
       </header>
 
@@ -153,7 +153,7 @@ function DoneStep({ whatsappDone, onContinue, onBack }) {
         onClick={onContinue}
         className="mt-6 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#2b2219] px-5 text-sm font-black text-white shadow-[0_16px_36px_rgba(43,34,25,0.2)]"
       >
-        <MessageCircle size={18} />
+        <Bot size={18} />
         Ouvrir mes discussions
         <ArrowRight size={16} />
       </button>
