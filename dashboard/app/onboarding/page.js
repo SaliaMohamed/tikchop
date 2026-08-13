@@ -14,6 +14,7 @@ import {
   signInWithPasswordControlled,
   getPasswordStrength,
 } from "../../lib/onboarding-utils";
+import { resolveSellerLanding } from "../../lib/seller-landing";
 import { OnboardingSplash } from "./components/OnboardingSplash";
 import { AccountStep } from "./components/AccountStep";
 import { ShopStep } from "./components/ShopStep";
@@ -74,7 +75,11 @@ export default function OnboardingPage() {
           getSellerByOwner(user.id, data.session?.access_token),
           "Chargement boutique trop long.", 10000,
         );
-        if (seller && active) { writeActiveSeller(seller); window.location.replace("/dashboard"); }
+        if (seller && active) {
+          writeActiveSeller(seller);
+          const landing = await resolveSellerLanding(seller);
+          if (active) window.location.replace(landing);
+        }
         else if (active) { setSellerAccount(user); setStep(1); setMode("SIGN_IN"); }
       } catch { /* silent */ }
     }
@@ -106,12 +111,22 @@ export default function OnboardingPage() {
           const fallback = await signInWithPasswordControlled({ phone: fullPhone, password }, 12000);
           if (fallback.error) throw new Error("Numéro ou mot de passe incorrect. Si c'est votre première fois, créez un compte.");
           const seller = await getSellerByOwner(fallback.data.user?.id, "");
-          if (seller) { writeActiveSeller(seller); window.location.replace("/dashboard"); return; }
+          if (seller) {
+            writeActiveSeller(seller);
+            const landing = await resolveSellerLanding(seller);
+            window.location.replace(landing);
+            return;
+          }
           setSellerAccount(fallback.data.user);
           throw new Error("Compte trouvé mais aucune boutique. Créez votre boutique.");
         }
         const seller = await withTimeout(getSellerByOwner(data.user?.id, data.session?.access_token), "Chargement trop long.", 10000);
-        if (seller) { writeActiveSeller(seller); window.location.replace("/dashboard"); return; }
+        if (seller) {
+          writeActiveSeller(seller);
+          const landing = await resolveSellerLanding(seller);
+          window.location.replace(landing);
+          return;
+        }
         setSellerAccount(data.user);
         setMode("SIGN_UP");
         setNotice("Compte trouvé. Donnez un nom à votre boutique pour continuer.");
