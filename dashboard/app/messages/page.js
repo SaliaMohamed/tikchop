@@ -18,6 +18,7 @@ import {
   resumeBotForCustomer,
   sendSellerManualReply,
 } from "../actions";
+import { getSellerWhatsAppConnection } from "../seller-actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getCustomerResponseTemplates } from "../../lib/customer-response-playbook";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
@@ -44,6 +45,17 @@ export default function MessagesPage() {
   const [error, setError] = useState("");
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [inboxFilter, setInboxFilter] = useState("ALL");
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
+
+  useEffect(() => {
+    if (!seller.slug) return;
+    let alive = true;
+    getSellerAccessToken()
+      .then((token) => getSellerWhatsAppConnection(seller, token))
+      .then((data) => { if (alive) setWhatsappConnected(Boolean(data?.isConnected)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [seller]);
 
   const fetchConversations = useCallback(async function fetchConversations() {
     if (!seller.slug) {
@@ -215,7 +227,7 @@ export default function MessagesPage() {
               {loading ? (
                 <LoadingState />
               ) : filteredConversations.length === 0 ? (
-                <EmptyMessages />
+                <EmptyMessages whatsappConnected={whatsappConnected} />
               ) : (
                 filteredConversations.map((conversation) => (
                   <ConversationCard
@@ -297,7 +309,7 @@ function LoadingState() {
   );
 }
 
-function EmptyMessages() {
+function EmptyMessages({ whatsappConnected }) {
   return (
     <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf6ee] rounded-[24px] border border-[#2b2219]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b] mb-4">
@@ -305,12 +317,16 @@ function EmptyMessages() {
       </div>
       <h3 className="font-display text-xl font-bold text-[#2b2219]">Aucun message encore</h3>
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#2b2219]/60 max-w-[280px]">
-        Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement.
+        {whatsappConnected
+          ? "Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement."
+          : "Connectez WhatsApp pour recevoir les messages de vos clients. DJASSAMAN repondra automatiquement."}
       </p>
-      <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
-        <Bot size={16} />
-        Connecter WhatsApp
-      </Link>
+      {!whatsappConnected && (
+        <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+          <Bot size={16} />
+          Connecter WhatsApp
+        </Link>
+      )}
     </div>
   );
 }
