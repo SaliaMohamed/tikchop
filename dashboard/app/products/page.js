@@ -1,24 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
-  Camera,
-  CheckCircle2,
   Copy,
-  Eye,
-  EyeOff,
   ImagePlus,
   Loader2,
-  Minus,
-  Package,
-  Pencil,
   Plus,
   Save,
   Search,
   Share2,
-  Store,
   X,
 } from "lucide-react";
 import {
@@ -34,71 +25,16 @@ import { fetchSellerProductsFromMobileApi, withClientTimeout } from "../../lib/s
 import { friendlyError } from "../../lib/user-facing-error";
 import { compressImage } from "../../lib/image-compressor";
 import { IllustrationEmptyShop } from "../components/TikchopIllustrations";
-
-const EXTRA_IMAGES_PATTERN = /\n?\[\[TIKCHOP_EXTRA_IMAGES:([^\]]*)\]\]/i;
-
-function formatPrice(value) {
-  return `${Number(value || 0).toLocaleString("fr-FR")} F`;
-}
-
-function getCleanProductDescription(description) {
-  return String(description || "").replace(EXTRA_IMAGES_PATTERN, "").trim();
-}
-
-function preserveExtraImagesMarker(nextDescription, previousDescription) {
-  const marker = String(previousDescription || "").match(EXTRA_IMAGES_PATTERN)?.[0] || "";
-  return [String(nextDescription || "").trim(), marker.trim()].filter(Boolean).join("\n");
-}
-
-function getStock(product) {
-  return Number.parseInt(product?.stock_quantity || 0, 10) || 0;
-}
-
-function isProductHidden(product) {
-  return product?.is_active === false || getStock(product) <= 0;
-}
-
-function isProductLive(product) {
-  return !isProductHidden(product) && getStock(product) > 0;
-}
-
-function isProductUnpublished(product) {
-  return product?.is_active === false;
-}
-
-function isProductOutOfStock(product) {
-  return product?.is_active !== false && getStock(product) <= 0;
-}
-
-function getProductStatus(product) {
-  const stock = getStock(product);
-  if (product?.is_active === false) {
-    return {
-      label: "Masque",
-      toneClass: "bg-zinc-100 text-zinc-600",
-      icon: <EyeOff size={14} />,
-    };
-  }
-  if (stock <= 0) {
-    return {
-      label: "Rupture",
-      toneClass: "bg-red-50 text-red-700",
-      icon: <AlertTriangle size={14} />,
-    };
-  }
-  if (stock <= 2) {
-    return {
-      label: `Stock faible (${stock})`,
-      toneClass: "bg-amber-50 text-amber-800",
-      icon: <AlertTriangle size={14} />,
-    };
-  }
-  return {
-    label: `En vente (${stock})`,
-    toneClass: "bg-white text-[var(--primary)]",
-    icon: <CheckCircle2 size={14} />,
-  };
-}
+import {
+  formatPrice,
+  getCleanProductDescription,
+  preserveExtraImagesMarker,
+  getStock,
+  isProductLive,
+  isProductUnpublished,
+  isProductOutOfStock,
+  getProductStatus,
+} from "../../lib/product-status-utils";
 
 export default function ProductsPage() {
   const seller = useActiveSeller();
@@ -374,7 +310,7 @@ export default function ProductsPage() {
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
-      {/* 1. Header Pur et Aéré */}
+      {/* 1. Header Pur et A?r? */}
       <header className="py-8 flex items-center justify-between border-b border-[#07120d]/5">
         <div>
           <h1 className="font-display text-3xl font-black text-[#07120d] leading-none">Catalogue</h1>
@@ -397,7 +333,7 @@ export default function ProductsPage() {
           {[
             { value: "ALL", label: "Tous", count: stockStats.total },
             { value: "LIVE", label: "En vente", count: stockStats.live },
-            { value: "HIDDEN", label: "Non publiés", count: stockStats.unpublished },
+            { value: "HIDDEN", label: "Non publi?s", count: stockStats.unpublished },
             { value: "OUT", label: "Rupture", count: stockStats.outOfStock },
             { value: "LOW", label: "Faible", count: stockStats.lowStock },
           ].map((item) => (
@@ -450,7 +386,7 @@ export default function ProductsPage() {
               onClick={() => window.location.reload()}
               className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
             >
-              Réessayer
+              R?essayer
             </button>
           </div>
         </div>
@@ -462,7 +398,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* 4. Liste des Produits épurée en Ligne verticale */}
+      {/* 4. Liste des Produits ?pur?e en Ligne verticale */}
       <main className="mt-8">
         {loading ? (
           <div className="space-y-2.5">
@@ -542,12 +478,12 @@ function EmptyProductsState({ hasProducts }) {
       <div className="relative z-10 flex flex-col items-center">
         <IllustrationEmptyShop size={120} className="opacity-90" />
         <h3 className="mt-3 font-display text-xl font-bold text-white">
-          {hasProducts ? "Aucun article trouvé" : "Aucun article en ligne"}
+          {hasProducts ? "Aucun article trouv?" : "Aucun article en ligne"}
         </h3>
         <p className="mt-2 text-sm font-medium leading-relaxed text-white/55 max-w-[260px]">
           {hasProducts
-            ? "Modifiez vos filtres ou écrivez un autre mot-clé dans la recherche."
-            : "Ajoutez une photo, un prix et un stock pour commencer à vendre en ligne."}
+            ? "Modifiez vos filtres ou ?crivez un autre mot-cl? dans la recherche."
+            : "Ajoutez une photo, un prix et un stock pour commencer ? vendre en ligne."}
         </p>
         <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[240px] items-center justify-center gap-2 rounded-2xl bg-[#39f58e] text-sm font-extrabold text-[#07120d] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(57,245,142,0.25)] no-underline">
           <Plus size={16} />
@@ -599,7 +535,7 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
         onClick={() => onEdit(product)}
         className="flex h-9 shrink-0 px-3.5 items-center justify-center rounded-full bg-[#07120d]/5 text-xs font-black text-[#07120d] hover:bg-[#07120d]/10 active:scale-95 transition"
       >
-        Édit
+        ?dit
       </button>
     </article>
   );
@@ -669,7 +605,7 @@ function ProductEditor({
                 : "text-[#685f4f]"
             }`}
           >
-            Masqué
+            Masqu?
           </button>
         </div>
 
@@ -679,7 +615,7 @@ function ProductEditor({
             <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Nom du produit</span>
             <input 
               className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
-              placeholder="Ex: Robe en soie plissée" 
+              placeholder="Ex: Robe en soie pliss?e" 
               value={formData.name} 
               onChange={(event) => setFormData({ ...formData, name: event.target.value })} 
             />
@@ -698,7 +634,7 @@ function ProductEditor({
             </div>
             
             <div className="space-y-1">
-              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Quantité Stock</span>
+              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Quantit? Stock</span>
               <input 
                 className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
                 type="number" 
@@ -750,7 +686,7 @@ function ProductEditor({
             <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Description WhatsApp</span>
             <textarea 
               className="w-full min-h-[84px] p-3.5 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none resize-none transition" 
-              placeholder="Ex: Robe fluide 100% soie sauvage, idéale pour les cérémonies..." 
+              placeholder="Ex: Robe fluide 100% soie sauvage, id?ale pour les c?r?monies..." 
               value={formData.description} 
               onChange={(event) => setFormData({ ...formData, description: event.target.value })} 
             />
@@ -767,7 +703,7 @@ function ProductEditor({
           </div>
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Mots-clés de recherche</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Mots-cl?s de recherche</span>
             <input 
               className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
               placeholder="Ex: robe, ceremonie, soie, rouge" 

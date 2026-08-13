@@ -4,12 +4,12 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 const toneClasses = {
-  dark: "bg-[#020905] text-white ring-[#020905]",
-  green: "bg-[#00E676] text-[#020905] ring-[#00E676]",
-  soft: "bg-white text-[#020905] ring-[#020905]/6",
-  mint: "bg-[#EDFFF5] text-[#020905] ring-[#00E676]/20",
-  cream: "bg-[#FCFDFD] text-[#020905] ring-[#020905]/6",
-  warn: "bg-[#FFF9E6] text-[#4d3200] ring-[#FFC400]/35",
+  dark: "bg-[var(--color-ink)] text-white ring-[var(--color-ink)]",
+  green: "bg-[var(--color-primary)] text-[var(--color-ink)] ring-[var(--color-primary)]",
+  soft: "bg-white text-[var(--color-ink)] ring-[var(--color-ink)]/6",
+  mint: "bg-[var(--color-mint-soft)] text-[var(--color-ink)] ring-[var(--color-primary)]/20",
+  cream: "bg-[var(--color-bg)] text-[var(--color-ink)] ring-[var(--color-ink)]/6",
+  warn: "bg-[#FFF9E6] text-[#4d3200] ring-[var(--color-gold-bright)]/35",
 };
 
 export function TkScreen({ children, className = "" }) {
@@ -50,7 +50,7 @@ export function TkIconButton({ href, onClick, icon, label, tone = "soft", classN
   const body = (
     <span
       className={`flex h-12 w-12 items-center justify-center rounded-[20px] ring-1 transition-all active:scale-[0.93] ${toneClasses[tone] || toneClasses.soft} ${className}`}
-      style={{ boxShadow: "0 6px 18px rgba(2, 9, 5, 0.06)" }}
+      style={{ boxShadow: "0 6px 18px var(--ink-06)" }}
     >
       {icon}
     </span>
@@ -81,12 +81,12 @@ export function TkActionCard({ href, icon, title, value, label, tone = "soft", u
       className={`tk-spring grid min-h-[88px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[28px] p-4 no-underline ring-1 transition-all active:scale-[0.97] ${cardTone}`}
       style={{
         boxShadow: isDark
-          ? "0 16px 40px rgba(2, 9, 5, 0.15), 0 4px 12px rgba(2, 9, 5, 0.08)"
-          : "0 4px 20px rgba(2, 9, 5, 0.04), 0 2px 6px rgba(2, 9, 5, 0.02)",
+          ? "0 16px 40px var(--ink-15), 0 4px 12px var(--ink-08)"
+          : "0 4px 20px var(--ink-04), 0 2px 6px var(--ink-02)",
       }}
     >
       <span
-        className={`flex shrink-0 items-center justify-center rounded-[22px] ${isDark ? "" : "shadow-sm ring-1 ring-[#020905]/5"}`}
+        className={`flex shrink-0 items-center justify-center rounded-[22px] ${isDark ? "" : "shadow-sm ring-1 ring-[var(--color-ink)]/5"}`}
         style={{
           height: "52px",
           width: "52px",
@@ -120,8 +120,8 @@ export function TkMetric({ icon, value, label, active = false, warn = false }) {
         boxShadow: warn
           ? "0 8px 20px rgba(255, 196, 0, 0.12)"
           : active
-          ? "0 16px 40px rgba(2, 9, 5, 0.22)"
-          : "0 4px 16px rgba(2, 9, 5, 0.04)",
+          ? "0 16px 40px var(--ink-22)"
+          : "0 4px 16px var(--ink-04)",
       }}
     >
       <span
@@ -153,9 +153,9 @@ export function TkMetric({ icon, value, label, active = false, warn = false }) {
 export function TkPrimary({ href, onClick, icon, label, disabled = false, urgent = false, className = "" }) {
   const classes = `flex min-h-[58px] w-full items-center justify-center gap-2.5 rounded-[26px] px-5 text-base font-black no-underline transition-all active:scale-[0.97] disabled:opacity-30 disabled:shadow-none ${urgent ? "animate-pulse-glow" : ""} ${className}`;
   const style = {
-    background: disabled ? "rgba(2, 9, 5, 0.1)" : "var(--primary)",
-    color: disabled ? "rgba(2, 9, 5, 0.35)" : "var(--text-main)",
-    boxShadow: disabled ? "none" : "0 12px 32px rgba(0, 230, 118, 0.28)",
+    background: disabled ? "var(--ink-10)" : "var(--primary)",
+    color: disabled ? "var(--ink-35)" : "var(--text-main)",
+    boxShadow: disabled ? "none" : "0 12px 32px var(--primary-28)",
   };
 
   if (href) {

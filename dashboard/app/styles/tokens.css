@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TOKENS — Unified Design System
+   ============================================================ */
+
+:root {
+  /* ── Primary Greens ── */
+  --color-primary: #00E676;
+  --color-primary-hover: #00C853;
+  --color-primary-bright: #14FF8D;
+  --color-primary-light: #69FFB4;
+  --color-primary-accent: #39F58E;
+
+  /* ── Deep Greens ── */
+  --color-deep: #057A55;
+  --color-deep-alt: #008F5A;
+  --color-deep-mint: #08724F;
+  --color-deep-teal: #006D44;
+  --color-deep-forest: #005F3D;
+  --color-deep-dark: #005B3B;
+
+  /* ── Dark Palette ── */
+  --color-ink: #020905;
+  --color-dark: #07120D;
+  --color-dark-soft: #07100A;
+  --color-dark-mid: #0E1712;
+  --color-dark-light: #0F1813;
+  --color-dark-surface: #14221A;
+  --color-dark-panel: #111814;
+  --color-dark-panel-alt: #101814;
+  --color-dark-panel-mid: #08120D;
+  --color-dark-panel-light: #040B07;
+
+  /* ── Green Neons & Lights ── */
+  --color-neon: #6DFFAC;
+  --color-mint: #EAFFF3;
+  --color-mint-soft: #EAFFF5;
+  --color-mint-light: #EAFFF1;
+  --color-mint-deep: #E8FFF2;
+  --color-mint-dark: #ECFFF5;
+  --color-honeydew: #F2FBF6;
+  --color-honeydew-soft: #F3F6EF;
+  --color-honeydew-light: #F4FBF6;
+  --color-honeydew-deep: #F5FBF7;
+  --color-snow: #F7FAF5;
+  --color-snow-deep: #F7FAF6;
+  --color-snow-light: #F7FBF8;
+  --color-ivory-warm: #F8FBF5;
+  --color-ivory: #F0F5EE;
+  --color-ivory-soft: #EDF7F0;
+  --color-cream: #E9F5EE;
+
+  /* ── Backgrounds ── */
+  --color-bg: #FBF9F4;
+  --color-bg-warm: #FAFAFA;
+  --color-bg-paper: #FFFDF7;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F7FAF5;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-mid: #F0F5F2;
+
+  /* ── Text ── */
+  --color-text: #07120D;
+  --color-text-soft: #2E4236;
+  --color-text-muted: #5A665F;
+  --color-text-subtle: #526259;
+  --color-text-whisper: #4D5C53;
+  --color-text-quiet: #4E6055;
+  --color-text-faint: #46564D;
+  --color-text-shadow: #48584F;
+
+  /* ── Accent Gold ── */
+  --color-gold: #F5A000;
+  --color-gold-soft: #FFB000;
+  --color-gold-bright: #FFC400;
+  --color-gold-pale: #FFE66D;
+
+  /* ── Semantic ── */
+  --color-success: #057A55;
+  --color-error: #EF4444;
+  --color-error-alt: #FF1744;
+  --color-warning: #F5A000;
+  --color-info: #2979FF;
+  --color-whatsapp: #25D366;
+
+  /* ── Opacity Tokens (dark ink at various alpha) ── */
+  --ink-01: rgba(2, 9, 5, 0.01);
+  --ink-02: rgba(2, 9, 5, 0.02);
+  --ink-04: rgba(2, 9, 5, 0.04);
+  --ink-05: rgba(2, 9, 5, 0.05);
+  --ink-06: rgba(2, 9, 5, 0.06);
+  --ink-08: rgba(2, 9, 5, 0.08);
+  --ink-10: rgba(2, 9, 5, 0.10);
+  --ink-12: rgba(2, 9, 5, 0.12);
+  --ink-15: rgba(2, 9, 5, 0.15);
+  --ink-18: rgba(2, 9, 5, 0.18);
+  --ink-20: rgba(2, 9, 5, 0.20);
+  --ink-30: rgba(2, 9, 5, 0.30);
+  --ink-35: rgba(2, 9, 5, 0.35);
+  --ink-40: rgba(2, 9, 5, 0.40);
+  --ink-55: rgba(2, 9, 5, 0.55);
+
+  /* ── Primary at alpha ── */
+  --primary-08: rgba(0, 230, 118, 0.08);
+  --primary-10: rgba(0, 230, 118, 0.10);
+  --primary-12: rgba(0, 230, 118, 0.12);
+  --primary-15: rgba(0, 230, 118, 0.15);
+  --primary-18: rgba(0, 230, 118, 0.18);
+  --primary-20: rgba(0, 230, 118, 0.20);
+  --primary-25: rgba(0, 230, 118, 0.25);
+  --primary-28: rgba(0, 230, 118, 0.28);
+  --primary-40: rgba(0, 230, 118, 0.40);
+
+  /* ── Bright accent at alpha ── */
+  --accent-10: rgba(57, 245, 142, 0.10);
+  --accent-16: rgba(57, 245, 142, 0.16);
+  --accent-20: rgba(57, 245, 142, 0.20);
+  --accent-22: rgba(57, 245, 142, 0.22);
+  --accent-24: rgba(57, 245, 142, 0.24);
+  --accent-35: rgba(57, 245, 142, 0.35);
+  --accent-40: rgba(57, 245, 142, 0.40);
+
+  /* ── Neon at alpha ── */
+  --neon-25: rgba(109, 255, 172, 0.25);
+  --neon-40: rgba(109, 255, 172, 0.40);
+
+  /* ── Gold at alpha ── */
+  --gold-18: rgba(245, 160, 0, 0.18);
+  --gold-20: rgba(245, 160, 0, 0.20);
+  --gold-22: rgba(245, 160, 0, 0.22);
+  --gold-28: rgba(255, 176, 0, 0.28);
+  --gold-34: rgba(255, 176, 0, 0.34);
+
+  /* ── White at alpha ── */
+  --white-08: rgba(255, 255, 255, 0.08);
+  --white-12: rgba(255, 255, 255, 0.12);
+  --white-13: rgba(255, 255, 255, 0.13);
+  --white-40: rgba(255, 255, 255, 0.40);
+  --white-58: rgba(255, 255, 255, 0.58);
+  --white-60: rgba(255, 255, 255, 0.60);
+  --white-62: rgba(255, 255, 255, 0.62);
+  --white-72: rgba(255, 255, 255, 0.72);
+  --white-78: rgba(255, 255, 255, 0.78);
+  --white-80: rgba(255, 255, 255, 0.80);
+  --white-85: rgba(255, 255, 255, 0.85);
+  --white-86: rgba(255, 255, 255, 0.86);
+  --white-90: rgba(255, 255, 255, 0.90);
+  --white-92: rgba(255, 255, 255, 0.92);
+  --white-94: rgba(255, 255, 255, 0.94);
+
+  /* ── Borders & Lines ── */
+  --border-subtle: var(--ink-06);
+  --border-light: var(--ink-05);
+  --border-medium: var(--ink-08);
+  --border-soft: rgba(191, 206, 197, 0.44);
+  --border-muted: rgba(191, 206, 197, 0.52);
+  --border-faint: rgba(191, 206, 197, 0.58);
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 2px 8px var(--ink-02), 0 1px 2px var(--ink-01);
+  --shadow-md: 0 12px 32px var(--ink-04), 0 4px 10px var(--ink-02);
+  --shadow-lg: 0 24px 72px var(--ink-08), 0 8px 24px var(--ink-04);
+  --shadow-green: 0 16px 40px var(--primary-25);
+  --shadow-glow: 0 0 24px var(--neon-40);
+
+  /* ── Radius ── */
+  --radius-sm: 16px;
+  --radius-md: 24px;
+  --radius-lg: 32px;
+
+  /* ── Typography ── */
+  --font-display: var(--font-plus-jakarta);
+  --font-sans: var(--font-inter);
+
+  /* ── Safe Area ── */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+
+  /* ── Backward Compatibility Aliases ── */
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-primary-hover);
+  --primary-vivid: var(--color-primary-bright);
+  --primary-bright: var(--color-primary-light);
+  --accent: var(--color-primary);
+  --accent-soft: var(--color-mint-deep);
+  --gold: var(--color-gold-bright);
+  --gold-soft: #FFF9E6;
+  --info: var(--color-info);
+  --info-soft: #EDF3FF;
+  --danger: var(--color-error-alt);
+  --danger-soft: #FFEBEF;
+  --secondary: #455A64;
+  --background: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-soft);
+  --surface-raised: var(--color-surface-raised);
+  --surface-mid: var(--color-surface-mid);
+  --text-main: var(--color-ink);
+  --text-dim: #3B4D45;
+  --text-muted: #7A9386;
+  --outline: var(--ink-06);
+  --line: var(--ink-04);
+}

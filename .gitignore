@@ -30,6 +30,13 @@ mobile/builds/*.apk
 
 # local design exports and scratch artifacts
 stitch-export/
+dashboard/design-references/
+
+# n8n debug dumps (API responses, schema exports, credential lists)
+n8n-workflows/*_response.json
+n8n-workflows/current_*.json
+n8n-workflows/schema_debug.json
+n8n-workflows/credentials_list.json
 
 # OS/editor
 .DS_Store

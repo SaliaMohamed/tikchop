@@ -34,10 +34,11 @@ tikchop/
 │   ├── hooks/          # React hooks custom
 │   ├── scripts/        # Scripts QA et tests CLI
 │   └── public/         # Assets statiques
-├── n8n-workflows/      # Workflows chatbot WhatsApp (JSON exportés)
+├── n8n-workflows/      # Workflows chatbot WhatsApp (JSON versionnés)
+├── tools/              # Scripts utilitaires (build workflow, rembg)
 ├── mobile/             # App Android native (en pause)
 ├── docs/               # Documentation architecture et décisions
-├── deployment/         # Config déploiement
+├── deployment/         # Config déploiement WAHA
 └── schema.sql          # Schéma base de données Supabase
 ```
 

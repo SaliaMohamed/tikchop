@@ -1,0 +1,64 @@
+﻿/* Skeleton shimmer de base */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0ede8 25%,
+    #e8e4dc 50%,
+    #f0ede8 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 12px;
+}
+
+/* Overrides pour les conteneurs skeleton */
+.skeleton-text  { border-radius: 6px; height: 0.85em; }
+.skeleton-round { border-radius: 9999px; }
+
+/* ========= INPUT FOCUS PREMIUM ========= */
+.mobile-input:focus {
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 143, 90, 0.1);
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.seller-workspace {
+  max-width: 1240px;
+}
+
+.btn-primary {
+  align-items: center;
+  background-color: var(--primary);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.85rem 1.5rem;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 230, 118, 0.15);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-bright);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+
+

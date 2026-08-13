@@ -87,7 +87,7 @@ export default function Dashboard() {
   if (!seller.slug) {
     return (
       <TkScreen>
-        <div className="flex flex-col items-center justify-center text-center p-8 bg-[#07120d] rounded-[32px] my-6 relative overflow-hidden text-white shadow-2xl">
+        <div className="flex flex-col items-center justify-center text-center p-8 bg-[var(--color-dark)] rounded-[32px] my-6 relative overflow-hidden text-white shadow-2xl">
           <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
           <div className="relative z-10 flex flex-col items-center max-w-xs">
             <IllustrationEmptyShop size={130} />
@@ -97,7 +97,7 @@ export default function Dashboard() {
             </p>
             <Link
               href="/onboarding?new=1"
-              className="mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#39f58e] text-base font-black text-[#07120d] shadow-[0_16px_36px_rgba(57,245,142,0.3)] active:scale-[0.98] transition no-underline"
+              className="mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--color-primary-accent)] text-base font-black text-[var(--color-dark)] shadow-[0_16px_36px_rgba(57,245,142,0.3)] active:scale-[0.98] transition no-underline"
             >
               <Store size={18} />
               Créer ma boutique
@@ -159,7 +159,7 @@ export default function Dashboard() {
             style={{
               background: "var(--text-main)",
               color: "var(--primary)",
-              boxShadow: "0 12px 26px rgba(2, 9, 5, 0.14)",
+              boxShadow: "0 12px 26px var(--ink-18)",
             }}
           >
             {seller.logo_url ? (
@@ -186,7 +186,7 @@ export default function Dashboard() {
           </div>
           <span
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px]"
-            style={{ background: "rgba(255,255,255,0.08)", color: "var(--primary)" }}
+            style={{ background: "var(--white-08)", color: "var(--primary)" }}
           >
             <ShoppingBag size={30} strokeWidth={2.1} />
           </span>

@@ -1,0 +1,203 @@
+﻿
+/* ========= ANIMATIONS PREMIUM ========= */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tkFloatSoft {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+@keyframes tkReveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tkSpring {
+  0%   { opacity: 0; transform: scale(0.94) translateY(10px); }
+  65%  { transform: scale(1.015) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tkSlideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tkDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.72); }
+}
+
+.tk-float-soft {
+  animation: tkFloatSoft 6s ease-in-out infinite;
+}
+
+.tk-float-slow {
+  animation: tkFloatSoft 4.5s ease-in-out infinite;
+}
+
+.tk-reveal {
+  animation: tkReveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-spring {
+  animation: tkSpring 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-slide-down {
+  animation: tkSlideDown 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tk-dot-1 { animation: tkDotPulse 1.4s ease-in-out infinite; }
+.tk-dot-2 { animation: tkDotPulse 1.4s ease-in-out 0.22s infinite; }
+.tk-dot-3 { animation: tkDotPulse 1.4s ease-in-out 0.44s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-float-soft,
+  .tk-float-slow,
+  .tk-reveal,
+  .tk-spring,
+  .tk-slide-down,
+  .tk-dot-1, .tk-dot-2, .tk-dot-3 {
+    animation: none !important;
+  }
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* Slide-up pour les bottom sheets */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Apparition avec lÃ©gÃ¨re montÃ©e (list items) */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Image fade-in au chargement */
+@keyframes imgReveal {
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Pulse glow â€“ pour les CTA et boutons d'action importants */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(57, 245, 142, 0.35); }
+  50%       { box-shadow: 0 0 0 10px rgba(57, 245, 142, 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes tkOrbit {
+  0% { transform: rotate(0deg) translateX(8px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(8px) rotate(-360deg); }
+}
+
+@keyframes tkGradShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes tkFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tk-fade-up-1 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+.tk-fade-up-2 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+.tk-fade-up-3 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both; }
+.tk-fade-up-4 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both; }
+
+/* Shimmer texte â€“ pour les mÃ©triques importantes */
+@keyframes shimmerText {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer-text {
+  background: linear-gradient(90deg, var(--color-primary-hover) 0%, var(--color-bg) 42%, var(--color-primary-bright) 58%, var(--color-primary-hover) 100%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerText 3.5s linear infinite;
+}
+
+/* Pop-in â€“ pour les badges et alertes */
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.8); }
+  70%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-pop-in {
+  animation: popIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slide-in-left pour les menus */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .animate-shimmer-text,
+  .animate-pop-in,
+  .animate-slide-in-left {
+    animation: none !important;
+    -webkit-text-fill-color: inherit;
+    background: none;
+    color: inherit;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-rise-in {
+  animation: riseIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-img-reveal {
+  animation: imgReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays â€” Ã  appliquer via style={{ animationDelay }} */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.13s; }
+.stagger-4 { animation-delay: 0.18s; }
+.stagger-5 { animation-delay: 0.24s; }
+
+
+
+
