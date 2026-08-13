@@ -10,11 +10,11 @@ export function StudioMiniButton({ icon, label, onClick, disabled = false, dark 
       disabled={disabled}
       className={`flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-[20px] text-xs font-black transition active:scale-[0.98] disabled:opacity-45 ${
         dark
-          ? "bg-[#07120d] text-white"
-          : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/7"
+          ? "bg-[#2b2219] text-white"
+          : "bg-[#fbf6ee] text-[#2b2219] ring-1 ring-[#2b2219]/7"
       }`}
     >
-      <span className={dark ? "text-[#39f58e]" : "text-[#008f5a]"}>{icon}</span>
+      <span className={dark ? "text-[#f0954c]" : "text-[#c2572b]"}>{icon}</span>
       <span className="max-w-full truncate px-1">{label}</span>
     </button>
   );
@@ -23,14 +23,14 @@ export function StudioMiniButton({ icon, label, onClick, disabled = false, dark 
 export function AngleDecisionCard({ index, extraCount, onAttachPrevious, onSeparateLast }) {
   if (index <= 0) {
     return (
-      <div className="rounded-[18px] bg-[#e9fff1] p-3 text-sm font-bold leading-5 text-[#063d28] ring-1 ring-[#bff3cf]">
+      <div className="rounded-[18px] bg-[#faedde] p-3 text-sm font-bold leading-5 text-[#2c221a] ring-1 ring-[#efe2ca]">
         Si plusieurs photos montrent le meme article, Tikchop les regroupe automatiquement quand il est assez sur.
       </div>
     );
   }
 
   return (
-    <div className="rounded-[20px] bg-[#f7fbf8] p-3 ring-1 ring-[rgba(0,143,90,0.12)]">
+    <div className="rounded-[20px] bg-[#f9f4ea] p-3 ring-1 ring-[rgba(0,143,90,0.12)]">
       <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">Cette photo est...</p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-center text-xs font-black text-[var(--text-main)] ring-1 ring-[rgba(0,143,90,0.10)]">
@@ -40,7 +40,7 @@ export function AngleDecisionCard({ index, extraCount, onAttachPrevious, onSepar
         <button
           type="button"
           onClick={onAttachPrevious}
-          className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-center text-xs font-black text-white"
+          className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#2b2219] px-3 text-center text-xs font-black text-white"
         >
           <CopyCheck size={15} />
           Meme article

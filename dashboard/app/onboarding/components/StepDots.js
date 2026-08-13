@@ -8,10 +8,10 @@ export function StepDots({ current, total }) {
           key={i}
           className={`rounded-full transition-all duration-300 ${
             i === current
-              ? "h-2 w-6 bg-[#008f5a]"
+              ? "h-2 w-6 bg-[#c2572b]"
               : i < current
-              ? "h-2 w-2 bg-[#008f5a]/40"
-              : "h-2 w-2 bg-[#07120d]/15"
+              ? "h-2 w-2 bg-[#c2572b]/40"
+              : "h-2 w-2 bg-[#2b2219]/15"
           }`}
         />
       ))}

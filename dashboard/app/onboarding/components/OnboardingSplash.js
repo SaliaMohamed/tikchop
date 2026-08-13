@@ -1,17 +1,18 @@
 "use client";
 
-import { ArrowRight, LockKeyhole, Store } from "lucide-react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
+import TikchopLottie from "../../components/TikchopLottie";
 
 export function OnboardingSplash({ onCreate, onSignIn }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[#07120d] px-5 py-12 text-white">
-      <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#39f58e] shadow-[0_20px_50px_rgba(57,245,142,0.35)]">
-        <Store size={36} className="text-[#07120d]" strokeWidth={2.5} />
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-[#2b2219] px-5 py-12 text-white">
+      <div className="mb-8 flex h-28 w-28 items-center justify-center rounded-[30px] bg-[#f0954c]/12 ring-1 ring-[#f0954c]/25">
+        <TikchopLottie name="sparkle" size={104} />
       </div>
 
       <h1 className="font-display text-4xl font-black leading-[1.08] text-white text-center">
         Vendez sur WhatsApp.<br />
-        <span className="text-[#39f58e]">Automatiquement.</span>
+        <span className="text-[#f0954c]">Automatiquement.</span>
       </h1>
 
       <p className="mt-4 max-w-[260px] text-center text-sm font-bold leading-6 text-white/50">
@@ -26,7 +27,7 @@ export function OnboardingSplash({ onCreate, onSignIn }) {
           { n: "3", label: "Commencez à vendre sur WhatsApp" },
         ].map(({ n, label }) => (
           <div key={n} className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#39f58e]/15 text-[0.68rem] font-black text-[#39f58e]">{n}</span>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f0954c]/15 text-[0.68rem] font-black text-[#f0954c]">{n}</span>
             <span className="text-sm font-bold text-white/70">{label}</span>
           </div>
         ))}
@@ -37,7 +38,7 @@ export function OnboardingSplash({ onCreate, onSignIn }) {
           id="onboarding-start-btn"
           type="button"
           onClick={onCreate}
-          className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#39f58e] text-base font-black text-[#07120d] shadow-[0_18px_44px_rgba(57,245,142,0.32)] active:scale-[0.98] transition"
+          className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#f0954c] text-base font-black text-[#2b2219] shadow-[0_18px_44px_rgba(240, 149, 76,0.32)] active:scale-[0.98] transition"
         >
           Créer ma boutique <ArrowRight size={18} />
         </button>

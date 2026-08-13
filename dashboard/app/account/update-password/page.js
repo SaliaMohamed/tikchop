@@ -113,50 +113,50 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="app-shell min-h-screen bg-[#fbf9f4] pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+    <div className="app-shell min-h-screen bg-[#fbf6ee] pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
       <header className="mobile-top bg-white">
         <div className="flex items-center justify-between">
-          <Link href="/login" className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#07120d]/50 no-underline hover:text-[#07120d]">Retour</Link>
+          <Link href="/login" className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#2b2219]/50 no-underline hover:text-[#2b2219]">Retour</Link>
           <BrandLogo href="/login" size="sm" />
           <span className="h-5 w-10" />
         </div>
       </header>
 
       <main className="mt-6 px-4">
-        <section className="mx-auto max-w-[440px] rounded-[34px] bg-white p-6 shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[#07120d]/10">
+        <section className="mx-auto max-w-[440px] rounded-[34px] bg-white p-6 shadow-[0_16px_34px_rgba(13,23,18,0.08)] ring-1 ring-[#2b2219]/10">
           <div className="mb-6 flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#fbf9f4] text-[#008f5a] ring-1 ring-[#07120d]/5">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#fbf6ee] text-[#c2572b] ring-1 ring-[#2b2219]/5">
               {success ? <CheckCircle2 size={26} /> : <KeyRound size={26} />}
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-2xl font-black leading-8 text-[#07120d]">
+              <h1 className="font-display text-2xl font-black leading-8 text-[#2b2219]">
                 {success ? "Mot de passe change" : "Nouveau mot de passe"}
               </h1>
-              <p className="mt-1 text-sm font-bold leading-5 text-[#07120d]/50">
+              <p className="mt-1 text-sm font-bold leading-5 text-[#2b2219]/50">
                 {success ? "Vous pouvez maintenant vous reconnecter a votre espace vendeur." : "Choisissez un nouveau mot de passe pour votre compte vendeur."}
               </p>
             </div>
           </div>
 
           {success ? (
-            <Link href="/login" className="flex min-h-[58px] w-full items-center justify-center rounded-[20px] bg-[#008f5a] text-base font-black text-white no-underline shadow-sm active:scale-[0.98] transition-transform">
+            <Link href="/login" className="flex min-h-[58px] w-full items-center justify-center rounded-[20px] bg-[#c2572b] text-base font-black text-white no-underline shadow-sm active:scale-[0.98] transition-transform">
               Retour connexion
             </Link>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {checkingLink && (
-                <p className="flex items-center gap-2 rounded-[20px] bg-[#fbf9f4] p-3 text-sm font-bold leading-5 text-[#07120d]/50 ring-1 ring-[#07120d]/10">
-                  <Loader2 className="animate-spin text-[#008f5a]" size={18} />
+                <p className="flex items-center gap-2 rounded-[20px] bg-[#fbf6ee] p-3 text-sm font-bold leading-5 text-[#2b2219]/50 ring-1 ring-[#2b2219]/10">
+                  <Loader2 className="animate-spin text-[#c2572b]" size={18} />
                   Verification du lien de recuperation...
                 </p>
               )}
               {!checkingLink && !linkReady && (
-                <Link href="/onboarding" className="flex min-h-[52px] w-full items-center justify-center rounded-[20px] bg-[#fbf9f4] text-sm font-black text-[#008f5a] no-underline ring-1 ring-[#07120d]/10 active:scale-[0.98] transition-transform">
+                <Link href="/onboarding" className="flex min-h-[52px] w-full items-center justify-center rounded-[20px] bg-[#fbf6ee] text-sm font-black text-[#c2572b] no-underline ring-1 ring-[#2b2219]/10 active:scale-[0.98] transition-transform">
                   Demander un nouveau lien
                 </Link>
               )}
               <label className="block">
-                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Nouveau mot de passe</span>
+                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#2b2219]/50">Nouveau mot de passe</span>
                 <input
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -164,12 +164,12 @@ export default function UpdatePasswordPage() {
                   autoComplete="new-password"
                   placeholder="Minimum 6 caracteres"
                   disabled={checkingLink || !linkReady}
-                  className="mobile-input bg-[#fbf9f4] text-base font-bold text-[#07120d] placeholder:text-[#07120d]/30"
+                  className="mobile-input bg-[#fbf6ee] text-base font-bold text-[#2b2219] placeholder:text-[#2b2219]/30"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Confirmer</span>
+                <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#2b2219]/50">Confirmer</span>
                 <input
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
@@ -177,7 +177,7 @@ export default function UpdatePasswordPage() {
                   autoComplete="new-password"
                   placeholder="Retape le mot de passe"
                   disabled={checkingLink || !linkReady}
-                  className="mobile-input bg-[#fbf9f4] text-base font-bold text-[#07120d] placeholder:text-[#07120d]/30"
+                  className="mobile-input bg-[#fbf6ee] text-base font-bold text-[#2b2219] placeholder:text-[#2b2219]/30"
                 />
               </label>
 
@@ -190,7 +190,7 @@ export default function UpdatePasswordPage() {
               <button
                 type="submit"
                 disabled={saving || checkingLink || !linkReady}
-                className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#07120d] text-base font-black text-[#39f58e] shadow-[0_16px_34px_rgba(7,18,13,0.22)] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
+                className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#2b2219] text-base font-black text-[#f0954c] shadow-[0_16px_34px_rgba(43, 34, 25,0.22)] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
               >
                 {saving ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
                 {saving ? "Enregistrement..." : "Changer le mot de passe"}

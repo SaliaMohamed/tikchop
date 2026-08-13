@@ -23,16 +23,16 @@ function MobileBulkPrepCard({
 
   return (
     <section className="relative md:hidden">
-      <div className="rounded-[28px] bg-white p-3 shadow-[0_14px_34px_rgb(7_18_13_/_0.06)] ring-1 ring-[#07120d]/7">
+      <div className="rounded-[28px] bg-white p-3 shadow-[0_14px_34px_rgb(43_34_25_/_0.06)] ring-1 ring-[#2b2219]/7">
         {!hasPhotos ? (
           <div className="space-y-3">
             <button
               type="button"
               onClick={onOpenGallery}
-              className="flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[24px] bg-[#07120d] px-4 text-left text-white shadow-[0_16px_34px_rgb(7_18_13_/_0.18)] active:scale-[0.99]"
+              className="flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[24px] bg-[#2b2219] px-4 text-left text-white shadow-[0_16px_34px_rgb(43_34_25_/_0.18)] active:scale-[0.99]"
             >
               <span className="flex min-w-0 items-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#39f58e] text-[#07120d]">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#f0954c] text-[#2b2219]">
                   <ImagePlus size={23} />
                 </span>
                 <span className="min-w-0">
@@ -40,7 +40,7 @@ function MobileBulkPrepCard({
                   <span className="mt-0.5 block text-xs font-bold text-white/52">Galerie du telephone</span>
                 </span>
               </span>
-              <ArrowRight size={20} className="shrink-0 text-[#39f58e]" />
+              <ArrowRight size={20} className="shrink-0 text-[#f0954c]" />
             </button>
 
             <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
@@ -52,7 +52,7 @@ function MobileBulkPrepCard({
                     type="button"
                     onClick={() => onProfileChange(profile.id)}
                     className={`min-h-[38px] shrink-0 rounded-full px-3 text-xs font-black ${
-                      active ? "bg-[#008f5a] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+                      active ? "bg-[#c2572b] text-white" : "bg-[#fbf6ee] text-[#2b2219] ring-1 ring-[#2b2219]/8"
                     }`}
                   >
                     {profile.shortLabel || profile.label}
@@ -73,11 +73,11 @@ function MobileBulkPrepCard({
                 dark
               />
               <details className="group">
-                <summary className="flex min-h-[58px] cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-[20px] bg-[#fbf9f4] text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/7">
-                  <ListChecks size={17} className="text-[#008f5a]" />
+                <summary className="flex min-h-[58px] cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-[20px] bg-[#fbf6ee] text-xs font-black text-[#2b2219] ring-1 ring-[#2b2219]/7">
+                  <ListChecks size={17} className="text-[#c2572b]" />
                   Type
                 </summary>
-                <div className="absolute left-4 right-4 z-20 mt-2 rounded-[24px] bg-white p-3 shadow-[0_20px_44px_rgb(7_18_13_/_0.16)] ring-1 ring-[#07120d]/8">
+                <div className="absolute left-4 right-4 z-20 mt-2 rounded-[24px] bg-white p-3 shadow-[0_20px_44px_rgb(43_34_25_/_0.16)] ring-1 ring-[#2b2219]/8">
                   <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
                     {PRODUCT_PROFILES.map((profile) => {
                       const active = productProfileId === profile.id;
@@ -87,7 +87,7 @@ function MobileBulkPrepCard({
                           type="button"
                           onClick={() => onProfileChange(profile.id)}
                           className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
-                            active ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8"
+                            active ? "bg-[#2b2219] text-white" : "bg-[#fbf6ee] text-[#2b2219] ring-1 ring-[#2b2219]/8"
                           }`}
                         >
                           {profile.shortLabel || profile.label}
@@ -99,19 +99,19 @@ function MobileBulkPrepCard({
                     value={preset.product_keywords}
                     onChange={(event) => onChange((current) => ({ ...current, product_keywords: event.target.value }))}
                     placeholder={`Ex: ${(presets || []).slice(0, 2).join(", ").toLowerCase() || "articles"}`}
-                    className="mt-2 min-h-[46px] w-full rounded-2xl bg-[#fbf9f4] px-3 text-sm font-bold text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                    className="mt-2 min-h-[46px] w-full rounded-2xl bg-[#fbf6ee] px-3 text-sm font-bold text-[#2b2219] outline-none ring-1 ring-[#2b2219]/8 focus:ring-[#c2572b]/35"
                   />
                   <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
                     <input
                       value={preset.size}
                       onChange={(event) => onChange((current) => ({ ...current, size: event.target.value }))}
                       placeholder={productProfile?.sizePlaceholder || "Option"}
-                      className="min-h-[46px] rounded-2xl bg-[#fbf9f4] px-3 text-sm font-bold text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                      className="min-h-[46px] rounded-2xl bg-[#fbf6ee] px-3 text-sm font-bold text-[#2b2219] outline-none ring-1 ring-[#2b2219]/8 focus:ring-[#c2572b]/35"
                     />
                     <button
                       type="button"
                       onClick={onApplyIncomplete}
-                      className="min-h-[46px] rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white"
+                      className="min-h-[46px] rounded-2xl bg-[#2b2219] px-3 text-xs font-black text-white"
                     >
                       OK
                     </button>
@@ -123,7 +123,7 @@ function MobileBulkPrepCard({
                           key={label}
                           type="button"
                           onClick={() => onChange((current) => ({ ...current, size: label }))}
-                          className="shrink-0 rounded-full bg-[#e9fff1] px-3 py-2 text-xs font-black text-[#008f5a]"
+                          className="shrink-0 rounded-full bg-[#faedde] px-3 py-2 text-xs font-black text-[#c2572b]"
                         >
                           {label}
                         </button>
@@ -151,7 +151,7 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
 
   return (
     <section className="md:hidden">
-      <div className="rounded-[30px] bg-[#07120d] p-3 text-white shadow-[0_22px_48px_rgb(7_18_13_/_0.18)]">
+      <div className="rounded-[30px] bg-[#2b2219] p-3 text-white shadow-[0_22px_48px_rgb(43_34_25_/_0.18)]">
         <div className="flex items-center gap-2">
           <div className="grid flex-1 grid-cols-2 gap-1 rounded-[20px] bg-white/8 p-1 ring-1 ring-white/10">
             {mobileModes.map((option) => {
@@ -166,7 +166,7 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
                   title={`Mode ${option.label}`}
                   className={`flex min-h-[44px] min-w-0 items-center justify-center gap-2 rounded-[15px] px-2 text-sm font-black transition active:scale-[0.98] ${
                     active
-                      ? "bg-[#39f58e] text-[#07120d] shadow-[0_12px_28px_rgb(57,245,142_/_0.18)]"
+                      ? "bg-[#f0954c] text-[#2b2219] shadow-[0_12px_28px_rgb(240,149,76_/_0.18)]"
                       : "bg-transparent text-white/58"
                   }`}
                 >
@@ -180,7 +180,7 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
             type="button"
             onClick={assistant.onClick}
             disabled={assistant.disabled}
-            className="flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-[18px] bg-white px-3 text-sm font-black text-[#07120d] shadow-[0_12px_24px_rgb(0_0_0_/_0.16)] disabled:opacity-60"
+            className="flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-[18px] bg-white px-3 text-sm font-black text-[#2b2219] shadow-[0_12px_24px_rgb(0_0_0_/_0.16)] disabled:opacity-60"
           >
             {React.cloneElement(assistant.icon, { strokeWidth: 2.75 })}
             {canSubmit ? "Publier" : photosDone ? "Suivant" : "Photos"}
@@ -192,12 +192,12 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
             <Camera size={14} />
             Articles
           </span>
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-black text-[#39f58e]">
+          <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-black text-[#f0954c]">
             {photosDone ? `${readyCount}/${total || selectedCount}` : "0"}
           </span>
         </div>
         <div className="mt-2 overflow-hidden rounded-full bg-white/10">
-          <span className="block h-2 rounded-full bg-[#39f58e]" style={{ width: `${progress}%` }} />
+          <span className="block h-2 rounded-full bg-[#f0954c]" style={{ width: `${progress}%` }} />
         </div>
       </div>
     </section>

@@ -77,9 +77,9 @@ export default async function AdminPage({ searchParams }) {
   const roadmapProgress = getAynidRoadmapProgress();
 
   return (
-    <section className="min-h-screen bg-[#f3f6ef] px-3 py-4 text-[#101713] md:px-7 md:py-7">
+    <section className="min-h-screen bg-[#f3f6ef] px-3 py-4 text-[#292117] md:px-7 md:py-7">
       <div className="mx-auto max-w-[1500px] space-y-5">
-        <header className="grid gap-4 rounded-[30px] bg-[#07120d] p-5 text-white shadow-sm lg:grid-cols-[1fr_auto] lg:items-end lg:p-7">
+        <header className="grid gap-4 rounded-[30px] bg-[#2b2219] p-5 text-white shadow-sm lg:grid-cols-[1fr_auto] lg:items-end lg:p-7">
           <div>
             <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
               <ShieldCheck size={16} />
@@ -147,18 +147,18 @@ function RoadmapPanel({ progress, items }) {
   return (
     <section className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
       <div className="grid gap-4 lg:grid-cols-[260px_1fr] lg:items-center">
-        <div className="rounded-[26px] bg-[#07120d] p-5 text-white">
+        <div className="rounded-[26px] bg-[#2b2219] p-5 text-white">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">Plan Aynid vers Tikchop</p>
           <p className="mt-3 font-display text-5xl font-black">{progress}%</p>
           <p className="mt-2 text-sm font-bold leading-5 text-white/62">Progression globale des fonctionnalites utiles adaptees a Tikchop.</p>
         </div>
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {visibleItems.map((item) => (
-            <article key={item.id} className="rounded-2xl bg-[#f7faf6] p-3 ring-1 ring-black/5">
+            <article key={item.id} className="rounded-2xl bg-[#f9f4ea] p-3 ring-1 ring-black/5">
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs font-black text-[#101713]">{item.title}</span>
+                <span className="truncate text-xs font-black text-[#292117]">{item.title}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
-                  item.status === "done" ? "bg-emerald-100 text-emerald-800" : item.status === "in_progress" ? "bg-amber-100 text-amber-800" : "bg-white text-[#647168]"
+                  item.status === "done" ? "bg-emerald-100 text-emerald-800" : item.status === "in_progress" ? "bg-amber-100 text-amber-800" : "bg-white text-[#776c5d]"
                 }`}>
                   {getRoadmapStatusLabel(item.status)}
                 </span>
@@ -166,7 +166,7 @@ function RoadmapPanel({ progress, items }) {
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
                 <div className="h-full rounded-full bg-emerald-500" style={{ width: `${item.percent}%` }} />
               </div>
-              <p className="mt-2 text-[0.68rem] font-black text-[#647168]">{item.percent}%</p>
+              <p className="mt-2 text-[0.68rem] font-black text-[#776c5d]">{item.percent}%</p>
             </article>
           ))}
         </div>
@@ -184,18 +184,18 @@ function AdminAccessState({ data }) {
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
           <AlertTriangle size={26} />
         </div>
-        <h1 className="mt-5 font-display text-3xl font-black text-[#101713]">Acces admin non disponible</h1>
-        <p className="mt-3 text-sm font-bold leading-6 text-[#536158]">
+        <h1 className="mt-5 font-display text-3xl font-black text-[#292117]">Acces admin non disponible</h1>
+        <p className="mt-3 text-sm font-bold leading-6 text-[#5f574b]">
           {isConfig
             ? "Ajoute ton email de connexion dans TIKCHOP_ADMIN_EMAILS sur Vercel ou dans .env.local, puis reconnecte-toi."
             : isDenied
               ? `Le compte ${data.email} n'est pas autorise comme admin Tikchop.`
               : data.message || "Connecte-toi avec un compte admin pour ouvrir cet espace."}
         </p>
-        <div className="mt-5 rounded-2xl bg-[#f5f7f2] p-4 font-mono text-xs font-bold text-[#101713]">
+        <div className="mt-5 rounded-2xl bg-[#f7f2e8] p-4 font-mono text-xs font-bold text-[#292117]">
           TIKCHOP_ADMIN_EMAILS=tonemail@example.com
         </div>
-        <Link href="/onboarding?mode=signin&method=email" className="mt-5 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#07120d] px-5 text-sm font-black text-white no-underline">
+        <Link href="/onboarding?mode=signin&method=email" className="mt-5 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#2b2219] px-5 text-sm font-black text-white no-underline">
           Se connecter
         </Link>
       </div>
@@ -207,8 +207,8 @@ function AdminFilters({ filters }) {
   return (
     <form action="/admin" className="grid gap-2 rounded-[26px] bg-white p-3 shadow-sm ring-1 ring-black/5 lg:grid-cols-[1fr_auto_auto_auto_auto]">
       <label className="flex min-h-12 items-center gap-2 rounded-2xl bg-[#f3f6ef] px-3">
-        <Search size={17} className="text-[#647168]" />
-        <input name="q" defaultValue={filters.search || ""} placeholder="Chercher boutique, client, commande..." className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-[#849189]" />
+        <Search size={17} className="text-[#776c5d]" />
+        <input name="q" defaultValue={filters.search || ""} placeholder="Chercher boutique, client, commande..." className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-[#8a8072]" />
       </label>
       <FilterSelect name="seller" defaultValue={filters.sellerStatus || "all"} options={[
         ["all", "Tous vendeurs"],
@@ -231,14 +231,14 @@ function AdminFilters({ filters }) {
         ["low_stock", "Stock faible"],
         ["out", "Rupture"],
       ]} />
-      <button className="min-h-12 rounded-2xl bg-[#07120d] px-5 text-sm font-black text-white">Filtrer</button>
+      <button className="min-h-12 rounded-2xl bg-[#2b2219] px-5 text-sm font-black text-white">Filtrer</button>
     </form>
   );
 }
 
 function FilterSelect({ name, defaultValue, options }) {
   return (
-    <select name={name} defaultValue={defaultValue} className="min-h-12 rounded-2xl bg-[#f3f6ef] px-3 text-sm font-black text-[#101713] outline-none">
+    <select name={name} defaultValue={defaultValue} className="min-h-12 rounded-2xl bg-[#f3f6ef] px-3 text-sm font-black text-[#292117] outline-none">
       {options.map(([value, label]) => (
         <option key={value} value={value}>{label}</option>
       ))}
@@ -260,10 +260,10 @@ function StatCard({ icon, label, value, detail, danger = false }) {
     <article className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between">
         <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${danger ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{icon}</span>
-        <span className="text-xs font-black uppercase tracking-[0.12em] text-[#849189]">{label}</span>
+        <span className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8072]">{label}</span>
       </div>
       <p className="mt-4 font-display text-3xl font-black">{value}</p>
-      <p className="mt-1 text-xs font-bold text-[#647168]">{detail}</p>
+      <p className="mt-1 text-xs font-bold text-[#776c5d]">{detail}</p>
     </article>
   );
 }
@@ -284,7 +284,7 @@ function CommandCenter({ attention = {} }) {
           {(order) => (
             <div className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate font-black">{order.order_ref || order.id?.slice(0, 8)} · {formatMoney(Number(order.total_amount || 0) + Number(order.delivery_fee || 0))}</span>
-              <span className="text-xs font-black text-[#647168]">{sellerNameFromJoin(order)}</span>
+              <span className="text-xs font-black text-[#776c5d]">{sellerNameFromJoin(order)}</span>
             </div>
           )}
         </PriorityBlock>
@@ -303,10 +303,10 @@ function CommandCenter({ attention = {} }) {
 
 function PriorityBlock({ title, rows = [], empty, children }) {
   return (
-    <div className="rounded-[22px] bg-[#f7faf6] p-4 ring-1 ring-black/5">
-      <h3 className="text-sm font-black text-[#101713]">{title}</h3>
-      <div className="mt-3 space-y-2 text-sm text-[#26332b]">
-        {rows.length ? rows.map((row) => <div key={row.id} className="rounded-2xl bg-white px-3 py-2">{children(row)}</div>) : <p className="text-xs font-bold text-[#647168]">{empty}</p>}
+    <div className="rounded-[22px] bg-[#f9f4ea] p-4 ring-1 ring-black/5">
+      <h3 className="text-sm font-black text-[#292117]">{title}</h3>
+      <div className="mt-3 space-y-2 text-sm text-[#3a3228]">
+        {rows.length ? rows.map((row) => <div key={row.id} className="rounded-2xl bg-white px-3 py-2">{children(row)}</div>) : <p className="text-xs font-bold text-[#776c5d]">{empty}</p>}
       </div>
     </div>
   );
@@ -317,11 +317,11 @@ function AdminPanel({ title, icon, action, children }) {
     <section className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-xl font-black text-[#101713]">
+          <h2 className="flex items-center gap-2 font-display text-xl font-black text-[#292117]">
             {icon}
             {title}
           </h2>
-          <p className="mt-1 text-xs font-bold text-[#647168]">{action}</p>
+          <p className="mt-1 text-xs font-bold text-[#776c5d]">{action}</p>
         </div>
       </div>
       {children}
@@ -335,11 +335,11 @@ function SellerCard({ seller }) {
   const paymentReady = Boolean(seller.paystack_subaccount_code || ["paystack_ready", "direct_ready"].includes(String(seller.payout_status || "").toLowerCase()));
 
   return (
-    <article className="rounded-[24px] bg-[#f7faf6] p-4 ring-1 ring-black/5">
+    <article className="rounded-[24px] bg-[#f9f4ea] p-4 ring-1 ring-black/5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-black">{seller.name || "Boutique sans nom"}</h3>
-          <p className="mt-1 truncate text-xs font-bold text-[#647168]">{seller.owner_email || seller.phone_number || "Proprietaire non renseigne"} · /{seller.slug}</p>
+          <p className="mt-1 truncate text-xs font-bold text-[#776c5d]">{seller.owner_email || seller.phone_number || "Proprietaire non renseigne"} · /{seller.slug}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <Badge tone={connected ? "green" : "amber"}>{connected ? "WhatsApp OK" : status || "WhatsApp ?"}</Badge>
@@ -348,13 +348,13 @@ function SellerCard({ seller }) {
       </div>
 
       <details className="mt-4 rounded-2xl bg-white p-3 ring-1 ring-black/5">
-        <summary className="cursor-pointer text-sm font-black text-[#101713]">Modifier le vendeur</summary>
+        <summary className="cursor-pointer text-sm font-black text-[#292117]">Modifier le vendeur</summary>
         <form action={adminUpdateSellerProfile} className="mt-3 grid gap-2 sm:grid-cols-3">
           <input type="hidden" name="seller_id" value={seller.id} />
           <AdminInput name="name" defaultValue={seller.name || ""} placeholder="Nom boutique" />
           <AdminInput name="phone_number" defaultValue={seller.phone_number || ""} placeholder="Telephone" />
           <AdminInput name="owner_email" defaultValue={seller.owner_email || ""} placeholder="Email proprietaire" />
-          <button className="min-h-11 rounded-2xl bg-[#07120d] px-4 text-xs font-black text-white sm:col-span-3">
+          <button className="min-h-11 rounded-2xl bg-[#2b2219] px-4 text-xs font-black text-white sm:col-span-3">
             Enregistrer
           </button>
         </form>
@@ -362,7 +362,7 @@ function SellerCard({ seller }) {
 
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {seller.slug && (
-          <Link href={`/${seller.slug}`} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-2xl bg-white px-3 text-xs font-black text-[#101713] no-underline ring-1 ring-black/10">
+          <Link href={`/${seller.slug}`} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-2xl bg-white px-3 text-xs font-black text-[#292117] no-underline ring-1 ring-black/10">
             <Eye size={14} />
             Voir boutique
           </Link>
@@ -377,7 +377,7 @@ function SellerCard({ seller }) {
             <option value="disconnected">Deconnecte</option>
             <option value="error">Erreur</option>
           </select>
-          <button className="bg-[#07120d] px-3 text-xs font-black text-white">OK</button>
+          <button className="bg-[#2b2219] px-3 text-xs font-black text-white">OK</button>
         </form>
       </div>
 
@@ -406,12 +406,12 @@ function SellerAction({ sellerId, action, name, value, icon, label, danger = fal
 function OrderRow({ order }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   return (
-    <article className="rounded-[24px] bg-[#f7faf6] p-4 ring-1 ring-black/5">
+    <article className="rounded-[24px] bg-[#f9f4ea] p-4 ring-1 ring-black/5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-black">{order.order_ref || order.id?.slice(0, 8)?.toUpperCase()} · {sellerNameFromJoin(order)}</p>
-          <p className="mt-1 truncate text-xs font-bold text-[#647168]">{order.customer_name || order.customer_phone || "Client"} · {formatDate(order.created_at)}</p>
-          <p className="mt-1 truncate text-xs font-bold text-[#647168]">{order.delivery_zone || "Zone non renseignee"}</p>
+          <p className="mt-1 truncate text-xs font-bold text-[#776c5d]">{order.customer_name || order.customer_phone || "Client"} · {formatDate(order.created_at)}</p>
+          <p className="mt-1 truncate text-xs font-bold text-[#776c5d]">{order.delivery_zone || "Zone non renseignee"}</p>
         </div>
         <div className="text-right">
           <p className="text-sm font-black text-emerald-700">{formatMoney(total)}</p>
@@ -448,7 +448,7 @@ function OrderRow({ order }) {
         ]} />
         <AdminInput name="delivery_zone" defaultValue={order.delivery_zone || ""} placeholder="Zone livraison" />
         <AdminInput name="delivery_address" defaultValue={order.delivery_address || ""} placeholder="Adresse livraison" className="md:col-span-2" />
-        <button className="min-h-11 rounded-2xl bg-[#07120d] px-4 text-xs font-black text-white md:col-span-2">
+        <button className="min-h-11 rounded-2xl bg-[#2b2219] px-4 text-xs font-black text-white md:col-span-2">
           Mettre a jour la commande
         </button>
       </form>
@@ -460,19 +460,19 @@ function ProductCard({ product }) {
   const isActive = product.is_active !== false;
   const slug = sellerSlugFromJoin(product);
   return (
-    <article className="rounded-[24px] bg-[#f7faf6] p-4 ring-1 ring-black/5">
+    <article className="rounded-[24px] bg-[#f9f4ea] p-4 ring-1 ring-black/5">
       <div className="flex gap-3">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
           {product.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={product.image_url} alt={product.name || "Article"} className="h-full w-full object-cover" />
           ) : (
-            <Package size={22} className="text-[#849189]" />
+            <Package size={22} className="text-[#8a8072]" />
           )}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-black">{product.name || "Article"}</h3>
-          <p className="mt-1 text-xs font-bold text-[#647168]">{sellerNameFromJoin(product)}</p>
+          <p className="mt-1 text-xs font-bold text-[#776c5d]">{sellerNameFromJoin(product)}</p>
           <div className="mt-2 flex flex-wrap gap-1">
             <Badge tone={isActive ? "green" : "gray"}>{isActive ? "Visible" : "Masque"}</Badge>
             <Badge tone={Number(product.stock_quantity || 0) <= 2 ? "amber" : "gray"}>stock {product.stock_quantity ?? 0}</Badge>
@@ -488,7 +488,7 @@ function ProductCard({ product }) {
           <option value="true">Visible</option>
           <option value="false">Masque</option>
         </select>
-        <button className="min-h-11 rounded-2xl bg-[#07120d] px-3 text-xs font-black text-white">
+        <button className="min-h-11 rounded-2xl bg-[#2b2219] px-3 text-xs font-black text-white">
           <Pencil className="mr-1 inline" size={13} />
           Modifier
         </button>
@@ -496,7 +496,7 @@ function ProductCard({ product }) {
 
       <div className="mt-2 flex flex-wrap gap-2">
         {slug && (
-          <Link href={`/${slug}?product=${product.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-2xl bg-white px-3 text-xs font-black text-[#101713] no-underline ring-1 ring-black/10">
+          <Link href={`/${slug}?product=${product.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-2xl bg-white px-3 text-xs font-black text-[#292117] no-underline ring-1 ring-black/10">
             <ExternalLink size={14} />
             Voir
           </Link>
@@ -515,7 +515,7 @@ function ProductCard({ product }) {
 
 function AdminInput({ className = "", ...props }) {
   return (
-    <input {...props} className={`min-h-11 rounded-2xl bg-white px-3 text-xs font-black outline-none ring-1 ring-black/10 placeholder:text-[#849189] ${className}`} />
+    <input {...props} className={`min-h-11 rounded-2xl bg-white px-3 text-xs font-black outline-none ring-1 ring-black/10 placeholder:text-[#8a8072] ${className}`} />
   );
 }
 
@@ -524,14 +524,14 @@ function Badge({ tone = "gray", children }) {
     green: "bg-emerald-100 text-emerald-800",
     amber: "bg-amber-100 text-amber-800",
     rose: "bg-rose-100 text-rose-800",
-    gray: "bg-white text-[#647168]",
+    gray: "bg-white text-[#776c5d]",
   };
   return <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-black ${tones[tone] || getStatusTone(children)}`}>{children}</span>;
 }
 
 function EmptyLine({ text }) {
   return (
-    <div className="rounded-2xl bg-[#f7faf6] p-4 text-sm font-bold text-[#647168]">
+    <div className="rounded-2xl bg-[#f9f4ea] p-4 text-sm font-bold text-[#776c5d]">
       <CheckCircle2 className="mb-2 text-emerald-700" size={20} />
       {text}
     </div>

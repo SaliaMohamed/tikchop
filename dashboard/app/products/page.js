@@ -311,16 +311,16 @@ export default function ProductsPage() {
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
       {/* 1. Header Pur et A?r? */}
-      <header className="py-8 flex items-center justify-between border-b border-[#07120d]/5">
+      <header className="py-8 flex items-center justify-between border-b border-[#2b2219]/5">
         <div>
-          <h1 className="font-display text-3xl font-black text-[#07120d] leading-none">Catalogue</h1>
-          <p className="mt-2 text-xs font-semibold text-[#4e6055]/60">
+          <h1 className="font-display text-3xl font-black text-[#2b2219] leading-none">Catalogue</h1>
+          <p className="mt-2 text-xs font-semibold text-[#6e6353]/60">
             {stockStats.live} article{stockStats.live > 1 ? "s" : ""} en ligne
           </p>
         </div>
         <Link 
           href="/add-product" 
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#07120d] text-white hover:bg-[#122b20] active:scale-95 transition shadow-md shadow-[#07120d]/10" 
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2b2219] text-white hover:bg-[#241d15] active:scale-95 transition shadow-md shadow-[#2b2219]/10" 
           aria-label="Ajouter un produit"
         >
           <Plus size={20} strokeWidth={1.5} />
@@ -329,7 +329,7 @@ export default function ProductsPage() {
 
       {/* 2. Filtres Minimalistes (Aynid Aesthetic Tabs) */}
       <nav className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4 pb-2">
-        <div className="flex gap-6 border-b border-[#07120d]/5 pb-1 min-w-max">
+        <div className="flex gap-6 border-b border-[#2b2219]/5 pb-1 min-w-max">
           {[
             { value: "ALL", label: "Tous", count: stockStats.total },
             { value: "LIVE", label: "En vente", count: stockStats.live },
@@ -341,7 +341,7 @@ export default function ProductsPage() {
               key={item.value}
               onClick={() => setStockFilter(item.value)}
               className={`pb-2 text-sm font-black transition relative ${
-                stockFilter === item.value ? "text-[#07120d]" : "text-[#4e6055]/50 hover:text-[#07120d]/70"
+                stockFilter === item.value ? "text-[#2b2219]" : "text-[#6e6353]/50 hover:text-[#2b2219]/70"
               }`}
             >
               {item.label}
@@ -349,7 +349,7 @@ export default function ProductsPage() {
                 ({item.count})
               </span>
               {stockFilter === item.value && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#008f5a] rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#c2572b] rounded-full" />
               )}
             </button>
           ))}
@@ -357,16 +357,16 @@ export default function ProductsPage() {
       </nav>
 
       {/* 3. Barre de Recherche Pure */}
-      <div className="mt-6 flex min-h-[50px] items-center gap-3 rounded-[20px] bg-[#07120d]/5 px-4">
-        <Search className="shrink-0 text-[#4e6055]/60" size={16} strokeWidth={1.5} />
+      <div className="mt-6 flex min-h-[50px] items-center gap-3 rounded-[20px] bg-[#2b2219]/5 px-4">
+        <Search className="shrink-0 text-[#6e6353]/60" size={16} strokeWidth={1.5} />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Chercher robe, sac, taille, couleur..."
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#07120d] outline-none placeholder:text-[#4e6055]/50"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2b2219] outline-none placeholder:text-[#6e6353]/50"
         />
         {query && (
-          <button type="button" onClick={() => setQuery("")} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#07120d]/10 text-[#07120d]" aria-label="Effacer">
+          <button type="button" onClick={() => setQuery("")} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2b2219]/10 text-[#2b2219]" aria-label="Effacer">
             <X size={12} />
           </button>
         )}
@@ -377,7 +377,7 @@ export default function ProductsPage() {
           <p>{error}</p>
           <div className="mt-3 flex gap-2">
             {sessionExpired && (
-              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-[#07120d] px-4 text-xs font-black text-white no-underline">
+              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-[#2b2219] px-4 text-xs font-black text-white no-underline">
                 Se reconnecter
               </Link>
             )}
@@ -403,7 +403,7 @@ export default function ProductsPage() {
         {loading ? (
           <div className="space-y-2.5">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-[20px] bg-white border border-[#07120d]/5 p-3" style={{ animationDelay: `${i * 0.06}s` }}>
+              <div key={i} className="flex items-center gap-3 rounded-[20px] bg-white border border-[#2b2219]/5 p-3" style={{ animationDelay: `${i * 0.06}s` }}>
                 <div className="skeleton h-14 w-14 rounded-[14px] shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="skeleton skeleton-text w-3/4" />
@@ -472,9 +472,9 @@ function CatalogueFilters({ stats, filter, onFilter }) {
 
 function EmptyProductsState({ hasProducts }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#07120d] rounded-[28px] my-6 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#2b2219] rounded-[28px] my-6 relative overflow-hidden">
       {/* Subtle grid */}
-      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(240, 149, 76,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(240, 149, 76,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
       <div className="relative z-10 flex flex-col items-center">
         <IllustrationEmptyShop size={120} className="opacity-90" />
         <h3 className="mt-3 font-display text-xl font-bold text-white">
@@ -485,7 +485,7 @@ function EmptyProductsState({ hasProducts }) {
             ? "Modifiez vos filtres ou ?crivez un autre mot-cl? dans la recherche."
             : "Ajoutez une photo, un prix et un stock pour commencer ? vendre en ligne."}
         </p>
-        <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[240px] items-center justify-center gap-2 rounded-2xl bg-[#39f58e] text-sm font-extrabold text-[#07120d] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(57,245,142,0.25)] no-underline">
+        <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[240px] items-center justify-center gap-2 rounded-2xl bg-[#f0954c] text-sm font-extrabold text-[#2b2219] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(240, 149, 76,0.25)] no-underline">
           <Plus size={16} />
           Ajouter un produit
         </Link>
@@ -501,7 +501,7 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
 
   return (
     <article
-      className="animate-rise-in flex items-center justify-between gap-3 rounded-[20px] bg-white border border-[#07120d]/5 p-3 hover:shadow-[0_4px_20px_rgba(7,18,13,0.03)] transition relative"
+      className="animate-rise-in flex items-center justify-between gap-3 rounded-[20px] bg-white border border-[#2b2219]/5 p-3 hover:shadow-[0_4px_20px_rgba(43, 34, 25,0.03)] transition relative"
       style={{ animationDelay: delay }}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -517,10 +517,10 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
 
         {/* Product Info */}
         <div className="min-w-0">
-          <h3 className="truncate font-display text-sm font-black text-[#07120d] leading-snug">
+          <h3 className="truncate font-display text-sm font-black text-[#2b2219] leading-snug">
             {product.name}
           </h3>
-          <p className="mt-0.5 font-display text-xs font-bold text-[#008f5a]">
+          <p className="mt-0.5 font-display text-xs font-bold text-[#c2572b]">
             {formatPrice(product.price)}
           </p>
           <span className={`inline-flex items-center gap-1 mt-1 rounded-full px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${status.toneClass}`}>
@@ -533,7 +533,7 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
       <button
         type="button"
         onClick={() => onEdit(product)}
-        className="flex h-9 shrink-0 px-3.5 items-center justify-center rounded-full bg-[#07120d]/5 text-xs font-black text-[#07120d] hover:bg-[#07120d]/10 active:scale-95 transition"
+        className="flex h-9 shrink-0 px-3.5 items-center justify-center rounded-full bg-[#2b2219]/5 text-xs font-black text-[#2b2219] hover:bg-[#2b2219]/10 active:scale-95 transition"
       >
         ?dit
       </button>
@@ -564,19 +564,19 @@ function ProductEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 backdrop-blur-sm px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[470px] overflow-y-auto rounded-[32px] bg-white p-5 border border-[#e8dcc8]/45 shadow-2xl space-y-4 no-scrollbar">
+    <div className="fixed inset-0 z-[260] flex items-end bg-[#2b2219]/40 backdrop-blur-sm px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
+      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[470px] overflow-y-auto rounded-[32px] bg-white p-5 border border-[#e7dac2]/45 shadow-2xl space-y-4 no-scrollbar">
         
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[0.64rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">Correction article</p>
-            <h2 className="font-display text-2xl font-black text-[#07120d] mt-1">Modifier la fiche</h2>
+            <p className="text-[0.64rem] font-black uppercase tracking-[0.14em] text-[#c2572b]">Correction article</p>
+            <h2 className="font-display text-2xl font-black text-[#2b2219] mt-1">Modifier la fiche</h2>
           </div>
           <button 
             type="button" 
             onClick={onClose} 
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] border border-[#e8dcc8]/25 text-[#07120d]" 
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf6ee] border border-[#e7dac2]/25 text-[#2b2219]" 
             aria-label="Fermer"
           >
             <X size={16} strokeWidth={1.5} />
@@ -584,14 +584,14 @@ function ProductEditor({
         </div>
 
         {/* Toggle En Vente / Masque */}
-        <div className="grid grid-cols-2 gap-2 rounded-[20px] bg-[#fbf9f4] border border-[#e8dcc8]/35 p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-[20px] bg-[#fbf6ee] border border-[#e7dac2]/35 p-1">
           <button
             type="button"
             onClick={() => setVisible(true)}
             className={`min-h-[46px] rounded-[16px] text-xs font-black transition-all ${
               formData.is_active 
-                ? "bg-[#07120d] text-white shadow-sm" 
-                : "text-[#685f4f]"
+                ? "bg-[#2b2219] text-white shadow-sm" 
+                : "text-[#6e6354]"
             }`}
           >
             En vente
@@ -601,8 +601,8 @@ function ProductEditor({
             onClick={() => setVisible(false)}
             className={`min-h-[46px] rounded-[16px] text-xs font-black transition-all ${
               !formData.is_active 
-                ? "bg-[#07120d] text-white shadow-sm" 
-                : "text-[#685f4f]"
+                ? "bg-[#2b2219] text-white shadow-sm" 
+                : "text-[#6e6354]"
             }`}
           >
             Masqu?
@@ -612,9 +612,9 @@ function ProductEditor({
         {/* Form Fields */}
         <div className="space-y-3.5">
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Nom du produit</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Nom du produit</span>
             <input 
-              className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
+              className="w-full min-h-[50px] px-4 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none transition" 
               placeholder="Ex: Robe en soie pliss?e" 
               value={formData.name} 
               onChange={(event) => setFormData({ ...formData, name: event.target.value })} 
@@ -623,9 +623,9 @@ function ProductEditor({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Prix (FCFA)</span>
+              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Prix (FCFA)</span>
               <input 
-                className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
+                className="w-full min-h-[50px] px-4 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none transition" 
                 type="number" 
                 placeholder="Prix" 
                 value={formData.price} 
@@ -634,9 +634,9 @@ function ProductEditor({
             </div>
             
             <div className="space-y-1">
-              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Quantit? Stock</span>
+              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Quantit? Stock</span>
               <input 
-                className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
+                className="w-full min-h-[50px] px-4 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none transition" 
                 type="number" 
                 placeholder="Stock" 
                 value={formData.stock_quantity} 
@@ -654,11 +654,11 @@ function ProductEditor({
           />
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Photo du produit</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Photo du produit</span>
             <button
               type="button"
               onClick={onPickImage}
-              className="relative flex min-h-[140px] w-full items-center justify-center overflow-hidden rounded-[22px] border border-dashed border-[#e8dcc8] bg-[#fbf9f4]/30 text-center hover:bg-[#fbf9f4]/50 transition"
+              className="relative flex min-h-[140px] w-full items-center justify-center overflow-hidden rounded-[22px] border border-dashed border-[#e7dac2] bg-[#fbf6ee]/30 text-center hover:bg-[#fbf6ee]/50 transition"
             >
               {formData.image_url && (
                 <>
@@ -667,11 +667,11 @@ function ProductEditor({
                   <span className="absolute inset-0 bg-black/25" />
                 </>
               )}
-              <span className="relative z-10 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-[#07120d] shadow-sm ring-1 ring-[#e8dcc8]/40 hover:bg-[#fbf9f4] transition">
+              <span className="relative z-10 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-[#2b2219] shadow-sm ring-1 ring-[#e7dac2]/40 hover:bg-[#fbf6ee] transition">
                 {formData.image_url ? "Changer la photo" : "Choisir une photo"}
               </span>
               {imageUploading && (
-                <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#008f5a] shadow-sm">
+                <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#c2572b] shadow-sm">
                   <Loader2 className="animate-spin" size={16} />
                 </span>
               )}
@@ -683,9 +683,9 @@ function ProductEditor({
           )}
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Description WhatsApp</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Description WhatsApp</span>
             <textarea 
-              className="w-full min-h-[84px] p-3.5 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none resize-none transition" 
+              className="w-full min-h-[84px] p-3.5 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none resize-none transition" 
               placeholder="Ex: Robe fluide 100% soie sauvage, id?ale pour les c?r?monies..." 
               value={formData.description} 
               onChange={(event) => setFormData({ ...formData, description: event.target.value })} 
@@ -693,9 +693,9 @@ function ProductEditor({
           </div>
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Tailles / Couleurs</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Tailles / Couleurs</span>
             <textarea 
-              className="w-full min-h-[70px] p-3.5 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none resize-none transition" 
+              className="w-full min-h-[70px] p-3.5 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none resize-none transition" 
               placeholder="Ex: M rouge stock 2, L bleu stock 4" 
               value={formData.variants_text} 
               onChange={(event) => setFormData({ ...formData, variants_text: event.target.value })} 
@@ -703,9 +703,9 @@ function ProductEditor({
           </div>
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80 pl-1">Mots-cl?s de recherche</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80 pl-1">Mots-cl?s de recherche</span>
             <input 
-              className="w-full min-h-[50px] px-4 rounded-xl border border-[#e8dcc8]/55 bg-[#fbf9f4]/45 text-sm font-semibold text-[#07120d] focus:bg-white focus:ring-1 focus:ring-[#008f5a] focus:border-[#008f5a] outline-none transition" 
+              className="w-full min-h-[50px] px-4 rounded-xl border border-[#e7dac2]/55 bg-[#fbf6ee]/45 text-sm font-semibold text-[#2b2219] focus:bg-white focus:ring-1 focus:ring-[#c2572b] focus:border-[#c2572b] outline-none transition" 
               placeholder="Ex: robe, ceremonie, soie, rouge" 
               value={formData.product_keywords} 
               onChange={(event) => setFormData({ ...formData, product_keywords: event.target.value })} 
@@ -714,11 +714,11 @@ function ProductEditor({
         </div>
 
         {/* Share & Duplicate Panel */}
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#e8dcc8]/30">
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#e7dac2]/30">
           <button
             type="button"
             onClick={onShare}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf9f4] border border-[#e8dcc8]/45 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition"
+            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf6ee] border border-[#e7dac2]/45 px-3 text-xs font-black text-[#2b2219] active:scale-[0.97] transition"
           >
             <Share2 size={14} />
             Partager le lien
@@ -727,7 +727,7 @@ function ProductEditor({
             type="button"
             onClick={onDuplicate}
             disabled={saving}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf9f4] border border-[#e8dcc8]/45 px-3 text-xs font-black text-[#07120d] active:scale-[0.97] transition"
+            className="flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#fbf6ee] border border-[#e7dac2]/45 px-3 text-xs font-black text-[#2b2219] active:scale-[0.97] transition"
           >
             <Copy size={14} />
             Dupliquer
@@ -739,7 +739,7 @@ function ProductEditor({
           type="button" 
           onClick={onSave} 
           disabled={saving || imageUploading} 
-          className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-black text-white hover:bg-[#122b20] active:scale-[0.98] transition disabled:bg-zinc-300 shadow-md shadow-[#07120d]/10"
+          className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] text-sm font-black text-white hover:bg-[#241d15] active:scale-[0.98] transition disabled:bg-zinc-300 shadow-md shadow-[#2b2219]/10"
         >
           <Save size={16} strokeWidth={1.5} />
           {imageUploading ? "Photo en cours..." : saving ? "Enregistrement..." : "Enregistrer"}

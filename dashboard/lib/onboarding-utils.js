@@ -90,14 +90,14 @@ export function getPasswordStrength(pw) {
 }
 
 export const SHOP_CATEGORIES = [
-  { id: "mode", label: "Mode & V?tements", emoji: "??" },
-  { id: "beaute", label: "Beaut? & Cosm?tiques", emoji: "??" },
-  { id: "alimentation", label: "Alimentation & Boissons", emoji: "???" },
-  { id: "electronique", label: "?lectronique & T?l?phones", emoji: "??" },
-  { id: "maison", label: "Maison & D?coration", emoji: "??" },
-  { id: "bijoux", label: "Bijoux & Accessoires", emoji: "??" },
-  { id: "sport", label: "Sport & Loisirs", emoji: "?" },
-  { id: "autre", label: "Autre activit?", emoji: "???" },
+  { id: "mode", label: "Mode & Vêtements", emoji: "👗" },
+  { id: "beaute", label: "Beauté & Cosmétiques", emoji: "💄" },
+  { id: "alimentation", label: "Alimentation & Boissons", emoji: "🍕" },
+  { id: "electronique", label: "Électronique & Téléphones", emoji: "📱" },
+  { id: "maison", label: "Maison & Décoration", emoji: "🏠" },
+  { id: "bijoux", label: "Bijoux & Accessoires", emoji: "💎" },
+  { id: "sport", label: "Sport & Loisirs", emoji: "⚽" },
+  { id: "autre", label: "Autre activité", emoji: "📾" },
 ];
 
-export const CI_CITIES = ["Abidjan", "Bouak?", "Daloa", "San-P?dro", "Yamoussoukro", "Korhogo", "Man", "Gagnoa", "Autre"];
+export const CI_CITIES = ["Abidjan", "Bouaké", "Daloa", "San-Pédro", "Yamoussoukro", "Korhogo", "Man", "Gagnoa", "Autre"];

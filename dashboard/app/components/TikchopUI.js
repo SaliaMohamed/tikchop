@@ -9,7 +9,7 @@ const toneClasses = {
   soft: "bg-white text-[var(--color-ink)] ring-[var(--color-ink)]/6",
   mint: "bg-[var(--color-mint-soft)] text-[var(--color-ink)] ring-[var(--color-primary)]/20",
   cream: "bg-[var(--color-bg)] text-[var(--color-ink)] ring-[var(--color-ink)]/6",
-  warn: "bg-[#FFF9E6] text-[#4d3200] ring-[var(--color-gold-bright)]/35",
+  warn: "bg-[#fff6e0] text-[#6a4a1f] ring-[var(--color-gold-bright)]/35",
 };
 
 export function TkScreen({ children, className = "" }) {
@@ -132,7 +132,7 @@ export function TkMetric({ icon, value, label, active = false, warn = false }) {
             : active
             ? "var(--primary)"
             : "var(--surface-soft)",
-          color: warn ? "#7a4f00" : active ? "var(--text-main)" : "var(--primary-hover)",
+          color: warn ? "#8a5d22" : active ? "var(--text-main)" : "var(--primary-hover)",
         }}
       >
         {icon}

@@ -34,7 +34,7 @@ const defaultProfile = {
   bot_delivery_notes: "",
   bot_special_rules: "",
   logo_url: "",
-  brand_color: "#008f5a",
+  brand_color: "#c2572b",
   physical_address: "",
 };
 
@@ -76,7 +76,7 @@ export default function ShopInfoPage() {
     || ["paystack_ready", "direct_ready", "manual_review", "pending_confirmation"].includes(String(seller?.payout_status || "").toLowerCase()),
   );
   const botReady = Boolean(profile.bot_greeting || profile.bot_payment_preferences || profile.bot_delivery_notes || profile.bot_special_rules);
-  const brandingReady = Boolean(profile.logo_url || profile.brand_color !== "#008f5a" || profile.physical_address);
+  const brandingReady = Boolean(profile.logo_url || profile.brand_color !== "#c2572b" || profile.physical_address);
   const readyCount = [profile.name, profile.phone_number, whatsappReady, deliveryReady, paymentReady, botReady, brandingReady].filter(Boolean).length;
   const readiness = Math.round((readyCount / 7) * 100);
 
@@ -106,7 +106,7 @@ export default function ShopInfoPage() {
         bot_delivery_notes: sellerData.bot_delivery_notes || "",
         bot_special_rules: sellerData.bot_special_rules || "",
         logo_url: sellerData.logo_url || "",
-        brand_color: sellerData.brand_color || "#008f5a",
+        brand_color: sellerData.brand_color || "#c2572b",
         physical_address: sellerData.physical_address || "",
       });
     } catch (err) {
@@ -185,8 +185,8 @@ export default function ShopInfoPage() {
     return (
       <div className="app-shell flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto animate-spin text-[#008f5a]" size={30} />
-          <p className="mt-3 text-sm font-black text-[#07120d]/50">Chargement boutique...</p>
+          <Loader2 className="mx-auto animate-spin text-[#c2572b]" size={30} />
+          <p className="mt-3 text-sm font-black text-[#2b2219]/50">Chargement boutique...</p>
         </div>
       </div>
     );
@@ -194,10 +194,10 @@ export default function ShopInfoPage() {
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
-      <header className="overflow-hidden rounded-[26px] bg-[#07120d] p-5 text-white shadow-[0_4px_28px_rgba(7,18,13,0.25)] md:p-7">
+      <header className="overflow-hidden rounded-[26px] bg-[#2b2219] p-5 text-white shadow-[0_4px_28px_rgba(43, 34, 25,0.25)] md:p-7">
         <div className="grid gap-5 lg:grid-cols-[1fr_120px_280px] lg:items-center">
           <div>
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]/80">Informations boutique</p>
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#f0954c]/80">Informations boutique</p>
             <h1 className="mt-2 font-display text-3xl font-black leading-tight text-white md:text-4xl">
               Tout ce que Tikchop doit savoir.
             </h1>
@@ -209,13 +209,13 @@ export default function ShopInfoPage() {
             <IllustrationBrandPulse size={90} />
           </div>
           <div className="rounded-[20px] bg-white/8 p-4 ring-1 ring-white/10">
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#39f58e]/70">Fiche complete</p>
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#f0954c]/70">Fiche complete</p>
             <div className="mt-3 flex items-end gap-3">
               <strong className="font-display text-5xl font-black text-white">{readiness}%</strong>
               <span className="pb-1.5 text-xs font-black text-white/50">{readyCount}/7 blocs</span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/12">
-              <div className="h-full rounded-full bg-[#39f58e] transition-all duration-700" style={{ width: `${readiness}%` }} />
+              <div className="h-full rounded-full bg-[#f0954c] transition-all duration-700" style={{ width: `${readiness}%` }} />
             </div>
           </div>
         </div>
@@ -226,14 +226,14 @@ export default function ShopInfoPage() {
 
       <main className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
         <form onSubmit={saveProfile} className="space-y-5">
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#07120d]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#008f5a]/10 text-[#008f5a]">
+          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center gap-2.5 border-b border-[#2b2219]/8 px-4 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
                 <Store size={17} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Identite</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">Identite boutique</h2>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Identite</p>
+                <h2 className="font-display text-lg font-black text-[#2b2219]">Identite boutique</h2>
               </div>
             </div>
             <div className="p-4 grid gap-3 md:grid-cols-2">
@@ -247,9 +247,9 @@ export default function ShopInfoPage() {
                 <input value={profile.owner_email} onChange={(event) => updateField("owner_email", event.target.value)} className="mobile-input" placeholder="email@exemple.com" />
               </Field>
               <Field label="Lien public">
-                <div className="flex min-h-[54px] overflow-hidden rounded-[18px] bg-[#fbf9f4] ring-1 ring-[#07120d]/12">
-                  <input value={publicUrl} readOnly className="min-w-0 flex-1 bg-transparent px-4 text-sm font-black text-[#07120d] outline-none" />
-                  <button type="button" onClick={copyPublicUrl} className="flex w-11 items-center justify-center border-l border-[#07120d]/10 text-[#008f5a]" aria-label="Copier">
+                <div className="flex min-h-[54px] overflow-hidden rounded-[18px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/12">
+                  <input value={publicUrl} readOnly className="min-w-0 flex-1 bg-transparent px-4 text-sm font-black text-[#2b2219] outline-none" />
+                  <button type="button" onClick={copyPublicUrl} className="flex w-11 items-center justify-center border-l border-[#2b2219]/10 text-[#c2572b]" aria-label="Copier">
                     <Copy size={17} />
                   </button>
                 </div>
@@ -257,20 +257,20 @@ export default function ShopInfoPage() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#07120d]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#008f5a]/10 text-[#008f5a]">
+          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center gap-2.5 border-b border-[#2b2219]/8 px-4 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
                 <Store size={17} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Design & Branding</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">Personnalisation boutique</h2>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Design & Branding</p>
+                <h2 className="font-display text-lg font-black text-[#2b2219]">Personnalisation boutique</h2>
               </div>
             </div>
             <div className="p-4 space-y-4">
               <div className="grid gap-4 md:grid-cols-[140px_1fr]">
                 <div className="flex flex-col items-center justify-center">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#685f4f]/80 mb-2">Logo</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-[#6e6354]/80 mb-2">Logo</span>
                   <input
                     ref={logoFileInputRef}
                     type="file"
@@ -282,7 +282,7 @@ export default function ShopInfoPage() {
                     type="button"
                     onClick={() => logoFileInputRef.current?.click()}
                     disabled={logoUploading}
-                    className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[#e8dcc8] bg-white text-center hover:bg-[#fbf9f4] transition"
+                    className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[#e7dac2] bg-white text-center hover:bg-[#fbf6ee] transition"
                   >
                     {profile.logo_url ? (
                       <>
@@ -291,13 +291,13 @@ export default function ShopInfoPage() {
                         <span className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white text-[10px] font-black">Changer</span>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-[#008f5a]">
+                      <div className="flex flex-col items-center justify-center text-[#c2572b]">
                         <Store size={22} className="opacity-80" />
-                        <span className="mt-1 text-[10px] font-black uppercase tracking-wider text-[#07120d]/50">Choisir</span>
+                        <span className="mt-1 text-[10px] font-black uppercase tracking-wider text-[#2b2219]/50">Choisir</span>
                       </div>
                     )}
                     {logoUploading && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-[#008f5a]">
+                      <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-[#c2572b]">
                         <Loader2 className="animate-spin" size={16} />
                       </span>
                     )}
@@ -311,14 +311,14 @@ export default function ShopInfoPage() {
                         type="color"
                         value={profile.brand_color}
                         onChange={(event) => updateField("brand_color", event.target.value)}
-                        className="h-11 w-16 shrink-0 cursor-pointer rounded-xl border border-[#07120d]/12 p-1 bg-white"
+                        className="h-11 w-16 shrink-0 cursor-pointer rounded-xl border border-[#2b2219]/12 p-1 bg-white"
                       />
                       <input
                         type="text"
                         value={profile.brand_color}
                         onChange={(event) => updateField("brand_color", event.target.value)}
                         className="mobile-input uppercase"
-                        placeholder="#008F5A"
+                        placeholder="#c2572b"
                       />
                     </div>
                   </Field>
@@ -335,14 +335,14 @@ export default function ShopInfoPage() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#07120d]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#008f5a]/10 text-[#008f5a]">
+          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center gap-2.5 border-b border-[#2b2219]/8 px-4 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
                 <Bot size={17} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Bot</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">Consignes du Djassaman digital</h2>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Bot</p>
+                <h2 className="font-display text-lg font-black text-[#2b2219]">Consignes du Djassaman digital</h2>
               </div>
             </div>
             <div className="p-4 grid gap-3">
@@ -364,7 +364,7 @@ export default function ShopInfoPage() {
             </div>
           </section>
 
-          <button disabled={saving} className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[24px] bg-[#07120d] px-5 text-base font-black text-white disabled:opacity-60 active:scale-[0.99]">
+          <button disabled={saving} className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[24px] bg-[#2b2219] px-5 text-base font-black text-white disabled:opacity-60 active:scale-[0.99]">
             {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
             Enregistrer la fiche boutique
           </button>
@@ -396,30 +396,30 @@ export default function ShopInfoPage() {
             action="Gerer livraison"
           />
 
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#07120d]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#008f5a]/10 text-[#008f5a]">
+          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center gap-2.5 border-b border-[#2b2219]/8 px-4 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
                 <MapPin size={17} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Zones</p>
-                <h2 className="font-display text-lg font-black text-[#07120d]">{zones.length} zone{zones.length > 1 ? "s" : ""} configuree{zones.length > 1 ? "s" : ""}</h2>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Zones</p>
+                <h2 className="font-display text-lg font-black text-[#2b2219]">{zones.length} zone{zones.length > 1 ? "s" : ""} configuree{zones.length > 1 ? "s" : ""}</h2>
               </div>
             </div>
             <div className="p-3 space-y-2">
               {zones.slice(0, 6).map((zone) => (
-                <div key={zone.id} className="flex items-center justify-between rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#07120d]/8">
-                  <span className="text-sm font-black text-[#07120d]">{zone.name}</span>
-                  <span className="text-xs font-black text-[#008f5a]">{formatPrice(zone.fee)}</span>
+                <div key={zone.id} className="flex items-center justify-between rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#2b2219]/8">
+                  <span className="text-sm font-black text-[#2b2219]">{zone.name}</span>
+                  <span className="text-xs font-black text-[#c2572b]">{formatPrice(zone.fee)}</span>
                 </div>
               ))}
-              {zones.length === 0 && <p className="rounded-xl bg-white p-3 text-sm font-bold text-[#07120d]/50 ring-1 ring-[#07120d]/8">Aucune zone. Le bot devra demander la zone au client.</p>}
+              {zones.length === 0 && <p className="rounded-xl bg-white p-3 text-sm font-bold text-[#2b2219]/50 ring-1 ring-[#2b2219]/8">Aucune zone. Le bot devra demander la zone au client.</p>}
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[26px] bg-[#07120d] text-white">
+          <section className="overflow-hidden rounded-[26px] bg-[#2b2219] text-white">
             <div className="border-b border-white/10 px-4 py-3">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#39f58e]/80">Apercu bot</p>
+              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#f0954c]/80">Apercu bot</p>
               <h2 className="font-display text-lg font-black">Ce que Tikchop sait dire</h2>
             </div>
             <div className="p-4">
@@ -470,7 +470,7 @@ function PanelTitle({ icon, title, text }) {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">{label}</span>
+      <span className="mb-2 block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">{label}</span>
       {children}
     </label>
   );
@@ -479,26 +479,26 @@ function Field({ label, children }) {
 function InfoStatusCard({ icon, title, ok, text, href, action }) {
   return (
     <section className={`overflow-hidden rounded-[24px] ring-1 ${
-      ok ? "bg-[#eafff5] ring-emerald-200/70" : "bg-[#fbf9f4] ring-[#07120d]/10"
+      ok ? "bg-[#fbefe2] ring-emerald-200/70" : "bg-[#fbf6ee] ring-[#2b2219]/10"
     }`}>
-      <div className="flex items-center gap-3 border-b border-[#07120d]/8 px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-[#2b2219]/8 px-4 py-3">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-          ok ? "bg-[#008f5a]/15 text-[#008f5a]" : "bg-amber-100 text-amber-800"
+          ok ? "bg-[#c2572b]/15 text-[#c2572b]" : "bg-amber-100 text-amber-800"
         }`}>
           {icon}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-base font-black text-[#07120d]">{title}</h3>
-            {ok && <CheckCircle2 size={15} className="text-[#008f5a]" />}
+            <h3 className="font-display text-base font-black text-[#2b2219]">{title}</h3>
+            {ok && <CheckCircle2 size={15} className="text-[#c2572b]" />}
           </div>
         </div>
-        <Link href={href} className="flex min-h-[34px] items-center gap-1.5 rounded-full bg-white px-3 text-xs font-black text-[#07120d] no-underline shadow-sm ring-1 ring-[#07120d]/10">
+        <Link href={href} className="flex min-h-[34px] items-center gap-1.5 rounded-full bg-white px-3 text-xs font-black text-[#2b2219] no-underline shadow-sm ring-1 ring-[#2b2219]/10">
           {action}
           <ExternalLink size={12} />
         </Link>
       </div>
-      <p className="px-4 py-3 text-sm font-bold leading-5 text-[#07120d]/55">{text}</p>
+      <p className="px-4 py-3 text-sm font-bold leading-5 text-[#2b2219]/55">{text}</p>
     </section>
   );
 }

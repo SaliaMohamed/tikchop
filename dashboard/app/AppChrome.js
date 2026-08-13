@@ -25,7 +25,7 @@ const dashboardRoutes = new Set([
   "/shop-info",
   "/social-sharing",
   "/whatsapp",
-  "/app",
+  "/plus",
   "/account",
 ]);
 
@@ -57,7 +57,7 @@ const sellerNavGroups = [
       { href: "/whatsapp", label: "Assistant", icon: Bot, badge: "IA" },
       { href: "/delivery-settings", label: "Livraison", icon: Truck },
       { href: "/payment-settings", label: "Paiement", icon: Wallet },
-      { href: "/app", label: "Plus", icon: Settings2 },
+      { href: "/plus", label: "Plus", icon: Settings2 },
     ],
   },
 ];
@@ -73,7 +73,7 @@ const mobilePageMeta = {
   "/payment-settings": { title: "Paiement", subtitle: "Choix vendeur" },
   "/shop-info": { title: "Boutique", subtitle: "Infos et bot" },
   "/social-sharing": { title: "Partager", subtitle: "Reseaux et boutique" },
-  "/app": { title: "Plus", subtitle: "Boutique et reglages" },
+  "/plus": { title: "Plus", subtitle: "Boutique et reglages" },
   "/account": { title: "Profil", subtitle: "Mon compte" },
 };
 
@@ -130,7 +130,7 @@ export default function AppChrome({ children }) {
   const mobileMeta = getMobilePageMeta(pathname);
   const publishActive = ["/add-product", "/products"].includes(pathname);
   const messagesActive = pathname === "/messages" || pathname === "/crm";
-  const menuActive = ["/app", "/delivery-settings", "/payment-settings", "/shop-info", "/social-sharing", "/whatsapp", "/account"].includes(pathname);
+  const menuActive = ["/plus", "/delivery-settings", "/payment-settings", "/shop-info", "/social-sharing", "/whatsapp", "/account"].includes(pathname);
   const pendingCount = usePendingOrderCount(showSellerChrome ? seller : null);
 
   if (showAdminChrome) {
@@ -151,15 +151,15 @@ export default function AppChrome({ children }) {
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
           <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f7f4] text-[#008f5a]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4ede1] text-[#c2572b]">
               <ArrowLeft size={17} strokeWidth={2.5} />
             </span>
-            <span className="hidden md:inline text-sm font-black text-[#07120d]/60">Accueil</span>
+            <span className="hidden md:inline text-sm font-black text-[#2b2219]/60">Accueil</span>
           </Link>
           <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta.title}`}>
             <strong className="tk-slide-down">{mobileMeta.title}</strong>
           </div>
-          <Link href="/app" className="mobile-seller-topbar-avatar relative overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
+          <Link href="/plus" className="mobile-seller-topbar-avatar relative overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
             {seller.logo_url ? (
               <Image src={seller.logo_url} alt="Logo" fill sizes="40px" className="object-cover" />
             ) : (
@@ -176,7 +176,7 @@ export default function AppChrome({ children }) {
           <Link href="/products" className="nav-link">Articles</Link>
           <Link href="/orders" className="nav-link">Ventes</Link>
           <Link href="/messages" className="nav-link">Clients</Link>
-          <Link href="/app" className="nav-link">Plus</Link>
+          <Link href="/plus" className="nav-link">Plus</Link>
         </div>
         <div className="seller-chip">
           <Store size={15} className="mr-1.5" />
@@ -211,7 +211,7 @@ export default function AppChrome({ children }) {
           <span className="mobile-tabbar-icon"><MessageCircle size={19} strokeWidth={2.5} /></span>
           <span>Clients</span>
         </Link>
-          <Link href="/app" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
+          <Link href="/plus" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
             <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={2.5} /></span>
             <span>Plus</span>
           </Link>
@@ -271,17 +271,17 @@ function DesktopSellerSidebar({ seller, sellerInitials, pathname }) {
 
 function PublicLegalFooter() {
   return (
-    <footer className="container mt-10 pb-8 text-center text-xs font-bold text-[#07120d]/40">
-      <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-3 rounded-[20px] bg-[#fbf9f4] px-4 py-3 ring-1 ring-[#07120d]/10">
-        <Link href="/mentions-legales" className="text-[#07120d]/60 no-underline hover:text-[#008f5a]">
+    <footer className="container mt-10 pb-8 text-center text-xs font-bold text-[#2b2219]/40">
+      <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-3 rounded-[20px] bg-[#fbf6ee] px-4 py-3 ring-1 ring-[#2b2219]/10">
+        <Link href="/mentions-legales" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
           Mentions legales
         </Link>
-        <span className="text-[#07120d]/20">|</span>
-        <Link href="/confidentialite" className="text-[#07120d]/60 no-underline hover:text-[#008f5a]">
+        <span className="text-[#2b2219]/20">|</span>
+        <Link href="/confidentialite" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
           Confidentialite
         </Link>
-        <span className="text-[#07120d]/20">|</span>
-        <Link href="/conditions" className="text-[#07120d]/60 no-underline hover:text-[#008f5a]">
+        <span className="text-[#2b2219]/20">|</span>
+        <Link href="/conditions" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
           Conditions
         </Link>
       </div>
@@ -375,18 +375,18 @@ function SellerAccountGate({ children }) {
     return (
       <main className="container">
         <div className="flex min-h-[80vh] flex-col items-center justify-center text-center">
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#07120d] shadow-[0_20px_48px_rgba(7,18,13,0.22)]">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#2b2219] shadow-[0_20px_48px_rgba(43, 34, 25,0.22)]">
             <span
               style={{ backgroundImage: "url('/icon.svg')" }}
               className="h-12 w-12 rounded-[14px] bg-center bg-cover bg-no-repeat"
               aria-hidden="true"
             />
           </div>
-          <p className="mt-6 font-display text-lg font-black text-[#07120d]">{message}</p>
+          <p className="mt-6 font-display text-lg font-black text-[#2b2219]">{message}</p>
           <div className="mt-3 flex items-center justify-center gap-1.5" aria-label="Chargement en cours">
-            <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#008f5a]" />
-            <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#008f5a]" />
-            <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#008f5a]" />
+            <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#c2572b]" />
+            <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#c2572b]" />
+            <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#c2572b]" />
           </div>
         </div>
       </main>

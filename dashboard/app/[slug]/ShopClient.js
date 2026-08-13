@@ -394,7 +394,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
     recognition.start();
   }
 
-  const brandColor = seller.brand_color || "#008f5a";
+  const brandColor = seller.brand_color || "#c2572b";
   const brandColorLight = `${brandColor}12`; // soft overlay
   const brandStyles = {
     "--primary": brandColor,
@@ -407,7 +407,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
       <section className="shop-topbar sticky top-0 z-40 -mx-4 px-4 py-3 md:mx-0 md:rounded-[24px] md:px-4 md:py-3.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[0.72rem] font-black text-[var(--primary)] shadow-[0_8px_18px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/7 md:h-12 md:w-12">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[0.72rem] font-black text-[var(--primary)] shadow-[0_8px_18px_rgba(43, 34, 25,0.06)] ring-1 ring-[#2b2219]/7 md:h-12 md:w-12">
               {seller.logo_url ? (
                 <Image src={seller.logo_url} alt="Logo" fill sizes="48px" className="object-cover" />
               ) : (
@@ -425,11 +425,11 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(7,18,13,0.06)] ring-1 ring-[#07120d]/7 active:scale-[0.97]"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(43, 34, 25,0.06)] ring-1 ring-[#2b2219]/7 active:scale-[0.97]"
             aria-label="Voir le panier"
           >
             <ShoppingBag size={19} />
-            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-[#fbf9f4] bg-[var(--primary-bright)] px-1 text-[0.52rem] font-black text-[#06100a]">
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-[#fbf6ee] bg-[var(--primary-bright)] px-1 text-[0.52rem] font-black text-[#221b14]">
               {cartCount}
             </span>
           </button>
@@ -452,26 +452,26 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
             <div className="min-w-0">
               {/* Hero boutique compact et épuré style Aynid */}
               <section className="space-y-4">
-                <div className="flex min-h-[56px] items-center gap-3 rounded-[28px] bg-white px-4 text-[var(--text-main)] shadow-[0_4px_40px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.035)]">
+                <div className="flex min-h-[56px] items-center gap-3 rounded-[28px] bg-white px-4 text-[var(--text-main)] shadow-[0_4px_40px_rgba(43, 34, 25,0.035)] ring-1 ring-[rgba(43, 34, 25,0.035)]">
                   <Search className="shrink-0 text-[var(--primary)]" size={22} />
                   <input
                     value={query.trimStart()}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Rechercher un article..."
-                    className="min-w-0 flex-1 bg-transparent text-base font-semibold text-[var(--text-main)] outline-none placeholder:font-semibold placeholder:text-[#8b9a92]"
+                    className="min-w-0 flex-1 bg-transparent text-base font-semibold text-[var(--text-main)] outline-none placeholder:font-semibold placeholder:text-[#91877a]"
                   />
                   {query ? (
-                    <button type="button" onClick={() => setQuery("")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2fbf6] text-[var(--text-dim)]" aria-label="Effacer la recherche">
+                    <button type="button" onClick={() => setQuery("")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f7f0e4] text-[var(--text-dim)]" aria-label="Effacer la recherche">
                       <X size={16} />
                     </button>
                   ) : (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2fbf6] text-[var(--primary)]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f7f0e4] text-[var(--primary)]">
                       <Sparkles size={17} />
                     </span>
                   )}
                 </div>
                 <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[rgba(7,18,13,0.08)] bg-white text-[var(--primary)]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[rgba(43, 34, 25,0.08)] bg-white text-[var(--primary)]">
                     <SlidersHorizontal size={16} />
                   </span>
                   <div className="flex min-w-0 gap-2">
@@ -487,7 +487,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
                         className={`min-h-[40px] shrink-0 rounded-full border-2 px-4 text-[0.72rem] font-black transition active:scale-[0.97] ${
                           priceSort === option.value
                             ? "border-[var(--primary)] bg-[var(--primary)] text-white shadow-[0_10px_22px_rgba(0,143,90,0.18)]"
-                            : "border-[rgba(7,18,13,0.08)] bg-white text-[var(--text-dim)]"
+                            : "border-[rgba(43, 34, 25,0.08)] bg-white text-[var(--text-dim)]"
                         }`}
                       >
                         <span className="block truncate">{option.label}</span>
@@ -508,11 +508,11 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
                       className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 text-[0.72rem] font-black transition active:scale-[0.97] ${
                         item.value === category
                           ? "bg-[var(--primary)] text-white shadow-[0_10px_22px_rgba(0,143,90,0.18)]"
-                          : "bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(7,18,13,0.025)] ring-1 ring-[rgba(7,18,13,0.045)]"
+                          : "bg-white text-[var(--text-main)] shadow-[0_8px_18px_rgba(43, 34, 25,0.025)] ring-1 ring-[rgba(43, 34, 25,0.045)]"
                       }`}
                     >
                       {item.label}
-                      <span className={`rounded-full px-2 py-1 text-[0.58rem] ${item.value === category ? "bg-white/18 text-white" : "bg-[#f2fbf6] text-[var(--primary)]"}`}>
+                      <span className={`rounded-full px-2 py-1 text-[0.58rem] ${item.value === category ? "bg-white/18 text-white" : "bg-[#f7f0e4] text-[var(--primary)]"}`}>
                         {item.value === "Tout" ? products.length : products.filter((product) => productCategory(product) === item.value).length}
                       </span>
                     </button>
@@ -566,7 +566,7 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
                     <button
                       type="button"
                       onClick={() => { setQuery(""); setCategory("Tout"); }}
-                      className="mt-5 rounded-2xl bg-[#07120d] px-5 py-2.5 text-sm font-extrabold text-[#39f58e]"
+                      className="mt-5 rounded-2xl bg-[#2b2219] px-5 py-2.5 text-sm font-extrabold text-[#f0954c]"
                     >
                       Voir tous les articles
                     </button>
@@ -670,10 +670,10 @@ function EmptyShopState({ seller, isOwnerView = false }) {
 
   return (
     <div className="overflow-hidden rounded-[32px] bg-white shadow-[var(--shadow-md)] ring-1 ring-[rgba(191,206,197,0.42)] md:grid md:grid-cols-[1.1fr_0.9fr]">
-      <div className="relative min-h-[280px] bg-[#07120d] p-5 text-white md:min-h-[440px] md:p-7">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#39f58e] via-[#008f5a] to-[#39f58e]" />
+      <div className="relative min-h-[280px] bg-[#2b2219] p-5 text-white md:min-h-[440px] md:p-7">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#f0954c] via-[#c2572b] to-[#f0954c]" />
         {/* Subtle grid texture */}
-        <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(90deg,rgba(57,245,142,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.05)_1px,transparent_1px)] [background-size:32px_32px]" />
+        <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(90deg,rgba(240, 149, 76,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(240, 149, 76,.05)_1px,transparent_1px)] [background-size:32px_32px]" />
         {/* SVG Illustration */}
         <div className="absolute bottom-0 right-0 opacity-12">
           <IllustrationEmptyShop size={200} />
@@ -685,11 +685,11 @@ function EmptyShopState({ seller, isOwnerView = false }) {
                 <Image src={seller.logo_url} alt="Logo" fill sizes="56px" className="object-cover" />
               </div>
             ) : (
-              <span className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/8 text-[#39f58e] ring-1 ring-white/10">
+              <span className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/8 text-[#f0954c] ring-1 ring-white/10">
                 <Store size={28} />
               </span>
             )}
-            <span className="rounded-full bg-[#39f58e]/15 px-3 py-1.5 text-xs font-extrabold text-[#39f58e] ring-1 ring-[#39f58e]/20">
+            <span className="rounded-full bg-[#f0954c]/15 px-3 py-1.5 text-xs font-extrabold text-[#f0954c] ring-1 ring-[#f0954c]/20">
               Bientot en ligne
             </span>
           </div>
@@ -707,7 +707,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
       <div className="grid content-between gap-4 p-4 md:p-6">
         <div className="grid gap-3">
           <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[var(--surface-soft)] p-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07120d] text-[#39f58e] shadow-sm">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2b2219] text-[#f0954c] shadow-sm">
               <MessageCircle size={19} />
             </span>
             <span>
@@ -721,8 +721,8 @@ function EmptyShopState({ seller, isOwnerView = false }) {
               </span>
             </span>
           </div>
-          <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[#fff7dd] p-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#9b6500] shadow-sm">
+          <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[#fdf2d5] p-4">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#a96e26] shadow-sm">
               <Truck size={19} />
             </span>
             <span>
@@ -737,7 +737,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
           {isOwnerView && (
             <Link
               href="/add-product"
-              className="flex min-h-[58px] items-center justify-center gap-2 rounded-[20px] bg-[#07120d] text-base font-extrabold text-[#39f58e] no-underline shadow-[0_12px_28px_rgb(7_18_13_/_0.25)]"
+              className="flex min-h-[58px] items-center justify-center gap-2 rounded-[20px] bg-[#2b2219] text-base font-extrabold text-[#f0954c] no-underline shadow-[0_12px_28px_rgb(43_34_25_/_0.25)]"
             >
               <ShoppingBag size={20} />
               Ajouter le premier article
@@ -779,7 +779,7 @@ function ShopMobileTrustRail({ availableProducts, deliveryZones, paymentLabels }
     <div className="relative z-10 mt-2.5 space-y-1.5 md:hidden">
       <div className="grid grid-cols-3 gap-1.5">
         {chips.map((chip) => (
-          <div key={chip.label} className="flex min-w-0 min-h-[38px] items-center gap-1.5 rounded-full bg-white px-1.5 ring-1 ring-[rgba(7,18,13,0.06)]">
+          <div key={chip.label} className="flex min-w-0 min-h-[38px] items-center gap-1.5 rounded-full bg-white px-1.5 ring-1 ring-[rgba(43, 34, 25,0.06)]">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-white">
               {chip.icon}
             </span>
@@ -789,12 +789,12 @@ function ShopMobileTrustRail({ availableProducts, deliveryZones, paymentLabels }
       </div>
       <div className="flex max-w-full flex-wrap gap-1.5 overflow-hidden pb-0.5">
         {cashOnDelivery && (
-          <span className="shrink-0 rounded-full bg-[var(--primary-bright)] px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[#06100a]">
+          <span className="shrink-0 rounded-full bg-[var(--primary-bright)] px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[#221b14]">
             Paiement a la livraison
           </span>
         )}
         {paymentLabels.slice(0, 2).map((option) => (
-          <span key={option.value} className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[var(--text-main)] ring-1 ring-[rgba(7,18,13,0.06)]">
+          <span key={option.value} className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[var(--text-main)] ring-1 ring-[rgba(43, 34, 25,0.06)]">
             {option.shortLabel || option.label}
           </span>
         ))}
@@ -897,7 +897,7 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
         <div>
           <h3 className="font-display text-2xl font-black leading-7 text-[var(--text-main)]">Populaire</h3>
         </div>
-        <span className="rounded-full bg-white px-4 py-2 text-[0.68rem] font-black text-[var(--text-dim)] shadow-[0_8px_18px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.055)]">
+        <span className="rounded-full bg-white px-4 py-2 text-[0.68rem] font-black text-[var(--text-dim)] shadow-[0_8px_18px_rgba(43, 34, 25,0.035)] ring-1 ring-[rgba(43, 34, 25,0.055)]">
           Swipe
         </span>
       </div>
@@ -910,7 +910,7 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
           return (
             <article
               key={product.id}
-              className="relative w-[280px] shrink-0 snap-center overflow-hidden rounded-[32px] bg-white p-4 shadow-[0_20px_40px_rgba(7,18,13,0.045)] ring-1 ring-[rgba(7,18,13,0.045)] md:w-[320px]"
+              className="relative w-[280px] shrink-0 snap-center overflow-hidden rounded-[32px] bg-white p-4 shadow-[0_20px_40px_rgba(43, 34, 25,0.045)] ring-1 ring-[rgba(43, 34, 25,0.045)] md:w-[320px]"
             >
               <div
                 role="button"
@@ -919,7 +919,7 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
                 onKeyDown={(event) => event.key === "Enter" && onOpen(product)}
                 className="block w-full text-left"
               >
-                <div className="relative h-[300px] overflow-hidden rounded-[24px] bg-[#f0eee9]">
+                <div className="relative h-[300px] overflow-hidden rounded-[24px] bg-[#eee9de]">
                   <SafeProductImage
                     src={product.image_url}
                     alt={product.name}
@@ -927,7 +927,7 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
                     className="object-cover transition duration-700 active:scale-105"
                     transform={CLOUDINARY_FEATURED_TRANSFORM}
                   />
-                  <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#07120d] shadow-sm">
+                  <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#2b2219] shadow-sm">
                     En stock
                   </span>
                 </div>
@@ -965,9 +965,9 @@ function FeaturedProductCard({ product, quantity, onOpen, onAdd, onMinus }) {
   const displayCategory = category === "Tout" ? "Article" : category;
 
   return (
-    <article className="overflow-hidden rounded-[32px] bg-white shadow-[0_20px_48px_rgba(7,18,13,0.10)] ring-1 ring-[rgba(7,18,13,0.06)]">
+    <article className="overflow-hidden rounded-[32px] bg-white shadow-[0_20px_48px_rgba(43, 34, 25,0.10)] ring-1 ring-[rgba(43, 34, 25,0.06)]">
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="relative block w-full text-left">
-        <div className="relative aspect-[0.92/1] overflow-hidden bg-[#edf6f1] md:aspect-[16/9]">
+        <div className="relative aspect-[0.92/1] overflow-hidden bg-[#f1e9dc] md:aspect-[16/9]">
           <SafeProductImage
             src={product.image_url}
             alt={product.name}
@@ -978,7 +978,7 @@ function FeaturedProductCard({ product, quantity, onOpen, onAdd, onMinus }) {
           <span className="absolute left-4 top-4 rounded-full bg-white/92 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--primary)] shadow-sm backdrop-blur">
             Populaire
           </span>
-          <span className="absolute right-4 top-4 rounded-full bg-[#07120d] px-3.5 py-2 text-[0.7rem] font-black text-white shadow-sm">
+          <span className="absolute right-4 top-4 rounded-full bg-[#2b2219] px-3.5 py-2 text-[0.7rem] font-black text-white shadow-sm">
             {stock > 0 ? `${stock} dispo` : "Indispo"}
           </span>
         </div>
@@ -1007,7 +1007,7 @@ function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
   const extraImageCount = getExtraProductImages(product.description).length;
 
   return (
-    <article className="group relative aspect-square overflow-hidden rounded-[24px] bg-[#f0eee9] shadow-[0_10px_30px_rgba(7,18,13,0.035)] ring-1 ring-[rgba(7,18,13,0.045)] transition active:scale-[0.98] md:hover:-translate-y-0.5">
+    <article className="group relative aspect-square overflow-hidden rounded-[24px] bg-[#eee9de] shadow-[0_10px_30px_rgba(43, 34, 25,0.035)] ring-1 ring-[rgba(43, 34, 25,0.045)] transition active:scale-[0.98] md:hover:-translate-y-0.5">
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => event.key === "Enter" && onOpen()} className="absolute inset-0 block h-full w-full text-left">
         <SafeProductImage
           src={product.image_url}
@@ -1191,7 +1191,7 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus, products = [
                 type="button"
                 onClick={onAdd}
                 disabled={stock === 0}
-                className="min-h-[58px] w-full rounded-2xl bg-[var(--primary-bright)] text-base font-extrabold text-[#042719] disabled:bg-[var(--surface-mid)] disabled:text-[var(--outline)]"
+                className="min-h-[58px] w-full rounded-2xl bg-[var(--primary-bright)] text-base font-extrabold text-[#1d1812] disabled:bg-[var(--surface-mid)] disabled:text-[var(--outline)]"
               >
                 Ajouter au panier
               </button>
@@ -1212,7 +1212,7 @@ function ProductSheet({ product, quantity, onClose, onAdd, onMinus, products = [
                     onClick={() => onProductSelect && onProductSelect(rec)}
                     className="w-[110px] shrink-0 text-left transition active:scale-95 group/rec"
                   >
-                    <div className="relative aspect-square overflow-hidden rounded-[16px] bg-[#f0eee9]">
+                    <div className="relative aspect-square overflow-hidden rounded-[16px] bg-[#eee9de]">
                       <SafeProductImage
                         src={rec.image_url}
                         alt={rec.name}
@@ -1519,7 +1519,7 @@ function CartSheet({
                   <CreditCard size={18} className="text-[var(--primary)]" />
                   Paiement
                 </h4>
-                <div className="rounded-[20px] bg-[#ecfff5] p-3 text-sm font-bold leading-5 text-[#073f28] ring-1 ring-[#baf7d6]">
+                <div className="rounded-[20px] bg-[#fbf0e3] p-3 text-sm font-bold leading-5 text-[#2e231a] ring-1 ring-[#f2e4cc]">
                   A Abidjan, beaucoup de clients paient a la livraison. La boutique choisit les options disponibles.
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -1656,7 +1656,7 @@ function CheckoutActionHint({ readiness }) {
   return (
     <div className={`rounded-[20px] p-3 ring-1 ${
       readiness.ready
-        ? "bg-[#ecfff5] text-[#073f28] ring-[#baf7d6]"
+        ? "bg-[#fbf0e3] text-[#2e231a] ring-[#f2e4cc]"
         : "bg-amber-50 text-amber-950 ring-amber-200"
     }`}>
       <p className="text-sm font-extrabold">{title}</p>
@@ -1735,7 +1735,7 @@ function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
 
   if (!imageSrc) {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[linear-gradient(145deg,#edf6f1,#fffdf8)] text-[var(--primary)]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[linear-gradient(145deg,#f1e9dc,#fffef9)] text-[var(--primary)]">
         <ShoppingBag size={30} />
         <span className="mt-2 max-w-[80%] truncate text-xs font-black uppercase tracking-[0.08em] text-[var(--text-dim)]">
           {alt || "Article"}

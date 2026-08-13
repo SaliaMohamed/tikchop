@@ -9,9 +9,9 @@ export function CustomerResponseRail({ templates, phoneNumber }) {
 
   return (
     <section>
-      <div className="flex items-center gap-2 border-b border-[#07120d]/8 pb-2">
-        <MessageCircle size={14} className="text-[#008f5a]" />
-        <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Messages</p>
+      <div className="flex items-center gap-2 border-b border-[#2b2219]/8 pb-2">
+        <MessageCircle size={14} className="text-[#c2572b]" />
+        <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Messages</p>
       </div>
       <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
         {templates.map((template) => {
@@ -22,7 +22,7 @@ export function CustomerResponseRail({ templates, phoneNumber }) {
               href={href || undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className={`min-w-[140px] rounded-[20px] p-3 text-left no-underline ring-1 ${href ? getTemplateToneClass(template.tone) : "pointer-events-none bg-[#07120d]/5 text-[#07120d]/30 ring-transparent"}`}
+              className={`min-w-[140px] rounded-[20px] p-3 text-left no-underline ring-1 ${href ? getTemplateToneClass(template.tone) : "pointer-events-none bg-[#2b2219]/5 text-[#2b2219]/30 ring-transparent"}`}
             >
               <div className="flex items-center gap-1.5">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/50 text-current">

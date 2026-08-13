@@ -182,7 +182,7 @@ export default async function ReceiptPage({ searchParams }) {
   const statusLabel = getStatusLabel(order, paid);
   const quantityTotal = getItemQuantityTotal(items);
 
-  const brandColor = order.sellers?.brand_color || "#008f5a";
+  const brandColor = order.sellers?.brand_color || "#c2572b";
   const brandColorLight = `${brandColor}12`; // ~7% opacity for soft backgrounds
   const brandStyles = {
     "--primary": brandColor,
@@ -192,7 +192,7 @@ export default async function ReceiptPage({ searchParams }) {
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-4 py-5 md:py-10" style={brandStyles}>
-      <section className="print-receipt mx-auto max-w-[480px] overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgb(16_24_20_/_0.12)] ring-1 ring-[var(--outline)]/55">
+      <section className="print-receipt mx-auto max-w-[480px] overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgb(60_48_37_/_0.12)] ring-1 ring-[var(--outline)]/55">
         <div className="relative overflow-hidden bg-[var(--text-main)] px-5 pb-6 pt-5 text-white">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[#5b8cff]" style={{ backgroundImage: `linear-gradient(to right, var(--primary-bright), ${brandColor}, #5b8cff)` }} />
           <div className="flex items-start justify-between gap-4">
@@ -254,10 +254,10 @@ export default async function ReceiptPage({ searchParams }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#07120d]/5 bg-[#fbf9f4] p-4">
+          <div className="rounded-2xl border border-[#2b2219]/5 bg-[#fbf6ee] p-4">
             <div className="relative flex justify-between items-center max-w-[360px] mx-auto">
               {/* Background progress line */}
-              <div className="absolute left-4 right-4 top-4 h-0.5 bg-[#07120d]/5 -translate-y-1/2 z-0">
+              <div className="absolute left-4 right-4 top-4 h-0.5 bg-[#2b2219]/5 -translate-y-1/2 z-0">
                 <div 
                   className="h-full transition-all duration-500" 
                   style={{ width: `${(currentStep / 3) * 100}%`, backgroundColor: brandColor }}
@@ -275,8 +275,8 @@ export default async function ReceiptPage({ searchParams }) {
                       isDone 
                         ? "text-white shadow-sm" 
                         : isActive 
-                          ? "bg-[#07120d] text-white shadow-[0_0_0_4px_rgba(7,18,13,0.1)] scale-105" 
-                          : "bg-white text-[#07120d]/40 ring-1 ring-[#07120d]/10"
+                          ? "bg-[#2b2219] text-white shadow-[0_0_0_4px_rgba(43, 34, 25,0.1)] scale-105" 
+                          : "bg-white text-[#2b2219]/40 ring-1 ring-[#2b2219]/10"
                     }`}
                     style={isDone ? { backgroundColor: brandColor } : {}}>
                       {isDone ? (
@@ -286,7 +286,7 @@ export default async function ReceiptPage({ searchParams }) {
                       )}
                     </div>
                     <span className={`mt-2 text-[10px] font-extrabold tracking-tight ${
-                      isActive ? "text-[#07120d]" : "text-[#07120d]/40"
+                      isActive ? "text-[#2b2219]" : "text-[#2b2219]/40"
                     }`}>
                       {label}
                     </span>

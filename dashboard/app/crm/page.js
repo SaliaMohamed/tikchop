@@ -98,29 +98,29 @@ export default function CrmPage() {
       <header className={`mobile-top ${selectedCustomer ? "hidden md:block" : ""}`}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[#008f5a]">Carnet vendeur</p>
-            <h1 className="mt-1 font-display text-3xl font-black leading-10 text-[#07120d]">Clients</h1>
+            <p className="quiet-label text-[#c2572b]">Carnet vendeur</p>
+            <h1 className="mt-1 font-display text-3xl font-black leading-10 text-[#2b2219]">Clients</h1>
           </div>
-          <button onClick={fetchCrm} className="app-icon-button bg-[#07120d] text-white" aria-label="Actualiser les clients">
+          <button onClick={fetchCrm} className="app-icon-button bg-[#2b2219] text-white" aria-label="Actualiser les clients">
             <RefreshCw size={19} strokeWidth={2.5} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
 
         <CrmHero stats={stats} totalCustomers={customers.length} />
 
-        <div className="mt-4 grid grid-cols-3 gap-px bg-[#07120d]/8 overflow-hidden rounded-[20px] ring-1 ring-[#07120d]/10">
+        <div className="mt-4 grid grid-cols-3 gap-px bg-[#2b2219]/8 overflow-hidden rounded-[20px] ring-1 ring-[#2b2219]/10">
           <StatTile label="A relancer" value={stats.followUpCount} tone="dark" />
           <StatTile label="Bons clients" value={stats.loyalCount} tone="green" />
           <StatTile label="Actifs" value={stats.activeCount} />
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-[20px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10">
+        <div className="mt-4 overflow-hidden rounded-[20px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
           <label className="flex min-h-[48px] items-center gap-2 px-3">
-            <Search size={17} className="shrink-0 text-[#008f5a]" />
+            <Search size={17} className="shrink-0 text-[#c2572b]" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#07120d] outline-none placeholder:text-[#07120d]/40"
+              className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[#2b2219] outline-none placeholder:text-[#2b2219]/40"
               placeholder="Rechercher un client..."
             />
           </label>
@@ -135,13 +135,13 @@ export default function CrmPage() {
                 onClick={() => setSegment(item)}
                 className={`flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-black transition-colors ${
                   active
-                    ? "bg-[#07120d] text-white"
-                    : "bg-white text-[#07120d] ring-1 ring-[#07120d]/10"
+                    ? "bg-[#2b2219] text-white"
+                    : "bg-white text-[#2b2219] ring-1 ring-[#2b2219]/10"
                 }`}
               >
                 {segmentLabels[item]}
                 <span className={`rounded-full px-1.5 py-0.5 text-[0.58rem] font-black ${
-                  active ? "bg-white/15 text-white" : "bg-[#008f5a]/10 text-[#008f5a]"
+                  active ? "bg-white/15 text-white" : "bg-[#c2572b]/10 text-[#c2572b]"
                 }`}>
                   {getSegmentCount(customers, item)}
                 </span>
@@ -161,8 +161,8 @@ export default function CrmPage() {
       <section className="mt-5">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#008f5a] border-t-transparent" />
-            <p className="mt-4 font-black text-[#07120d]/40">Chargement...</p>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#c2572b] border-t-transparent" />
+            <p className="mt-4 font-black text-[#2b2219]/40">Chargement...</p>
           </div>
         ) : filteredCustomers.length === 0 ? (
           <EmptyCrm query={query} />

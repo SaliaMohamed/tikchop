@@ -130,7 +130,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
   if (showFull) {
     return (
       <section className="mx-auto max-w-[520px] px-4 py-4">
-        <div className="rounded-[28px] bg-[#07120d] p-5 text-white shadow-[var(--shadow-lg)]">
+        <div className="rounded-[28px] bg-[#2b2219] p-5 text-white shadow-[var(--shadow-lg)]">
           <BrandLogo size="sm" subtitle="App vendeur" className="text-white [&_.brand-logo-copy_small]:text-white/70 [&_.brand-logo-copy_strong]:text-white" />
           <p className="quiet-label mt-4 text-[var(--primary-bright)]">Priorite PWA</p>
           <h1 className="mt-2 font-display text-2xl font-bold leading-8">Installer Tikchop</h1>

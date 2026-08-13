@@ -4,14 +4,14 @@ import { BadgeCheck, ImagePlus, Loader2, Sparkles } from "lucide-react";
 
 function MobileProductStep({ icon, label, value, done, warn = false, dark = false }) {
   const className = warn
-    ? "bg-[#fff0bd] text-[#171006] ring-[#ffcf3d]/50"
+    ? "bg-[#f9e8b4] text-[#3a2f24] ring-[#f4c13a]/50"
     : done
       ? dark
-        ? "bg-white text-[#008f5a] ring-white"
-        : "bg-white text-[#008f5a] ring-[#e8dcc8]"
+        ? "bg-white text-[#c2572b] ring-white"
+        : "bg-white text-[#c2572b] ring-[#e7dac2]"
       : dark
         ? "bg-white/10 text-white ring-white/10"
-        : "bg-white text-[#07120d] ring-[#e8dcc8]";
+        : "bg-white text-[#2b2219] ring-[#e7dac2]";
 
   return (
     <div className={`flex-1 rounded-[18px] p-2 text-center ring-1 ${className}`}>
@@ -59,7 +59,7 @@ function ImageQualitySwitch({
   }
 
   return (
-    <div className="rounded-[20px] bg-[#f5fbf7] p-3 ring-1 ring-[rgba(0,143,90,0.12)]">
+    <div className="rounded-[20px] bg-[#f8f2e7] p-3 ring-1 ring-[rgba(0,143,90,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">Rendu boutique</p>
@@ -80,7 +80,7 @@ function ImageQualitySwitch({
               onClick={() => onChange(option.value)}
               className={`flex min-h-[56px] items-center justify-center gap-2 rounded-2xl px-3 text-left text-xs font-black transition active:scale-[0.99] ${
                 active
-                  ? "bg-[#07120d] text-white"
+                  ? "bg-[#2b2219] text-white"
                   : "bg-white text-[var(--text-main)] ring-1 ring-[rgba(0,143,90,0.10)]"
               }`}
             >

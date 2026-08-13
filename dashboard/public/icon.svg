@@ -1,30 +1,30 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dark charcoal background like Aynid -->
-  <rect width="512" height="512" rx="112" fill="#07120D"/>
-  <!-- Subtle emerald radial glow -->
-  <circle cx="256" cy="280" r="180" fill="#39f58e" opacity="0.05"/>
+  <!-- Warm espresso background -->
+  <rect width="512" height="512" rx="112" fill="#2B2219"/>
+  <!-- Subtle terracotta radial glow -->
+  <circle cx="256" cy="280" r="180" fill="#F0954C" opacity="0.06"/>
   <!-- Grid pattern overlay -->
   <rect width="512" height="512" rx="112" fill="url(#grid)" opacity="1"/>
 
   <defs>
     <pattern id="grid" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
-      <path d="M36 0L0 0 0 36" fill="none" stroke="#39f58e" stroke-width="0.4" opacity="0.18"/>
+      <path d="M36 0L0 0 0 36" fill="none" stroke="#F0954C" stroke-width="0.4" opacity="0.18"/>
     </pattern>
   </defs>
 
   <!-- Shopping bag body -->
-  <rect x="142" y="222" width="228" height="176" rx="30" fill="#0e2419"/>
-  <rect x="142" y="222" width="228" height="176" rx="30" stroke="#39f58e" stroke-width="13"/>
+  <rect x="142" y="222" width="228" height="176" rx="30" fill="#3A2F24"/>
+  <rect x="142" y="222" width="228" height="176" rx="30" stroke="#F0954C" stroke-width="13"/>
 
   <!-- Shopping bag handle -->
   <path d="M196 222v-42c0-33.137 26.863-60 60-60s60 26.863 60 60v42"
-    stroke="#39f58e" stroke-width="13" stroke-linecap="round" fill="none"/>
+    stroke="#F0954C" stroke-width="13" stroke-linecap="round" fill="none"/>
 
   <!-- Checkmark inside bag - order confirmed -->
   <path d="M210 308l30 30 62-62"
-    stroke="#39f58e" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    stroke="#F0954C" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- Small WhatsApp chat notification dot -->
-  <circle cx="358" cy="154" r="30" fill="#39f58e"/>
-  <path d="M349 154l9 9 18-18" stroke="#07120D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="358" cy="154" r="30" fill="#F0954C"/>
+  <path d="M349 154l9 9 18-18" stroke="#2B2219" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

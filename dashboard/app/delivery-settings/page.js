@@ -243,11 +243,11 @@ export default function DeliverySettingsPage() {
       <header className="mobile-top hidden md:block">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="quiet-label text-[#008f5a]">Livraison</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">Livraison client</h1>
-            <p className="mt-1 text-base text-[#07120d]/55">Retrait, communes, frais et livreurs WhatsApp.</p>
+            <p className="quiet-label text-[#c2572b]">Livraison</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#2b2219]">Livraison client</h1>
+            <p className="mt-1 text-base text-[#2b2219]/55">Retrait, communes, frais et livreurs WhatsApp.</p>
           </div>
-          <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#07120d] text-[#39f58e] disabled:bg-[#07120d]/30" aria-label="Enregistrer">
+          <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#2b2219] text-[#f0954c] disabled:bg-[#2b2219]/30" aria-label="Enregistrer">
             <Save size={19} strokeWidth={2.5} />
           </button>
         </div>
@@ -260,7 +260,7 @@ export default function DeliverySettingsPage() {
       )}
 
       {notice && (
-        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#eafff1] p-4 text-sm font-semibold text-[#005f3d] ring-1 ring-emerald-200">
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#fbeee0] p-4 text-sm font-semibold text-[#96451f] ring-1 ring-emerald-200">
           <CheckCircle2 size={17} />
           {notice}
         </div>
@@ -268,8 +268,8 @@ export default function DeliverySettingsPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#008f5a] border-t-transparent" />
-          <p className="mt-4 font-extrabold text-[#07120d]/40">Chargement...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#c2572b] border-t-transparent" />
+          <p className="mt-4 font-extrabold text-[#2b2219]/40">Chargement...</p>
         </div>
       ) : (
         <main className="mt-4 space-y-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:mt-8 md:space-y-5 md:pb-0">
@@ -290,12 +290,12 @@ export default function DeliverySettingsPage() {
             <section className="space-y-4">
 
               {/* Delivery options toggles */}
-              <div className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_12px_rgba(7,18,13,0.07)]">
-                <div className="flex items-center gap-2 border-b border-[#07120d]/8 px-4 py-3">
-                  <Truck className="text-[#008f5a]" size={19} />
-                  <h2 className="font-display text-lg font-black text-[#07120d]">Options client</h2>
+              <div className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10 shadow-[0_2px_12px_rgba(43, 34, 25,0.07)]">
+                <div className="flex items-center gap-2 border-b border-[#2b2219]/8 px-4 py-3">
+                  <Truck className="text-[#c2572b]" size={19} />
+                  <h2 className="font-display text-lg font-black text-[#2b2219]">Options client</h2>
                 </div>
-                <div className="divide-y divide-[#07120d]/7">
+                <div className="divide-y divide-[#2b2219]/7">
                   <ToggleRow
                     title="Livraison"
                     text="Le client renseigne commune, quartier et adresse."
@@ -318,28 +318,28 @@ export default function DeliverySettingsPage() {
               </div>
 
               {/* Delivery fee + payment timing */}
-              <div className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_12px_rgba(7,18,13,0.07)]">
-                <div className="flex items-center gap-2 border-b border-[#07120d]/8 px-4 py-3">
-                  <CircleDollarSign className="text-[#008f5a]" size={19} />
-                  <h2 className="font-display text-lg font-black text-[#07120d]">Prix de livraison</h2>
+              <div className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10 shadow-[0_2px_12px_rgba(43, 34, 25,0.07)]">
+                <div className="flex items-center gap-2 border-b border-[#2b2219]/8 px-4 py-3">
+                  <CircleDollarSign className="text-[#c2572b]" size={19} />
+                  <h2 className="font-display text-lg font-black text-[#2b2219]">Prix de livraison</h2>
                 </div>
                 <div className="p-4 space-y-4">
                   <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Frais par defaut</span>
-                    <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#07120d]/12">
-                      <span className="flex h-[54px] items-center justify-center border-r border-[#07120d]/10 px-4 text-sm font-black text-[#008f5a]">FCFA</span>
+                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#2b2219]/50">Frais par defaut</span>
+                    <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#2b2219]/12">
+                      <span className="flex h-[54px] items-center justify-center border-r border-[#2b2219]/10 px-4 text-sm font-black text-[#c2572b]">FCFA</span>
                       <input
                         type="number"
                         value={settings.fixed_delivery_fee}
                         onChange={(event) => setSettings({ ...settings, fixed_delivery_fee: event.target.value })}
-                        className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#07120d] outline-none"
+                        className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#2b2219] outline-none"
                         placeholder="1000"
                       />
                     </div>
                   </label>
 
                   <div>
-                    <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[#07120d]/50">Quand payer ?</p>
+                    <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[#2b2219]/50">Quand payer ?</p>
                     <div className="grid gap-2">
                       <PaymentChoice
                         title="Apres reception"
@@ -366,7 +366,7 @@ export default function DeliverySettingsPage() {
                     type="button"
                     onClick={saveSettings}
                     disabled={saving || !seller}
-                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-4 text-sm font-black text-white active:scale-[0.99] disabled:bg-[#07120d]/30"
+                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] px-4 text-sm font-black text-white active:scale-[0.99] disabled:bg-[#2b2219]/30"
                   >
                     {saving ? "Enregistrement..." : <><Save size={17} /> Enregistrer livraison</>}
                   </button>
@@ -381,23 +381,23 @@ export default function DeliverySettingsPage() {
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MapPin className="text-[#008f5a]" size={19} />
-                    <h2 className="font-display text-lg font-black text-[#07120d]">Communes</h2>
+                    <MapPin className="text-[#c2572b]" size={19} />
+                    <h2 className="font-display text-lg font-black text-[#2b2219]">Communes</h2>
                     {zones.length > 0 && (
-                      <span className="rounded-full bg-[#008f5a]/10 px-2.5 py-0.5 text-xs font-black text-[#008f5a]">{zones.length}</span>
+                      <span className="rounded-full bg-[#c2572b]/10 px-2.5 py-0.5 text-xs font-black text-[#c2572b]">{zones.length}</span>
                     )}
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddAbidjanZones}
                       disabled={saving}
-                      className="hidden min-h-[38px] items-center gap-1.5 rounded-full bg-[#fbf9f4] px-3 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/20 disabled:opacity-60 min-[390px]:flex"
+                      className="hidden min-h-[38px] items-center gap-1.5 rounded-full bg-[#fbf6ee] px-3 text-sm font-extrabold text-[#c2572b] ring-1 ring-[#c2572b]/20 disabled:opacity-60 min-[390px]:flex"
                     >
                       Abidjan
                     </button>
                     <button
                       onClick={() => openZoneModal()}
-                      className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#07120d] px-3 text-sm font-extrabold text-white"
+                      className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#2b2219] px-3 text-sm font-extrabold text-white"
                     >
                       <Plus size={15} strokeWidth={3} />
                       Ajouter
@@ -408,20 +408,20 @@ export default function DeliverySettingsPage() {
                 <button
                   onClick={handleAddAbidjanZones}
                   disabled={saving}
-                  className="mb-3 flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#fbf9f4] px-4 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/15 disabled:opacity-60 min-[390px]:hidden"
+                  className="mb-3 flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#fbf6ee] px-4 text-sm font-extrabold text-[#c2572b] ring-1 ring-[#c2572b]/15 disabled:opacity-60 min-[390px]:hidden"
                 >
                   Ajouter les communes d&apos;Abidjan
                 </button>
 
                 {zones.length === 0 ? (
-                  <div className="rounded-[22px] bg-[#fbf9f4] p-6 text-center ring-1 ring-[#07120d]/8">
-                    <MapPin className="mx-auto text-[#07120d]/20" size={30} />
-                    <p className="mt-3 font-extrabold text-[#07120d]">Frais fixes actifs</p>
-                    <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Ajoutez les communes d&apos;Abidjan en un geste, puis ajustez les frais.</p>
+                  <div className="rounded-[22px] bg-[#fbf6ee] p-6 text-center ring-1 ring-[#2b2219]/8">
+                    <MapPin className="mx-auto text-[#2b2219]/20" size={30} />
+                    <p className="mt-3 font-extrabold text-[#2b2219]">Frais fixes actifs</p>
+                    <p className="mt-1 text-sm font-semibold text-[#2b2219]/50">Ajoutez les communes d&apos;Abidjan en un geste, puis ajustez les frais.</p>
                     <button
                       onClick={handleAddAbidjanZones}
                       disabled={saving}
-                      className="mt-4 min-h-[50px] w-full rounded-2xl bg-[#07120d] text-sm font-extrabold text-white disabled:bg-[#07120d]/30"
+                      className="mt-4 min-h-[50px] w-full rounded-2xl bg-[#2b2219] text-sm font-extrabold text-white disabled:bg-[#2b2219]/30"
                     >
                       {saving ? "Ajout..." : "Ajouter Abidjan"}
                     </button>
@@ -430,7 +430,7 @@ export default function DeliverySettingsPage() {
                         <button
                           key={name}
                           onClick={() => openSuggestedZone(name)}
-                          className="min-h-[36px] rounded-full bg-white px-3 text-sm font-extrabold text-[#008f5a] ring-1 ring-[#008f5a]/20"
+                          className="min-h-[36px] rounded-full bg-white px-3 text-sm font-extrabold text-[#c2572b] ring-1 ring-[#c2572b]/20"
                         >
                           {name}
                         </button>
@@ -440,27 +440,27 @@ export default function DeliverySettingsPage() {
                 ) : (
                   <div className="space-y-2">
                     {zones.map((zone) => (
-                      <div key={zone.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+                      <div key={zone.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf6ee] p-3 ring-1 ring-[#2b2219]/8">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#008f5a] shadow-sm">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#c2572b] shadow-sm">
                             <MapPin size={17} />
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-black text-[#07120d]">{zone.name}</p>
-                            <p className="truncate text-xs font-bold text-[#008f5a]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
+                            <p className="truncate text-sm font-black text-[#2b2219]">{zone.name}</p>
+                            <p className="truncate text-xs font-bold text-[#c2572b]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           <button
                             onClick={() => openZoneModal(zone)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#07120d]/50 shadow-sm"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#2b2219]/50 shadow-sm"
                             aria-label={`Modifier ${zone.name}`}
                           >
                             <Pencil size={15} />
                           </button>
                           <button
                             onClick={() => handleDeleteZone(zone.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#07120d]/25"
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#2b2219]/25"
                             aria-label={`Supprimer ${zone.name}`}
                           >
                             <Trash2 size={16} />
@@ -476,15 +476,15 @@ export default function DeliverySettingsPage() {
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Truck className="text-[#008f5a]" size={19} />
-                    <h2 className="font-display text-lg font-black text-[#07120d]">Livreurs</h2>
+                    <Truck className="text-[#c2572b]" size={19} />
+                    <h2 className="font-display text-lg font-black text-[#2b2219]">Livreurs</h2>
                     {drivers.length > 0 && (
-                      <span className="rounded-full bg-[#008f5a]/10 px-2.5 py-0.5 text-xs font-black text-[#008f5a]">{drivers.length}</span>
+                      <span className="rounded-full bg-[#c2572b]/10 px-2.5 py-0.5 text-xs font-black text-[#c2572b]">{drivers.length}</span>
                     )}
                   </div>
                   <button
                     onClick={() => openDriverModal()}
-                    className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#07120d] px-3 text-sm font-extrabold text-white"
+                    className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#2b2219] px-3 text-sm font-extrabold text-white"
                   >
                     <Plus size={15} strokeWidth={3} />
                     Ajouter
@@ -492,8 +492,8 @@ export default function DeliverySettingsPage() {
                 </div>
 
                 {drivers.length === 0 ? (
-                  <div className="relative overflow-hidden rounded-[24px] bg-[#07120d] p-6 text-center">
-                    <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+                  <div className="relative overflow-hidden rounded-[24px] bg-[#2b2219] p-6 text-center">
+                    <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(240, 149, 76,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(240, 149, 76,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
                     <div className="relative z-10 flex flex-col items-center">
                       <IllustrationDelivery size={96} className="opacity-90" />
                       <p className="mt-2 font-display text-base font-black text-white">Aucun livreur</p>
@@ -503,27 +503,27 @@ export default function DeliverySettingsPage() {
                 ) : (
                   <div className="space-y-2">
                     {drivers.map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+                      <div key={driver.id} className="flex items-center justify-between rounded-[18px] bg-[#fbf6ee] p-3 ring-1 ring-[#2b2219]/8">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#008f5a] shadow-sm">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#c2572b] shadow-sm">
                             <User size={17} />
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-black text-[#07120d]">{driver.name}</p>
-                            <p className="truncate text-xs font-bold text-[#07120d]/50">{driver.phone_number} / {driver.zone || "Toutes communes"}</p>
+                            <p className="truncate text-sm font-black text-[#2b2219]">{driver.name}</p>
+                            <p className="truncate text-xs font-bold text-[#2b2219]/50">{driver.phone_number} / {driver.zone || "Toutes communes"}</p>
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           <button
                             onClick={() => openDriverModal(driver)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#07120d]/50 shadow-sm"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#2b2219]/50 shadow-sm"
                             aria-label={`Modifier ${driver.name}`}
                           >
                             <Pencil size={15} />
                           </button>
                           <button
                             onClick={() => handleDeleteDriver(driver.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#07120d]/25"
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#2b2219]/25"
                             aria-label={`Supprimer ${driver.name}`}
                           >
                             <Trash2 size={16} />
@@ -542,28 +542,28 @@ export default function DeliverySettingsPage() {
       {/* Add/Edit Driver Modal */}
       {showAddDriver && (
         <div className="fixed inset-0 z-[260] flex items-end bg-black/50 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf9f4] shadow-2xl ring-1 ring-[#07120d]/10">
-            <div className="flex items-center justify-between border-b border-[#07120d]/8 px-5 py-4">
-              <h2 className="font-display text-xl font-black text-[#07120d]">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
-              <button onClick={closeDriverModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#07120d]/8" aria-label="Fermer">
+          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf6ee] shadow-2xl ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center justify-between border-b border-[#2b2219]/8 px-5 py-4">
+              <h2 className="font-display text-xl font-black text-[#2b2219]">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
+              <button onClick={closeDriverModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2b2219]/8" aria-label="Fermer">
                 <X size={17} />
               </button>
             </div>
             <div className="space-y-3 p-5">
               <input
-                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                className="mobile-input bg-white ring-1 ring-[#2b2219]/12"
                 placeholder="Nom du livreur"
                 value={newDriver.name}
                 onChange={(event) => setNewDriver({ ...newDriver, name: event.target.value })}
               />
               <input
-                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                className="mobile-input bg-white ring-1 ring-[#2b2219]/12"
                 placeholder="WhatsApp (+225...)"
                 value={newDriver.phone_number}
                 onChange={(event) => setNewDriver({ ...newDriver, phone_number: event.target.value })}
               />
               <input
-                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                className="mobile-input bg-white ring-1 ring-[#2b2219]/12"
                 placeholder="Commune ou zone (optionnel)"
                 value={newDriver.zone}
                 onChange={(event) => setNewDriver({ ...newDriver, zone: event.target.value })}
@@ -571,7 +571,7 @@ export default function DeliverySettingsPage() {
               <button
                 onClick={handleSaveDriver}
                 disabled={saving}
-                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-base font-extrabold text-white disabled:bg-[#07120d]/30"
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] text-base font-extrabold text-white disabled:bg-[#2b2219]/30"
               >
                 {editingDriver ? "Mettre a jour" : "Enregistrer"}
               </button>
@@ -583,25 +583,25 @@ export default function DeliverySettingsPage() {
       {/* Add/Edit Zone Modal */}
       {showAddZone && (
         <div className="fixed inset-0 z-[260] flex items-end bg-black/50 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:items-center">
-          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf9f4] shadow-2xl ring-1 ring-[#07120d]/10">
-            <div className="flex items-center justify-between border-b border-[#07120d]/8 px-5 py-4">
-              <h2 className="font-display text-xl font-black text-[#07120d]">{editingZone ? "Modifier la commune" : "Nouvelle commune"}</h2>
-              <button onClick={closeZoneModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#07120d]/8" aria-label="Fermer">
+          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#fbf6ee] shadow-2xl ring-1 ring-[#2b2219]/10">
+            <div className="flex items-center justify-between border-b border-[#2b2219]/8 px-5 py-4">
+              <h2 className="font-display text-xl font-black text-[#2b2219]">{editingZone ? "Modifier la commune" : "Nouvelle commune"}</h2>
+              <button onClick={closeZoneModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2b2219]/8" aria-label="Fermer">
                 <X size={17} />
               </button>
             </div>
             <div className="space-y-3 p-5">
               <input
-                className="mobile-input bg-white ring-1 ring-[#07120d]/12"
+                className="mobile-input bg-white ring-1 ring-[#2b2219]/12"
                 placeholder="Ex: Cocody, Angre, Riviera..."
                 value={newZone.name}
                 onChange={(event) => setNewZone({ ...newZone, name: event.target.value })}
               />
-              <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#07120d]/12">
-                <span className="flex h-[54px] items-center justify-center border-r border-[#07120d]/10 px-4 text-sm font-black text-[#008f5a]">FCFA</span>
+              <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#2b2219]/12">
+                <span className="flex h-[54px] items-center justify-center border-r border-[#2b2219]/10 px-4 text-sm font-black text-[#c2572b]">FCFA</span>
                 <input
                   type="number"
-                  className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#07120d] outline-none"
+                  className="flex-1 bg-transparent px-3 py-3 text-base font-black text-[#2b2219] outline-none"
                   placeholder="Frais de livraison"
                   value={newZone.fee}
                   onChange={(event) => setNewZone({ ...newZone, fee: event.target.value })}
@@ -610,7 +610,7 @@ export default function DeliverySettingsPage() {
               <button
                 onClick={handleSaveZone}
                 disabled={saving}
-                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-base font-extrabold text-white disabled:bg-[#07120d]/30"
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] text-base font-extrabold text-white disabled:bg-[#2b2219]/30"
               >
                 {editingZone ? "Mettre a jour" : "Enregistrer"}
               </button>
@@ -658,15 +658,15 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
 
 function DeliveryNextActionCard({ action, saving }) {
   return (
-    <section className={`rounded-[26px] p-4 ${action.strong ? "bg-[#07120d] text-white" : "bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/10"}`}>
+    <section className={`rounded-[26px] p-4 ${action.strong ? "bg-[#2b2219] text-white" : "bg-[#fbf6ee] text-[#2b2219] ring-1 ring-[#2b2219]/10"}`}>
       <div className="flex items-start gap-3">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${action.strong ? "bg-[#39f58e]/20 text-[#39f58e]" : "bg-white text-[#008f5a] shadow-sm"}`}>
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${action.strong ? "bg-[#f0954c]/20 text-[#f0954c]" : "bg-white text-[#c2572b] shadow-sm"}`}>
           {action.step}
         </span>
         <div className="min-w-0 flex-1">
-          <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${action.strong ? "text-[#39f58e]/80" : "text-[#008f5a]"}`}>Action suivante</p>
+          <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${action.strong ? "text-[#f0954c]/80" : "text-[#c2572b]"}`}>Action suivante</p>
           <h2 className="mt-1 font-display text-xl font-bold leading-7">{action.title}</h2>
-          <p className={`mt-1 text-sm leading-5 ${action.strong ? "text-white/65" : "text-[#07120d]/55"}`}>{action.body}</p>
+          <p className={`mt-1 text-sm leading-5 ${action.strong ? "text-white/65" : "text-[#2b2219]/55"}`}>{action.body}</p>
         </div>
       </div>
       <button
@@ -674,7 +674,7 @@ function DeliveryNextActionCard({ action, saving }) {
         onClick={action.onClick}
         disabled={saving}
         className={`mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-extrabold active:scale-[0.99] disabled:opacity-70 ${
-          action.strong ? "bg-[#39f58e] text-[#07120d]" : "bg-[#07120d] text-white"
+          action.strong ? "bg-[#f0954c] text-[#2b2219]" : "bg-[#2b2219] text-white"
         }`}
       >
         {saving ? "Enregistrement..." : action.icon}
@@ -687,18 +687,18 @@ function DeliveryNextActionCard({ action, saving }) {
 
 function DeliveryStat({ icon, label, value, tone }) {
   const toneClass = {
-    primary: "bg-[#008f5a]/10 text-[#008f5a]",
+    primary: "bg-[#c2572b]/10 text-[#c2572b]",
     info: "bg-blue-50 text-blue-600",
     accent: "bg-amber-50 text-amber-600",
   }[tone];
 
   return (
-    <div className="rounded-[18px] bg-[#fbf9f4] p-3 ring-1 ring-[#07120d]/8">
+    <div className="rounded-[18px] bg-[#fbf6ee] p-3 ring-1 ring-[#2b2219]/8">
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
         {icon}
       </span>
-      <p className="mt-3 font-display text-lg font-bold leading-none text-[#07120d]">{value}</p>
-      <p className="mt-1 text-xs font-bold text-[#07120d]/50">{label}</p>
+      <p className="mt-3 font-display text-lg font-bold leading-none text-[#2b2219]">{value}</p>
+      <p className="mt-1 text-xs font-bold text-[#2b2219]/50">{label}</p>
     </div>
   );
 }
@@ -710,10 +710,10 @@ function ToggleRow({ title, text, active, onClick }) {
       className="flex min-h-[70px] w-full items-center justify-between gap-4 px-4 py-3 text-left"
     >
       <div>
-        <p className="text-sm font-black text-[#07120d]">{title}</p>
-        <p className="mt-0.5 text-xs font-bold leading-4 text-[#07120d]/50">{text}</p>
+        <p className="text-sm font-black text-[#2b2219]">{title}</p>
+        <p className="mt-0.5 text-xs font-bold leading-4 text-[#2b2219]/50">{text}</p>
       </div>
-      <div className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 ${active ? "bg-[#008f5a]" : "bg-[#07120d]/15"}`}>
+      <div className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 ${active ? "bg-[#c2572b]" : "bg-[#2b2219]/15"}`}>
         <div className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? "translate-x-5" : ""}`} />
       </div>
     </button>
@@ -725,14 +725,14 @@ function PaymentChoice({ title, text, active, onClick }) {
     <button
       onClick={onClick}
       className={`flex min-h-[60px] w-full items-center justify-between gap-4 rounded-2xl border p-3 text-left transition-colors ${
-        active ? "border-[#008f5a]/40 bg-[#eafff5]" : "border-[#07120d]/10 bg-white"
+        active ? "border-[#c2572b]/40 bg-[#fbefe2]" : "border-[#2b2219]/10 bg-white"
       }`}
     >
       <div>
-        <p className={`text-sm font-black ${active ? "text-[#07120d]" : "text-[#07120d]"}`}>{title}</p>
-        <p className="mt-0.5 text-xs font-bold leading-4 text-[#07120d]/50">{text}</p>
+        <p className={`text-sm font-black ${active ? "text-[#2b2219]" : "text-[#2b2219]"}`}>{title}</p>
+        <p className="mt-0.5 text-xs font-bold leading-4 text-[#2b2219]/50">{text}</p>
       </div>
-      {active && <CheckCircle2 className="shrink-0 text-[#008f5a]" size={19} />}
+      {active && <CheckCircle2 className="shrink-0 text-[#c2572b]" size={19} />}
     </button>
   );
 }

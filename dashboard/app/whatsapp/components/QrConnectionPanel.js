@@ -17,7 +17,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { formatPairingCode, getPairingValidityLabel } from "../../../lib/whatsapp-utils";
-import { IllustrationSuccess, IllustrationWhatsApp } from "../../components/TikchopIllustrations";
+import TikchopLottie from "../../components/TikchopLottie";
 
 function QrStep({ icon, title, text }) {
   return (
@@ -75,12 +75,12 @@ export function QrConnectionPanel({
       </div>
 
       {!isConnected && (
-        <div className="mt-5 rounded-[24px] bg-[#07120d] p-3 text-white shadow-[0_18px_38px_rgba(8,18,13,0.16)]">
+        <div className="mt-5 rounded-[24px] bg-[#2b2219] p-3 text-white shadow-[0_18px_38px_rgba(38, 30, 22,0.16)]">
           <label htmlFor="seller-whatsapp-number" className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary-bright)]">
             <Phone size={15} />
             Numero WhatsApp vendeur
           </label>
-          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[#07120d]">
+          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[#2b2219]">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-[var(--primary)]">
               <Smartphone size={19} />
             </span>
@@ -111,19 +111,14 @@ export function QrConnectionPanel({
         <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
           {isConnected ? (
             <div className="flex min-h-[270px] flex-col items-center justify-center text-center">
-              <div className="relative mx-auto w-24 h-24 mb-4 flex items-center justify-center">
-                <IllustrationWhatsApp size={96} />
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
-                  <IllustrationSuccess size={32} />
-                </div>
-              </div>
-              <h3 className="mt-4 font-display text-2xl font-black text-[var(--text-main)]">WhatsApp est connecte</h3>
+              <TikchopLottie name="success" size={150} />
+              <h3 className="mt-2 font-display text-2xl font-black text-[var(--text-main)]">WhatsApp est connecte</h3>
               <p className="mt-2 max-w-sm text-sm font-semibold leading-5 text-[var(--text-dim)]">
                 Tikchop peut maintenant recevoir les messages et vendre depuis ce numero.
               </p>
               <Link
                 href="/messages"
-                className="mt-5 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#08120d] px-5 text-sm font-black text-white no-underline"
+                className="mt-5 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#261e16] px-5 text-sm font-black text-white no-underline"
               >
                 <MessageCircle size={17} />
                 Voir les discussions
@@ -155,7 +150,7 @@ export function QrConnectionPanel({
                 type="button"
                 onClick={onRefreshPairingCode}
                 disabled={busy === "code"}
-                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-70"
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#261e16] px-5 text-sm font-black text-white disabled:opacity-70"
               >
                 {busy === "code" ? <Loader2 className="animate-spin" size={18} /> : <RefreshCw size={18} />}
                 Reessayer
@@ -174,7 +169,7 @@ export function QrConnectionPanel({
                 type="button"
                 onClick={onConnect}
                 disabled={busy === "pairing" || !phoneReady}
-                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#08120d] px-5 text-sm font-black text-white disabled:opacity-70"
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#261e16] px-5 text-sm font-black text-white disabled:opacity-70"
               >
                 {busy === "pairing" ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
                 Generer le QR
@@ -220,7 +215,7 @@ export function QrConnectionPanel({
             type="button"
             onClick={onRefreshPairingCode}
             disabled={busy === "code"}
-            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#08120d] px-4 text-xs font-black text-white disabled:opacity-60"
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#261e16] px-4 text-xs font-black text-white disabled:opacity-60"
           >
             {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
             Generer un nouveau code
@@ -234,7 +229,7 @@ export function QrConnectionPanel({
             type="button"
             onClick={onRefreshPairingCode}
             disabled={busy === "code"}
-            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#08120d] px-4 text-xs font-black text-white disabled:opacity-60"
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#261e16] px-4 text-xs font-black text-white disabled:opacity-60"
           >
             {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
             Generer un code WhatsApp

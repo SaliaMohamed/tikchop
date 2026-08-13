@@ -81,12 +81,12 @@ export default function OrdersPage() {
               aria-label={label}
               title={label}
               className={`flex min-h-[44px] items-center gap-2 rounded-full px-3 text-sm font-black transition ${
-                filter === key ? "bg-[#07120d] text-white" : "bg-white text-[#4e6055] ring-1 ring-[#07120d]/8"
+                filter === key ? "bg-[#2b2219] text-white" : "bg-white text-[#6e6353] ring-1 ring-[#2b2219]/8"
               }`}
             >
               <Icon size={16} />
               <span className={filter === key ? "" : "sr-only"}>{label}</span>
-              <span className={`text-[10px] font-black ${filter === key ? "text-[#39f58e]" : "text-[#008f5a]"}`}>
+              <span className={`text-[10px] font-black ${filter === key ? "text-[#f0954c]" : "text-[#c2572b]"}`}>
                 {getFilterCount(key)}
               </span>
             </button>
@@ -96,26 +96,26 @@ export default function OrdersPage() {
             onClick={fetchOrders}
             aria-label="Actualiser"
             title="Actualiser"
-            className="flex min-h-[44px] w-12 items-center justify-center rounded-full bg-white text-[#07120d] ring-1 ring-[#07120d]/8"
+            className="flex min-h-[44px] w-12 items-center justify-center rounded-full bg-white text-[#2b2219] ring-1 ring-[#2b2219]/8"
           >
-            <RefreshCw size={17} strokeWidth={2.35} className={loading ? "animate-spin text-[#008f5a]" : ""} />
+            <RefreshCw size={17} strokeWidth={2.35} className={loading ? "animate-spin text-[#c2572b]" : ""} />
           </button>
         </div>
       </nav>
 
       {error && (
-        <div className="mt-4 rounded-[22px] bg-[#fff8dd] p-3 text-xs font-black text-[#5b3b00] ring-1 ring-[#ffd966]/45">
+        <div className="mt-4 rounded-[22px] bg-[#fdf3d6] p-3 text-xs font-black text-[#7a5425] ring-1 ring-[#f4ce60]/45">
           <p>{error}</p>
           <div className="mt-3 flex gap-2">
             {sessionExpired && (
-              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[#07120d] px-4 text-xs font-black text-white no-underline">
+              <Link href="/login" className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[#2b2219] px-4 text-xs font-black text-white no-underline">
                 Connexion
               </Link>
             )}
             <button
               type="button"
               onClick={fetchOrders}
-              className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white px-4 text-xs font-black text-[#5b3b00] ring-1 ring-[#ffd966]/60"
+              className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white px-4 text-xs font-black text-[#7a5425] ring-1 ring-[#f4ce60]/60"
             >
               Actualiser
             </button>
@@ -211,9 +211,9 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#07120d] rounded-[28px] my-6 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#2b2219] rounded-[28px] my-6 relative overflow-hidden">
       {/* Subtle grid */}
-      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(57,245,142,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(57,245,142,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(240, 149, 76,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(240, 149, 76,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
       <div className="relative z-10 flex flex-col items-center w-full">
         <IllustrationNoOrders size={120} className="opacity-90" />
         <h3 className="mt-3 font-display text-xl font-bold text-white">Aucune vente</h3>
@@ -224,7 +224,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         <button
           type="button"
           onClick={handleShare}
-          className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-2xl bg-[#39f58e] text-sm font-extrabold text-[#07120d] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(57,245,142,0.25)]"
+          className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-2xl bg-[#f0954c] text-sm font-extrabold text-[#2b2219] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(240, 149, 76,0.25)]"
         >
           <Share2 size={16} />
           {copied ? "Lien copi? !" : "Partager la boutique"}
@@ -286,28 +286,28 @@ function OrderCard({ order, onClick, index = 0 }) {
   return (
     <div
       onClick={onClick}
-      className="animate-rise-in cursor-pointer w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(7_18_13_/_0.035)] ring-1 ring-[#07120d]/7 active:scale-[0.99] transition hover:shadow-md"
+      className="animate-rise-in cursor-pointer w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(43_34_25_/_0.035)] ring-1 ring-[#2b2219]/7 active:scale-[0.99] transition hover:shadow-md"
       style={{ animationDelay: delay }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-base font-black text-[#07120d] truncate">
+            <h3 className="font-display text-base font-black text-[#2b2219] truncate">
               {order.order_ref || order.id?.slice(0, 8).toUpperCase()}
             </h3>
             <span className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${statusColors[simpleStatus] || "bg-zinc-50 text-zinc-600"}`}>
               {statusLabel}
             </span>
           </div>
-          <p className="mt-1 text-sm font-semibold text-[#4e6055] truncate">
+          <p className="mt-1 text-sm font-semibold text-[#6e6353] truncate">
             {demoOrder ? "Client test" : primaryLine}
           </p>
-          <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-[#4e6055]/50">
+          <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-[#6e6353]/50">
             <Package size={12} /> {itemCount} article{itemCount > 1 ? "s" : ""} ? {dateStr}
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-display text-base font-black text-[#07120d] whitespace-nowrap">
+          <p className="font-display text-base font-black text-[#2b2219] whitespace-nowrap">
             {demoOrder ? "TEST" : formatPrice(total)}
           </p>
           <span className={`mt-1.5 inline-flex min-h-[30px] items-center justify-center rounded-full px-3 text-[0.68rem] font-black ${getCardActionTone(simpleStatus)}`}>
@@ -317,19 +317,19 @@ function OrderCard({ order, onClick, index = 0 }) {
       </div>
 
       {/* Visual Stepper Bar on List Card */}
-      <div className="mt-3 flex items-center justify-between border-t border-[#07120d]/5 pt-2.5">
+      <div className="mt-3 flex items-center justify-between border-t border-[#2b2219]/5 pt-2.5">
         <div className="flex items-center gap-1.5">
-          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Re?ue" />
-          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Colis pr?t" />
-          <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Livreur" />
-          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#008f5a]" : "w-2 bg-[#07120d]/10"}`} title="Livr?" />
-          <span className="ml-1 text-[0.6rem] font-black text-[#008f5a] uppercase tracking-wider">
+          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#c2572b]" : "w-2 bg-[#2b2219]/10"}`} title="Re?ue" />
+          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#c2572b]" : "w-2 bg-[#2b2219]/10"}`} title="Colis pr?t" />
+          <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#c2572b]" : "w-2 bg-[#2b2219]/10"}`} title="Livreur" />
+          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#c2572b]" : "w-2 bg-[#2b2219]/10"}`} title="Livr?" />
+          <span className="ml-1 text-[0.6rem] font-black text-[#c2572b] uppercase tracking-wider">
             {simpleStatus === "DELIVERED" ? "Livr?e" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Pr?te" : simpleStatus === "PAID" ? "En pr?pa" : "Re?ue"}
           </span>
         </div>
         {order.delivery_zone && (
-          <span className="text-[0.64rem] font-extrabold text-[#4e6055]/60 flex items-center gap-1">
-            <MapPin size={11} className="text-[#008f5a]" /> {order.delivery_zone}
+          <span className="text-[0.64rem] font-extrabold text-[#6e6353]/60 flex items-center gap-1">
+            <MapPin size={11} className="text-[#c2572b]" /> {order.delivery_zone}
           </span>
         )}
       </div>
@@ -415,32 +415,32 @@ function OrderSheet({
   );
 
   return (
-    <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
-      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[32px] bg-white border border-[#e8dcc8]/45 shadow-2xl md:rounded-[32px]">
-        <div className="relative overflow-hidden bg-[#fbf9f4] border-b border-[#e8dcc8]/40 p-5 text-[#07120d]">
+    <div className="fixed inset-0 z-[260] flex items-end bg-[#2b2219]/40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
+      <div className="animate-slide-up mx-auto max-h-[92vh] w-full max-w-[460px] overflow-hidden rounded-t-[32px] bg-white border border-[#e7dac2]/45 shadow-2xl md:rounded-[32px]">
+        <div className="relative overflow-hidden bg-[#fbf6ee] border-b border-[#e7dac2]/40 p-5 text-[#2b2219]">
           <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[var(--primary)] to-[var(--primary-bright)]" />
           <button 
             onClick={onClose} 
-            className="absolute right-5 top-5 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#07120d] border border-[#e8dcc8]/30 shadow-sm hover:bg-[#fbf9f4] transition active:scale-95" 
+            className="absolute right-5 top-5 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#2b2219] border border-[#e7dac2]/30 shadow-sm hover:bg-[#fbf6ee] transition active:scale-95" 
             aria-label="Fermer"
           >
             <X size={16} strokeWidth={2.5} />
           </button>
           <div className="relative z-10 flex items-start justify-between gap-4">
             <div className="min-w-0 pr-12">
-              <p className="text-[0.64rem] font-black uppercase tracking-[0.14em] text-[#685f4f]/80">Commande #{order.order_ref || order.id?.slice(0, 8)}</p>
-              <h2 className="mt-2 font-display text-xl font-black leading-7 text-[#07120d]">{nextAction.title}</h2>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#685f4f]">{nextAction.subtitle}</p>
+              <p className="text-[0.64rem] font-black uppercase tracking-[0.14em] text-[#6e6354]/80">Commande #{order.order_ref || order.id?.slice(0, 8)}</p>
+              <h2 className="mt-2 font-display text-xl font-black leading-7 text-[#2b2219]">{nextAction.title}</h2>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6e6354]">{nextAction.subtitle}</p>
             </div>
           </div>
           <div className="relative z-10 mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-2xl bg-white border border-[#e8dcc8]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
-              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80">Total</p>
-              <p className="mt-1 font-display text-lg font-black text-[#008f5a]">{formatPrice(total)}</p>
+            <div className="rounded-2xl bg-white border border-[#e7dac2]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
+              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80">Total</p>
+              <p className="mt-1 font-display text-lg font-black text-[#c2572b]">{formatPrice(total)}</p>
             </div>
-            <div className="rounded-2xl bg-white border border-[#e8dcc8]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
-              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#685f4f]/80">Articles</p>
-              <p className="mt-1 font-display text-lg font-black text-[#07120d]">{getOrderItemCount(order)}</p>
+            <div className="rounded-2xl bg-white border border-[#e7dac2]/35 p-3 shadow-[0_2px_6px_rgba(58,47,30,0.02)]">
+              <p className="text-[0.62rem] font-black uppercase tracking-wider text-[#6e6354]/80">Articles</p>
+              <p className="mt-1 font-display text-lg font-black text-[#2b2219]">{getOrderItemCount(order)}</p>
             </div>
           </div>
         </div>
@@ -483,24 +483,24 @@ function OrderSheet({
                 onShare={openDriverWhatsapp}
               />
             ) : (
-              <div className="mt-3 rounded-2xl bg-[#fff8db] p-3 text-sm font-bold leading-5 text-[#5a4212] ring-1 ring-[#ffcf3d]/40">
+              <div className="mt-3 rounded-2xl bg-[#fcf2d3] p-3 text-sm font-bold leading-5 text-[#6d5126] ring-1 ring-[#f4c13a]/40">
                 La fiche livreur apparait ici apres <strong>Marquer colis pret</strong>. Elle contient client, adresse, articles, total, frais a encaisser et lien recu.
               </div>
             )}
           </section>
 
-          <div className="rounded-[24px] bg-[#fbf9f4] border border-[#e8dcc8]/45 p-4.5 text-[#07120d] shadow-[0_2px_10px_rgba(58,47,30,0.02)]">
-            <div className="flex justify-between text-xs font-black uppercase tracking-wider text-[#685f4f]">
+          <div className="rounded-[24px] bg-[#fbf6ee] border border-[#e7dac2]/45 p-4.5 text-[#2b2219] shadow-[0_2px_10px_rgba(58,47,30,0.02)]">
+            <div className="flex justify-between text-xs font-black uppercase tracking-wider text-[#6e6354]">
               <span>Produits</span>
               <span>{formatPrice(order.total_amount)}</span>
             </div>
-            <div className="mt-2.5 flex justify-between text-xs font-black uppercase tracking-wider text-[#685f4f]">
+            <div className="mt-2.5 flex justify-between text-xs font-black uppercase tracking-wider text-[#6e6354]">
               <span>Livraison</span>
               <span>{formatPrice(order.delivery_fee)}</span>
             </div>
-            <div className="mt-3.5 flex justify-between border-t border-dashed border-[#e8dcc8] pt-3.5 text-lg font-black font-display">
+            <div className="mt-3.5 flex justify-between border-t border-dashed border-[#e7dac2] pt-3.5 text-lg font-black font-display">
               <span>Total</span>
-              <span className="text-[#008f5a]">{formatPrice(total)}</span>
+              <span className="text-[#c2572b]">{formatPrice(total)}</span>
             </div>
           </div>
 
@@ -535,17 +535,17 @@ function OrderSheet({
               Commande annulee
             </div>
           ) : isPending ? (
-            <button onClick={onPaid} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#008f5a] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
+            <button onClick={onPaid} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#c2572b] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
               <CheckCircle2 size={20} />
               Client confirme
             </button>
           ) : isPaid ? (
-            <button onClick={onPrepared} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#07120d] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
+            <button onClick={onPrepared} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#2b2219] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
               <Package size={20} />
               Marquer colis pret
             </button>
           ) : isInDelivery ? (
-            <button onClick={onDelivered} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#008f5a] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
+            <button onClick={onDelivered} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#c2572b] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
               <CheckCircle2 size={20} />
               Marquer livree
             </button>
@@ -555,25 +555,25 @@ function OrderSheet({
               Commande livree
             </div>
           ) : (
-            <button onClick={() => openDriverWhatsapp()} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#07120d] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
+            <button onClick={() => openDriverWhatsapp()} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#2b2219] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
               <Share2 size={19} />
               Partager au livreur
             </button>
           )}
 
           <div className="grid grid-cols-2 gap-2">
-            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${clientHref ? "bg-[#fbf9f4] text-[#07120d] border border-[#e8dcc8]/60 shadow-sm active:scale-98" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
+            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${clientHref ? "bg-[#fbf6ee] text-[#2b2219] border border-[#e7dac2]/60 shadow-sm active:scale-98" : "pointer-events-none bg-zinc-100 text-zinc-400"}`}>
               <Send size={15} />
               Message client
             </a>
-            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#fbf9f4] text-xs font-black text-[#07120d] border border-[#e8dcc8]/60 shadow-sm transition active:scale-98">
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#fbf6ee] text-xs font-black text-[#2b2219] border border-[#e7dac2]/60 shadow-sm transition active:scale-98">
               <ReceiptText size={15} />
               Recu
             </a>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={onDelivered} disabled={!canMarkDelivered || isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${canMarkDelivered && !isDone && !isCancelled ? "bg-[#fbf9f4] text-[#008f5a] border border-[#e8dcc8]/60 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
+            <button onClick={onDelivered} disabled={!canMarkDelivered || isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${canMarkDelivered && !isDone && !isCancelled ? "bg-[#fbf6ee] text-[#c2572b] border border-[#e7dac2]/60 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
               <CheckCircle2 size={15} />
               {isReadyForDriver ? "Livree sans livreur" : "Marquer livree"}
             </button>
@@ -626,26 +626,26 @@ function SimpleOrderSheet({
             : { label: "Partager livreur", icon: <Truck size={19} />, onClick: () => onShareDriver(), tone: "dark" };
 
   return (
-    <div className="fixed inset-0 z-[260] flex items-end bg-[#07120d]/35 px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
-      <div className="animate-slide-up mx-auto max-h-[88vh] w-full max-w-[440px] overflow-hidden rounded-[30px] bg-[#fbf9f4] shadow-[0_28px_70px_rgb(7_18_13_/_0.28)] ring-1 ring-white/70">
-        <header className="flex items-start justify-between gap-4 border-b border-[#07120d]/8 bg-white px-5 py-4">
+    <div className="fixed inset-0 z-[260] flex items-end bg-[#2b2219]/35 px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom,0px))] backdrop-blur-sm md:items-center">
+      <div className="animate-slide-up mx-auto max-h-[88vh] w-full max-w-[440px] overflow-hidden rounded-[30px] bg-[#fbf6ee] shadow-[0_28px_70px_rgb(43_34_25_/_0.28)] ring-1 ring-white/70">
+        <header className="flex items-start justify-between gap-4 border-b border-[#2b2219]/8 bg-white px-5 py-4">
           <div className="min-w-0">
-            <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#008f5a]">{statusLabels[status] || status}</p>
-            <h2 className="mt-1 truncate font-display text-2xl font-black leading-7 text-[#07120d]">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#c2572b]">{statusLabels[status] || status}</p>
+            <h2 className="mt-1 truncate font-display text-2xl font-black leading-7 text-[#2b2219]">
               {order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}
             </h2>
-            <p className="mt-1 text-xs font-bold text-[#4e6055]/60">{action.title}</p>
+            <p className="mt-1 text-xs font-bold text-[#6e6353]/60">{action.title}</p>
           </div>
-          <button type="button" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] text-[#07120d] ring-1 ring-[#07120d]/8" aria-label="Fermer">
+          <button type="button" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf6ee] text-[#2b2219] ring-1 ring-[#2b2219]/8" aria-label="Fermer">
             <X size={17} />
           </button>
         </header>
 
         <div className="no-scrollbar max-h-[58vh] space-y-3 overflow-y-auto px-4 py-4">
-          <div className="rounded-[24px] bg-[#07120d] p-4 text-white">
+          <div className="rounded-[24px] bg-[#2b2219] p-4 text-white">
             <div className="flex items-end justify-between gap-3">
               <span>
-                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#39f58e]">Total</span>
+                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#f0954c]">Total</span>
                 <strong className="mt-1 block font-display text-3xl font-black leading-none">{formatPrice(total)}</strong>
               </span>
               <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white/80">
@@ -654,19 +654,19 @@ function SimpleOrderSheet({
             </div>
           </div>
 
-          <section className="rounded-[22px] bg-white p-3 ring-1 ring-[#07120d]/7">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#008f5a]">
+          <section className="rounded-[22px] bg-white p-3 ring-1 ring-[#2b2219]/7">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#c2572b]">
               <Package size={14} />
               Sachet
             </div>
             <div className="mt-3 space-y-2">
               {(items || []).map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-[#fbf9f4] px-3 py-2.5">
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-[#fbf6ee] px-3 py-2.5">
                   <span className="min-w-0">
-                    <strong className="block truncate text-sm font-black text-[#07120d]">{item.products?.name || "Article"}</strong>
-                    <small className="text-xs font-bold text-[#4e6055]/55">A mettre dans le sachet</small>
+                    <strong className="block truncate text-sm font-black text-[#2b2219]">{item.products?.name || "Article"}</strong>
+                    <small className="text-xs font-bold text-[#6e6353]/55">A mettre dans le sachet</small>
                   </span>
-                  <strong className="rounded-full bg-white px-3 py-1.5 text-sm font-black text-[#07120d] ring-1 ring-[#07120d]/6">x{item.quantity}</strong>
+                  <strong className="rounded-full bg-white px-3 py-1.5 text-sm font-black text-[#2b2219] ring-1 ring-[#2b2219]/6">x{item.quantity}</strong>
                 </div>
               ))}
             </div>
@@ -685,7 +685,7 @@ function SimpleOrderSheet({
                   key={driver.id}
                   type="button"
                   onClick={() => onShareDriver(driver)}
-                  className="min-h-[46px] shrink-0 rounded-full bg-white px-4 text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/8"
+                  className="min-h-[46px] shrink-0 rounded-full bg-white px-4 text-xs font-black text-[#2b2219] ring-1 ring-[#2b2219]/8"
                 >
                   {driver.name}
                 </button>
@@ -694,30 +694,30 @@ function SimpleOrderSheet({
           )}
         </div>
 
-        <footer className="space-y-2 border-t border-[#07120d]/8 bg-white p-4">
+        <footer className="space-y-2 border-t border-[#2b2219]/8 bg-white p-4">
           <button
             type="button"
             onClick={primary.onClick || undefined}
             disabled={primary.disabled}
             className={`flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-black shadow-sm disabled:opacity-70 ${
               primary.tone === "green"
-                ? "bg-[#008f5a] text-white"
+                ? "bg-[#c2572b] text-white"
                 : primary.tone === "dark"
-                  ? "bg-[#07120d] text-white"
-                  : "bg-[#f1f1ee] text-[#4e6055]"
+                  ? "bg-[#2b2219] text-white"
+                  : "bg-[#f0ece2] text-[#6e6353]"
             }`}
           >
             {primary.icon}
             {primary.label}
           </button>
           <div className="grid grid-cols-3 gap-2">
-            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[46px] items-center justify-center rounded-[18px] text-xs font-black no-underline ring-1 ${clientHref ? "bg-[#fbf9f4] text-[#07120d] ring-[#07120d]/8" : "pointer-events-none bg-[#f1f1ee] text-[#4e6055]/45 ring-transparent"}`}>
+            <a href={clientHref || undefined} target="_blank" rel="noopener noreferrer" className={`flex min-h-[46px] items-center justify-center rounded-[18px] text-xs font-black no-underline ring-1 ${clientHref ? "bg-[#fbf6ee] text-[#2b2219] ring-[#2b2219]/8" : "pointer-events-none bg-[#f0ece2] text-[#6e6353]/45 ring-transparent"}`}>
               Client
             </a>
-            <button type="button" onClick={() => onShareDriver()} disabled={!canShareDriver} className="min-h-[46px] rounded-[18px] bg-[#fbf9f4] text-xs font-black text-[#07120d] ring-1 ring-[#07120d]/8 disabled:opacity-40">
+            <button type="button" onClick={() => onShareDriver()} disabled={!canShareDriver} className="min-h-[46px] rounded-[18px] bg-[#fbf6ee] text-xs font-black text-[#2b2219] ring-1 ring-[#2b2219]/8 disabled:opacity-40">
               Livreur
             </button>
-            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[46px] items-center justify-center rounded-[18px] bg-[#fbf9f4] text-xs font-black text-[#07120d] no-underline ring-1 ring-[#07120d]/8">
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-[46px] items-center justify-center rounded-[18px] bg-[#fbf6ee] text-xs font-black text-[#2b2219] no-underline ring-1 ring-[#2b2219]/8">
               Recu
             </a>
           </div>
@@ -734,13 +734,13 @@ function SimpleOrderSheet({
 
 function MiniInfo({ icon, label, value }) {
   return (
-    <div className="flex items-center gap-3 rounded-[20px] bg-white px-3 py-3 ring-1 ring-[#07120d]/7">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf9f4] text-[#008f5a]">
+    <div className="flex items-center gap-3 rounded-[20px] bg-white px-3 py-3 ring-1 ring-[#2b2219]/7">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf6ee] text-[#c2572b]">
         {icon}
       </span>
       <span className="min-w-0">
-        <small className="block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#4e6055]/45">{label}</small>
-        <strong className="block truncate text-sm font-black text-[#07120d]">{value}</strong>
+        <small className="block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#6e6353]/45">{label}</small>
+        <strong className="block truncate text-sm font-black text-[#2b2219]">{value}</strong>
       </span>
     </div>
   );
@@ -757,8 +757,8 @@ function DemoOrderChecklist() {
   ];
 
   return (
-    <section className="rounded-[22px] bg-[#fff8dc] p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#ffb000]/30">
-      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#8a5a00]">Exemple</p>
+    <section className="rounded-[22px] bg-[#fdf2d5] p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#ef9f28]/30">
+      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#a06a24]">Exemple</p>
       <p className="mt-1 text-sm font-extrabold text-[var(--text-main)]">Aucun vrai client WhatsApp n&apos;est contacte.</p>
       <div className="mt-3 grid gap-2">
         {checks.map((check, index) => (
@@ -840,7 +840,7 @@ function OrderActionPath({ verifyCount, prepareCount, readyCount, deliveryCount,
       count: prepareCount,
       detail: "Articles en sachet",
       icon: <Package size={18} />,
-      className: "bg-[var(--primary-bright)] text-[#06100a] ring-[var(--primary-bright)]",
+      className: "bg-[var(--primary-bright)] text-[#221b14] ring-[var(--primary-bright)]",
     },
     {
       key: "driver",
@@ -968,14 +968,14 @@ function OrderProgress({ status, deliveryStatus }) {
   ];
 
   return (
-    <div className="rounded-[22px] bg-[#07120d] p-3.5 text-white shadow-md">
+    <div className="rounded-[22px] bg-[#2b2219] p-3.5 text-white shadow-md">
       <div className="grid grid-cols-4 gap-2">
         {steps.map((step, index) => (
           <div key={step.key} className="flex flex-col items-center text-center">
             <span
               className={`flex h-9 w-9 items-center justify-center rounded-xl font-black text-xs transition-all ${
                 step.active
-                  ? "bg-[#39f58e] text-[#07120d] shadow-[0_0_12px_rgba(57,245,142,0.45)]"
+                  ? "bg-[#f0954c] text-[#2b2219] shadow-[0_0_12px_rgba(240, 149, 76,0.45)]"
                   : "bg-white/10 text-white/35"
               }`}
             >
@@ -983,7 +983,7 @@ function OrderProgress({ status, deliveryStatus }) {
             </span>
             <span
               className={`mt-1.5 text-[0.62rem] font-black uppercase tracking-tight ${
-                step.active ? "text-[#39f58e]" : "text-white/35"
+                step.active ? "text-[#f0954c]" : "text-white/35"
               }`}
             >
               {step.label}

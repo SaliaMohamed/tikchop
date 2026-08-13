@@ -345,15 +345,15 @@ export default function WhatsAppPage() {
       <header className="mobile-top hidden md:block">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="quiet-label text-[#008f5a]">Chatbot</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#07120d]">WhatsApp</h1>
-            <p className="mt-1 text-sm leading-5 text-[#07120d]/55">{seller.name}</p>
+            <p className="quiet-label text-[#c2572b]">Chatbot</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#2b2219]">WhatsApp</h1>
+            <p className="mt-1 text-sm leading-5 text-[#2b2219]/55">{seller.name}</p>
           </div>
           <button
             type="button"
             onClick={refreshConnection}
             disabled={loading}
-            className="app-icon-button bg-[#07120d] text-white"
+            className="app-icon-button bg-[#2b2219] text-white"
             aria-label="Actualiser WhatsApp"
           >
             <RefreshCw className={loading ? "animate-spin" : ""} size={18} />
@@ -385,7 +385,7 @@ export default function WhatsAppPage() {
           onRefreshPairingCode={regeneratePairingCode}
         />
 
-        <section className="hidden overflow-hidden rounded-[32px] bg-[#06110c] p-4 text-white shadow-[0_28px_70px_rgba(8,18,13,0.22)] md:grid md:min-h-[520px] md:grid-cols-[minmax(0,0.9fr)_minmax(430px,1.1fr)] md:gap-6 md:p-6 lg:p-8">
+        <section className="hidden overflow-hidden rounded-[32px] bg-[#06110c] p-4 text-white shadow-[0_28px_70px_rgba(38, 30, 22,0.22)] md:grid md:min-h-[520px] md:grid-cols-[minmax(0,0.9fr)_minmax(430px,1.1fr)] md:gap-6 md:p-6 lg:p-8">
           <div className="relative z-10 flex min-w-0 flex-col justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -393,7 +393,7 @@ export default function WhatsAppPage() {
                   <MonitorSmartphone size={15} />
                   QR sur second ecran
                 </span>
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#07100a]" : "bg-white/10 text-white/78"}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#231c15]" : "bg-white/10 text-white/78"}`}>
                   {status.icon}
                   {status.label}
                 </span>
@@ -414,7 +414,7 @@ export default function WhatsAppPage() {
                 type="button"
                 onClick={connectWhatsApp}
                 disabled={busy === "pairing" || !phoneReady}
-                className="flex min-h-[62px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-5 text-base font-black text-[#07120d] shadow-[0_18px_38px_rgba(57,245,142,0.23)] disabled:opacity-70"
+                className="flex min-h-[62px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-5 text-base font-black text-[#2b2219] shadow-[0_18px_38px_rgba(240, 149, 76,0.23)] disabled:opacity-70"
               >
                 {busy === "pairing" ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={21} />}
                 {!phoneReady ? "Ajoute le numero" : pairing ? "Regenerer le QR" : "Generer le QR WhatsApp"}
@@ -464,7 +464,7 @@ export default function WhatsAppPage() {
         </section>
 
         {(message || error || connection?.error) && (
-          <div className={`rounded-[22px] p-4 text-sm font-bold leading-5 ${error || connection?.error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#eafff1] text-[#005f3d] ring-1 ring-emerald-200"}`}>
+          <div className={`rounded-[22px] p-4 text-sm font-bold leading-5 ${error || connection?.error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#fbeee0] text-[#96451f] ring-1 ring-emerald-200"}`}>
             {error || connection?.error || message}
           </div>
         )}
@@ -488,7 +488,7 @@ export default function WhatsAppPage() {
                 Connexion directe au WhatsApp du vendeur. A utiliser seulement si le vendeur peut scanner un QR depuis un second ecran.
               </p>
             </div>
-            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold shadow-[0_10px_22px_rgba(0,0,0,0.14)] ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#07100a]" : "bg-white/14 text-white/82"}`}>
+            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold shadow-[0_10px_22px_rgba(0,0,0,0.14)] ${connection?.isConnected ? "bg-[var(--primary-bright)] text-[#231c15]" : "bg-white/14 text-white/82"}`}>
               {status.icon}
               {status.label}
             </span>
@@ -606,7 +606,7 @@ export default function WhatsAppPage() {
             <button
               type="button"
               onClick={applyDjassamanPreset}
-              className="shrink-0 rounded-xl bg-[#08120d] px-3 py-2 text-xs font-extrabold text-[var(--primary-bright)] shadow-[0_12px_24px_rgba(8,18,13,0.16)]"
+              className="shrink-0 rounded-xl bg-[#261e16] px-3 py-2 text-xs font-extrabold text-[var(--primary-bright)] shadow-[0_12px_24px_rgba(38, 30, 22,0.16)]"
             >
               Preset
             </button>
@@ -647,7 +647,7 @@ export default function WhatsAppPage() {
             type="button"
             onClick={saveChatbotSettings}
             disabled={busy === "settings"}
-            className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#08120d,#006540)] px-4 text-sm font-extrabold text-white shadow-[0_16px_34px_rgba(8,18,13,0.18)] disabled:opacity-60"
+            className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#261e16,#8a3c1c)] px-4 text-sm font-extrabold text-white shadow-[0_16px_34px_rgba(38, 30, 22,0.18)] disabled:opacity-60"
           >
             {busy === "settings" ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
             Enregistrer le style
@@ -708,7 +708,7 @@ function SalesAutomationPreview({ isConnected, onApplyPreset }) {
               Un vrai vendeur WhatsApp qui repond, conseille, prend les commandes, gere le paiement et coordonne la livraison.
             </p>
           </div>
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-extrabold shadow-[0_10px_22px_rgba(0,0,0,0.12)] ${isConnected ? "bg-[var(--primary-bright)] text-[#07100a]" : "bg-white/14 text-white/82"}`}>
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-extrabold shadow-[0_10px_22px_rgba(0,0,0,0.12)] ${isConnected ? "bg-[var(--primary-bright)] text-[#231c15]" : "bg-white/14 text-white/82"}`}>
             {isConnected ? "Actif" : "A connecter"}
           </span>
         </div>
@@ -716,7 +716,7 @@ function SalesAutomationPreview({ isConnected, onApplyPreset }) {
         <div className="djassa-chat-stack">
           {steps.map((step) => (
             <div key={step.title} className="djassa-chat-bubble grid grid-cols-[auto_1fr] gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08120d] text-[var(--primary-bright)] ring-1 ring-white/10">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#261e16] text-[var(--primary-bright)] ring-1 ring-white/10">
                 {step.icon}
               </span>
               <span>
@@ -730,7 +730,7 @@ function SalesAutomationPreview({ isConnected, onApplyPreset }) {
         <button
           type="button"
           onClick={onApplyPreset}
-          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,var(--primary-bright),#ffe66d)] text-sm font-extrabold text-[#07100a] shadow-[0_16px_34px_rgba(57,245,142,0.22)]"
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,var(--primary-bright),#f6d766)] text-sm font-extrabold text-[#231c15] shadow-[0_16px_34px_rgba(240, 149, 76,0.22)]"
         >
           <ShieldCheck size={18} />
           Appliquer le preset vendeur
@@ -780,13 +780,13 @@ function WhatsAppPlans({ connection, busy, onActivateStandard, onConnect, onRepa
 
   return (
     <section className="grid gap-3 md:grid-cols-2">
-      <article className="rounded-[28px] bg-[linear-gradient(135deg,#08120d,#006540)] p-5 text-white shadow-[0_20px_46px_rgba(8,18,13,0.22)]">
+      <article className="rounded-[28px] bg-[linear-gradient(135deg,#261e16,#8a3c1c)] p-5 text-white shadow-[0_20px_46px_rgba(38, 30, 22,0.22)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--primary-bright)]">Offre Standard</p>
             <h2 className="mt-2 font-display text-3xl font-bold leading-9">Assistant Tikchop</h2>
           </div>
-          <span className="rounded-full bg-[var(--primary-bright)] px-3 py-1 text-xs font-extrabold text-[#07100a]">
+          <span className="rounded-full bg-[var(--primary-bright)] px-3 py-1 text-xs font-extrabold text-[#231c15]">
             {standardActive ? "Actif" : "Recommande"}
           </span>
         </div>
@@ -802,7 +802,7 @@ function WhatsAppPlans({ connection, busy, onActivateStandard, onConnect, onRepa
           type="button"
           onClick={onActivateStandard}
           disabled={busy === "standard" || standardActive}
-          className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary-bright)] px-4 text-sm font-extrabold text-[#07100a] shadow-[0_16px_34px_rgba(57,245,142,0.22)] disabled:opacity-70"
+          className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary-bright)] px-4 text-sm font-extrabold text-[#231c15] shadow-[0_16px_34px_rgba(240, 149, 76,0.22)] disabled:opacity-70"
         >
           {busy === "standard" ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
           {standardActive ? "Standard deja actif" : "Activer Standard"}
@@ -847,7 +847,7 @@ function WhatsAppPlans({ connection, busy, onActivateStandard, onConnect, onRepa
             type="button"
             onClick={onConnect}
             disabled={busy === "pairing"}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-xl bg-[#08120d] px-4 text-sm font-extrabold text-white disabled:opacity-60"
+            className="flex min-h-[54px] items-center justify-center gap-2 rounded-xl bg-[#261e16] px-4 text-sm font-extrabold text-white disabled:opacity-60"
           >
             {busy === "pairing" ? <Loader2 className="animate-spin" size={18} /> : <PlugZap size={18} />}
             Utiliser mon numero
@@ -919,8 +919,8 @@ function ConnectionExplainer() {
 
 function InfoTile({ icon, title, text }) {
   return (
-    <div className="app-card min-h-[124px] bg-[#fffdf5] p-4 ring-1 ring-[#ffb000]/16">
-      <span className="app-icon-pill bg-[#08120d] text-[var(--primary-bright)]">
+    <div className="app-card min-h-[124px] bg-[#fffdf6] p-4 ring-1 ring-[#ef9f28]/16">
+      <span className="app-icon-pill bg-[#261e16] text-[var(--primary-bright)]">
         {icon}
       </span>
       <p className="mt-3 text-sm font-bold text-[var(--text-main)]">{title}</p>
@@ -955,11 +955,11 @@ function MobileWhatsAppPwaPanel({
   return (
     <section className="space-y-3 md:hidden">
       {/* Main connection card */}
-      <section className="overflow-hidden rounded-[26px] bg-[#fbf9f4] ring-1 ring-[#07120d]/10 shadow-[0_2px_14px_rgba(7,18,13,0.07)]">
+      <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10 shadow-[0_2px_14px_rgba(43, 34, 25,0.07)]">
         {/* Status bar */}
-        <div className="flex items-center justify-between border-b border-[#07120d]/8 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-[#2b2219]/8 px-4 py-3">
           <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black ${
-            connected ? "bg-[#eafff5] text-[#005f3d]" : "bg-[#07120d]/7 text-[#07120d]/60"
+            connected ? "bg-[#fbefe2] text-[#96451f]" : "bg-[#2b2219]/7 text-[#2b2219]/60"
           }`}>
             {status?.icon}
             {status?.label || "Pret"}
@@ -974,8 +974,8 @@ function MobileWhatsAppPwaPanel({
 
         {/* Hero banner for disconnected state */}
         {!connected && (
-          <div className="flex flex-col items-center justify-center bg-[#07120d] text-white p-5 text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#39f58e]/5 rounded-full blur-2xl" />
+          <div className="flex flex-col items-center justify-center bg-[#2b2219] text-white p-5 text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#f0954c]/5 rounded-full blur-2xl" />
             <IllustrationWhatsApp size={120} className="relative z-10" />
             <h2 className="font-display text-lg font-black mt-2 text-[var(--primary-bright)]">Liez votre WhatsApp</h2>
             <p className="text-xs text-white/60 max-w-[260px] mt-1 leading-relaxed">
@@ -993,14 +993,14 @@ function MobileWhatsAppPwaPanel({
                   <IllustrationSuccess size={32} />
                 </div>
               </div>
-              <h3 className="mt-3 font-display text-2xl font-black text-[#07120d]">Connecte</h3>
-              <p className="mt-1 text-sm font-semibold text-[#07120d]/50">Tikchop repond depuis ce numero WhatsApp.</p>
+              <h3 className="mt-3 font-display text-2xl font-black text-[#2b2219]">Connecte</h3>
+              <p className="mt-1 text-sm font-semibold text-[#2b2219]/50">Tikchop repond depuis ce numero WhatsApp.</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={onRefresh}
                   disabled={loading}
-                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-55"
+                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#2b2219]/8 px-4 text-sm font-black text-[#2b2219] disabled:opacity-55"
                 >
                   <RefreshCw className={loading ? "animate-spin" : ""} size={16} />
                   Verifier
@@ -1009,13 +1009,13 @@ function MobileWhatsAppPwaPanel({
                   type="button"
                   onClick={onDisconnect}
                   disabled={busy === "disconnect"}
-                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#07120d] px-4 text-sm font-black text-white disabled:opacity-55"
+                  className="flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#2b2219] px-4 text-sm font-black text-white disabled:opacity-55"
                 >
                   {busy === "disconnect" ? <Loader2 className="animate-spin" size={16} /> : <Power size={16} />}
                   Retirer
                 </button>
               </div>
-              <Link href="/messages" className="mt-3 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#008f5a] px-4 text-sm font-black text-white no-underline">
+              <Link href="/messages" className="mt-3 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#c2572b] px-4 text-sm font-black text-white no-underline">
                 <MessageCircle size={17} />
                 Voir les messages
               </Link>
@@ -1023,9 +1023,9 @@ function MobileWhatsAppPwaPanel({
           ) : (
             <>
               {/* Phone number input */}
-              <label className="block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Numero WhatsApp</label>
-              <div className="mt-2 grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#07120d]/12 px-3 py-2">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#008f5a]/10 text-[#008f5a]">
+              <label className="block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Numero WhatsApp</label>
+              <div className="mt-2 grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#2b2219]/12 px-3 py-2">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b]">
                   <Phone size={18} />
                 </span>
                 <input
@@ -1034,7 +1034,7 @@ function MobileWhatsAppPwaPanel({
                   onChange={(event) => onPhoneChange(event.target.value)}
                   inputMode="tel"
                   autoComplete="tel"
-                  className="min-h-12 w-full bg-transparent text-lg font-black text-[#07120d] outline-none placeholder:text-[#07120d]/35"
+                  className="min-h-12 w-full bg-transparent text-lg font-black text-[#2b2219] outline-none placeholder:text-[#2b2219]/35"
                   placeholder="+225 07 00 00 00 00"
                 />
               </div>
@@ -1045,46 +1045,46 @@ function MobileWhatsAppPwaPanel({
               )}
 
               {/* Mobile code pairing area. QR is desktop-only to avoid clutter. */}
-              <div className="mt-4 overflow-hidden rounded-[22px] bg-white ring-1 ring-[#07120d]/8 text-center p-4">
+              <div className="mt-4 overflow-hidden rounded-[22px] bg-white ring-1 ring-[#2b2219]/8 text-center p-4">
                 {hasCode ? (
                   <>
-                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#008f5a]/10 text-[#008f5a]">
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#c2572b]/10 text-[#c2572b]">
                       <KeyRound size={32} />
                     </span>
-                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code pret</h3>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Ouvrez WhatsApp puis liez avec un numero.</p>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#2b2219]">Code pret</h3>
+                    <p className="mt-1 text-xs font-bold text-[#2b2219]/50">Ouvrez WhatsApp puis liez avec un numero.</p>
                   </>
                 ) : hasPairing ? (
                   <>
                     <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-amber-50 text-amber-700">
                       <KeyRound size={32} />
                     </span>
-                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code a regenerer</h3>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Si aucun code ne s&apos;affiche, relancez le code.</p>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#2b2219]">Code a regenerer</h3>
+                    <p className="mt-1 text-xs font-bold text-[#2b2219]/50">Si aucun code ne s&apos;affiche, relancez le code.</p>
                   </>
                 ) : (
                   <>
-                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#008f5a]/10 text-[#008f5a]">
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#c2572b]/10 text-[#c2572b]">
                       <KeyRound size={32} />
                     </span>
-                    <h3 className="mt-3 font-display text-xl font-black text-[#07120d]">Code WhatsApp</h3>
-                    <p className="mt-1 text-xs font-bold text-[#07120d]/50">Le plus simple sur mobile. Pas besoin de scanner.</p>
+                    <h3 className="mt-3 font-display text-xl font-black text-[#2b2219]">Code WhatsApp</h3>
+                    <p className="mt-1 text-xs font-bold text-[#2b2219]/50">Le plus simple sur mobile. Pas besoin de scanner.</p>
                   </>
                 )}
               </div>
 
               {/* Pairing code card */}
               {hasCode && (
-                <div className="mt-3 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#07120d]/10">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#07120d]/8 px-4 py-3">
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#008f5a]">Code WhatsApp temporaire</p>
+                <div className="mt-3 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#2b2219]/10">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#2b2219]/8 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Code WhatsApp temporaire</p>
                     <button type="button" onClick={onCopyPairingCode} className="app-icon-button" aria-label="Copier le code WhatsApp">
                       <Copy size={16} />
                     </button>
                   </div>
                   <div className="px-4 py-3">
-                    <p className="font-display text-3xl font-black tracking-wider text-[#07120d]">{formatPairingCode(pairing.pairingCode)}</p>
-                    <p className="mt-2 text-xs font-bold leading-4 text-[#07120d]/50">
+                    <p className="font-display text-3xl font-black tracking-wider text-[#2b2219]">{formatPairingCode(pairing.pairingCode)}</p>
+                    <p className="mt-2 text-xs font-bold leading-4 text-[#2b2219]/50">
                       {getPairingValidityLabel(pairing)}
                     </p>
                   </div>
@@ -1092,7 +1092,7 @@ function MobileWhatsAppPwaPanel({
               )}
 
               {watchingConnection && (
-                <p className="mt-3 flex items-center gap-2 rounded-2xl bg-[#eafff5] px-3 py-2.5 text-sm font-bold text-[#005f3d] ring-1 ring-emerald-200">
+                <p className="mt-3 flex items-center gap-2 rounded-2xl bg-[#fbefe2] px-3 py-2.5 text-sm font-bold text-[#96451f] ring-1 ring-emerald-200">
                   <Loader2 className="animate-spin" size={16} />
                   Tikchop verifie la connexion...
                 </p>
@@ -1104,7 +1104,7 @@ function MobileWhatsAppPwaPanel({
                   type="button"
                   onClick={onRefreshPairingCode}
                   disabled={busy === "code" || !phoneReady}
-                  className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-[#07120d] px-5 text-base font-black text-white disabled:opacity-50"
+                  className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-[#2b2219] px-5 text-base font-black text-white disabled:opacity-50"
                 >
                   {busy === "code" ? <Loader2 className="animate-spin" size={20} /> : <KeyRound size={20} />}
                   {phoneReady ? (hasCode ? "Regenerer le code" : "Generer le code WhatsApp") : "Ajoutez le numero"}
@@ -1115,7 +1115,7 @@ function MobileWhatsAppPwaPanel({
                     type="button"
                     onClick={onRefresh}
                     disabled={loading}
-                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-50"
+                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#2b2219]/8 px-4 text-sm font-black text-[#2b2219] disabled:opacity-50"
                   >
                     <RefreshCw className={loading ? "animate-spin" : ""} size={16} />
                     Verifier
@@ -1124,7 +1124,7 @@ function MobileWhatsAppPwaPanel({
                     type="button"
                     onClick={onRefreshPairingCode}
                     disabled={busy === "code" || !phoneReady}
-                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#07120d]/8 px-4 text-sm font-black text-[#07120d] disabled:opacity-50"
+                    className="flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#2b2219]/8 px-4 text-sm font-black text-[#2b2219] disabled:opacity-50"
                   >
                     {busy === "code" ? <Loader2 className="animate-spin" size={16} /> : <KeyRound size={16} />}
                     Nouveau code

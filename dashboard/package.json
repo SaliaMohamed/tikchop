@@ -26,6 +26,7 @@
     "test:background-clean": "node scripts/test-background-clean-flow.mjs"
   },
   "dependencies": {
+    "@lottiefiles/react-lottie-player": "^3.6.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.1",
     "framer-motion": "^12.38.0",

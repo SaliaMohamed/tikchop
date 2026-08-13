@@ -101,7 +101,7 @@ function PublishDock({ loading, canSubmit, mode, count }) {
       : "Mettre en ligne";
 
   return (
-    <div id="publish-dock" className="fixed inset-x-0 bottom-0 z-[120] border-t border-white/70 bg-white/92 px-4 pb-[calc(0.85rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_44px_rgb(13_23_18_/_0.13)] backdrop-blur-2xl md:hidden">
+    <div id="publish-dock" className="fixed inset-x-0 bottom-0 z-[120] border-t border-white/70 bg-white/92 px-4 pb-[calc(0.85rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_44px_rgb(58_46_36_/_0.13)] backdrop-blur-2xl md:hidden">
       <div className="mx-auto max-w-[460px]">
         <button
           type="submit"
@@ -121,7 +121,7 @@ function PublishDock({ loading, canSubmit, mode, count }) {
 
 function BatchReviewSummary({ items, backgroundProgress }) {
   return (
-    <div className="rounded-[20px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#07120d]/5">
+    <div className="rounded-[20px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#2b2219]/5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-lg font-bold text-[var(--text-main)]">Photos de vos articles</p>

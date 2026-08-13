@@ -17,6 +17,7 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
+import TikchopLottie from "./components/TikchopLottie";
 
 /* ============================================================
    Static data — rendered once, no client JS needed
@@ -198,7 +199,7 @@ export default function TikchopLanding() {
           <a href="#acces">Accès</a>
         </nav>
         <div className="tk-nav-actions">
-          <Link href="/vendeur" className="tk-light-button hidden md:inline-flex">
+          <Link href="/app" className="tk-light-button hidden md:inline-flex">
             App vendeur
           </Link>
           <WhatsappTrialButton className="tk-dark-button tk-nav-whatsapp" label="Accès gratuit" showArrow={false} />
@@ -230,6 +231,9 @@ export default function TikchopLanding() {
                   <span>{item.label}</span>
                 </div>
               ))}
+              <div className="tk-win-card tk-win-card-lottie" aria-hidden="true">
+                <TikchopLottie name="coin" size={54} />
+              </div>
             </div>
           </div>
 
@@ -337,6 +341,9 @@ export default function TikchopLanding() {
           </div>
           <div className="tk-chat-panel" aria-label="Exemple de conversation WhatsApp">
             <div className="tk-chat-top">
+              <span className="tk-chat-top-lottie">
+                <TikchopLottie name="chat" size={46} />
+              </span>
               <span>Salia Boutique</span>
               <span>En ligne</span>
             </div>
@@ -415,6 +422,7 @@ export default function TikchopLanding() {
 
         {/* ── CTA ── */}
         <section className="tk-whatsapp-cta">
+          <TikchopLottie name="sparkle" size={150} className="tk-cta-lottie" />
           <div>
             <p className="tk-eyebrow">Accès gratuit</p>
             <h2>Testez avec votre vraie boutique, pas avec une démo vide.</h2>
@@ -530,7 +538,7 @@ function CaseStudySection() {
           })}
         </div>
         <div className="fatim-delivery-note">
-          <Truck size={22} />
+          <TikchopLottie name="truck" size={64} />
           <div>
             <strong>Vos livreurs habituels restent dans votre organisation</strong>
             <p>

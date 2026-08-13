@@ -104,10 +104,10 @@
 
   .seller-desktop-sidebar {
     align-self: start;
-    background: var(--white-92);
-    border: 1px solid var(--border-faint);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--border-soft);
     border-radius: 28px;
-    box-shadow: 0 24px 58px rgba(8, 18, 13, 0.11);
+    box-shadow: 0 24px 58px rgba(43, 34, 25, 0.09);
     display: flex;
     flex-direction: column;
     justify-content: space-between;

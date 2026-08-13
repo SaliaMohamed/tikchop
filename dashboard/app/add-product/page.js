@@ -1224,7 +1224,7 @@ export default function AddProductPage() {
                     <button
                       type="button"
                       onClick={openNextIncompleteBulkItem}
-                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#07120d] px-3 text-sm font-black text-white shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]"
+                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#2b2219] px-3 text-sm font-black text-white shadow-[0_14px_30px_rgb(43_34_25_/_0.16)]"
                     >
                       <ListChecks size={16} />
                       Suivant
@@ -1234,7 +1234,7 @@ export default function AddProductPage() {
                         type="button"
                         onClick={cleanAllBulkBackgrounds}
                         disabled={backgroundBusyId === "bulk-all" || cleanableBulkPhotos.length === 0}
-                        className="col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#f4fbf6] px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[rgba(0,143,90,0.16)] disabled:opacity-55"
+                        className="col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#f7f1e5] px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[rgba(0,143,90,0.16)] disabled:opacity-55"
                       >
                         {backgroundBusyId === "bulk-all" ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />}
                         {backgroundBusyId === "bulk-all"
@@ -1257,7 +1257,7 @@ export default function AddProductPage() {
                     const previousItem = bulkPhotoItems[index - 1] || null;
                     const duplicateHint = getLikelyDuplicateHint(item, previousItem);
                     return (
-                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} overflow-hidden rounded-[28px] bg-white shadow-[0_18px_42px_rgb(7_18_13_/_0.07)] ring-1 ring-[#07120d]/8 md:rounded-[24px] md:p-3 md:shadow-[0_10px_26px_rgb(7_18_13_/_0.045)]`}>
+                    <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} overflow-hidden rounded-[28px] bg-white shadow-[0_18px_42px_rgb(43_34_25_/_0.07)] ring-1 ring-[#2b2219]/8 md:rounded-[24px] md:p-3 md:shadow-[0_10px_26px_rgb(43_34_25_/_0.045)]`}>
                       <button
                         type="button"
                         onClick={() => setExpandedBulkItemId((current) => current === item.id ? "" : item.id)}
@@ -1321,7 +1321,7 @@ export default function AddProductPage() {
                       {expandedBulkItemId === item.id && (
                         <div className="mt-4 space-y-3 border-t border-[var(--outline)]/20 pt-4">
                           <div className="flex items-center justify-between gap-3 px-1">
-                            <span className="flex h-9 items-center rounded-full bg-[#e9fff1] px-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
+                            <span className="flex h-9 items-center rounded-full bg-[#faedde] px-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]">
                               #{index + 1}
                             </span>
                             <button type="button" onClick={() => removeBulkPhotoItem(item.id)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600" aria-label="Retirer cette photo">
@@ -1334,14 +1334,14 @@ export default function AddProductPage() {
                             onUpdate={updateBulkPhotoItem}
                             onNext={markCurrentAndNext}
                           />
-                          <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#07120d]/7 md:hidden">
+                          <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#2b2219]/7 md:hidden">
                             <label className="block">
-                              <span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.13em] text-[#008f5a]">Nom</span>
+                              <span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.13em] text-[#c2572b]">Nom</span>
                               <input
                                 value={item.name}
                                 onChange={(event) => updateBulkPhotoItem(item.id, "name", event.target.value)}
                                 placeholder={item.analyzing ? "Tikchop prepare..." : "Nom visible"}
-                                className="min-h-[48px] w-full rounded-[18px] bg-[#fbf9f4] px-3 text-sm font-black text-[#07120d] outline-none ring-1 ring-[#07120d]/8 focus:ring-[#008f5a]/35"
+                                className="min-h-[48px] w-full rounded-[18px] bg-[#fbf6ee] px-3 text-sm font-black text-[#2b2219] outline-none ring-1 ring-[#2b2219]/8 focus:ring-[#c2572b]/35"
                               />
                             </label>
                           </div>
@@ -1365,7 +1365,7 @@ export default function AddProductPage() {
                             <button
                               type="button"
                               onClick={() => attachBulkPhotoToPrevious(item.id)}
-                              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--primary)]/25 bg-[#f4fbf6] px-3 text-sm font-black text-[var(--text-main)]"
+                              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--primary)]/25 bg-[#f7f1e5] px-3 text-sm font-black text-[var(--text-main)]"
                             >
                               <Layers3 size={16} />
                               {duplicateHint}
@@ -1458,7 +1458,7 @@ export default function AddProductPage() {
                           <button
                             type="button"
                             onClick={() => markCurrentAndNext(item.id)}
-                            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#07120d] text-sm font-extrabold text-white shadow-[0_14px_30px_rgb(7_18_13_/_0.16)]"
+                            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] text-sm font-extrabold text-white shadow-[0_14px_30px_rgb(43_34_25_/_0.16)]"
                           >
                             <CheckCircle2 size={16} />
                             Suivant
