@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
-  CheckCircle2,
   Copy,
   KeyRound,
   Loader2,
@@ -19,6 +18,7 @@ import {
   disconnectSellerWhatsApp,
 } from "../seller-actions";
 import { useActiveSeller, writeActiveSeller } from "./sellerContext";
+import TikchopLottie from "./TikchopLottie";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import {
@@ -197,8 +197,8 @@ export default function WhatsAppConnector({ onConnected }) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3 rounded-[20px] bg-[#fbefe2] p-4 ring-1 ring-[#c2572b]/15">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#c2572b]/15 text-[#c2572b]">
-            <CheckCircle2 size={22} />
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#c2572b]/15 text-[#c2572b]">
+            <TikchopLottie name="success" size={34} loop={false} ariaLabel="WhatsApp connecte" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-black text-[#2b2219]">WhatsApp connecte</p>
@@ -275,7 +275,7 @@ export default function WhatsAppConnector({ onConnected }) {
 
       {watchingConnection && (
         <p className="flex items-center gap-2 rounded-[14px] bg-[#fbefe2] px-3 py-2.5 text-sm font-bold text-[#96451f]">
-          <Loader2 className="animate-spin" size={15} />
+          <TikchopLottie name="sparkle" size={20} speed={1.5} className="shrink-0" ariaLabel="Verification en cours" />
           Verification en cours...
         </p>
       )}

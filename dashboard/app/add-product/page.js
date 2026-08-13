@@ -62,6 +62,7 @@ import { BulkQuickPricePanel, BulkItemMoreOptions } from "./components/BulkItem"
 import { BatchReviewSummary, DesktopPublishPanel, PublishDock } from "./components/PublishPanels";
 import { Field, HeroMiniStat, NoticeBanner, QuickValueButton, PublishSuccess } from "./components/SharedUI";
 import { AngleDecisionCard } from "./components/AnalysisDeck";
+import TikchopLottie from "../components/TikchopLottie";
 
 
 const BACKGROUND_REMOVAL_ENABLED = process.env.NEXT_PUBLIC_BACKGROUND_REMOVAL_ENABLED === "true";
@@ -1561,7 +1562,9 @@ export default function AddProductPage() {
                 )}
                 {(imageUploading || imageAnalyzing) && (
                   <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--primary)] shadow-sm">
-                    <Loader2 className="animate-spin" size={20} />
+                    {imageAnalyzing
+                      ? <TikchopLottie name="sparkle" size={24} speed={1.4} ariaLabel="Tikchop analyse la photo" />
+                      : <Loader2 className="animate-spin" size={20} />}
                   </span>
                 )}
                 {formData.image_url && !imageUploading && !imageAnalyzing && (
@@ -1601,7 +1604,9 @@ export default function AddProductPage() {
                       {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom propose a verifier" : "Ajoutez une photo pour que Tikchop propose le nom"}
                     </p>
                   </div>
-                  {imageAnalyzing ? <Loader2 className="animate-spin text-[var(--primary)]" size={22} /> : <Sparkles className="text-[var(--primary)]" size={22} />}
+                  {imageAnalyzing
+                    ? <TikchopLottie name="sparkle" size={26} speed={1.4} className="shrink-0" ariaLabel="Tikchop analyse la photo" />
+                    : <Sparkles className="text-[var(--primary)]" size={22} />}
                 </div>
                 <div className="mt-4 rounded-2xl bg-[var(--surface-soft)] p-3">
                   <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--text-dim)]">Nom visible dans la boutique</p>

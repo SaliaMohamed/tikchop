@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, Camera, ImagePlus, ListChecks, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, ImagePlus, ListChecks, Sparkles } from "lucide-react";
 import { PRODUCT_PROFILES } from "../../../lib/product-profiles";
 import { StudioMiniButton } from "./AnalysisDeck";
+import TikchopLottie from "../../components/TikchopLottie";
 
 function MobileBulkPrepCard({
   preset,
@@ -66,7 +67,9 @@ function MobileBulkPrepCard({
             <div className="grid grid-cols-3 gap-2">
               <StudioMiniButton icon={<ImagePlus size={17} />} label="Photos" onClick={onOpenGallery} />
               <StudioMiniButton
-                icon={renamingAll ? <Loader2 className="animate-spin" size={17} /> : <Sparkles size={17} />}
+                icon={renamingAll
+                  ? <TikchopLottie name="sparkle" size={18} speed={1.5} ariaLabel="Tikchop renomme le lot" />
+                  : <Sparkles size={17} />}
                 label="IA"
                 onClick={onRenameAll}
                 disabled={!canRename || renamingAll}

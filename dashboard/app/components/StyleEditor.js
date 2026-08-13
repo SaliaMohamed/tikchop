@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bot, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 import { getSellerChatbotSettings, saveSellerChatbotSettings } from "../seller-actions";
 import { useActiveSeller } from "./sellerContext";
+import TikchopLottie from "./TikchopLottie";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 
@@ -139,7 +140,8 @@ export default function StyleEditor({ onSaved }) {
       </div>
 
       {(message || error) && (
-        <div className={`rounded-[16px] p-3 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#fbeee0] text-[#96451f] ring-1 ring-[#fbefe2]"}`}>
+        <div className={`flex items-center gap-2.5 rounded-[16px] p-3 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#fbeee0] text-[#96451f] ring-1 ring-[#fbefe2]"}`}>
+          {!error && <TikchopLottie name="sparkle" size={20} speed={1.3} className="shrink-0" ariaLabel="Enregistre" />}
           {error || message}
         </div>
       )}

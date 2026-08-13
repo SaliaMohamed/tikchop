@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, ImagePlus, Share2 } from "lucide-react";
+import { ArrowRight, ImagePlus, Share2 } from "lucide-react";
 import Link from "next/link";
+import TikchopLottie from "../../components/TikchopLottie";
 
 function Field({ label, icon, children }) {
   return (
@@ -94,9 +95,9 @@ function PublishSuccess({ result, onAddMore }) {
       <main className="flex min-h-[78vh] flex-col justify-center space-y-5">
         <section className="relative overflow-hidden rounded-[30px] bg-[var(--text-main)] p-5 text-white shadow-[var(--shadow-lg)]">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-bright)] via-[var(--accent)] to-[var(--info)]" />
-          <span className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-[var(--primary-bright)] text-[var(--text-main)] shadow-sm">
-            <CheckCircle2 size={32} />
-          </span>
+          <div className="flex h-28 items-center justify-center">
+            <TikchopLottie name="success" size={112} loop={false} ariaLabel="Articles publies" />
+          </div>
           <p className="mt-7 text-xs font-extrabold uppercase tracking-[0.14em] text-white/48">Article en ligne</p>
           <h1 className="mt-2 font-display text-4xl font-bold leading-[2.7rem] text-white">
             {result.count} article{result.count > 1 ? "s" : ""} publie{result.count > 1 ? "s" : ""}
