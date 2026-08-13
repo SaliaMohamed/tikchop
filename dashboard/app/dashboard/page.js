@@ -136,8 +136,8 @@ export default function Dashboard() {
         ? {
             kicker: "WhatsApp",
             title: "Connectez WhatsApp",
-            href: "/whatsapp",
-            cta: "Connecter",
+            href: "/setup",
+            cta: "Configurer",
             icon: <Bot size={20} />,
           }
         : {

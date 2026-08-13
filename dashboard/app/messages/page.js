@@ -307,7 +307,7 @@ function EmptyMessages() {
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#2b2219]/60 max-w-[280px]">
         Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement.
       </p>
-      <Link href="/crm" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+      <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
         <Bot size={16} />
         Connecter WhatsApp
       </Link>

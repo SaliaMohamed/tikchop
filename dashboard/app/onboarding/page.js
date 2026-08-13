@@ -181,8 +181,8 @@ export default function OnboardingPage() {
       }
 
       writeActiveSeller(created.seller);
-      setNotice("Boutique créée. Ouverture de votre espace vendeur...");
-      window.location.replace("/dashboard?created=1");
+      setNotice("Boutique créée. Configuration de votre DJASSAMAN...");
+      window.location.replace("/setup");
     } catch (err) {
       setError(friendlyError(err, "Création boutique incomplète. Vérifiez et réessayez."));
     } finally {

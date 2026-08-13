@@ -125,7 +125,7 @@ export default function SellerMenuPage() {
       {/* Action rapide si WhatsApp manquant */}
       {!whatsappConnected && hasProducts && (
         <Link
-          href="/crm"
+          href="/setup"
           className="flex items-center gap-3 rounded-[22px] bg-[#fbefe0] px-4 py-3 text-[#2b2219] no-underline ring-1 ring-[#f0954c]/35 active:scale-[0.99]"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#c2572b] text-white shrink-0">
@@ -143,7 +143,7 @@ export default function SellerMenuPage() {
       <MenuSection title="Vendre">
         <MenuItem href="/add-product" icon={<Camera size={20} />} label="Publier un article" sub={hasProducts ? `${stats.products} en ligne` : "Aucun article"} accent={!hasProducts} />
         <MenuItem href="/orders" icon={<ClipboardList size={20} />} label="Ventes" sub={workCount > 0 ? `${workCount} à traiter` : "Aucune"} warn={workCount > 0} />
-        <MenuItem href="/messages" icon={<MessageCircle size={20} />} label="Messages clients" sub="" />
+        <MenuItem href="/messages" icon={<MessageCircle size={20} />} label="Discussions" sub="Clients et reponses DJASSAMAN" />
         <MenuItem href={shopLink} icon={<Store size={20} />} label="Voir ma boutique" sub="Vue client" />
       </MenuSection>
 
