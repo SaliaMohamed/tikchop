@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Bot, Check, Store } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, Loader2, Store } from "lucide-react";
 import { useActiveSeller } from "../components/sellerContext";
+import { getSellerChatbotSettings, getSellerWhatsAppConnection } from "../seller-actions";
+import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import WhatsAppConnector from "../components/WhatsAppConnector";
 import StyleEditor from "../components/StyleEditor";
 import TikchopLottie from "../components/TikchopLottie";
@@ -20,6 +22,34 @@ export default function SetupPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [whatsappDone, setWhatsappDone] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!seller.slug) return;
+    let alive = true;
+
+    async function checkCurrentSetup() {
+      try {
+        const token = await getSellerAccessToken();
+        const [connection, settings] = await Promise.all([
+          getSellerWhatsAppConnection(seller, token),
+          getSellerChatbotSettings(seller, token),
+        ]);
+        if (!alive) return;
+        const connected = Boolean(connection?.isConnected);
+        const styleSaved = Object.values(settings || {}).some((value) => Boolean(value));
+        setWhatsappDone(connected);
+        if (connected && styleSaved) setStep(2);
+      } catch {
+        if (alive) setWhatsappDone(false);
+      } finally {
+        if (alive) setChecking(false);
+      }
+    }
+
+    checkCurrentSetup();
+    return () => { alive = false; };
+  }, [seller]);
 
   const current = STEPS[step];
 
@@ -28,6 +58,15 @@ export default function SetupPage() {
   }
 
   const progress = ((step + 1) / STEPS.length) * 100;
+
+  if (checking) {
+    return (
+      <div className="app-shell flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-[#c2572b]" size={28} />
+        <p className="mt-3 text-sm font-black text-[#2b2219]/45">Verification de la configuration...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell mx-auto max-w-[520px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-4 md:pt-8">
