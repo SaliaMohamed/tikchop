@@ -5,7 +5,7 @@
 export function parseVoiceProductLegacy(text) {
   const originalText = String(text || "");
   const source = String(text || "").toLowerCase();
-  const explicitPriceMatch = source.match(/(?:prix|a|?)\s*(\d[\d\s.]*)/i)
+  const explicitPriceMatch = source.match(/(?:prix|a)\s*(\d[\d\s.]*)/i)
     || source.match(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)/i);
   const quantityMatch = source.match(/(?:quantite|quantit?|qte|stock|reste|il y a)\s*(\d+)/i)
     || source.match(/\b(\d+)\s*(?:piece|pi?ce|pieces|pi?ces|article|articles|dispo|disponible|disponibles)\b/i);
@@ -21,11 +21,11 @@ export function parseVoiceProductLegacy(text) {
   const quantity = quantityMatch?.[1] || parseSpokenQuantity(source) || "1";
   const name = originalText
     .replace(priceTextToRemove, "")
-    .replace(/(?:prix|a|?)?\s*(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante)(?:[-\s]+(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix))?\s+mille/i, "")
-    .replace(/(?:prix|a|?)\s*(\d[\d\s.]*)/i, "")
+    .replace(/(?:prix|a)?\s*(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante)(?:[-\s]+(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix))?\s+mille/i, "")
+    .replace(/(?:prix|a)\s*(\d[\d\s.]*)/i, "")
     .replace(/(\d[\d\s.]*)\s*(f|fcfa|franc|cfa)/i, "")
     .replace(/(?:quantite|quantit?|qte|stock|reste|il y a)\s*\d+/i, "")
-    .replace(/(?:quantite|quantit�|qte|stock|reste|il y a)\s*(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)/i, "")
+    .replace(/(?:quantite|quantité|qte|stock|reste|il y a)\s*(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)/i, "")
     .replace(/\b(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\s*(?:piece|pi?ce|pieces|pi?ces|article|articles|dispo|disponible|disponibles)\b/i, "")
     .replace(/(?:taille|size|pointure)\s*[a-z0-9]+/i, "")
     .replace(/[,.]/g, " ")

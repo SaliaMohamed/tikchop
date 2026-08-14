@@ -525,17 +525,38 @@ export function parseBulkProducts(text) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const parts = line.split(/\s[-:]\s|,/).map((part) => part.trim()).filter(Boolean);
-      const fallbackPrice = line.match(/(\d[\d\s.]*)\s*(f|fcfa|cfa)?$/i);
-      const name = parts.length > 1 ? parts[0] : line.replace(fallbackPrice?.[0] || "", "").trim();
-      const price = (parts[1] || fallbackPrice?.[1] || "").replace(/[^\d]/g, "");
+      const trailingStockMatch = line.match(/(?:stock|qte|dispo|disponibles?)\s*[:=]?\s*(\d+)/i);
+      const leadingStockMatch = line.match(/\b(\d+)\s*(?:pieces?|articles?)\b/i);
+      const dashQuantityMatch = line.match(/\s-+\s*(\d{1,2})\s*$/);
+      const stockMatch = trailingStockMatch || leadingStockMatch || dashQuantityMatch;
+      const stockRaw = stockMatch?.[1] || "";
+      const body = stockMatch ? line.replace(stockMatch[0], "") : line;
+
+      const currencyPrice = body.match(/(\d[\d\s.]*)\s*(f|fcfa|cfa|francs?)\b/i);
+      const pricedWithoutCurrency = currencyPrice
+        ? null
+        : [...body.matchAll(/\d[\d\s.]*/g)]
+          .map((match) => ({ raw: match[0], digits: match[0].replace(/[^\d]/g, "") }))
+          .find((match) => match.digits.length >= 3);
+
+      const priceMatch = currencyPrice?.[1] || pricedWithoutCurrency?.raw || "";
+      const priceRaw = priceMatch.replace(/[^\d]/g, "");
+      const reservedParts = [currencyPrice?.[0], pricedWithoutCurrency?.raw, stockMatch?.[0]].filter(Boolean);
+      let name = body;
+      for (const part of reservedParts.sort((a, b) => (b?.length || 0) - (a?.length || 0))) {
+        name = name.replace(part, " ");
+      }
+
       return {
-        name,
-        price,
-        stock_quantity: 1,
+        name: name.replace(/[,;]\s*$/g, " ").replace(/\s*[-:;,]+\s*$/g, "").replace(/^[-:;,\s]+/g, "")
+          .replace(/\s*[-:;,]\s*(?=\s*$)/g, "")
+          .replace(/\s+/g, " ")
+          .trim(),
+        price: priceRaw || "0",
+        stock_quantity: stockRaw || "1",
       };
     })
-    .filter((product) => product.name && product.price && Number(product.price) > 0);
+    .filter((product) => product.name && Number(product.price) > 0);
 }
 
 export function getPublishAssistant({
