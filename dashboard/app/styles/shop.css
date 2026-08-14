@@ -46,7 +46,7 @@
 }
 
 .shop-hero::after {
-  background: linear-gradient(90deg, rgb(244 188 126 / 0.24), rgba(245, 159, 0, 0.2));
+  background: linear-gradient(90deg, rgb(110 231 183 / 0.24), rgba(245, 159, 0, 0.2));
   bottom: -4.5rem;
   content: "";
   height: 10rem;
@@ -92,7 +92,7 @@
 .shop-process-rail {
   background:
     linear-gradient(135deg, rgb(255 255 255 / 0.94), rgb(248 243 233 / 0.9)),
-    radial-gradient(circle at top right, rgb(244 188 126 / 0.2), transparent 34%);
+    radial-gradient(circle at top right, rgb(110 231 183 / 0.2), transparent 34%);
   border: 1px solid var(--border-muted);
   border-radius: 26px;
   box-shadow: 0 18px 42px rgba(13, 23, 18, 0.08);
@@ -121,7 +121,7 @@
 }
 
 .shop-process-index {
-  color: rgb(43 34 25 / 0.22);
+  color: rgb(15 43 32 / 0.22);
   font-family: var(--font-display), var(--font-sans), sans-serif;
   font-size: 1.55rem;
   font-weight: 900;

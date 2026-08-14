@@ -64,7 +64,7 @@
   border-radius: 18px;
   height: 52px;
   width: 52px;
-  box-shadow: 0 6px 18px rgb(43 34 25 / 0.26);
+  box-shadow: 0 6px 18px rgb(15 43 32 / 0.26);
 }
 
 .brand-logo-copy {
@@ -502,7 +502,7 @@
 .tk-logo-mark {
   background: var(--color-dark) url("/icon.svg") center / cover no-repeat !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 14px rgb(43 34 25 / 0.25) !important;
+  box-shadow: 0 4px 14px rgb(15 43 32 / 0.25) !important;
   color: transparent !important;
   display: inline-block;
   height: 34px;

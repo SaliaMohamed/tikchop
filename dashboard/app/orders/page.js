@@ -757,8 +757,8 @@ function DemoOrderChecklist() {
   ];
 
   return (
-    <section className="rounded-[22px] bg-[#fdf2d5] p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#ef9f28]/30">
-      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#a06a24]">Exemple</p>
+    <section className="rounded-[22px] bg-[#f6fbf7] p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#34d399]/30">
+      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#059669]">Exemple</p>
       <p className="mt-1 text-sm font-extrabold text-[var(--text-main)]">Aucun vrai client WhatsApp n&apos;est contacte.</p>
       <div className="mt-3 grid gap-2">
         {checks.map((check, index) => (
