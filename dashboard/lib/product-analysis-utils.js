@@ -6,7 +6,7 @@ import { normalizeMoneyInput } from "./product-utils";
 
 // Kept only as a rollback reference for older mojibake voice parsing.
 export function canSingleProductSubmit(formData, imageUploading, imageAnalyzing) {
-  return Boolean(formData.seller_id && formData.image_url && formData.name && formData.price && !imageUploading && !imageAnalyzing);
+  return Boolean(formData.seller_id && formData.image_url && formData.name && formData.price && Number(normalizeMoneyInput(formData.price)) > 0 && !imageUploading && !imageAnalyzing);
 }
 
 async function runLimited(items, limit, worker) {
@@ -242,7 +242,7 @@ export function getProductFieldCopy(product, profile = getProductProfile("genera
 }
 
 export function isBulkItemReady(item) {
-  return Boolean(item?.image_url && normalizeMoneyInput(item?.price));
+  return Boolean(item?.image_url && Number(normalizeMoneyInput(item?.price)) > 0);
 }
 
 export function getBulkReviewStats(items = []) {
@@ -535,7 +535,7 @@ export function parseBulkProducts(text) {
         stock_quantity: 1,
       };
     })
-    .filter((product) => product.name && product.price);
+    .filter((product) => product.name && product.price && Number(product.price) > 0);
 }
 
 export function getPublishAssistant({

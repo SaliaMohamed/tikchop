@@ -220,8 +220,9 @@ export default function ShopClient({ seller, products, deliveryZones = [], initi
   const availableProductsLabel = `${availableProducts} article${availableProducts > 1 ? "s" : ""}`;
   const shopReady = availableProducts > 0;
   const singleProductLayout = filteredProducts.length === 1;
-  const featuredProducts = filteredProducts
+const featuredProducts = filteredProducts
     .filter((product) => String(product?.image_url || "").trim())
+    .filter((product) => Number(product?.stock_quantity || 0) > 0)
     .sort((a, b) => Number(b.stock_quantity || 0) - Number(a.stock_quantity || 0))
     .slice(0, 8);
   const gridProducts = filteredProducts;
@@ -927,9 +928,15 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
                     className="object-cover transition duration-700 active:scale-105"
                     transform={CLOUDINARY_FEATURED_TRANSFORM}
                   />
-                  <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#0F2B20] shadow-sm">
-                    En stock
-                  </span>
+{stock > 0 ? (
+                    <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#0F2B20] shadow-sm">
+                      En stock
+                    </span>
+                  ) : (
+                    <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-amber-700 shadow-sm">
+                      Rupture
+                    </span>
+                  )}
                 </div>
                 <div className="flex min-h-[72px] items-end justify-between gap-3 pt-4">
                   <div className="min-w-0">

@@ -74,6 +74,7 @@ export default function AddProductPage() {
   const bulkFileInputRef = useRef(null);
   const bulkVoiceParseTimerRef = useRef(null);
   const voiceParseTimerRef = useRef(null);
+  const submittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageAnalyzing, setImageAnalyzing] = useState(false);
@@ -143,6 +144,8 @@ export default function AddProductPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     setSubmitError("");
 
@@ -192,6 +195,7 @@ export default function AddProductPage() {
       setSubmitError(friendlyError(error, "Article non publie. Verifiez surtout le prix et le stock."));
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   }
 
@@ -205,9 +209,20 @@ export default function AddProductPage() {
     setFormData({ ...formData, [name]: nextValue });
   }
 
+  function openGallery() {
+    if (imageUploading || imageAnalyzing) return;
+    fileInputRef.current?.click();
+  }
+
+  function openBulkGallery() {
+    if (bulkUploading) return;
+    bulkFileInputRef.current?.click();
+  }
+
   async function handleImageSelection(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (imageUploading || imageAnalyzing) return;
 
     setImageError("");
     setAnalysisError("");
@@ -265,6 +280,7 @@ export default function AddProductPage() {
   async function handleBulkImageSelection(event) {
     const files = Array.from(event.target.files || []).filter((file) => file.type?.startsWith("image/"));
     if (files.length === 0) return;
+    if (bulkUploading) return;
 
     setImageError("");
     setBulkUploading(true);
@@ -972,8 +988,8 @@ export default function AddProductPage() {
     bulkUploading,
     imageUploading,
     imageAnalyzing,
-    onPhoto: () => fileInputRef.current?.click(),
-    onBulkPhoto: () => bulkFileInputRef.current?.click(),
+    onPhoto: openGallery,
+    onBulkPhoto: openBulkGallery,
     onDetails: () => {
       if (firstIncompleteBulkItem) {
         setExpandedBulkItemId(firstIncompleteBulkItem.id);
@@ -1160,7 +1176,7 @@ export default function AddProductPage() {
                 onChange={setBulkPreset}
                 onProfileChange={changeProductProfile}
                 onApplyIncomplete={applyBulkPresetToIncomplete}
-                onOpenGallery={() => bulkFileInputRef.current?.click()}
+                onOpenGallery={openBulkGallery}
                 onRenameAll={reanalyzeAllBulkPhotos}
               />
             <div className={`md:rounded-[26px] md:border md:border-white/80 md:bg-white/95 md:p-4 md:shadow-[var(--shadow-sm)] md:ring-1 md:ring-[rgba(191,206,197,0.34)] ${
@@ -1177,8 +1193,9 @@ export default function AddProductPage() {
               </div>
               <button
                 type="button"
-                onClick={() => bulkFileInputRef.current?.click()}
-                className="mt-4 hidden min-h-[92px] w-full items-center justify-between gap-3 rounded-[24px] bg-[var(--text-main)] px-4 text-left text-base font-bold text-white shadow-[var(--shadow-md)] active:scale-[0.99] md:flex"
+                onClick={openBulkGallery}
+                disabled={bulkUploading}
+                className="mt-4 hidden min-h-[92px] w-full items-center justify-between gap-3 rounded-[24px] bg-[var(--text-main)] px-4 text-left text-base font-bold text-white shadow-[var(--shadow-md)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:flex"
               >
                 <span className="flex items-center gap-3">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12">
@@ -1281,8 +1298,9 @@ export default function AddProductPage() {
                   <div className="hidden">
                     <button
                       type="button"
-                      onClick={() => bulkFileInputRef.current?.click()}
-                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[var(--outline)]/30"
+                      onClick={openBulkGallery}
+                      disabled={bulkUploading}
+                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[var(--outline)]/30 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <ImagePlus size={16} />
                       Photos
@@ -1601,8 +1619,9 @@ export default function AddProductPage() {
               />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className={`relative flex min-h-[240px] w-full flex-col items-center justify-center overflow-hidden rounded-[22px] border p-0 text-center transition active:scale-[0.99] md:min-h-[280px] ${
+                onClick={openGallery}
+                disabled={imageUploading || imageAnalyzing}
+                className={`relative flex min-h-[240px] w-full flex-col items-center justify-center overflow-hidden rounded-[22px] border p-0 text-center transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-80 md:min-h-[280px] ${
                   formData.image_url ? "border-[var(--primary)] bg-white" : "border-[var(--line)] bg-white shadow-[var(--shadow-sm)]"
                 }`}
               >

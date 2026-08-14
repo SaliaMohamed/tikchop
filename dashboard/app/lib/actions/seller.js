@@ -26,7 +26,7 @@ export async function addProduct(product, accessToken) {
     seller_id: product.seller_id,
   };
 
-  if (!payload.seller_id || !payload.name || payload.price < 0 || payload.stock_quantity < 0) {
+if (!payload.seller_id || !payload.name || payload.price <= 0 || payload.stock_quantity < 0) {
     throw new Error("Invalid product payload.");
   }
 
@@ -74,10 +74,10 @@ export async function addProductsBulk(products, accessToken) {
     product_variants: normalizeProductVariants(product.product_variants || product.variants_text),
     product_keywords: String(product.product_keywords || "").trim() || null,
     seller_id: product.seller_id,
-  })).filter((product) => (
+})).filter((product) => (
     product.seller_id
     && product.name
-    && product.price >= 0
+    && product.price > 0
     && product.stock_quantity >= 0
   ));
 

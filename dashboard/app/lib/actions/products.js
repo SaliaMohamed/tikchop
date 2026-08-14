@@ -5,13 +5,14 @@ import { supabaseAdmin } from "../../../lib/supabase-admin";
 // getCloudinaryConfig, getCloudinaryCleanProductUrl defined below
 // AI vision functions defined below
 
-import { requireSellerBySlug } from "./auth";
+import { requireSellerBySlug, requireSellerUser } from "./auth";
 import { normalizeProductVariants } from "./shared";
 
 /**
  * Product management & AI vision server actions.
  */
 export async function uploadProductImage(formData) {
+  await requireSellerUser();
   const file = formData?.get("image");
 
   if (!file || typeof file === "string") {
@@ -70,6 +71,7 @@ export async function uploadProductImage(formData) {
 }
 
 export async function uploadSellerLogo(formData) {
+  await requireSellerUser();
   const file = formData?.get("image");
 
   if (!file || typeof file === "string") {
@@ -263,6 +265,7 @@ function getCloudinaryConfig() {
 }
 
 export async function analyzeProductImage(imageUrl, voiceHint = "") {
+  await requireSellerUser();
   if (!imageUrl) {
     throw new Error("Image manquante.");
   }
@@ -304,6 +307,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 18000, timeoutMes
 }
 
 export async function analyzeProductImagesBatch(imageUrls = [], voiceHint = "") {
+  await requireSellerUser();
   const urls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean).slice(0, 6) : [];
   if (urls.length === 0) return [];
 
@@ -578,6 +582,7 @@ async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
 }
 
 export async function parseVoiceProductWithAI(text, hint = "") {
+  await requireSellerUser();
   const cleanText = String(text || "").trim();
   if (!cleanText) return {};
 
@@ -599,6 +604,7 @@ export async function parseVoiceProductWithAI(text, hint = "") {
 }
 
 export async function parseVoiceProductsWithAI(text, hint = "") {
+  await requireSellerUser();
   const cleanText = String(text || "").trim();
   if (!cleanText) return [];
 
