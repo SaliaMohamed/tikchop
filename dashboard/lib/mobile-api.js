@@ -602,6 +602,6 @@ function getCloudinaryCleanProductUrl(imageUrl) {
 
   return url.replace(
     "/image/upload/",
-    "/image/upload/e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_limit,w_1400,h_1800/f_auto,q_auto:good/",
+    "/image/upload/e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_pad,w_1200,h_1200,b_rgb:f6fbf7/f_auto,q_auto:good/",
   );
 }

@@ -79,7 +79,7 @@ function getDirectPaymentInstruction(seller, selectedPayment, amountToPay, deliv
 
 const FALLBACK_IMAGE = "";
 const EXTRA_IMAGES_PATTERN = /\n?\[\[TIKCHOP_EXTRA_IMAGES:([^\]]*)\]\]/i;
-const CLOUDINARY_CARD_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_520,h_640/f_auto,q_auto:eco";
+const CLOUDINARY_CARD_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_600,h_600/f_auto,q_auto:good";
 const CLOUDINARY_FEATURED_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_460,h_560/f_auto,q_auto:eco";
 const CLOUDINARY_DETAIL_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_900,h_680/f_auto,q_auto:good";
 const CLOUDINARY_THUMB_TRANSFORM = "e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_fill,g_auto,w_128,h_128/f_auto,q_auto:eco";
