@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Bot, Camera, ClipboardList, Home, Loader2, LogOut, Package, Plus, Settings2, Share2, Store, Truck, Wallet } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
+import AppIcon3D from "./components/AppIcon3D";
 import BrandLogo from "./components/BrandLogo";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import SetupResumeBanner from "./components/SetupResumeBanner";
@@ -44,43 +45,43 @@ const sellerNavGroups = [
   {
     title: "Travail du jour",
     items: [
-      { href: "/dashboard", label: "Accueil", icon: Home },
-      { href: "/add-product", label: "Publier", icon: Camera },
-      { href: "/orders", label: "Ventes", icon: ClipboardList },
-      { href: "/messages", label: "DJASSAMAN", icon: Bot, badge: "IA" },
+      { href: "/dashboard", label: "Accueil", icon: "home" },
+      { href: "/add-product", label: "Publier", icon: "plus" },
+      { href: "/orders", label: "Ventes", icon: "orders" },
+      { href: "/messages", label: "DJASSAMAN", icon: "messages", badge: "IA" },
     ],
   },
   {
     title: "Boutique",
     items: [
-      { href: "/products", label: "Articles", icon: Package },
-      { href: "/shop-info", label: "Boutique", icon: Store },
-      { href: "/social-sharing", label: "Partager", icon: Share2 },
-      { href: "/crm", label: "Parametres DJASSAMAN", icon: Bot },
-      { href: "/delivery-settings", label: "Livraison", icon: Truck },
-      { href: "/payment-settings", label: "Paiement", icon: Wallet },
-      { href: "/plus", label: "Plus", icon: Settings2 },
+      { href: "/products", label: "Articles", icon: "products" },
+      { href: "/shop-info", label: "Boutique", icon: "store" },
+      { href: "/social-sharing", label: "Partager", icon: "sharing" },
+      { href: "/crm", label: "DJASSAMAN", icon: "crm" },
+      { href: "/delivery-settings", label: "Livraison", icon: "delivery" },
+      { href: "/payment-settings", label: "Paiement", icon: "payment" },
+      { href: "/plus", label: "Plus", icon: "settings" },
     ],
   },
 ];
 
 const mobilePageMeta = {
-  "/add-product": { title: "Publier", subtitle: "Photos et prix" },
-  "/products": { title: "Articles", subtitle: "Stock et boutique" },
-  "/orders": { title: "Ventes", subtitle: "" },
-  "/messages": { title: "DJASSAMAN", subtitle: "Discussions et reponses" },
-  "/crm": { title: "Parametres DJASSAMAN", subtitle: "Connexion et style" },
-  "/setup": { title: "DJASSAMAN", subtitle: "Configuration en 3 etapes" },
-  "/delivery-settings": { title: "Livraison", subtitle: "Zones et livreurs" },
-  "/payment-settings": { title: "Paiement", subtitle: "Choix vendeur" },
-  "/shop-info": { title: "Boutique", subtitle: "Infos et bot" },
-  "/social-sharing": { title: "Partager", subtitle: "Reseaux et boutique" },
-  "/plus": { title: "Plus", subtitle: "Boutique et reglages" },
-  "/account": { title: "Profil", subtitle: "Mon compte" },
+  "/add-product": "Publier",
+  "/products": "Articles",
+  "/orders": "Ventes",
+  "/messages": "DJASSAMAN",
+  "/crm": "DJASSAMAN",
+  "/setup": "DJASSAMAN",
+  "/delivery-settings": "Livraison",
+  "/payment-settings": "Paiement",
+  "/shop-info": "Boutique",
+  "/social-sharing": "Partager",
+  "/plus": "Plus",
+  "/account": "Profil",
 };
 
 function getMobilePageMeta(pathname) {
-  return mobilePageMeta[pathname] || { title: "Tikchop", subtitle: "Espace vendeur" };
+  return mobilePageMeta[pathname] || "Tikchop";
 }
 
 function accountSyncTimeout(promise, message = "Verification du compte trop longue.") {
@@ -158,8 +159,8 @@ export default function AppChrome({ children }) {
             </span>
             <span className="hidden md:inline text-sm font-black text-[#0F2B20]/60">Accueil</span>
           </Link>
-          <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta.title}`}>
-            <strong className="tk-slide-down">{mobileMeta.title}</strong>
+          <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta}`}>
+            <strong className="tk-slide-down">{mobileMeta}</strong>
           </div>
           <Link href="/plus" className="mobile-seller-topbar-avatar relative overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
             {seller.logo_url ? (
@@ -181,7 +182,7 @@ export default function AppChrome({ children }) {
           <Link href="/plus" className="nav-link">Plus</Link>
         </div>
         <div className="seller-chip">
-          <Store size={15} className="mr-1.5" />
+          <AppIcon3D app="store" size={17} />
           <span>{seller.name}</span>
         </div>
         <SignOutButton />
@@ -196,12 +197,12 @@ export default function AppChrome({ children }) {
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
         <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><Home size={19} strokeWidth={1.6} /></span>
+          <span className="mobile-tabbar-icon"><AppIcon3D app="home" size={16} /></span>
           <span>Accueil</span>
         </Link>
         <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
           <span className="mobile-tabbar-icon relative">
-            <ClipboardList size={19} strokeWidth={1.6} />
+            <AppIcon3D app="orders" size={16} />
             {pendingCount > 0 && (
               <span className="mobile-tabbar-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>
             )}
@@ -209,15 +210,15 @@ export default function AppChrome({ children }) {
           <span>Ventes</span>
         </Link>
         <Link href="/add-product" className={`mobile-tabbar-action ${publishActive ? "is-active" : ""}`} aria-label="Publier un article">
-          <span className="mobile-tabbar-icon"><Plus size={24} strokeWidth={1.6} /></span>
+          <span className="mobile-tabbar-icon"><AppIcon3D app="plus" size={20} /></span>
           <span>Publier</span>
         </Link>
         <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><Bot size={19} strokeWidth={1.6} /></span>
+          <span className="mobile-tabbar-icon"><AppIcon3D app="messages" size={16} /></span>
           <span>DJASSAMAN</span>
         </Link>
           <Link href="/plus" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
-            <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={1.6} /></span>
+            <span className="mobile-tabbar-icon"><AppIcon3D app="settings" size={16} /></span>
             <span>Plus</span>
           </Link>
       </nav>
@@ -251,9 +252,9 @@ function DesktopSellerSidebar({ seller, sellerInitials, pathname }) {
           {sellerNavGroups.map((group) => (
             <div key={group.title} className="seller-desktop-link-group">
               <p className="seller-desktop-link-title">{group.title}</p>
-              {group.items.map(({ href, label, icon: Icon, badge }) => (
+              {group.items.map(({ href, label, icon, badge }) => (
                 <Link key={href} href={href} className={`seller-desktop-link ${badge ? "is-critical" : ""} ${pathname === href ? "is-active" : ""}`}>
-                  <Icon size={18} />
+                  <AppIcon3D app={icon} size={18} />
                   <span>{label}</span>
                   {badge && <small className="seller-desktop-link-badge">{badge}</small>}
                 </Link>
@@ -265,7 +266,7 @@ function DesktopSellerSidebar({ seller, sellerInitials, pathname }) {
 
       <div className="seller-desktop-bottom">
         <Link href={seller.slug ? `/${seller.slug}` : "/onboarding"} className="seller-desktop-store-link">
-          <Store size={18} />
+          <AppIcon3D app="store" size={18} />
           Voir la boutique
         </Link>
         <SignOutButton />

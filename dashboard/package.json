@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@lottiefiles/react-lottie-player": "^3.6.0",
+    "@nobertdev/react-3d-icons": "^1.5.2",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.1",
     "framer-motion": "^12.38.0",

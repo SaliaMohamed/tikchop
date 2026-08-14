@@ -318,8 +318,8 @@ function EmptyMessages({ whatsappConnected }) {
       <h3 className="font-display text-xl font-bold text-[#0F2B20]">Aucun message encore</h3>
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#0F2B20]/60 max-w-[280px]">
         {whatsappConnected
-          ? "Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement."
-          : "Connectez WhatsApp pour recevoir les messages de vos clients. DJASSAMAN repondra automatiquement."}
+          ? "Les messages clients arrivent ici. DJASSAMAN repond automatiquement."
+          : "Connectez WhatsApp : DJASSAMAN repondra a vos clients."}
       </p>
       {!whatsappConnected && (
         <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#059669] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
