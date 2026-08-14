@@ -75,12 +75,12 @@ export function QrConnectionPanel({
       </div>
 
       {!isConnected && (
-        <div className="mt-5 rounded-[24px] bg-[#2b2219] p-3 text-white shadow-[0_18px_38px_rgba(38, 30, 22,0.16)]">
+        <div className="mt-5 rounded-[24px] bg-[#0F2B20] p-3 text-white shadow-[0_18px_38px_rgba(38, 30, 22,0.16)]">
           <label htmlFor="seller-whatsapp-number" className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary-bright)]">
             <Phone size={15} />
             Numero WhatsApp vendeur
           </label>
-          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[#2b2219]">
+          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[#0F2B20]">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-[var(--primary)]">
               <Smartphone size={19} />
             </span>
@@ -118,7 +118,7 @@ export function QrConnectionPanel({
               </p>
               <Link
                 href="/messages"
-                className="mt-5 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#261e16] px-5 text-sm font-black text-white no-underline"
+                className="mt-5 flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#0A2319] px-5 text-sm font-black text-white no-underline"
               >
                 <MessageCircle size={17} />
                 Voir les discussions
@@ -150,7 +150,7 @@ export function QrConnectionPanel({
                 type="button"
                 onClick={onRefreshPairingCode}
                 disabled={busy === "code"}
-                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#261e16] px-5 text-sm font-black text-white disabled:opacity-70"
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#0A2319] px-5 text-sm font-black text-white disabled:opacity-70"
               >
                 {busy === "code" ? <Loader2 className="animate-spin" size={18} /> : <RefreshCw size={18} />}
                 Reessayer
@@ -169,7 +169,7 @@ export function QrConnectionPanel({
                 type="button"
                 onClick={onConnect}
                 disabled={busy === "pairing" || !phoneReady}
-                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#261e16] px-5 text-sm font-black text-white disabled:opacity-70"
+                className="mt-5 flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#0A2319] px-5 text-sm font-black text-white disabled:opacity-70"
               >
                 {busy === "pairing" ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
                 Generer le QR
@@ -215,7 +215,7 @@ export function QrConnectionPanel({
             type="button"
             onClick={onRefreshPairingCode}
             disabled={busy === "code"}
-            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#261e16] px-4 text-xs font-black text-white disabled:opacity-60"
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#0A2319] px-4 text-xs font-black text-white disabled:opacity-60"
           >
             {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
             Generer un nouveau code
@@ -229,7 +229,7 @@ export function QrConnectionPanel({
             type="button"
             onClick={onRefreshPairingCode}
             disabled={busy === "code"}
-            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#261e16] px-4 text-xs font-black text-white disabled:opacity-60"
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-[#0A2319] px-4 text-xs font-black text-white disabled:opacity-60"
           >
             {busy === "code" ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
             Generer un code WhatsApp

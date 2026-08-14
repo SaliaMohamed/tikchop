@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => new Response(
-        "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Tikchop</title><body style=\"margin:0;font-family:system-ui;background:#fbf9f4;color:#07120d;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px\"><main><strong style=\"font-size:22px\">Connexion indisponible</strong><p style=\"font-weight:700;color:#4e6055\">Reconnectez internet puis actualisez Tikchop.</p></main></body>",
+        "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Tikchop</title><body style=\"margin:0;font-family:system-ui;background:#f6fbf7;color:#0f2b20;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px\"><main><strong style=\"font-size:22px\">Connexion indisponible</strong><p style=\"font-weight:700;color:#54685e\">Reconnectez internet puis actualisez Tikchop.</p></main></body>",
         {
           headers: { "Content-Type": "text/html; charset=utf-8" },
         },

@@ -111,8 +111,8 @@ export default function StyleEditor({ onSaved }) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="animate-spin text-[#c2572b]" size={30} />
-        <p className="mt-3 text-sm font-black text-[#2b2219]/45">Chargement du style...</p>
+        <Loader2 className="animate-spin text-[#059669]" size={30} />
+        <p className="mt-3 text-sm font-black text-[#0F2B20]/45">Chargement du style...</p>
       </div>
     );
   }
@@ -121,18 +121,18 @@ export default function StyleEditor({ onSaved }) {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#2b2219] text-[#f0954c]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#0F2B20] text-[#34D399]">
             <Bot size={20} />
           </span>
           <div>
-            <p className="text-sm font-black text-[#2b2219]">Personnalisez DJASSAMAN</p>
-            <p className="text-xs font-bold text-[#2b2219]/45">Il repond et vend pour vous 24h/24</p>
+            <p className="text-sm font-black text-[#0F2B20]">Personnalisez DJASSAMAN</p>
+            <p className="text-xs font-bold text-[#0F2B20]/45">Il repond et vend pour vous 24h/24</p>
           </div>
         </div>
         <button
           type="button"
           onClick={applyPreset}
-          className="flex shrink-0 items-center gap-1.5 rounded-[12px] bg-[#261e16] px-3 py-2 text-[0.66rem] font-black text-[#f0954c]"
+          className="flex shrink-0 items-center gap-1.5 rounded-[12px] bg-[#0A2319] px-3 py-2 text-[0.66rem] font-black text-[#34D399]"
         >
           <Sparkles size={13} />
           Preset
@@ -140,7 +140,7 @@ export default function StyleEditor({ onSaved }) {
       </div>
 
       {(message || error) && (
-        <div className={`flex items-center gap-2.5 rounded-[16px] p-3 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#fbeee0] text-[#96451f] ring-1 ring-[#fbefe2]"}`}>
+        <div className={`flex items-center gap-2.5 rounded-[16px] p-3 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#E7F6ED] text-[#047857] ring-1 ring-[#EAF8F0]"}`}>
           {!error && <TikchopLottie name="sparkle" size={20} speed={1.3} className="shrink-0" ariaLabel="Enregistre" />}
           {error || message}
         </div>
@@ -150,15 +150,15 @@ export default function StyleEditor({ onSaved }) {
         {FIELDS.map((field) => (
           <div key={field.key}>
             <div className="flex items-center justify-between">
-              <label className="block text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#2b2219]/50">{field.label}</label>
-              <span className="text-[0.6rem] font-bold text-[#2b2219]/35">{field.hint}</span>
+              <label className="block text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">{field.label}</label>
+              <span className="text-[0.6rem] font-bold text-[#0F2B20]/35">{field.hint}</span>
             </div>
             <textarea
               value={settings[field.key]}
               onChange={(e) => updateSetting(field.key, e.target.value)}
               placeholder={field.placeholder}
               rows={field.rows}
-              className="mt-1.5 min-h-0 w-full resize-none rounded-[14px] bg-[#fbf6ee] px-3.5 py-2.5 text-sm font-semibold text-[#2b2219] outline-none ring-1 ring-[#2b2219]/8 placeholder:text-[#2b2219]/30 focus:ring-2 focus:ring-[#c2572b]/30"
+              className="mt-1.5 min-h-0 w-full resize-none rounded-[14px] bg-[#F6FBF7] px-3.5 py-2.5 text-sm font-semibold text-[#0F2B20] outline-none ring-1 ring-[#0F2B20]/8 placeholder:text-[#0F2B20]/30 focus:ring-2 focus:ring-[#059669]/30"
             />
           </div>
         ))}
@@ -168,13 +168,13 @@ export default function StyleEditor({ onSaved }) {
         type="button"
         onClick={saveSettings}
         disabled={busy === "settings"}
-        className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[20px] bg-[linear-gradient(135deg,#261e16,#8a3c1c)] px-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(38,30,22,0.16)] disabled:opacity-60"
+        className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[20px] bg-[linear-gradient(135deg,#0A2319,#065F46)] px-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(38,30,22,0.16)] disabled:opacity-60"
       >
         {busy === "settings" ? <Loader2 className="animate-spin" size={17} /> : <ShieldCheck size={17} />}
         Enregistrer le style
       </button>
 
-      <p className="text-center text-xs font-bold text-[#2b2219]/40">Etape 2 sur 3</p>
+      <p className="text-center text-xs font-bold text-[#0F2B20]/40">Etape 2 sur 3</p>
     </div>
   );
 }

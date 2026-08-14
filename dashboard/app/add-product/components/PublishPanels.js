@@ -106,7 +106,7 @@ function PublishDock({ loading, canSubmit, mode, count }) {
         <button
           type="submit"
           disabled={loading || !canSubmit}
-          className={`flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-extrabold shadow-[0_14px_34px_rgba(194, 87, 43, 0.26)] transition ${
+          className={`flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] text-base font-extrabold shadow-[0_14px_34px_rgba(5, 150, 105, 0.26)] transition ${
             loading || !canSubmit ? "bg-[var(--outline)] text-white" : "bg-[var(--primary)] text-white active:scale-[0.98]"
           }`}
         >
@@ -121,7 +121,7 @@ function PublishDock({ loading, canSubmit, mode, count }) {
 
 function BatchReviewSummary({ items, backgroundProgress }) {
   return (
-    <div className="rounded-[20px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#2b2219]/5">
+    <div className="rounded-[20px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-lg font-bold text-[var(--text-main)]">Photos de vos articles</p>

@@ -75,9 +75,9 @@ export function getCardActionLabel(status) {
 }
 
 export function getCardActionTone(status) {
-  if (status === "DELIVERED") return "bg-[#07120d]/7 text-[#07120d]/45";
+  if (status === "DELIVERED") return "bg-[#071B12]/7 text-[#071B12]/45";
   if (status === "CANCELLED") return "bg-rose-50 text-rose-800";
-  return "bg-[#07120d] text-white";
+  return "bg-[#071B12] text-white";
 }
 
 export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery) {
@@ -85,7 +85,7 @@ export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDel
     return {
       label: "Marquer livree",
       icon: <CheckCircle2 size={18} />,
-      className: "bg-[#008f5a] text-white hover:bg-[#007a4d]",
+      className: "bg-[#059669] text-white hover:bg-[#047857]",
       onClick: onDelivered,
     };
   }
@@ -94,7 +94,7 @@ export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDel
     return {
       label: "Partager au livreur",
       icon: <Truck size={18} />,
-      className: "bg-[#07120d] text-white hover:bg-[#122b20]",
+      className: "bg-[#071B12] text-white hover:bg-[#0F2B20]",
       onClick: onOpenDelivery,
     };
   }
@@ -103,7 +103,7 @@ export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDel
     return {
       label: "Client confirme",
       icon: <CheckCircle2 size={18} />,
-      className: "bg-[#008f5a] text-white hover:bg-[#007a4d]",
+      className: "bg-[#059669] text-white hover:bg-[#047857]",
       onClick: onPaid,
     };
   }
@@ -112,7 +112,7 @@ export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDel
     return {
       label: "Colis pret",
       icon: <Package size={18} />,
-      className: "bg-[#07120d] text-white hover:bg-[#122b20]",
+      className: "bg-[#071B12] text-white hover:bg-[#0F2B20]",
       onClick: onPrepared,
     };
   }

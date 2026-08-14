@@ -1,6 +1,14 @@
 import { supabaseAdmin } from "./supabase-admin";
 import { createHash } from "node:crypto";
 import { sendEvolutionText } from "./evolution";
+import {
+  getActiveSellerHandoffs,
+  mergeMessageRows,
+  MESSAGE_SELECT_BASE,
+  MESSAGE_SELECT_WITH_MEDIA,
+  normalizeStoredMessage,
+} from "../app/lib/actions/shared";
+import { formatCustomerPhone, handoffKey, normalizeCustomerPhone } from "../app/lib/actions/formatters";
 
 const ALLOWED_ORDER_STATUS = new Set(["PENDING", "PAID", "PREPARED", "DELIVERED", "CANCELLED"]);
 const DEFAULT_HANDOFF_MINUTES = 24 * 60;
@@ -70,14 +78,6 @@ export function computeMobileStats(products = [], orders = [], seller = {}) {
     revenueToday,
     whatsappConnected: ["connected", "open", "standard_active"].includes(String(seller.whatsapp_status || "").toLowerCase()),
   };
-}
-
-function normalizeCustomerPhone(value) {
-  return String(value || "").replace(/\D/g, "");
-}
-
-function handoffKey(value) {
-  return normalizeCustomerPhone(value) || String(value || "").trim();
 }
 
 function getSellerEvolutionInstance(seller) {
@@ -202,6 +202,181 @@ export async function getMobileOverview(request) {
     products: products || [],
     orders: normalizedOrders,
     stats: computeMobileStats(products || [], normalizedOrders, seller),
+  };
+}
+
+async function fetchMobileMessages(sellerKeys, likeQueries) {
+  async function fetchMessages(queryFactory, schemaFallbackPattern = /messages|schema cache|column/i) {
+    const mediaResult = await queryFactory(MESSAGE_SELECT_WITH_MEDIA);
+    if (!mediaResult.error || !schemaFallbackPattern.test(mediaResult.error.message || "")) return mediaResult;
+    return queryFactory(MESSAGE_SELECT_BASE).then((result) => (
+      schemaFallbackPattern.test(result.error?.message || "") ? { data: [], error: null } : result
+    ));
+  }
+
+  const [bySlugResult, ...legacyResults] = await Promise.all([
+    fetchMessages((select) => supabaseAdmin
+      .from("messages")
+      .select(select)
+      .in("seller_slug", sellerKeys)
+      .order("created_at", { ascending: false })
+      .limit(300)),
+    ...likeQueries.map((pattern) => fetchMessages((select) => supabaseAdmin
+      .from("messages")
+      .select(select)
+      .ilike("client", pattern)
+      .order("created_at", { ascending: false })
+      .limit(300))),
+  ]);
+
+  return { bySlugResult, legacyResults };
+}
+
+function buildMobileConversations(seller, rows, orders, handoffs) {
+  const messages = rows
+    .map(normalizeStoredMessage)
+    .filter((message) => (message.text || message.media) && String(message.status || "").toLowerCase() !== "human_pause")
+    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+  const handoffsByPhone = new Map((handoffs || []).map((handoff) => [handoffKey(handoff.customer_phone), handoff]));
+  const conversations = new Map();
+
+  function ensureConversation(phone, fallback = {}) {
+    const cleanPhone = normalizeCustomerPhone(phone);
+    const key = cleanPhone || fallback.key || "unknown";
+    if (!conversations.has(key)) {
+      conversations.set(key, {
+        key,
+        customer_phone: cleanPhone,
+        display_phone: formatCustomerPhone(cleanPhone),
+        customer_name: fallback.customer_name || fallback.customerName || "",
+        messages: [],
+        orders: [],
+        last_message: null,
+        last_at: fallback.created_at || null,
+        handoff: handoffsByPhone.get(handoffKey(cleanPhone)) || null,
+        bot_paused: Boolean(handoffsByPhone.get(handoffKey(cleanPhone))),
+      });
+    }
+
+    const conversation = conversations.get(key);
+    if (!conversation.customer_name && (fallback.customer_name || fallback.customerName)) {
+      conversation.customer_name = fallback.customer_name || fallback.customerName;
+    }
+    if (!conversation.display_phone && cleanPhone) {
+      conversation.display_phone = formatCustomerPhone(cleanPhone);
+    }
+    return conversation;
+  }
+
+  for (const message of messages) {
+    const conversation = ensureConversation(message.customer_phone, {
+      customer_name: message.customer_name,
+      key: message.client,
+      created_at: message.created_at,
+    });
+    conversation.messages.push(message);
+    conversation.last_message = message;
+    conversation.last_at = message.created_at || conversation.last_at;
+  }
+
+  for (const order of orders || []) {
+    const phone = normalizeCustomerPhone(order.customer_phone);
+    const conversation = ensureConversation(phone, {
+      customer_name: order.customer_name,
+      key: order.id,
+      created_at: order.created_at,
+    });
+    conversation.orders.push(order);
+    if (!conversation.last_at || new Date(order.created_at || 0) > new Date(conversation.last_at || 0)) {
+      conversation.last_at = order.created_at;
+    }
+  }
+
+  return Array.from(conversations.values())
+    .map((conversation) => ({
+      ...conversation,
+      customer_name: conversation.customer_name || conversation.display_phone || "Client WhatsApp",
+      orders: conversation.orders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)),
+      last_order: conversation.orders[0] || null,
+      inbound_count: conversation.messages.filter((message) => message.direction === "in").length,
+    }))
+    .sort((a, b) => new Date(b.last_at || 0) - new Date(a.last_at || 0));
+}
+
+export async function getMobileConversations(request) {
+  const { seller } = await requireMobileSeller(request);
+  const sellerKeys = getHandoffSellerKeys(seller);
+  const likeQueries = sellerKeys.map((sellerKey) => `${sellerKey} :%`);
+  const handoffsPromise = getActiveSellerHandoffs(seller);
+  const ordersPromise = supabaseAdmin
+    .from("orders")
+    .select("id,order_ref,customer_name,customer_phone,status,total_amount,delivery_fee,delivery_zone,created_at")
+    .eq("seller_id", seller.id)
+    .order("created_at", { ascending: false })
+    .limit(50)
+    .then((result) => result)
+    .catch((error) => {
+      throw new Error(error.message);
+    });
+
+  const { bySlugResult, legacyResults } = await fetchMobileMessages(sellerKeys, likeQueries);
+
+  if (bySlugResult?.error) throw new Error(bySlugResult.error.message);
+  const legacyError = legacyResults.find((result) => result.error)?.error;
+  if (legacyError) throw new Error(legacyError.message);
+
+  const [{ data: orders }, handoffs] = await Promise.all([ordersPromise, handoffsPromise]);
+
+  const rows = mergeMessageRows(
+    bySlugResult.data || [],
+    ...legacyResults.map((result) => result.data || []),
+  );
+
+  return {
+    seller,
+    conversations: buildMobileConversations(seller, rows, orders || [], handoffs),
+  };
+}
+
+export async function getMobileConversationMessages(request, customerPhone) {
+  const { seller } = await requireMobileSeller(request);
+  const cleanPhone = normalizeCustomerPhone(customerPhone);
+  if (cleanPhone.length < 6) {
+    throw new MobileApiError("Numero client invalide.", 400);
+  }
+
+  const sellerKeys = getHandoffSellerKeys(seller);
+  const likeQueries = sellerKeys.map((sellerKey) => `${sellerKey} :%`);
+  const handoffsPromise = getActiveSellerHandoffs(seller);
+
+  const { bySlugResult, legacyResults } = await fetchMobileMessages(sellerKeys, likeQueries);
+
+  if (bySlugResult?.error) throw new Error(bySlugResult.error.message);
+  const legacyError = legacyResults.find((result) => result.error)?.error;
+  if (legacyError) throw new Error(legacyError.message);
+
+  const handoffs = await handoffsPromise;
+  const rows = mergeMessageRows(
+    bySlugResult.data || [],
+    ...legacyResults.map((result) => result.data || []),
+  );
+  const messages = rows
+    .map(normalizeStoredMessage)
+    .filter((message) => (message.text || message.media) && String(message.status || "").toLowerCase() !== "human_pause")
+    .filter((message) => normalizeCustomerPhone(message.customer_phone) === cleanPhone)
+    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+  const conversations = buildMobileConversations(seller, rows, [], handoffs);
+  const conversation = conversations.find((item) => normalizeCustomerPhone(item.customer_phone) === cleanPhone) || null;
+  const handoff = (handoffs || []).find((item) => handoffKey(item.customer_phone) === handoffKey(cleanPhone)) || null;
+
+  return {
+    customer_phone: cleanPhone,
+    customer_name: conversation?.customer_name || conversation?.display_phone || "Client WhatsApp",
+    messages,
+    handoff,
+    bot_paused: Boolean(handoff),
   };
 }
 

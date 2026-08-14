@@ -49,7 +49,7 @@ function QuickValueButton({ active, label, onClick }) {
       type="button"
       onClick={onClick}
       className={`h-9 min-w-10 shrink-0 rounded-xl px-3 text-sm font-extrabold shadow-sm ring-1 ${
-        active ? "bg-[#2b2219] text-white ring-[#2b2219]" : "bg-white text-[#2b2219] ring-[#e7dac2]"
+        active ? "bg-[#0F2B20] text-white ring-[#0F2B20]" : "bg-white text-[#0F2B20] ring-[#DCEFE3]"
       }`}
     >
       {label}
@@ -110,7 +110,7 @@ function PublishSuccess({ result, onAddMore }) {
         <section className="grid gap-3">
           <Link
             href="/social-sharing"
-            className="flex min-h-[62px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-extrabold text-[var(--text-main)] no-underline shadow-[0_14px_34px_rgba(240, 149, 76,0.22)]"
+            className="flex min-h-[62px] items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] px-4 text-base font-extrabold text-[var(--text-main)] no-underline shadow-[0_14px_34px_rgba(52, 211, 153,0.22)]"
           >
             <Share2 size={19} />
             Partager maintenant

@@ -88,7 +88,7 @@ export default function Dashboard() {
     return (
       <TkScreen>
         <div className="flex flex-col items-center justify-center text-center p-8 bg-[var(--color-dark)] rounded-[32px] my-6 relative overflow-hidden text-white shadow-2xl">
-          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(240, 149, 76,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(240, 149, 76,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
+          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(52, 211, 153,.08)_1px,transparent_1px),linear-gradient(0deg,rgba(52, 211, 153,.06)_1px,transparent_1px)] [background-size:28px_28px]" />
           <div className="relative z-10 flex flex-col items-center max-w-xs">
             <TikchopLottie name="empty-box" size={150} />
             <h2 className="mt-4 font-display text-2xl font-black text-white">Aucune boutique active</h2>
@@ -97,7 +97,7 @@ export default function Dashboard() {
             </p>
             <Link
               href="/onboarding?new=1"
-              className="mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--color-primary-accent)] text-base font-black text-[var(--color-dark)] shadow-[0_16px_36px_rgba(240, 149, 76,0.3)] active:scale-[0.98] transition no-underline"
+              className="mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--color-primary-accent)] text-base font-black text-[var(--color-dark)] shadow-[0_16px_36px_rgba(52, 211, 153,0.3)] active:scale-[0.98] transition no-underline"
             >
               <Store size={18} />
               Créer ma boutique
@@ -211,8 +211,8 @@ export default function Dashboard() {
               style={{
                 background: "var(--surface)",
                 color: "var(--primary-hover)",
-                ringColor: "rgba(43, 34, 25, 0.06)",
-                boxShadow: "0 4px 12px rgba(43, 34, 25, 0.04)",
+                ringColor: "rgba(15, 43, 32, 0.06)",
+                boxShadow: "0 4px 12px rgba(15, 43, 32, 0.04)",
               }}
             >
               <ChevronRight size={17} />
@@ -253,8 +253,8 @@ export default function Dashboard() {
           className="mt-5 rounded-2xl p-3 text-center text-xs font-black ring-1 tk-fade-up-4"
           style={{
             background: "var(--surface)",
-            color: "rgba(43, 34, 25, 0.4)",
-            ringColor: "rgba(43, 34, 25, 0.05)",
+            color: "rgba(15, 43, 32, 0.4)",
+            ringColor: "rgba(15, 43, 32, 0.05)",
           }}
         >
           Chiffres indisponibles
@@ -266,13 +266,13 @@ export default function Dashboard() {
 
 function MiniStat({ value, label, icon, dot = false }) {
   return (
-    <div className="relative rounded-[22px] bg-white px-2.5 py-4 text-center shadow-[0_10px_26px_rgb(43_34_25_/_0.04)] ring-1 ring-[#2b2219]/6">
-      {dot && <span className="absolute right-4 top-3 h-1.5 w-1.5 rounded-full bg-[#c2572b]" />}
-      <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fbefe0] text-[#c2572b]">
+    <div className="relative rounded-[22px] bg-white px-2.5 py-4 text-center shadow-[0_10px_26px_rgb(43_34_25_/_0.04)] ring-1 ring-[#0F2B20]/6">
+      {dot && <span className="absolute right-4 top-3 h-1.5 w-1.5 rounded-full bg-[#059669]" />}
+      <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#E8F7EE] text-[#059669]">
         {icon}
       </span>
-      <strong className="mt-2 block font-display text-lg font-black leading-5 text-[#2b2219]">{value}</strong>
-      <span className="mt-1 block text-[0.65rem] font-black text-[#6e6353]">{label}</span>
+      <strong className="mt-2 block font-display text-lg font-black leading-5 text-[#0F2B20]">{value}</strong>
+      <span className="mt-1 block text-[0.65rem] font-black text-[#54685E]">{label}</span>
     </div>
   );
 }

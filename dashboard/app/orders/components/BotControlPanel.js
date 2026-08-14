@@ -26,12 +26,12 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
   return (
     <section className={`rounded-[24px] p-4 shadow-[var(--shadow-sm)] ring-1 ${
       active
-        ? "bg-[#221b14] text-white ring-[#f0954c]/20"
+        ? "bg-[#091D14] text-white ring-[#34D399]/20"
         : "bg-white text-[var(--text-main)] ring-[var(--outline)]/20"
     }`}>
       <div className="flex items-start gap-3">
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-          active ? "bg-[var(--primary-bright)] text-[#221b14]" : "bg-[var(--surface-soft)] text-[var(--primary)]"
+          active ? "bg-[var(--primary-bright)] text-[#091D14]" : "bg-[var(--surface-soft)] text-[var(--primary)]"
         }`}>
           <Bot size={20} />
         </span>
@@ -63,7 +63,7 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
                   setNotice("Bot reactive pour ce client.");
                 })}
                 disabled={Boolean(busy)}
-                className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-[#221b14] ring-1 ring-white/20 disabled:opacity-60"
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-[#091D14] ring-1 ring-white/20 disabled:opacity-60"
               >
                 {busy === "resume" ? <Loader2 className="animate-spin" size={17} /> : <PlayCircle size={17} />}
                 Relancer le bot
@@ -113,7 +113,7 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
               setNotice("Message envoye. Le bot reste en pause 24h.");
             })}
             disabled={Boolean(busy) || !message.trim()}
-            className="mt-2 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-bright)] text-sm font-extrabold text-[#221b14] shadow-[0_12px_28px_rgba(240, 149, 76,0.20)] disabled:opacity-55"
+            className="mt-2 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-bright)] text-sm font-extrabold text-[#091D14] shadow-[0_12px_28px_rgba(52, 211, 153,0.20)] disabled:opacity-55"
           >
             {busy === "reply" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
             Envoyer moi-meme

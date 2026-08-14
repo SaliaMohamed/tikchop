@@ -182,7 +182,7 @@ export default async function ReceiptPage({ searchParams }) {
   const statusLabel = getStatusLabel(order, paid);
   const quantityTotal = getItemQuantityTotal(items);
 
-  const brandColor = order.sellers?.brand_color || "#c2572b";
+  const brandColor = order.sellers?.brand_color || "#059669";
   const brandColorLight = `${brandColor}12`; // ~7% opacity for soft backgrounds
   const brandStyles = {
     "--primary": brandColor,
@@ -254,10 +254,10 @@ export default async function ReceiptPage({ searchParams }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#2b2219]/5 bg-[#fbf6ee] p-4">
+          <div className="rounded-2xl border border-[#0F2B20]/5 bg-[#F6FBF7] p-4">
             <div className="relative flex justify-between items-center max-w-[360px] mx-auto">
               {/* Background progress line */}
-              <div className="absolute left-4 right-4 top-4 h-0.5 bg-[#2b2219]/5 -translate-y-1/2 z-0">
+              <div className="absolute left-4 right-4 top-4 h-0.5 bg-[#0F2B20]/5 -translate-y-1/2 z-0">
                 <div 
                   className="h-full transition-all duration-500" 
                   style={{ width: `${(currentStep / 3) * 100}%`, backgroundColor: brandColor }}
@@ -275,8 +275,8 @@ export default async function ReceiptPage({ searchParams }) {
                       isDone 
                         ? "text-white shadow-sm" 
                         : isActive 
-                          ? "bg-[#2b2219] text-white shadow-[0_0_0_4px_rgba(43, 34, 25,0.1)] scale-105" 
-                          : "bg-white text-[#2b2219]/40 ring-1 ring-[#2b2219]/10"
+                          ? "bg-[#0F2B20] text-white shadow-[0_0_0_4px_rgba(15, 43, 32,0.1)] scale-105" 
+                          : "bg-white text-[#0F2B20]/40 ring-1 ring-[#0F2B20]/10"
                     }`}
                     style={isDone ? { backgroundColor: brandColor } : {}}>
                       {isDone ? (
@@ -286,7 +286,7 @@ export default async function ReceiptPage({ searchParams }) {
                       )}
                     </div>
                     <span className={`mt-2 text-[10px] font-extrabold tracking-tight ${
-                      isActive ? "text-[#2b2219]" : "text-[#2b2219]/40"
+                      isActive ? "text-[#0F2B20]" : "text-[#0F2B20]/40"
                     }`}>
                       {label}
                     </span>

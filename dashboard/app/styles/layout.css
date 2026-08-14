@@ -6,7 +6,7 @@
   -webkit-backdrop-filter: blur(24px) saturate(1.35);
   border: 1px solid var(--border-soft);
   border-radius: 22px;
-  box-shadow: 0 10px 34px rgba(43, 34, 25, 0.06), 0 2px 6px rgba(43, 34, 25, 0.04);
+  box-shadow: 0 10px 34px rgba(15, 43, 32, 0.06), 0 2px 6px rgba(15, 43, 32, 0.04);
   display: flex;
   justify-content: space-between;
   margin: 0.85rem auto 1.35rem;
@@ -51,7 +51,7 @@
   height: 40px;
   overflow: hidden;
   width: 40px;
-  box-shadow: 0 6px 16px rgba(43, 34, 25, 0.18);
+  box-shadow: 0 6px 16px rgba(15, 43, 32, 0.18);
 }
 
 .brand-logo-mark.is-sm {
@@ -144,7 +144,7 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 40px;
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 20px 48px rgba(43, 34, 25, 0.12), 0 8px 16px rgba(43, 34, 25, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  box-shadow: 0 20px 48px rgba(15, 43, 32, 0.12), 0 8px 16px rgba(15, 43, 32, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
   display: none;
   gap: 0;
   justify-content: space-around;
@@ -164,8 +164,8 @@
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
-  border-bottom: 1px solid rgba(43, 34, 25, 0.045);
-  box-shadow: 0 1px 0 var(--white-80) inset, 0 8px 28px rgba(43, 34, 25, 0.065);
+  border-bottom: 1px solid rgba(15, 43, 32, 0.045);
+  box-shadow: 0 1px 0 var(--white-80) inset, 0 8px 28px rgba(15, 43, 32, 0.065);
   display: none;
   height: calc(3.85rem + env(safe-area-inset-top, 0px));
   justify-content: space-between;
@@ -232,7 +232,7 @@
 
 .mobile-seller-topbar-avatar {
   background: var(--text-main);
-  border: 1px solid rgba(194, 87, 43, 0.2);
+  border: 1px solid rgba(5, 150, 105, 0.2);
   border-radius: 999px;
   color: var(--primary);
   height: 2.25rem;
@@ -281,7 +281,7 @@
 .mobile-tabbar-icon {
   align-items: center;
   background: var(--color-surface-soft);
-  border: 1.5px solid rgba(43, 34, 25, 0.05);
+  border: 1.5px solid rgba(15, 43, 32, 0.05);
   border-radius: 17px;
   color: #948a7d;
   display: flex;
@@ -321,12 +321,12 @@
   height: 58px;
   margin-top: -1.75rem;
   width: 58px;
-  box-shadow: 0 14px 26px rgba(194, 87, 43, 0.34), 0 0 0 4px rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 26px rgba(5, 150, 105, 0.34), 0 0 0 4px rgba(255, 255, 255, 0.9);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .mobile-tabbar-action:active .mobile-tabbar-icon {
   transform: translateY(-1.75rem) scale(0.9);
-  box-shadow: 0 8px 16px rgba(43, 34, 25, 0.15), 0 0 0 2px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 16px rgba(15, 43, 32, 0.15), 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
 .mobile-tabbar-action .mobile-tabbar-icon svg {
@@ -340,20 +340,20 @@
 }
 
 .mobile-tabbar-action.is-active .mobile-tabbar-icon {
-  box-shadow: 0 12px 24px rgba(43, 34, 25, 0.3), 0 0 0 4px rgba(194, 87, 43, 0.4);
+  box-shadow: 0 12px 24px rgba(15, 43, 32, 0.3), 0 0 0 4px rgba(5, 150, 105, 0.4);
 }
 
 .mobile-tabbar-item.is-active {
   background: var(--surface-soft);
   color: var(--text-main);
-  box-shadow: inset 0 0 0 1px rgba(194, 87, 43, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.15);
 }
 
 .mobile-tabbar-item.is-active .mobile-tabbar-icon {
   background: var(--surface);
-  border-color: rgba(194, 87, 43, 0.25);
+  border-color: rgba(5, 150, 105, 0.25);
   color: var(--primary-hover);
-  box-shadow: 0 6px 16px rgba(194, 87, 43, 0.2);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.2);
 }
 
 /* Badge compteur sur la tabbar */
@@ -383,21 +383,21 @@
 
 .card {
   background: var(--surface);
-  border: 1px solid rgba(43, 34, 25, 0.04);
+  border: 1px solid rgba(15, 43, 32, 0.04);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover {
-  border-color: rgba(43, 34, 25, 0.08);
+  border-color: rgba(15, 43, 32, 0.08);
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
 }
 
 .mobile-input {
-  background: rgba(43, 34, 25, 0.02);
-  border: 1px solid rgba(43, 34, 25, 0.05);
+  background: rgba(15, 43, 32, 0.02);
+  border: 1px solid rgba(15, 43, 32, 0.05);
   border-radius: 20px;
   color: var(--text-main);
   font-size: 0.95rem;
@@ -408,7 +408,7 @@
   padding: 0 1.25rem;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
-  box-shadow: inset 0 2px 4px rgba(43, 34, 25, 0.01);
+  box-shadow: inset 0 2px 4px rgba(15, 43, 32, 0.01);
 }
 
 .mobile-input::placeholder {
@@ -419,7 +419,7 @@
 .mobile-input:focus {
   background: var(--surface);
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(194, 87, 43, 0.12), 0 4px 16px rgba(194, 87, 43, 0.08);
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12), 0 4px 16px rgba(5, 150, 105, 0.08);
   outline: none;
 }
 
@@ -492,7 +492,7 @@
 .seller-desktop-logo {
   background: linear-gradient(135deg, var(--color-dark), var(--color-dark-mid));
   border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(43, 34, 25, 0.24);
+  box-shadow: 0 6px 18px rgba(15, 43, 32, 0.24);
   color: white;
   height: 46px;
   overflow: hidden;
@@ -514,14 +514,14 @@
 .seller-desktop-shop {
   align-items: center;
   background: linear-gradient(135deg, var(--surface-soft) 0%, var(--color-mint-soft) 100%);
-  border: 1px solid rgba(194, 87, 43, 0.18);
+  border: 1px solid rgba(5, 150, 105, 0.18);
   border-radius: 22px;
   color: var(--text-main);
   display: flex;
   gap: 0.75rem;
   margin-top: 1.4rem;
   padding: 0.75rem;
-  box-shadow: 0 4px 12px rgba(194, 87, 43, 0.08);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08);
 }
 
 .seller-desktop-avatar {
@@ -578,7 +578,7 @@
 .seller-desktop-link.is-active {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   color: white;
-  box-shadow: 0 12px 28px rgba(194, 87, 43, 0.24);
+  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.24);
 }
 
 .seller-desktop-link:hover svg {
@@ -648,7 +648,7 @@
 
 .app-card {
   background: var(--color-surface);
-  border: 1px solid rgba(43, 34, 25, 0.05);
+  border: 1px solid rgba(15, 43, 32, 0.05);
   border-radius: 28px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;

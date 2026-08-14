@@ -155,10 +155,10 @@ export function getSegmentCount(customers, segment) {
 }
 
 export function getTemplateToneClass(tone) {
-  if (tone === "primary") return "bg-[#07120d] text-white ring-[#07120d]/20";
-  if (tone === "success") return "bg-[#eafff5] text-[#005f3d] ring-[#008f5a]/20";
+  if (tone === "primary") return "bg-[#071B12] text-white ring-[#071B12]/20";
+  if (tone === "success") return "bg-[#E4F7EC] text-[#065F46] ring-[#059669]/20";
   if (tone === "warning") return "bg-amber-50 text-amber-800 ring-amber-200";
   if (tone === "info") return "bg-blue-50 text-blue-800 ring-blue-200";
   if (tone === "danger") return "bg-red-50 text-red-700 ring-red-200";
-  return "bg-white text-[#07120d] ring-[#07120d]/10";
+  return "bg-white text-[#071B12] ring-[#071B12]/10";
 }

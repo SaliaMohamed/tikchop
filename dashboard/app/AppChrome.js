@@ -153,10 +153,10 @@ export default function AppChrome({ children }) {
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
           <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4ede1] text-[#c2572b]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF8F2] text-[#059669]">
               <ArrowLeft size={17} strokeWidth={2.5} />
             </span>
-            <span className="hidden md:inline text-sm font-black text-[#2b2219]/60">Accueil</span>
+            <span className="hidden md:inline text-sm font-black text-[#0F2B20]/60">Accueil</span>
           </Link>
           <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta.title}`}>
             <strong className="tk-slide-down">{mobileMeta.title}</strong>
@@ -276,17 +276,17 @@ function DesktopSellerSidebar({ seller, sellerInitials, pathname }) {
 
 function PublicLegalFooter() {
   return (
-    <footer className="container mt-10 pb-8 text-center text-xs font-bold text-[#2b2219]/40">
-      <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-3 rounded-[20px] bg-[#fbf6ee] px-4 py-3 ring-1 ring-[#2b2219]/10">
-        <Link href="/mentions-legales" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
+    <footer className="container mt-10 pb-8 text-center text-xs font-bold text-[#0F2B20]/40">
+      <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-3 rounded-[20px] bg-[#F6FBF7] px-4 py-3 ring-1 ring-[#0F2B20]/10">
+        <Link href="/mentions-legales" className="text-[#0F2B20]/60 no-underline hover:text-[#059669]">
           Mentions legales
         </Link>
-        <span className="text-[#2b2219]/20">|</span>
-        <Link href="/confidentialite" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
+        <span className="text-[#0F2B20]/20">|</span>
+        <Link href="/confidentialite" className="text-[#0F2B20]/60 no-underline hover:text-[#059669]">
           Confidentialite
         </Link>
-        <span className="text-[#2b2219]/20">|</span>
-        <Link href="/conditions" className="text-[#2b2219]/60 no-underline hover:text-[#c2572b]">
+        <span className="text-[#0F2B20]/20">|</span>
+        <Link href="/conditions" className="text-[#0F2B20]/60 no-underline hover:text-[#059669]">
           Conditions
         </Link>
       </div>
@@ -380,18 +380,18 @@ function SellerAccountGate({ children }) {
     return (
       <main className="container">
         <div className="flex min-h-[80vh] flex-col items-center justify-center text-center">
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#2b2219] shadow-[0_20px_48px_rgba(43, 34, 25,0.22)]">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#0F2B20] shadow-[0_20px_48px_rgba(15, 43, 32,0.22)]">
             <span
               style={{ backgroundImage: "url('/icon.svg')" }}
               className="h-12 w-12 rounded-[14px] bg-center bg-cover bg-no-repeat"
               aria-hidden="true"
             />
           </div>
-          <p className="mt-6 font-display text-lg font-black text-[#2b2219]">{message}</p>
+          <p className="mt-6 font-display text-lg font-black text-[#0F2B20]">{message}</p>
           <div className="mt-3 flex items-center justify-center gap-1.5" aria-label="Chargement en cours">
-            <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#c2572b]" />
-            <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#c2572b]" />
-            <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#c2572b]" />
+            <span className="tk-dot-1 h-2 w-2 rounded-full bg-[#059669]" />
+            <span className="tk-dot-2 h-2 w-2 rounded-full bg-[#059669]" />
+            <span className="tk-dot-3 h-2 w-2 rounded-full bg-[#059669]" />
           </div>
         </div>
       </main>

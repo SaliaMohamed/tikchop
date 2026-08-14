@@ -86,7 +86,7 @@ export function getPasswordStrength(pw) {
   if (score <= 2) return { score: 2, label: "Faible", color: "#f97316" };
   if (score <= 3) return { score: 3, label: "Moyen", color: "#eab308" };
   if (score <= 4) return { score: 4, label: "Bon", color: "#22c55e" };
-  return { score: 5, label: "Excellent", color: "#008f5a" };
+  return { score: 5, label: "Excellent", color: "#059669" };
 }
 
 export const SHOP_CATEGORIES = [
@@ -101,3 +101,27 @@ export const SHOP_CATEGORIES = [
 ];
 
 export const CI_CITIES = ["Abidjan", "Bouaké", "Daloa", "San-Pédro", "Yamoussoukro", "Korhogo", "Man", "Gagnoa", "Autre"];
+
+export const CI_CITY_COMMUNES = {
+  Abidjan: [
+    "Abobo",
+    "Adjamé",
+    "Angré",
+    "Anyama",
+    "Attécoubé",
+    "Bingerville",
+    "Cocody",
+    "Deux Plateaux",
+    "Koumassi",
+    "Marcory",
+    "Niangon",
+    "Plateau",
+    "Port-Bouët",
+    "Riviera",
+    "Songon",
+    "Treichville",
+    "Vridi",
+    "Yopougon",
+    "Zone 4",
+  ],
+};

@@ -9,14 +9,14 @@ import { Field, QuickValueButton } from "./SharedUI";
 function BulkQuickPricePanel({ item, itemFieldCopy, onUpdate, onNext }) {
   const hasPrice = Boolean(normalizeMoneyInput(item.price));
   return (
-    <section className="rounded-[26px] bg-[#2b2219] p-3 text-white shadow-[0_18px_40px_rgb(43_34_25_/_0.18)]">
+    <section className="rounded-[26px] bg-[#0F2B20] p-3 text-white shadow-[0_18px_40px_rgb(43_34_25_/_0.18)]">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.12em] text-white/48">Prix</p>
           <p className="mt-1 hidden text-xs font-bold leading-4 text-[var(--text-dim)] md:block">Le prix suffit pour publier cette fiche.</p>
         </div>
         {hasPrice ? (
-          <span className="rounded-full bg-[#f0954c] px-3 py-1.5 text-xs font-black text-[#2b2219] shadow-sm">
+          <span className="rounded-full bg-[#34D399] px-3 py-1.5 text-xs font-black text-[#0F2B20] shadow-sm">
             OK
           </span>
         ) : (
@@ -31,12 +31,12 @@ function BulkQuickPricePanel({ item, itemFieldCopy, onUpdate, onNext }) {
           onChange={(event) => onUpdate(item.id, "price", event.target.value)}
           placeholder="15000"
           inputMode="numeric"
-          className="min-h-[60px] w-full rounded-[22px] border border-white/10 bg-white px-4 font-display text-2xl font-extrabold text-[#c2572b] outline-none focus:border-[#f0954c] focus:shadow-[0_0_0_4px_rgb(240,149,76_/_0.16)]"
+          className="min-h-[60px] w-full rounded-[22px] border border-white/10 bg-white px-4 font-display text-2xl font-extrabold text-[#059669] outline-none focus:border-[#34D399] focus:shadow-[0_0_0_4px_rgb(52,211,153_/_0.16)]"
         />
         <button
           type="button"
           onClick={() => onNext(item.id)}
-          className="flex min-h-[60px] items-center justify-center rounded-[22px] bg-[#f0954c] text-[#2b2219] shadow-[0_14px_30px_rgb(240,149,76_/_0.18)] disabled:opacity-50"
+          className="flex min-h-[60px] items-center justify-center rounded-[22px] bg-[#34D399] text-[#0F2B20] shadow-[0_14px_30px_rgb(52,211,153_/_0.18)] disabled:opacity-50"
           disabled={!hasPrice}
           aria-label="Valider cette fiche et passer a la suivante"
         >

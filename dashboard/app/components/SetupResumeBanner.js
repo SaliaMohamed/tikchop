@@ -44,17 +44,17 @@ export default function SetupResumeBanner() {
   if (connected === null || connected || dismissed) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-[18px] bg-[#fbefe0] px-4 py-3 text-[#2b2219] ring-1 ring-[#f0954c]/35">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#c2572b] text-white">
+    <div className="mb-3 flex items-center gap-3 rounded-[18px] bg-[#E8F7EE] px-4 py-3 text-[#0F2B20] ring-1 ring-[#34D399]/35">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#059669] text-white">
         <Bot size={19} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black">Configuration a terminer</p>
-        <p className="text-xs font-bold text-[#6a5f50]">Connectez WhatsApp et creez le style de DJASSAMAN.</p>
+        <p className="text-xs font-bold text-[#577066]">Connectez WhatsApp et creez le style de DJASSAMAN.</p>
       </div>
       <Link
         href="/setup"
-        className="flex shrink-0 items-center gap-1 rounded-full bg-[#2b2219] px-3.5 py-2 text-xs font-black text-white no-underline"
+        className="flex shrink-0 items-center gap-1 rounded-full bg-[#0F2B20] px-3.5 py-2 text-xs font-black text-white no-underline"
       >
         Reprendre
       </Link>
@@ -65,7 +65,7 @@ export default function SetupResumeBanner() {
           setDismissed(true);
           window.sessionStorage.setItem(DISMISS_KEY, "1");
         }}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#2b2219]/40"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#0F2B20]/40"
       >
         <X size={16} />
       </button>

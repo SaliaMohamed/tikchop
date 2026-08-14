@@ -55,7 +55,7 @@ export default function AccountPage() {
           phone_number: s.phone_number || "",
           owner_email: s.owner_email || "",
           logo_url: s.logo_url || "",
-          brand_color: s.brand_color || "#c2572b",
+          brand_color: s.brand_color || "#059669",
           physical_address: s.physical_address || "",
           bot_tone: s.bot_tone || "",
           bot_greeting: s.bot_greeting || "",
@@ -128,7 +128,7 @@ export default function AccountPage() {
     return (
       <TkScreen>
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="animate-spin text-[#c2572b]" size={28} />
+          <Loader2 className="animate-spin text-[#059669]" size={28} />
         </div>
       </TkScreen>
     );
@@ -143,7 +143,7 @@ export default function AccountPage() {
             type="button"
             onClick={() => logoRef.current?.click()}
             disabled={logoUploading}
-            className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[28px] bg-[#2b2219] font-display text-2xl font-black text-[#f0954c] shadow-[0_16px_36px_rgba(43, 34, 25,0.22)] transition active:scale-[0.97]"
+            className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[28px] bg-[#0F2B20] font-display text-2xl font-black text-[#34D399] shadow-[0_16px_36px_rgba(15, 43, 32,0.22)] transition active:scale-[0.97]"
             aria-label="Changer la photo"
           >
             {logoUrl ? (
@@ -157,7 +157,7 @@ export default function AccountPage() {
                 <Loader2 className="animate-spin text-white" size={20} />
               </span>
             )}
-            <span className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#c2572b] text-white shadow-md">
+            <span className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#059669] text-white shadow-md">
               <Camera size={14} />
             </span>
           </button>
@@ -172,10 +172,10 @@ export default function AccountPage() {
         {logoError && (
           <p className="mt-2 text-center text-xs font-bold text-rose-600">{logoError}</p>
         )}
-        <h1 className="mt-4 font-display text-2xl font-black text-[#2b2219]">
+        <h1 className="mt-4 font-display text-2xl font-black text-[#0F2B20]">
           {activeSeller.name || "Mon profil"}
         </h1>
-        <p className="mt-1 text-xs font-bold text-[#2b2219]/50">
+        <p className="mt-1 text-xs font-bold text-[#0F2B20]/50">
           /{activeSeller.slug || "boutique"}
         </p>
       </div>
@@ -194,14 +194,14 @@ export default function AccountPage() {
 
       {/* Infos identité */}
       <form onSubmit={handleSave} className="space-y-3">
-        <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#2b2219]/8">
-          <div className="flex items-center gap-2.5 border-b border-[#2b2219]/6 px-4 py-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
+        <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#0F2B20]/8">
+          <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/6 px-4 py-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
               <User size={15} />
             </span>
-            <p className="text-sm font-black text-[#2b2219]">Identite</p>
+            <p className="text-sm font-black text-[#0F2B20]">Identite</p>
           </div>
-          <div className="space-y-0 divide-y divide-[#2b2219]/5">
+          <div className="space-y-0 divide-y divide-[#0F2B20]/5">
             <ProfileField
               label="Nom boutique"
               id="account-name"
@@ -235,7 +235,7 @@ export default function AccountPage() {
           type="submit"
           disabled={saving}
           id="account-save-btn"
-          className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#c2572b] text-base font-black text-white shadow-[0_14px_30px_rgba(0,143,90,0.2)] active:scale-[0.98] disabled:opacity-60"
+          className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#059669] text-base font-black text-white shadow-[0_14px_30px_rgba(0,143,90,0.2)] active:scale-[0.98] disabled:opacity-60"
         >
           {saving ? <Loader2 className="animate-spin" size={19} /> : <CheckCircle2 size={19} />}
           {saving ? "Enregistrement..." : "Enregistrer"}
@@ -243,56 +243,56 @@ export default function AccountPage() {
       </form>
 
       {/* Sécurité */}
-      <section className="mt-3 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#2b2219]/8">
-        <div className="flex items-center gap-2.5 border-b border-[#2b2219]/6 px-4 py-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
+      <section className="mt-3 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#0F2B20]/8">
+        <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/6 px-4 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
             <ShieldCheck size={15} />
           </span>
-          <p className="text-sm font-black text-[#2b2219]">Securite</p>
+          <p className="text-sm font-black text-[#0F2B20]">Securite</p>
         </div>
 
         <Link
           href="/account/update-password"
           id="account-change-password"
-          className="flex min-h-[58px] items-center justify-between px-4 py-3 no-underline active:bg-[#f7f0e4]"
+          className="flex min-h-[58px] items-center justify-between px-4 py-3 no-underline active:bg-[#F2F9F5]"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#fbf6ee] text-[#2b2219]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#F6FBF7] text-[#0F2B20]">
               <KeyRound size={16} />
             </span>
             <span>
-              <p className="text-sm font-black text-[#2b2219]">Changer le mot de passe</p>
-              <p className="text-xs font-bold text-[#2b2219]/45">Vous recevrez un lien par email</p>
+              <p className="text-sm font-black text-[#0F2B20]">Changer le mot de passe</p>
+              <p className="text-xs font-bold text-[#0F2B20]/45">Vous recevrez un lien par email</p>
             </span>
           </div>
-          <ChevronRight size={17} className="text-[#2b2219]/30" />
+          <ChevronRight size={17} className="text-[#0F2B20]/30" />
         </Link>
       </section>
 
       {/* Boutique */}
-      <section className="mt-3 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#2b2219]/8">
-        <div className="flex items-center gap-2.5 border-b border-[#2b2219]/6 px-4 py-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#c2572b]/10 text-[#c2572b]">
+      <section className="mt-3 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#0F2B20]/8">
+        <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/6 px-4 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
             <Store size={15} />
           </span>
-          <p className="text-sm font-black text-[#2b2219]">Boutique</p>
+          <p className="text-sm font-black text-[#0F2B20]">Boutique</p>
         </div>
 
         <Link
           href="/shop-info"
           id="account-shop-info"
-          className="flex min-h-[58px] items-center justify-between px-4 py-3 no-underline active:bg-[#f7f0e4]"
+          className="flex min-h-[58px] items-center justify-between px-4 py-3 no-underline active:bg-[#F2F9F5]"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#fbf6ee] text-[#2b2219]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#F6FBF7] text-[#0F2B20]">
               <Store size={16} />
             </span>
             <span>
-              <p className="text-sm font-black text-[#2b2219]">Informations boutique</p>
-              <p className="text-xs font-bold text-[#2b2219]/45">Logo, adresse, bot WhatsApp</p>
+              <p className="text-sm font-black text-[#0F2B20]">Informations boutique</p>
+              <p className="text-xs font-bold text-[#0F2B20]/45">Logo, adresse, bot WhatsApp</p>
             </span>
           </div>
-          <ChevronRight size={17} className="text-[#2b2219]/30" />
+          <ChevronRight size={17} className="text-[#0F2B20]/30" />
         </Link>
       </section>
 
@@ -302,14 +302,14 @@ export default function AccountPage() {
           type="button"
           id="account-signout-btn"
           onClick={handleSignOut}
-          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white text-sm font-black text-[#2b2219]/60 ring-1 ring-[#2b2219]/10 active:bg-[#fbf6ee] active:scale-[0.98]"
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white text-sm font-black text-[#0F2B20]/60 ring-1 ring-[#0F2B20]/10 active:bg-[#F6FBF7] active:scale-[0.98]"
         >
           <LogOut size={16} />
           Se deconnecter
         </button>
       </div>
 
-      <p className="pb-2 text-center text-[0.62rem] font-bold text-[#2b2219]/30">
+      <p className="pb-2 text-center text-[0.62rem] font-bold text-[#0F2B20]/30">
         Tikchop · Espace vendeur
       </p>
     </TkScreen>
@@ -319,11 +319,11 @@ export default function AccountPage() {
 function ProfileField({ label, id, value, onChange, placeholder, icon, inputMode }) {
   return (
     <label htmlFor={id} className="flex min-h-[62px] cursor-text items-center gap-3 px-4 py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] bg-[#fbf6ee] text-[#c2572b]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] bg-[#F6FBF7] text-[#059669]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.65rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">
+        <span className="block text-[0.65rem] font-black uppercase tracking-[0.12em] text-[#059669]">
           {label}
         </span>
         <input
@@ -332,7 +332,7 @@ function ProfileField({ label, id, value, onChange, placeholder, icon, inputMode
           onChange={onChange}
           placeholder={placeholder}
           inputMode={inputMode}
-          className="mt-0.5 w-full bg-transparent text-sm font-black text-[#2b2219] outline-none placeholder:text-[#2b2219]/30"
+          className="mt-0.5 w-full bg-transparent text-sm font-black text-[#0F2B20] outline-none placeholder:text-[#0F2B20]/30"
         />
       </span>
     </label>

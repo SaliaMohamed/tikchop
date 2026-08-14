@@ -109,37 +109,37 @@ export default function PaymentSettingsPage() {
     <div className="app-shell">
       {/* Desktop header */}
       <header className="mobile-top hidden md:block">
-        <p className="quiet-label text-[#c2572b]">Paiement</p>
-        <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#2b2219]">
+        <p className="quiet-label text-[#059669]">Paiement</p>
+        <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#0F2B20]">
           Numéro de réception
         </h1>
-        <p className="mt-1 text-base font-semibold leading-6 text-[#2b2219]/55">
+        <p className="mt-1 text-base font-semibold leading-6 text-[#0F2B20]/55">
           Le numéro sur lequel vos clients vous paient (Wave, Orange ou MTN).
         </p>
       </header>
 
       {loading ? (
         <div className="flex min-h-[56vh] flex-col items-center justify-center text-center">
-          <Loader2 className="animate-spin text-[#c2572b]" size={34} />
-          <p className="mt-4 font-display text-xl font-bold text-[#2b2219]">Chargement…</p>
+          <Loader2 className="animate-spin text-[#059669]" size={34} />
+          <p className="mt-4 font-display text-xl font-bold text-[#0F2B20]">Chargement…</p>
         </div>
       ) : (
         <form onSubmit={handleSave} className="mt-5 space-y-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
 
           {/* Status banner */}
-          <section className={`overflow-hidden rounded-[26px] ${hasPayoutPhone ? "bg-[#2b2219] text-white" : "bg-[#fbf6ee] ring-1 ring-[#2b2219]/10"}`}>
+          <section className={`overflow-hidden rounded-[26px] ${hasPayoutPhone ? "bg-[#0F2B20] text-white" : "bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10"}`}>
             <div className="flex items-start gap-3 p-4">
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${hasPayoutPhone ? "bg-[#f0954c]/20 text-[#f0954c]" : "bg-[#c2572b]/10 text-[#c2572b]"}`}>
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${hasPayoutPhone ? "bg-[#34D399]/20 text-[#34D399]" : "bg-[#059669]/10 text-[#059669]"}`}>
                 {hasPayoutPhone ? <CheckCircle2 size={22} /> : <Banknote size={22} />}
               </span>
               <div>
-                <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${hasPayoutPhone ? "text-[#f0954c]/80" : "text-[#c2572b]"}`}>
+                <p className={`text-[0.68rem] font-black uppercase tracking-[0.12em] ${hasPayoutPhone ? "text-[#34D399]/80" : "text-[#059669]"}`}>
                   Statut
                 </p>
                 <h2 className="mt-1 font-display text-2xl font-black leading-7">
                   {hasPayoutPhone ? "Numéro enregistré" : "Numéro manquant"}
                 </h2>
-                <p className={`mt-1.5 text-sm font-bold leading-5 ${hasPayoutPhone ? "text-white/60" : "text-[#2b2219]/55"}`}>
+                <p className={`mt-1.5 text-sm font-bold leading-5 ${hasPayoutPhone ? "text-white/60" : "text-[#0F2B20]/55"}`}>
                   {hasPayoutPhone
                     ? "Le bot WhatsApp communique ce numéro aux clients pour le paiement."
                     : "Ajoutez votre numéro pour que les clients sachent où vous payer."}
@@ -149,15 +149,15 @@ export default function PaymentSettingsPage() {
           </section>
 
           {/* Paiement à la livraison — info fixe */}
-          <section className="overflow-hidden rounded-[26px] bg-[#fbefe0] ring-1 ring-[#f0954c]/30">
+          <section className="overflow-hidden rounded-[26px] bg-[#E8F7EE] ring-1 ring-[#34D399]/30">
             <div className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#c2572b]/15 text-[#c2572b]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#059669]/15 text-[#059669]">
                 <Truck size={19} />
               </span>
               <div>
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Mode de paiement</p>
-                <h2 className="font-display text-base font-black text-[#2b2219]">Paiement à la livraison</h2>
-                <p className="text-xs font-bold text-[#2b2219]/50 leading-4 mt-0.5">
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#059669]">Mode de paiement</p>
+                <h2 className="font-display text-base font-black text-[#0F2B20]">Paiement à la livraison</h2>
+                <p className="text-xs font-bold text-[#0F2B20]/50 leading-4 mt-0.5">
                   Le client paie à la réception de sa commande.
                 </p>
               </div>
@@ -165,16 +165,16 @@ export default function PaymentSettingsPage() {
           </section>
 
           {/* Numéro de réception */}
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
-            <div className="flex items-center gap-3 border-b border-[#2b2219]/8 px-4 py-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b]">
+          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
+            <div className="flex items-center gap-3 border-b border-[#0F2B20]/8 px-4 py-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#059669]/10 text-[#059669]">
                 <Smartphone size={19} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Votre numéro de réception</p>
-                <h2 className="font-display text-lg font-black text-[#2b2219]">
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Votre numéro de réception</p>
+                <h2 className="font-display text-lg font-black text-[#0F2B20]">
                   Où recevoir l&apos;argent
-                  <span className="ml-1 text-[#c2572b]">*</span>
+                  <span className="ml-1 text-[#059669]">*</span>
                 </h2>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function PaymentSettingsPage() {
             <div className="p-4 space-y-3">
               {/* Réseau */}
               <div>
-                <p className="mb-2 text-xs font-black text-[#2b2219]/70">Réseau mobile <span className="text-[#c2572b]">*</span></p>
+                <p className="mb-2 text-xs font-black text-[#0F2B20]/70">Réseau mobile <span className="text-[#059669]">*</span></p>
                 <div className="grid grid-cols-3 gap-2">
                   {PAYOUT_NETWORKS.map((net) => (
                     <button
@@ -191,16 +191,16 @@ export default function PaymentSettingsPage() {
                       onClick={() => setSettings((c) => ({ ...c, payout_network: net.key }))}
                       className={`min-h-[64px] rounded-[18px] p-2 text-center ring-1 transition-all active:scale-[0.98] ${
                         settings.payout_network === net.key
-                          ? "bg-[#2b2219] text-white ring-[#2b2219]"
-                          : "bg-white text-[#2b2219] ring-[#2b2219]/10"
+                          ? "bg-[#0F2B20] text-white ring-[#0F2B20]"
+                          : "bg-white text-[#0F2B20] ring-[#0F2B20]/10"
                       }`}
                     >
                       <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl ${
-                        settings.payout_network === net.key ? "bg-[#f0954c]/20 text-[#f0954c]" : "bg-[#f0f0f0] text-[#c2572b]"
+                        settings.payout_network === net.key ? "bg-[#34D399]/20 text-[#34D399]" : "bg-[#f0f0f0] text-[#059669]"
                       }`}>
                         <Smartphone size={16} />
                       </span>
-                      <strong className={`mt-1 block text-[0.68rem] font-black leading-3 ${settings.payout_network === net.key ? "text-white" : "text-[#2b2219]"}`}>
+                      <strong className={`mt-1 block text-[0.68rem] font-black leading-3 ${settings.payout_network === net.key ? "text-white" : "text-[#0F2B20]"}`}>
                         {net.label}
                       </strong>
                     </button>
@@ -210,25 +210,25 @@ export default function PaymentSettingsPage() {
 
               {/* Numéro */}
               <div>
-                <p className="mb-1.5 text-xs font-black text-[#2b2219]/70">
-                  Numéro {selectedNetwork.label} <span className="text-[#c2572b]">*</span>
+                <p className="mb-1.5 text-xs font-black text-[#0F2B20]/70">
+                  Numéro {selectedNetwork.label} <span className="text-[#059669]">*</span>
                 </p>
                 <div className={`grid grid-cols-[72px_1fr] overflow-hidden rounded-[20px] bg-white ring-2 transition ${
                   settings.payout_phone && !phoneValid
                     ? "ring-amber-400"
                     : phoneValid
-                    ? "ring-[#c2572b]/50"
-                    : "ring-[#2b2219]/10"
+                    ? "ring-[#059669]/50"
+                    : "ring-[#0F2B20]/10"
                 }`}>
-                  <span className="flex items-center justify-center border-r border-[#2b2219]/10 text-sm font-black text-[#c2572b]">+225</span>
+                  <span className="flex items-center justify-center border-r border-[#0F2B20]/10 text-sm font-black text-[#059669]">+225</span>
                   <input
-                    className="min-h-[56px] bg-transparent px-4 text-base font-black text-[#2b2219] outline-none placeholder:text-[#2b2219]/25"
+                    className="min-h-[56px] bg-transparent px-4 text-base font-black text-[#0F2B20] outline-none placeholder:text-[#0F2B20]/25"
                     inputMode="numeric"
                     placeholder="07 00 00 00 00"
                     value={settings.payout_phone}
                     onChange={(e) => setSettings((c) => ({ ...c, payout_phone: normalizeLocalPhone(e.target.value) }))}
                   />
-                  {phoneValid && <CheckCircle2 size={18} className="self-center mr-3 text-[#c2572b]" />}
+                  {phoneValid && <CheckCircle2 size={18} className="self-center mr-3 text-[#059669]" />}
                 </div>
                 {settings.payout_phone && !phoneValid && (
                   <p className="mt-1.5 text-[0.7rem] font-bold text-amber-600">
@@ -250,31 +250,31 @@ export default function PaymentSettingsPage() {
             </div>
           )}
           {notice && (
-            <div className="flex items-center gap-2 rounded-2xl bg-[#fbeee0] p-4 text-sm font-bold leading-5 text-[#96451f] ring-1 ring-emerald-200">
+            <div className="flex items-center gap-2 rounded-2xl bg-[#E7F6ED] p-4 text-sm font-bold leading-5 text-[#047857] ring-1 ring-emerald-200">
               <CheckCircle2 size={17} />
               {notice}
             </div>
           )}
 
           {/* Save */}
-          <section className="overflow-hidden rounded-[26px] bg-[#fbf6ee] ring-1 ring-[#2b2219]/10">
-            <div className="flex items-center gap-3 border-b border-[#2b2219]/8 px-4 py-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b]">
+          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
+            <div className="flex items-center gap-3 border-b border-[#0F2B20]/8 px-4 py-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#059669]/10 text-[#059669]">
                 <ShieldCheck size={19} />
               </span>
               <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#c2572b]">Dernière étape</p>
-                <h2 className="font-display text-lg font-black text-[#2b2219]">Enregistrer</h2>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Dernière étape</p>
+                <h2 className="font-display text-lg font-black text-[#0F2B20]">Enregistrer</h2>
               </div>
             </div>
             <div className="p-4 space-y-3">
-              <p className="text-sm font-bold leading-5 text-[#2b2219]/55">
+              <p className="text-sm font-bold leading-5 text-[#0F2B20]/55">
                 Ce numéro sera utilisé par le bot WhatsApp pour guider vos clients au moment du paiement.
               </p>
               <button
                 type="submit"
                 disabled={saving || !seller}
-                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl bg-[#2b2219] px-4 text-sm font-black text-white active:scale-[0.99] disabled:opacity-40"
+                className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl bg-[#0F2B20] px-4 text-sm font-black text-white active:scale-[0.99] disabled:opacity-40"
               >
                 {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                 {saving ? "Enregistrement…" : "Enregistrer"}

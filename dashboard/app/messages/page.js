@@ -180,22 +180,22 @@ export default function MessagesPage() {
       <header className={`${showChatOnMobile ? "hidden md:block" : ""} hidden md:block`}>
         <div className="flex items-center justify-between gap-3 px-1 pt-1 md:px-0 md:pt-0">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#2b2219] text-[#f0954c] shadow-[0_12px_28px_rgb(43_34_25_/_0.12)]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#0F2B20] text-[#34D399] shadow-[0_12px_28px_rgb(43_34_25_/_0.12)]">
               <MessageCircle size={22} />
             </span>
             <div className="min-w-0">
-              <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#c2572b]">DJASSAMAN</p>
-              <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#2b2219]">{headerLabel}</h1>
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#059669]">DJASSAMAN</p>
+              <h1 className="mt-0.5 truncate font-display text-xl font-black leading-6 text-[#0F2B20]">{headerLabel}</h1>
             </div>
           </div>
-          <button onClick={fetchConversations} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#c2572b] shadow-[0_12px_28px_rgb(43_34_25_/_0.06)] ring-1 ring-[#2b2219]/8" aria-label="Actualiser les discussions">
+          <button onClick={fetchConversations} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#059669] shadow-[0_12px_28px_rgb(43_34_25_/_0.06)] ring-1 ring-[#0F2B20]/8" aria-label="Actualiser les discussions">
             <RefreshCw className={loading ? "animate-spin" : ""} size={19} />
           </button>
         </div>
       </header>
 
       {(error || notice) && (
-        <div className={`mt-3 rounded-[18px] px-3 py-2 text-xs font-black leading-4 ${error ? "bg-[#fdf3d6] text-[#7a5425] ring-1 ring-[#f4ce60]/45" : "bg-[#fbeee0] text-[#96451f] ring-1 ring-emerald-200"}`}>
+        <div className={`mt-3 rounded-[18px] px-3 py-2 text-xs font-black leading-4 ${error ? "bg-[#fdf3d6] text-[#7a5425] ring-1 ring-[#f4ce60]/45" : "bg-[#E7F6ED] text-[#047857] ring-1 ring-emerald-200"}`}>
           {error || notice}
         </div>
       )}
@@ -203,12 +203,12 @@ export default function MessagesPage() {
       <main className="mt-2 grid min-w-0 gap-4 md:mt-4 md:grid-cols-[370px_minmax(0,1fr)]">
         <section className={`${showChatOnMobile ? "hidden md:block" : ""} min-w-0`}>
           <div className="space-y-2.5">
-            <label className="flex min-h-[50px] items-center gap-2 rounded-full bg-white px-4 shadow-[0_10px_24px_rgb(43_34_25_/_0.045)] ring-1 ring-[#2b2219]/7">
-              <Search size={17} className="shrink-0 text-[#c2572b]" />
+            <label className="flex min-h-[50px] items-center gap-2 rounded-full bg-white px-4 shadow-[0_10px_24px_rgb(43_34_25_/_0.045)] ring-1 ring-[#0F2B20]/7">
+              <Search size={17} className="shrink-0 text-[#059669]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-bold text-[#2b2219] outline-none placeholder:text-[#2b2219]/32"
+                className="min-w-0 flex-1 bg-transparent text-[0.95rem] font-bold text-[#0F2B20] outline-none placeholder:text-[#0F2B20]/32"
                 placeholder="Rechercher"
               />
             </label>
@@ -223,7 +223,7 @@ export default function MessagesPage() {
               }}
             />
 
-            <div className="min-w-0 overflow-hidden rounded-[26px] bg-white shadow-[0_12px_30px_rgb(43_34_25_/_0.05)] ring-1 ring-[#2b2219]/7">
+            <div className="min-w-0 overflow-hidden rounded-[26px] bg-white shadow-[0_12px_30px_rgb(43_34_25_/_0.05)] ring-1 ring-[#0F2B20]/7">
               {loading ? (
                 <LoadingState />
               ) : filteredConversations.length === 0 ? (
@@ -284,13 +284,13 @@ function InboxFilterRail({ value, onChange, counts }) {
             title={item.label}
             className={`flex min-h-[40px] min-w-0 items-center justify-center gap-1 rounded-[15px] px-1 text-[0.66rem] font-black transition-colors ${
               active
-                ? "bg-[#2b2219] text-white shadow-[0_10px_20px_rgb(43_34_25_/_0.12)]"
-                : "bg-white text-[#2b2219] ring-1 ring-[#2b2219]/7"
+                ? "bg-[#0F2B20] text-white shadow-[0_10px_20px_rgb(43_34_25_/_0.12)]"
+                : "bg-white text-[#0F2B20] ring-1 ring-[#0F2B20]/7"
             }`}
           >
             <Icon size={15} />
             <span className="min-w-0 truncate">{item.label}</span>
-            <span className={`rounded-full px-1 py-0.5 text-[0.55rem] font-black ${active ? "bg-white/18 text-white" : "bg-[#c2572b]/10 text-[#c2572b]"}`}>
+            <span className={`rounded-full px-1 py-0.5 text-[0.55rem] font-black ${active ? "bg-white/18 text-white" : "bg-[#059669]/10 text-[#059669]"}`}>
               {counts[item.key] || 0}
             </span>
           </button>
@@ -303,26 +303,26 @@ function InboxFilterRail({ value, onChange, counts }) {
 function LoadingState() {
   return (
     <div className="flex min-h-[220px] flex-col items-center justify-center bg-white p-6 text-center">
-      <Loader2 className="animate-spin text-[#c2572b]" size={30} />
-      <p className="mt-3 text-sm font-black text-[#2b2219]/50">Chargement...</p>
+      <Loader2 className="animate-spin text-[#059669]" size={30} />
+      <p className="mt-3 text-sm font-black text-[#0F2B20]/50">Chargement...</p>
     </div>
   );
 }
 
 function EmptyMessages({ whatsappConnected }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#fbf6ee] rounded-[24px] border border-[#2b2219]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#c2572b]/10 text-[#c2572b] mb-4">
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-[#F6FBF7] rounded-[24px] border border-[#0F2B20]/5 shadow-[0_2px_16px_rgba(13,23,18,0.03)] my-6">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#059669]/10 text-[#059669] mb-4">
         <Bot size={28} />
       </div>
-      <h3 className="font-display text-xl font-bold text-[#2b2219]">Aucun message encore</h3>
-      <p className="mt-2 text-sm font-medium leading-relaxed text-[#2b2219]/60 max-w-[280px]">
+      <h3 className="font-display text-xl font-bold text-[#0F2B20]">Aucun message encore</h3>
+      <p className="mt-2 text-sm font-medium leading-relaxed text-[#0F2B20]/60 max-w-[280px]">
         {whatsappConnected
           ? "Vos conversations WhatsApp apparaissent ici quand les clients ecrivent a votre boutique. DJASSAMAN repond automatiquement."
           : "Connectez WhatsApp pour recevoir les messages de vos clients. DJASSAMAN repondra automatiquement."}
       </p>
       {!whatsappConnected && (
-        <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#c2572b] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
+        <Link href="/setup" className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-xl bg-[#059669] text-sm font-extrabold text-white transition active:scale-[0.98] shadow-[0_12px_24px_rgba(0,143,90,0.15)] no-underline">
           <Bot size={16} />
           Connecter WhatsApp
         </Link>
@@ -340,13 +340,13 @@ function ConversationCard({ conversation, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full border-b border-[#2b2219]/5 px-3.5 py-3 text-left transition-colors last:border-b-0 active:bg-[#f7f0e4] ${
-        active ? "bg-[#f7f0e4]" : "bg-white"
+      className={`w-full border-b border-[#0F2B20]/5 px-3.5 py-3 text-left transition-colors last:border-b-0 active:bg-[#F2F9F5] ${
+        active ? "bg-[#F2F9F5]" : "bg-white"
       }`}
     >
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
         <span className={`relative flex h-12 w-12 items-center justify-center rounded-full ${
-          active ? "bg-[#2b2219] text-[#f0954c]" : "bg-[#f7f0e4] text-[#c2572b]"
+          active ? "bg-[#0F2B20] text-[#34D399]" : "bg-[#F2F9F5] text-[#059669]"
         }`}>
           <UserRound size={18} />
           {conversation.bot_paused && (
@@ -354,14 +354,14 @@ function ConversationCard({ conversation, active, onClick }) {
           )}
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-[0.96rem] font-black leading-5 text-[#2b2219]">{getConversationTitle(conversation)}</span>
-          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.78rem] font-semibold text-[#2b2219]/50">
-            {lastOrder ? <ShoppingBag size={13} className="shrink-0 text-[#c2572b]" /> : null}
+          <span className="block truncate text-[0.96rem] font-black leading-5 text-[#0F2B20]">{getConversationTitle(conversation)}</span>
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.78rem] font-semibold text-[#0F2B20]/50">
+            {lastOrder ? <ShoppingBag size={13} className="shrink-0 text-[#059669]" /> : null}
             <span className="min-w-0 truncate">{lastOrder ? `Vente ${formatPrice(total)}` : getPreview(conversation)}</span>
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="text-[0.64rem] font-bold text-[#2b2219]/35">{formatDateTime(lastTime).split(",").pop()?.trim() || ""}</span>
+          <span className="text-[0.64rem] font-bold text-[#0F2B20]/35">{formatDateTime(lastTime).split(",").pop()?.trim() || ""}</span>
           <span className={`rounded-full px-2 py-0.5 text-[0.56rem] font-black ${action.chipClass}`}>
             {action.label}
           </span>

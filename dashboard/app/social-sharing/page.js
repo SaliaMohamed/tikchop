@@ -151,7 +151,7 @@ export default function SocialSharingPage() {
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8">
-      <section className="overflow-hidden rounded-[30px] bg-[#2b2219] text-white shadow-[var(--shadow-lg)] ring-1 ring-black/10 md:rounded-[34px]">
+      <section className="overflow-hidden rounded-[30px] bg-[#0F2B20] text-white shadow-[var(--shadow-lg)] ring-1 ring-black/10 md:rounded-[34px]">
         <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_200px_360px]">
           <div className="p-4 md:p-7 flex flex-col justify-center">
             <p className="quiet-label text-[var(--primary-bright)]">Partage</p>
@@ -162,7 +162,7 @@ export default function SocialSharingPage() {
               <button
                 type="button"
                 onClick={() => shareWhatsApp(shopCaption)}
-                className="inline-flex min-h-[50px] items-center gap-2 rounded-2xl bg-[var(--primary-bright)] px-4 text-sm font-black text-[#2b2219] shadow-[0_18px_42px_rgb(240_149_76_/_0.25)]"
+                className="inline-flex min-h-[50px] items-center gap-2 rounded-2xl bg-[var(--primary-bright)] px-4 text-sm font-black text-[#0F2B20] shadow-[0_18px_42px_rgb(240_149_76_/_0.25)]"
               >
                 <MessageCircle size={18} />
                 Boutique
@@ -189,7 +189,7 @@ export default function SocialSharingPage() {
       </section>
 
       {notice && (
-        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#fbeee0] px-4 py-3 text-sm font-black text-[#96451f] ring-1 ring-emerald-200">
+        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#E7F6ED] px-4 py-3 text-sm font-black text-[#047857] ring-1 ring-emerald-200">
           <CheckCircle2 size={18} />
           {notice}
         </div>
@@ -227,31 +227,31 @@ export default function SocialSharingPage() {
             />
           </div>
 
-          <section className="rounded-[26px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#2b2219]/8 md:p-5">
+          <section className="rounded-[26px] bg-white p-3 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/8 md:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="quiet-label text-[#c2572b]">Articles a partager</p>
-                <h2 className="font-display text-2xl font-black text-[#2b2219]">Articles</h2>
+                <p className="quiet-label text-[#059669]">Articles a partager</p>
+                <h2 className="font-display text-2xl font-black text-[#0F2B20]">Articles</h2>
               </div>
-              <Link href="/add-product" className="inline-flex min-h-[44px] items-center gap-2 rounded-[18px] bg-[#2b2219] px-4 text-sm font-black text-[#f0954c] no-underline">
+              <Link href="/add-product" className="inline-flex min-h-[44px] items-center gap-2 rounded-[18px] bg-[#0F2B20] px-4 text-sm font-black text-[#34D399] no-underline">
                 <Package size={18} />
                 Ajouter
               </Link>
             </div>
 
-            <label className="mt-4 flex min-h-[54px] items-center gap-3 rounded-[20px] bg-[#fbf6ee] px-4 text-[#2b2219] ring-1 ring-[#2b2219]/10">
-              <Search size={19} className="text-[#c2572b]" />
+            <label className="mt-4 flex min-h-[54px] items-center gap-3 rounded-[20px] bg-[#F6FBF7] px-4 text-[#0F2B20] ring-1 ring-[#0F2B20]/10">
+              <Search size={19} className="text-[#059669]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#2b2219]/40"
+                className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#0F2B20]/40"
                 placeholder="Rechercher..."
               />
             </label>
 
             {loading ? (
-              <div className="mt-5 flex min-h-[220px] items-center justify-center rounded-[24px] bg-[#fbf6ee] text-sm font-black text-[#2b2219]/50 ring-1 ring-[#2b2219]/10">
-                <Loader2 size={20} className="mr-2 animate-spin text-[#c2572b]" />
+              <div className="mt-5 flex min-h-[220px] items-center justify-center rounded-[24px] bg-[#F6FBF7] text-sm font-black text-[#0F2B20]/50 ring-1 ring-[#0F2B20]/10">
+                <Loader2 size={20} className="mr-2 animate-spin text-[#059669]" />
                 Chargement...
               </div>
             ) : filteredProducts.length === 0 ? (
@@ -264,13 +264,13 @@ export default function SocialSharingPage() {
                   const caption = buildProductCaption(product, seller, url);
 
                   return (
-                    <article key={product.id} className="grid gap-3 rounded-[24px] bg-[#fbf6ee] p-3 ring-1 ring-[#2b2219]/10 md:grid-cols-[100px_1fr]">
-                      <div className="relative h-32 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#2b2219]/5 md:h-[108px]">
+                    <article key={product.id} className="grid gap-3 rounded-[24px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/10 md:grid-cols-[100px_1fr]">
+                      <div className="relative h-32 overflow-hidden rounded-[20px] bg-white ring-1 ring-[#0F2B20]/5 md:h-[108px]">
                         {product.image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={product.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                         ) : (
-                          <span className="flex h-full w-full items-center justify-center text-[#c2572b]/40 bg-[#fbf6ee]">
+                          <span className="flex h-full w-full items-center justify-center text-[#059669]/40 bg-[#F6FBF7]">
                             <Package size={26} />
                           </span>
                         )}
@@ -278,23 +278,23 @@ export default function SocialSharingPage() {
                       <div className="min-w-0 flex flex-col justify-between">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <h3 className="truncate text-base font-black text-[#2b2219]">{product.name}</h3>
-                            <p className="mt-0.5 text-sm font-black text-[#c2572b]">{formatPrice(product.price)}</p>
+                            <h3 className="truncate text-base font-black text-[#0F2B20]">{product.name}</h3>
+                            <p className="mt-0.5 text-sm font-black text-[#059669]">{formatPrice(product.price)}</p>
                           </div>
-                          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[0.65rem] font-black uppercase text-[#2b2219]/50 shadow-sm ring-1 ring-[#2b2219]/5">
+                          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[0.65rem] font-black uppercase text-[#0F2B20]/50 shadow-sm ring-1 ring-[#0F2B20]/5">
                             Stock {getProductStock(product)}
                           </span>
                         </div>
                         <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                          <button type="button" onClick={() => copyText(caption, "Texte article copie")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-black text-[#2b2219] shadow-sm ring-1 ring-[#2b2219]/5 active:scale-[0.98] transition-transform">
+                          <button type="button" onClick={() => copyText(caption, "Texte article copie")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-black text-[#0F2B20] shadow-sm ring-1 ring-[#0F2B20]/5 active:scale-[0.98] transition-transform">
                             <Copy size={16} />
                             Texte
                           </button>
-                          <button type="button" onClick={() => shareWhatsApp(caption)} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-[#fbefe2] px-3 text-xs font-black text-[#96451f] ring-1 ring-[#c2572b]/20 active:scale-[0.98] transition-transform">
+                          <button type="button" onClick={() => shareWhatsApp(caption)} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-[#EAF8F0] px-3 text-xs font-black text-[#047857] ring-1 ring-[#059669]/20 active:scale-[0.98] transition-transform">
                             <MessageCircle size={16} />
                             WhatsApp
                           </button>
-                          <Link href={path} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-[#2b2219] px-3 text-xs font-black text-white no-underline shadow-[0_4px_12px_rgba(43, 34, 25,0.2)] active:scale-[0.98] transition-transform">
+                          <Link href={path} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-[#0F2B20] px-3 text-xs font-black text-white no-underline shadow-[0_4px_12px_rgba(15, 43, 32,0.2)] active:scale-[0.98] transition-transform">
                             <ExternalLink size={16} />
                             Voir
                           </Link>
@@ -309,20 +309,20 @@ export default function SocialSharingPage() {
         </section>
 
         <aside className="space-y-4">
-          <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#2b2219]/8 md:p-5">
-            <p className="quiet-label text-[#c2572b]">Message</p>
-            <h2 className="mt-1 font-display text-xl font-black text-[#2b2219]">Pret</h2>
+          <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/8 md:p-5">
+            <p className="quiet-label text-[#059669]">Message</p>
+            <h2 className="mt-1 font-display text-xl font-black text-[#0F2B20]">Pret</h2>
             <textarea
               readOnly
               value={shopCaption}
-              className="mt-3 min-h-[190px] w-full resize-none rounded-[22px] bg-[#fbf6ee] p-4 text-sm font-bold leading-6 text-[#2b2219] outline-none ring-1 ring-[#2b2219]/10"
+              className="mt-3 min-h-[190px] w-full resize-none rounded-[22px] bg-[#F6FBF7] p-4 text-sm font-bold leading-6 text-[#0F2B20] outline-none ring-1 ring-[#0F2B20]/10"
             />
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => copyText(shopCaption, "Texte boutique copie")} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#2b2219] px-3 text-sm font-black text-[#f0954c] active:scale-[0.98] transition-transform">
+              <button type="button" onClick={() => copyText(shopCaption, "Texte boutique copie")} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#0F2B20] px-3 text-sm font-black text-[#34D399] active:scale-[0.98] transition-transform">
                 <Copy size={17} />
                 Copier
               </button>
-              <button type="button" onClick={() => shareWhatsApp(shopCaption)} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#fbefe2] px-3 text-sm font-black text-[#96451f] ring-1 ring-[#c2572b]/20 active:scale-[0.98] transition-transform">
+              <button type="button" onClick={() => shareWhatsApp(shopCaption)} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#EAF8F0] px-3 text-sm font-black text-[#047857] ring-1 ring-[#059669]/20 active:scale-[0.98] transition-transform">
                 <Share2 size={17} />
                 WhatsApp
               </button>
@@ -331,21 +331,21 @@ export default function SocialSharingPage() {
 
           <section className="rounded-[26px] bg-[#fcf1d1] p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#f4c13a]/40 md:p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#2b2219] text-[#f4c13a]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0F2B20] text-[#f4c13a]">
                 <Bot size={21} />
               </span>
               <div>
-                <h2 className="font-display text-xl font-black text-[#3a2f24]">Partagez. Tikchop suit.</h2>
+                <h2 className="font-display text-xl font-black text-[#133327]">Partagez. Tikchop suit.</h2>
                 <p className="mt-1 text-sm font-bold leading-6 text-[#74572a]">Commande et livraison restent dans l&apos;app.</p>
               </div>
             </div>
           </section>
 
-          <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#2b2219]/8 md:p-5">
-            <p className="quiet-label text-[#c2572b]">Lien public</p>
-            <div className="mt-2 flex items-center gap-2 rounded-[20px] bg-[#fbf6ee] p-2 ring-1 ring-[#2b2219]/5">
-              <span className="min-w-0 flex-1 truncate px-2 text-sm font-black text-[#2b2219]">{publicShopUrl}</span>
-              <button type="button" onClick={() => copyText(publicShopUrl, "Lien copie")} className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-white text-[#c2572b] shadow-sm ring-1 ring-[#2b2219]/10 active:scale-[0.98]">
+          <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/8 md:p-5">
+            <p className="quiet-label text-[#059669]">Lien public</p>
+            <div className="mt-2 flex items-center gap-2 rounded-[20px] bg-[#F6FBF7] p-2 ring-1 ring-[#0F2B20]/5">
+              <span className="min-w-0 flex-1 truncate px-2 text-sm font-black text-[#0F2B20]">{publicShopUrl}</span>
+              <button type="button" onClick={() => copyText(publicShopUrl, "Lien copie")} className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-white text-[#059669] shadow-sm ring-1 ring-[#0F2B20]/10 active:scale-[0.98]">
                 <Copy size={17} />
               </button>
             </div>
@@ -358,32 +358,32 @@ export default function SocialSharingPage() {
 
 function ShareStat({ label, value, active }) {
   return (
-    <div className={`rounded-2xl p-3 ring-1 ${active ? "bg-white text-[#2b2219] ring-white/30" : "bg-white/8 text-white ring-white/10"}`}>
+    <div className={`rounded-2xl p-3 ring-1 ${active ? "bg-white text-[#0F2B20] ring-white/30" : "bg-white/8 text-white ring-white/10"}`}>
       <strong className="block font-display text-2xl font-black leading-none">{value}</strong>
-      <small className={`mt-1 block text-[0.66rem] font-black uppercase leading-3 ${active ? "text-[#496155]" : "text-white/54"}`}>{label}</small>
+      <small className={`mt-1 block text-[0.66rem] font-black uppercase leading-3 ${active ? "text-[#3E6B55]" : "text-white/54"}`}>{label}</small>
     </div>
   );
 }
 
 function PlatformCard({ icon, title, text, actionLabel, onAction }) {
   const brandKey = String(title || "").toLowerCase();
-  let pillStyle = "bg-[#fbf6ee] text-[#c2572b] ring-[#2b2219]/5";
-  if (brandKey === "whatsapp") pillStyle = "bg-[#f0e7d8] text-[#25d366] ring-[#25d366]/10";
+  let pillStyle = "bg-[#F6FBF7] text-[#059669] ring-[#0F2B20]/5";
+  if (brandKey === "whatsapp") pillStyle = "bg-[#ECF5EF] text-[#25d366] ring-[#25d366]/10";
   if (brandKey === "tiktok") pillStyle = "bg-[#09090b] text-white ring-white/10 shadow-[1px_1px_4px_rgba(255,0,80,0.4)]";
   if (brandKey === "instagram") pillStyle = "bg-[linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7)] text-white ring-purple-500/10";
 
   return (
-    <article className="rounded-[24px] bg-white p-4 ring-1 ring-[#2b2219]/8">
+    <article className="rounded-[24px] bg-white p-4 ring-1 ring-[#0F2B20]/8">
       <div className="flex items-start gap-3">
         <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] ring-1 ${pillStyle}`}>
           {icon}
         </span>
         <div className="min-w-0">
-          <h3 className="text-base font-black text-[#2b2219]">{title}</h3>
-          <p className="mt-0.5 text-xs font-bold leading-5 text-[#2b2219]/50">{text}</p>
+          <h3 className="text-base font-black text-[#0F2B20]">{title}</h3>
+          <p className="mt-0.5 text-xs font-bold leading-5 text-[#0F2B20]/50">{text}</p>
         </div>
       </div>
-      <button type="button" onClick={onAction} className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[16px] bg-[#fbf6ee] px-3 text-sm font-black text-[#2b2219] ring-1 ring-[#2b2219]/10 active:scale-[0.98] transition-transform">
+      <button type="button" onClick={onAction} className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[16px] bg-[#F6FBF7] px-3 text-sm font-black text-[#0F2B20] ring-1 ring-[#0F2B20]/10 active:scale-[0.98] transition-transform">
         <Share2 size={17} />
         {actionLabel}
       </button>
@@ -393,17 +393,17 @@ function PlatformCard({ icon, title, text, actionLabel, onAction }) {
 
 function EmptyShareState({ hasProducts }) {
   return (
-    <div className="mt-5 rounded-[24px] bg-[#fbf6ee] p-5 text-center ring-1 ring-[#2b2219]/10">
-      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#c2572b] shadow-sm">
+    <div className="mt-5 rounded-[24px] bg-[#F6FBF7] p-5 text-center ring-1 ring-[#0F2B20]/10">
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#059669] shadow-sm">
         {hasProducts ? <Search size={28} /> : <Store size={28} />}
       </span>
-      <h3 className="mt-4 font-display text-2xl font-black text-[#2b2219]">
+      <h3 className="mt-4 font-display text-2xl font-black text-[#0F2B20]">
         {hasProducts ? "Aucun article" : "Ajoutez un article"}
       </h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm font-bold leading-6 text-[#2b2219]/50">
+      <p className="mx-auto mt-2 max-w-sm text-sm font-bold leading-6 text-[#0F2B20]/50">
         {hasProducts ? "Essayez un autre mot." : "Une photo, un nom et un prix suffisent."}
       </p>
-      <Link href="/add-product" className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[#2b2219] px-5 text-sm font-black text-[#f0954c] no-underline shadow-[0_12px_24px_rgba(43, 34, 25,0.15)] active:scale-[0.98] transition-transform">
+      <Link href="/add-product" className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[#0F2B20] px-5 text-sm font-black text-[#34D399] no-underline shadow-[0_12px_24px_rgba(15, 43, 32,0.15)] active:scale-[0.98] transition-transform">
         Ajouter un article
       </Link>
     </div>

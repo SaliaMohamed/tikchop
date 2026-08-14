@@ -31,12 +31,12 @@ import { getCustomerResponseTemplates } from "../../../lib/customer-response-pla
 export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen, onBack, onSend, onPause, onResume }) {
   if (!conversation) {
     return (
-      <section className="hidden min-h-[560px] items-center justify-center rounded-[28px] bg-[#fbf6ee] p-8 text-center ring-1 ring-[#2b2219]/8 md:flex">
+      <section className="hidden min-h-[560px] items-center justify-center rounded-[28px] bg-[#F6FBF7] p-8 text-center ring-1 ring-[#0F2B20]/8 md:flex">
         <div>
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#c2572b] shadow-sm">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#059669] shadow-sm">
             <MessageCircle size={30} />
           </span>
-          <h2 className="mt-5 font-display text-2xl font-black text-[#2b2219]">Choisis une discussion</h2>
+          <h2 className="mt-5 font-display text-2xl font-black text-[#0F2B20]">Choisis une discussion</h2>
         </div>
       </section>
     );
@@ -51,18 +51,18 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
   const pauseHelp = conversation.bot_paused ? "Mode humain" : "Bot actif";
 
   return (
-    <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#ece5d8] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#ece5d8] md:ring-1 md:ring-[#2b2219]/10`}>
-      <div className="border-b border-[#2b2219]/8 bg-[#f1eee9] px-3 pb-2.5 pt-[calc(0.7rem+env(safe-area-inset-top,0px))] md:p-4">
+    <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#E7F1EA] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#E7F1EA] md:ring-1 md:ring-[#0F2B20]/10`}>
+      <div className="border-b border-[#0F2B20]/8 bg-[#F0F7F3] px-3 pb-2.5 pt-[calc(0.7rem+env(safe-area-inset-top,0px))] md:p-4">
         <div className="flex items-center gap-3">
           <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full text-[#54656f] md:hidden" aria-label="Retour aux discussions">
             <ArrowLeft size={20} />
           </button>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3e8d4] text-[#c2572b]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0F8F2] text-[#059669]">
             <UserRound size={19} />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#2a2118]">{getConversationTitle(conversation)}</h2>
-            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#776d60]">{conversation.display_phone || "Numero inconnu"}</p>
+            <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#0C271C]">{getConversationTitle(conversation)}</h2>
+            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">{conversation.display_phone || "Numero inconnu"}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {canReply && (
@@ -70,7 +70,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
               type="button"
               onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
               disabled={busy === "pause" || busy === "resume"}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#c2572b] shadow-sm disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#059669] shadow-sm disabled:opacity-50"
               aria-label={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
             >
               {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
@@ -91,12 +91,12 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
         {!canReply && <SellerConversationHint paused={conversation.bot_paused} canReply={canReply} />}
       </div>
 
-      <div className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto bg-[#ece5d8] px-3 py-3 md:px-5">
+      <div className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto bg-[#E7F1EA] px-3 py-3 md:px-5">
         {lastOrder && <OrderContext order={lastOrder} />}
         {(conversation.messages || []).length === 0 ? (
           <div className="mx-auto mt-4 max-w-[78%] rounded-[16px] bg-[#fbeec0] px-4 py-3 text-center text-[#54656f] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
             <MessageCircle className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="mt-2 text-sm font-extrabold text-[#2a2118]">{canReply ? "Pret a repondre" : "Numero manquant"}</p>
+            <p className="mt-2 text-sm font-extrabold text-[#0C271C]">{canReply ? "Pret a repondre" : "Numero manquant"}</p>
             <p className="mt-1 text-xs font-semibold leading-4">{canReply ? "Ecrivez en bas." : "Completez la vente."}</p>
           </div>
         ) : (
@@ -106,7 +106,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
         )}
       </div>
 
-      <div className="bg-[#f1eee9] p-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] md:p-3">
+      <div className="bg-[#F0F7F3] p-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] md:p-3">
         {canReply && <QuickReplyRail templates={responseTemplates} onUseTemplate={setReply} compact />}
         <div className="mt-2 grid grid-cols-[1fr_auto] items-end gap-2">
           <textarea
@@ -114,19 +114,19 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
             onChange={(event) => setReply(event.target.value)}
             placeholder={canReply ? "Message..." : "Numero indisponible"}
             disabled={!canReply || busy === "send"}
-            className="max-h-32 min-h-[44px] resize-none rounded-[22px] bg-white px-4 py-3 text-[0.92rem] font-medium leading-5 text-[#2a2118] shadow-sm outline-none placeholder:text-[#776d60]/70 disabled:opacity-60"
+            className="max-h-32 min-h-[44px] resize-none rounded-[22px] bg-white px-4 py-3 text-[0.92rem] font-medium leading-5 text-[#0C271C] shadow-sm outline-none placeholder:text-[#4C6B5E]/70 disabled:opacity-60"
           />
           <button
             type="button"
             onClick={onSend}
             disabled={!canReply || !reply.trim() || busy === "send"}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#c2572b] text-white shadow-sm disabled:bg-[#c4b9a8] disabled:opacity-70"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#059669] text-white shadow-sm disabled:bg-[#AFC4B8] disabled:opacity-70"
             aria-label="Envoyer le message"
           >
             {busy === "send" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
           </button>
         </div>
-        <p className="mt-1 px-2 text-[0.64rem] font-semibold leading-4 text-[#776d60]">
+        <p className="mt-1 px-2 text-[0.64rem] font-semibold leading-4 text-[#4C6B5E]">
           {pauseHelp}
         </p>
       </div>
@@ -140,7 +140,7 @@ export function SellerConversationHint({ paused, canReply }) {
     ? {
       title: "Numero a completer",
       body: "La vente reste consultable.",
-      className: "bg-white text-[#2b2219] ring-1 ring-[#2b2219]/8",
+      className: "bg-white text-[#0F2B20] ring-1 ring-[#0F2B20]/8",
     }
     : paused
       ? {
@@ -151,7 +151,7 @@ export function SellerConversationHint({ paused, canReply }) {
       : {
         title: "Bot actif",
         body: "Tikchop suit.",
-        className: "bg-[#fbefe2] text-[#96451f] ring-1 ring-emerald-200",
+        className: "bg-[#EAF8F0] text-[#047857] ring-1 ring-emerald-200",
       };
 
   return (
@@ -186,19 +186,19 @@ export function QuickReplyRail({ templates, onUseTemplate, compact = false }) {
 export function OrderContext({ order }) {
   const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
   return (
-    <div className="mx-auto w-full max-w-[92%] rounded-[14px] bg-white/90 p-3 text-[#2a2118] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
+    <div className="mx-auto w-full max-w-[92%] rounded-[14px] bg-white/90 p-3 text-[#0C271C] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-[#c2572b]">
+          <p className="flex items-center gap-2 text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-[#059669]">
             <ShoppingBag size={15} />
             Vente
           </p>
           <p className="mt-1 text-[1rem] font-extrabold">{order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}</p>
-          <p className="mt-0.5 text-xs font-semibold text-[#776d60]">{order.delivery_zone || order.delivery_address || "Livraison a confirmer"}</p>
+          <p className="mt-0.5 text-xs font-semibold text-[#4C6B5E]">{order.delivery_zone || order.delivery_address || "Livraison a confirmer"}</p>
         </div>
         <div className="text-right">
-          <p className="text-[0.95rem] font-extrabold text-[#c2572b]">{formatPrice(total)}</p>
-          <Link href="/orders" className="mt-2 inline-flex rounded-full bg-[#fbefe0] px-3 py-1.5 text-[0.68rem] font-extrabold text-[#c2572b] no-underline">
+          <p className="text-[0.95rem] font-extrabold text-[#059669]">{formatPrice(total)}</p>
+          <Link href="/orders" className="mt-2 inline-flex rounded-full bg-[#E8F7EE] px-3 py-1.5 text-[0.68rem] font-extrabold text-[#059669] no-underline">
             Voir
           </Link>
         </div>
@@ -215,10 +215,10 @@ export function MessageBubble({ message }) {
     <div className={`flex ${isOut || isBot ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[82%] px-3 py-2 shadow-[0_1px_1px_rgba(17,27,33,0.12)] ${
         isOut
-          ? "rounded-[12px] rounded-br-sm bg-[#f3e8d4] text-[#2a2118]"
+          ? "rounded-[12px] rounded-br-sm bg-[#F0F8F2] text-[#0C271C]"
           : isBot
-            ? "rounded-[12px] rounded-br-sm bg-[#f1e8da] text-[#2a2118]"
-            : "rounded-[12px] rounded-bl-sm bg-white text-[#2a2118]"
+            ? "rounded-[12px] rounded-br-sm bg-[#f1e8da] text-[#0C271C]"
+            : "rounded-[12px] rounded-bl-sm bg-white text-[#0C271C]"
       }`}
       >
         {message.media && <MessageMedia media={message.media} dark={isOut || isBot} />}
@@ -226,7 +226,7 @@ export function MessageBubble({ message }) {
         {!hasText && message.media?.caption && (
           <p className="mt-2 whitespace-pre-wrap text-[0.92rem] font-medium leading-5">{message.media.caption}</p>
         )}
-        <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#776d60]">
+        <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#4C6B5E]">
           {isOut ? "Vous" : isBot ? "DJASSAMAN" : "Client"}
           <span>Â·</span>
           <Clock3 size={11} />

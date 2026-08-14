@@ -70,7 +70,7 @@ export function getConversationAction(conversation) {
       label: "A lire",
       title: "Client a lire",
       detail: "Ouvrez et verifiez si le bot a besoin d'aide.",
-      chipClass: "bg-[var(--primary-bright)] text-[#06100a]",
+      chipClass: "bg-[var(--primary-bright)] text-[#061812]",
     };
   }
 
@@ -136,5 +136,5 @@ export function getTemplateToneClasses(tone) {
   if (tone === "danger") return "bg-rose-50 text-rose-900 ring-rose-100";
   if (tone === "info") return "bg-sky-50 text-sky-900 ring-sky-100";
   if (tone === "soft") return "bg-white text-[var(--text-main)] ring-[rgba(191,206,197,0.62)]";
-  return "bg-[#07120d] text-white ring-[#07120d]";
+  return "bg-[#071B12] text-white ring-[#071B12]";
 }

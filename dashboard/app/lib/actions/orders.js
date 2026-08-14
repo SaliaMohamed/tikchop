@@ -1078,7 +1078,7 @@ export async function saveSellerBusinessProfile(sellerId, profile, accessToken) 
     bot_delivery_notes: String(profile?.bot_delivery_notes || "").trim(),
     bot_special_rules: String(profile?.bot_special_rules || "").trim(),
     logo_url: profile?.logo_url ? String(profile.logo_url).trim() : null,
-    brand_color: profile?.brand_color ? String(profile.brand_color).trim() : "#c2572b",
+    brand_color: profile?.brand_color ? String(profile.brand_color).trim() : "#059669",
     physical_address: profile?.physical_address ? String(profile.physical_address).trim() : null,
   };
 

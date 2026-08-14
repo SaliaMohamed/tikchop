@@ -47,6 +47,7 @@ export default function OnboardingPage() {
   const [shopName, setShopName] = useState("");
   const [shopCategory, setShopCategory] = useState("");
   const [shopCity, setShopCity] = useState("");
+  const [shopCommune, setShopCommune] = useState("");
 
   const suggestedSlug = useMemo(() => slugify(shopName), [shopName]);
   const strength = useMemo(() => getPasswordStrength(password), [password]);
@@ -160,6 +161,7 @@ export default function OnboardingPage() {
       delivery_payment_timing: "AT_RECEPTION",
       category: shopCategory,
       city: shopCity,
+      commune: shopCommune,
     };
 
     try {
@@ -256,7 +258,9 @@ export default function OnboardingPage() {
       shopCategory={shopCategory}
       onShopCategory={setShopCategory}
       shopCity={shopCity}
-      onShopCity={(e) => setShopCity(e.target.value)}
+      onShopCity={(value) => { setShopCity(value); setShopCommune(""); }}
+      shopCommune={shopCommune}
+      onShopCommune={setShopCommune}
       canSubmit={canSubmitStep2}
       saving={saving}
       error={error}

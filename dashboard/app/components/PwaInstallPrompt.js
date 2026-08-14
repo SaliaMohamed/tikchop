@@ -130,7 +130,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
   if (showFull) {
     return (
       <section className="mx-auto max-w-[520px] px-4 py-4">
-        <div className="rounded-[28px] bg-[#2b2219] p-5 text-white shadow-[var(--shadow-lg)]">
+        <div className="rounded-[28px] bg-[#0F2B20] p-5 text-white shadow-[var(--shadow-lg)]">
           <BrandLogo size="sm" subtitle="App vendeur" className="text-white [&_.brand-logo-copy_small]:text-white/70 [&_.brand-logo-copy_strong]:text-white" />
           <p className="quiet-label mt-4 text-[var(--primary-bright)]">Priorite PWA</p>
           <h1 className="mt-2 font-display text-2xl font-bold leading-8">Installer Tikchop</h1>
@@ -156,7 +156,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
   }
 
   return (
-    <div className="fixed inset-x-4 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] z-[160] mx-auto max-w-[390px] rounded-[22px] border border-[rgba(194, 87, 43, 0.18)] bg-white/96 p-3 shadow-[0_16px_40px_rgba(13,23,18,0.14)] backdrop-blur-2xl md:bottom-5">
+    <div className="fixed inset-x-4 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] z-[160] mx-auto max-w-[390px] rounded-[22px] border border-[rgba(5, 150, 105, 0.18)] bg-white/96 p-3 shadow-[0_16px_40px_rgba(13,23,18,0.14)] backdrop-blur-2xl md:bottom-5">
       <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
         <span className="brand-logo-mark tk-logo-mark h-10 w-10 shrink-0 rounded-2xl" aria-hidden="true" />
         <div className="min-w-0">

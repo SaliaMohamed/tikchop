@@ -48,7 +48,7 @@
   padding: 0.85rem 1.5rem;
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(194, 87, 43, 0.15);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
 }
 
 .btn-primary:hover {
