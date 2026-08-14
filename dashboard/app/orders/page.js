@@ -98,7 +98,7 @@ export default function OrdersPage() {
             title="Actualiser"
             className="flex min-h-[44px] w-12 items-center justify-center rounded-full bg-white text-[#0F2B20] ring-1 ring-[#0F2B20]/8"
           >
-            <RefreshCw size={17} strokeWidth={2.35} className={loading ? "animate-spin text-[#059669]" : ""} />
+            <RefreshCw size={17} strokeWidth={1.6} className={loading ? "animate-spin text-[#059669]" : ""} />
           </button>
         </div>
       </nav>
@@ -424,7 +424,7 @@ function OrderSheet({
             className="absolute right-5 top-5 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#0F2B20] border border-[#DCEFE3]/30 shadow-sm hover:bg-[#F6FBF7] transition active:scale-95" 
             aria-label="Fermer"
           >
-            <X size={16} strokeWidth={2.5} />
+            <X size={16} strokeWidth={1.6} />
           </button>
           <div className="relative z-10 flex items-start justify-between gap-4">
             <div className="min-w-0 pr-12">
@@ -979,7 +979,7 @@ function OrderProgress({ status, deliveryStatus }) {
                   : "bg-white/10 text-white/35"
               }`}
             >
-              {step.active ? <CheckCircle2 size={16} strokeWidth={2.5} /> : index + 1}
+              {step.active ? <CheckCircle2 size={16} strokeWidth={1.6} /> : index + 1}
             </span>
             <span
               className={`mt-1.5 text-[0.62rem] font-black uppercase tracking-tight ${

@@ -154,7 +154,7 @@ export default function AppChrome({ children }) {
         <header className="mobile-seller-topbar">
           <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF8F2] text-[#059669]">
-              <ArrowLeft size={17} strokeWidth={2.5} />
+              <ArrowLeft size={17} strokeWidth={1.6} />
             </span>
             <span className="hidden md:inline text-sm font-black text-[#0F2B20]/60">Accueil</span>
           </Link>
@@ -196,12 +196,12 @@ export default function AppChrome({ children }) {
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
         <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><Home size={19} strokeWidth={2.5} /></span>
+          <span className="mobile-tabbar-icon"><Home size={19} strokeWidth={1.6} /></span>
           <span>Accueil</span>
         </Link>
         <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
           <span className="mobile-tabbar-icon relative">
-            <ClipboardList size={19} strokeWidth={2.5} />
+            <ClipboardList size={19} strokeWidth={1.6} />
             {pendingCount > 0 && (
               <span className="mobile-tabbar-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>
             )}
@@ -209,15 +209,15 @@ export default function AppChrome({ children }) {
           <span>Ventes</span>
         </Link>
         <Link href="/add-product" className={`mobile-tabbar-action ${publishActive ? "is-active" : ""}`} aria-label="Publier un article">
-          <span className="mobile-tabbar-icon"><Plus size={24} strokeWidth={2.8} /></span>
+          <span className="mobile-tabbar-icon"><Plus size={24} strokeWidth={1.6} /></span>
           <span>Publier</span>
         </Link>
         <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><Bot size={19} strokeWidth={2.5} /></span>
+          <span className="mobile-tabbar-icon"><Bot size={19} strokeWidth={1.6} /></span>
           <span>DJASSAMAN</span>
         </Link>
           <Link href="/plus" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
-            <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={2.5} /></span>
+            <span className="mobile-tabbar-icon"><Settings2 size={19} strokeWidth={1.6} /></span>
             <span>Plus</span>
           </Link>
       </nav>

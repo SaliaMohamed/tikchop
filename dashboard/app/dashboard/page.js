@@ -171,7 +171,7 @@ export default function Dashboard() {
           <TkIconButton
             href={`/${seller.slug}`}
             label="Voir boutique"
-            icon={<Store size={20} strokeWidth={2.5} />}
+            icon={<Store size={20} strokeWidth={1.6} />}
           />
         )}
       />
@@ -188,7 +188,7 @@ export default function Dashboard() {
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px]"
             style={{ background: "var(--white-08)", color: "var(--primary)" }}
           >
-            <ShoppingBag size={30} strokeWidth={2.1} />
+            <ShoppingBag size={30} strokeWidth={1.6} />
           </span>
         </div>
         <TkPrimary href={mainAction.href} icon={mainAction.icon} label={mainAction.cta} className="mt-5" />
@@ -278,5 +278,5 @@ function MiniStat({ value, label, icon, dot = false }) {
 }
 
 function ShoppingBagIcon() {
-  return <ShoppingBag size={42} strokeWidth={1.9} />;
+  return <ShoppingBag size={42} strokeWidth={1.6} />;
 }

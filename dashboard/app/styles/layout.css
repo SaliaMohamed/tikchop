@@ -283,11 +283,11 @@
   background: var(--color-surface-soft);
   border: 1.5px solid rgba(15, 43, 32, 0.05);
   border-radius: 17px;
-  color: #948a7d;
+  color: #6b8175;
   display: flex;
-  height: 36px;
+  height: 38px;
   justify-content: center;
-  width: 36px;
+  width: 38px;
   transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
@@ -330,7 +330,7 @@
 }
 
 .mobile-tabbar-action .mobile-tabbar-icon svg {
-  stroke-width: 2.8;
+  stroke-width: 1.8;
 }
 
 .mobile-tabbar-action.is-active {
@@ -412,7 +412,7 @@
 }
 
 .mobile-input::placeholder {
-  color: #847a6d;
+  color: #6b8175;
   font-weight: 500;
 }
 
@@ -570,7 +570,7 @@
 .seller-desktop-link svg,
 .seller-desktop-store-link svg {
   color: var(--color-deep-teal);
-  stroke-width: 2.45;
+  stroke-width: 1.8;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s ease;
 }
 

@@ -174,8 +174,8 @@
   --radius-lg: 32px;
 
   /* ── Typography ── */
-  --font-display: var(--font-plus-jakarta);
-  --font-sans: var(--font-inter);
+  --font-display: var(--font-sora);
+  --font-sans: var(--font-manrope);
 
   /* ── Safe Area ── */
   --safe-bottom: env(safe-area-inset-bottom, 0px);

@@ -148,8 +148,8 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
   const total = totalCount || selectedCount || 0;
   const progress = photosDone ? Math.max(8, Math.round((readyCount / Math.max(total || selectedCount, 1)) * 100)) : 0;
   const mobileModes = [
-    { value: "BULK", label: "Plusieurs", icon: <ImagePlus size={18} strokeWidth={2.8} /> },
-    { value: "MANUAL", label: "Simple", icon: <Camera size={18} strokeWidth={2.8} /> },
+    { value: "BULK", label: "Plusieurs", icon: <ImagePlus size={18} strokeWidth={1.6} /> },
+    { value: "MANUAL", label: "Simple", icon: <Camera size={18} strokeWidth={1.6} /> },
   ];
 
   return (

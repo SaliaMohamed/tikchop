@@ -100,7 +100,7 @@ export default function SellerMenuPage() {
           <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#0F2B20] font-display text-base font-black text-[#34D399]">
             {(seller.name || "T").slice(0, 1).toUpperCase()}
             <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#34D399] text-[#0F2B20]">
-              <Zap size={8} strokeWidth={3} />
+              <Zap size={8} strokeWidth={1.6} />
             </span>
           </span>
           <div className="min-w-0 flex-1">

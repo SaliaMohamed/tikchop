@@ -1,19 +1,19 @@
 import "./globals.css";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Manrope, Sora } from "next/font/google";
 import AppChrome from "./AppChrome";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-manrope",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
+const sora = Sora({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-sora",
   display: "swap",
-  weight: ["500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata = {
@@ -50,7 +50,7 @@ viewportFit: "cover",
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${plusJakarta.variable}`}>
+    <html lang="fr" className={`${manrope.variable} ${sora.variable}`}>
       <body>
         <AppChrome>{children}</AppChrome>
       </body>

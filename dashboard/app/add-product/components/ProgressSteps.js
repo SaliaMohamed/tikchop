@@ -6,7 +6,7 @@ export function StepChip({ done, step, label, icon, important = false }) {
   return (
     <div className={`rounded-2xl border px-2 py-3 ${done ? "border-[var(--primary)] bg-[var(--surface-soft)] text-[var(--primary)]" : important ? "border-[var(--primary)]/45 bg-white text-[var(--primary)]" : "border-[var(--outline)]/35 bg-white text-[var(--text-dim)]"}`}>
       <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl text-sm font-bold ${done ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-mid)] text-[var(--text-dim)]"}`}>
-        {done ? <CheckCircle2 size={16} strokeWidth={2.6} /> : icon || step}
+        {done ? <CheckCircle2 size={16} strokeWidth={1.6} /> : icon || step}
       </span>
       <p className="mt-1 text-xs font-bold">{label}</p>
     </div>

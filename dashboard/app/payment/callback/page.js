@@ -14,7 +14,7 @@ export default async function PaymentCallbackPage({ searchParams }) {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#f4efe5] p-6 text-center">
       <div className="w-full max-w-md rounded-[40px] bg-white p-10 shadow-xl shadow-black/5 ring-1 ring-black/5">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600">
-          <CheckCircle2 size={48} strokeWidth={2.5} />
+          <CheckCircle2 size={48} strokeWidth={1.6} />
         </div>
 
         <h1 className="text-3xl font-extrabold text-zinc-950">Commande prise en charge</h1>

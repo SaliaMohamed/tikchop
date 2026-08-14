@@ -16,7 +16,7 @@ export function CrmHero({ stats, totalCustomers }) {
           </p>
         </div>
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-white/10 text-[#34D399] ring-1 ring-white/10">
-          <UsersRound size={22} strokeWidth={2.4} />
+          <UsersRound size={22} strokeWidth={1.6} />
         </div>
       </div>
       <div className="relative z-10 mt-5 rounded-[20px] bg-white/6 p-4 ring-1 ring-white/10">

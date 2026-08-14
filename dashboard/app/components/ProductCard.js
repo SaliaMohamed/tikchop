@@ -59,7 +59,7 @@ export default function ProductCard({ product, sellerPhone }) {
               : "pointer-events-none bg-zinc-100 text-zinc-400"
           }`}
         >
-          <MessageCircle size={17} strokeWidth={2.4} />
+          <MessageCircle size={17} strokeWidth={1.6} />
           {stock > 0 ? "Commander" : "Indisponible"}
         </a>
       </div>

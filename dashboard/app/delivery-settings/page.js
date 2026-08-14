@@ -248,7 +248,7 @@ export default function DeliverySettingsPage() {
             <p className="mt-1 text-base text-[#0F2B20]/55">Retrait, communes, frais et livreurs WhatsApp.</p>
           </div>
           <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#0F2B20] text-[#34D399] disabled:bg-[#0F2B20]/30" aria-label="Enregistrer">
-            <Save size={19} strokeWidth={2.5} />
+            <Save size={19} strokeWidth={1.6} />
           </button>
         </div>
       </header>
@@ -399,7 +399,7 @@ export default function DeliverySettingsPage() {
                       onClick={() => openZoneModal()}
                       className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
                     >
-                      <Plus size={15} strokeWidth={3} />
+                      <Plus size={15} strokeWidth={1.6} />
                       Ajouter
                     </button>
                   </div>
@@ -486,7 +486,7 @@ export default function DeliverySettingsPage() {
                     onClick={() => openDriverModal()}
                     className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
                   >
-                    <Plus size={15} strokeWidth={3} />
+                    <Plus size={15} strokeWidth={1.6} />
                     Ajouter
                   </button>
                 </div>

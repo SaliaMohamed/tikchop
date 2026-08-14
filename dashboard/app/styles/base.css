@@ -14,6 +14,70 @@ body {
   text-rendering: geometricPrecision;
 }
 
+/* ── Icônes lucide — trait fin style iOS ── */
+svg.lucide {
+  stroke-width: 1.5 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* ── Micro-animations d'icônes (hover/active) ── */
+button:not(:active) svg.lucide,
+a:not(:active) svg.lucide,
+.seller-desktop-link svg.lucide {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease;
+}
+button:hover svg.lucide,
+a:hover svg.lucide,
+.seller-desktop-link:hover svg.lucide {
+  transform: scale(1.12) rotate(-2deg);
+}
+button:active svg.lucide,
+a:active svg.lucide {
+  transform: scale(0.88);
+}
+button:hover .mobile-tabbar-icon svg.lucide {
+  transform: scale(1.1);
+}
+
+/* ── Titres — échelle fluid responsive (clamp) ── */
+h1 {
+  font-size: clamp(1.9rem, 4.6vw, 2.9rem);
+  line-height: 1.06;
+}
+h2 {
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+  line-height: 1.12;
+}
+h3 {
+  font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+  line-height: 1.18;
+}
+h4 {
+  font-size: clamp(1rem, 2.1vw, 1.18rem);
+}
+@media (max-width: 700px) {
+  h1 { font-size: clamp(1.6rem, 6.2vw, 2.1rem); }
+  h2 { font-size: clamp(1.25rem, 4.6vw, 1.65rem); }
+  h3 { font-size: clamp(1.05rem, 3.6vw, 1.28rem); }
+}
+
+/* ── Focus visible — ring émeraude accessible ── */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.35), 0 0 0 6px rgba(5, 150, 105, 0.12);
+  border-radius: 6px;
+}
+button:focus-visible:not(:active),
+a:focus-visible:not(:active) {
+  transform: translateY(-1px);
+}
+
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-display), var(--font-sans), sans-serif !important;
   letter-spacing: -0.03em !important;
