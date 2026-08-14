@@ -721,8 +721,8 @@ function EmptyShopState({ seller, isOwnerView = false }) {
               </span>
             </span>
           </div>
-          <div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[#fdf2d5] p-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#a96e26] shadow-sm">
+<div className="grid grid-cols-[auto_1fr] gap-3 rounded-[22px] bg-[#f6fbf7] p-4">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#059669] shadow-sm">
               <Truck size={19} />
             </span>
             <span>
