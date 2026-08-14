@@ -577,6 +577,379 @@ async function analyzeProductImageWithOpenRouter(imageUrl, voiceHint = "") {
   return normalizeProductAnalysis(parseJsonModelOutput(textOutput));
 }
 
+export async function parseVoiceProductWithAI(text, hint = "") {
+  const cleanText = String(text || "").trim();
+  if (!cleanText) return {};
+
+  let lastError = null;
+
+  for (const provider of getVisionProviderOrder()) {
+    try {
+      if (provider === "gemini") return await parseVoiceWithGemini(cleanText, hint);
+      if (provider === "openrouter") return await parseVoiceWithOpenRouter(cleanText, hint);
+      if (provider === "openai") return await parseVoiceWithOpenAI(cleanText, hint);
+    } catch (err) {
+      console.error(`${provider} voice parse failed:`, err);
+      lastError = err;
+    }
+  }
+
+  console.warn("Voice AI parse unavailable. Falling back to regex. Last error:", lastError);
+  return {};
+}
+
+export async function parseVoiceProductsWithAI(text, hint = "") {
+  const cleanText = String(text || "").trim();
+  if (!cleanText) return [];
+
+  let lastError = null;
+
+  for (const provider of getVisionProviderOrder()) {
+    try {
+      if (provider === "gemini") return await parseVoiceBatchWithGemini(cleanText, hint);
+      if (provider === "openrouter") return await parseVoiceBatchWithOpenRouter(cleanText, hint);
+      if (provider === "openai") return await parseVoiceBatchWithOpenAI(cleanText, hint);
+    } catch (err) {
+      console.error(`${provider} voice batch parse failed:`, err);
+      lastError = err;
+    }
+  }
+
+  console.warn("Voice batch AI parse unavailable. Fallback regex:", lastError);
+  return [];
+}
+
+async function parseVoiceWithGemini(text, hint) {
+  const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: voiceProductPrompt(text, hint) }],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseJsonSchema: voiceProductSchema(),
+        temperature: 0.1,
+        maxOutputTokens: 900,
+      },
+    }),
+  }, 15000, "Interpretation vocale Gemini trop lente.");
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Interpretation vocale Gemini impossible.");
+  }
+
+  const textOutput = data.candidates?.[0]?.content?.parts
+    ?.find((part) => typeof part.text === "string")?.text;
+
+  if (!textOutput) {
+    throw new Error("Interpretation vocale Gemini vide.");
+  }
+
+  return normalizeVoiceProduct(parseJsonModelOutput(textOutput));
+}
+
+async function parseVoiceBatchWithGemini(text, hint) {
+  const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: voiceBatchPrompt(text, hint) }],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseJsonSchema: voiceBatchSchema(),
+        temperature: 0.1,
+        maxOutputTokens: 2200,
+      },
+    }),
+  }, 18000, "Interpretation vocale lot Gemini trop lente.");
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Interpretation vocale lot Gemini impossible.");
+  }
+
+  const textOutput = data.candidates?.[0]?.content?.parts
+    ?.find((part) => typeof part.text === "string")?.text;
+
+  if (!textOutput) {
+    throw new Error("Interpretation vocale lot Gemini vide.");
+  }
+
+  const parsed = parseJsonModelOutput(textOutput);
+  const products = Array.isArray(parsed?.products) ? parsed.products : [];
+  return products.map(normalizeVoiceProduct).filter((product) => product.name || product.price);
+}
+
+async function callOpenRouterChatCompletion({ text, hint, systemHint, jsonName }) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const model = process.env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-32b-instruct";
+
+  if (!apiKey) {
+    throw new Error("OpenRouter voice non configure.");
+  }
+
+  const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://tikchop.app",
+      "X-Title": process.env.OPENROUTER_APP_NAME || "Tikchop",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: `${systemHint}\n\nDictation: ${JSON.stringify(text)}\n${hint ? `Indication: ${hint}` : ""}\nRetourne uniquement un JSON valide.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: 1200,
+    }),
+  }, 16000, "Interpretation vocale OpenRouter trop lente.");
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Interpretation vocale OpenRouter impossible.");
+  }
+
+  const content = data.choices?.[0]?.message?.content;
+  const textOutput = Array.isArray(content)
+    ? content.map((part) => part.text || "").join("\n")
+    : content;
+
+  if (!textOutput) {
+    throw new Error("Interpretation vocale OpenRouter vide.");
+  }
+
+  return parseJsonModelOutput(textOutput);
+}
+
+async function parseVoiceWithOpenRouter(text, hint) {
+  const parsed = await callOpenRouterChatCompletion({
+    text,
+    hint,
+    systemHint: [
+      "Tu interprets la dictee d'une vendeuse de boutique Tikchop (Cote d'Ivoire).",
+      "Extrais une fiche produit exploitable. Convertit les nombres en lettres en chiffres (ex: trois mille cinq cent francs => 3500).",
+      "Nom court et vendable, rayon simple, couleurs, taille/pointure uniquement si dictee, stock par defaut 1.",
+      "Champs: name, description, category, colors, size, price, stock_quantity, confidence.",
+    ].join("\n"),
+  });
+  return normalizeVoiceProduct(parsed);
+}
+
+async function parseVoiceBatchWithOpenRouter(text, hint) {
+  const parsed = await callOpenRouterChatCompletion({
+    text,
+    hint,
+    systemHint: [
+      "Tu interprets la dictee de plusieurs articles d'une vendeuse (ex: 'sandales 8000, puis robe bleue 15000').",
+      "Separe chaque article, convertit les nombres en lettres en chiffres.",
+      "Retourne un JSON avec un tableau products.",
+      "Chaque fiche: name, description, category, colors, size, price, stock_quantity, confidence.",
+    ].join("\n"),
+  });
+  const products = Array.isArray(parsed?.products) ? parsed.products : [];
+  return products.map(normalizeVoiceProduct).filter((product) => product.name || product.price);
+}
+
+async function parseVoiceWithOpenAI(text, hint) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
+  const response = await fetchWithTimeout("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: voiceProductPrompt(text, hint),
+            },
+          ],
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "tikchop_voice_product",
+          strict: true,
+          schema: voiceProductSchema(),
+        },
+      },
+      max_output_tokens: 500,
+    }),
+  }, 15000, "Interpretation vocale OpenAI trop lente.");
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Interpretation vocale IA impossible.");
+  }
+
+  const textOutput = data.output_text
+    || data.output?.flatMap((item) => item.content || [])
+      .find((content) => content.type === "output_text")?.text;
+
+  if (!textOutput) {
+    throw new Error("Interpretation vocale vide.");
+  }
+
+  return normalizeVoiceProduct(parseJsonModelOutput(textOutput));
+}
+
+async function parseVoiceBatchWithOpenAI(text, hint) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini";
+  const response = await fetchWithTimeout("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [voiceBatchPrompt(text, hint), "Retourne uniquement le JSON valide."].join("\n"),
+            },
+          ],
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "tikchop_voice_products",
+          strict: true,
+          schema: voiceBatchSchema(),
+        },
+      },
+      max_output_tokens: 700,
+    }),
+  }, 16000, "Interpretation vocale lot IA trop lente.");
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Interpretation vocale lot IA impossible.");
+  }
+
+  const textOutput = data.output_text
+    || data.output?.flatMap((item) => item.content || [])
+      .find((content) => content.type === "output_text")?.text;
+
+  if (!textOutput) {
+    throw new Error("Interpretation vocale lot vide.");
+  }
+
+  const parsed = parseJsonModelOutput(textOutput);
+  const products = Array.isArray(parsed?.products) ? parsed.products : [];
+  return products.map(normalizeVoiceProduct).filter((product) => product.name || product.price);
+}
+
+function voiceProductPrompt(text, hint = "") {
+  return [
+    "Tu interprets la dictee d'une vendeuse de boutique en ligne Tikchop (Abidjan, Cote d'Ivoire).",
+    `Dictation: ${JSON.stringify(text)}`,
+    "Extrais une fiche produit utilitaire: nom court et vendable, rayon simple, couleurs, taille ou pointure uniquement si dictes, stock par defaut 1.",
+    "Convertit tous les nombres en lettres en chiffres: 'trois mille cinq cent francs' => 3500, 'dix' => 10, 'quarante-deux' => 42.",
+    "Le prix est en francs CFA: 'a 5000' ou '5000f' => price \"5000\".",
+    "Un grand nombre sans unite (>= 1000) est souvent le prix, plus petit (1-1000) souvent la taille, pointure, quantite ou stock.",
+    "Ne devine pas le prix s'il n'est pas dicte.",
+    hint ? `Indication vendeur: ${hint}` : "",
+    "Retourne les champs: name, description, category, colors, size, price, stock_quantity, confidence.",
+  ].filter(Boolean).join("\n");
+}
+
+function voiceBatchPrompt(text, hint = "") {
+  return [
+    "Tu interpretes la dictee de plusieurs articles d'une vendeuse de boutique Tikchop.",
+    `Dictation: ${JSON.stringify(text)}`,
+    "Separe chaque article dicte (transition par 'puis', 'et', 'aussi', 'ensuite', virgule, changement de sujet, nouveau nom + prix).",
+    "Ne cree pas deux fiches pour le meme article; fusionne les details repartis sur plusieurs phrases.",
+    "Convertit tous les nombres en lettres en chiffres.",
+    "Le prix est en francs CFA. Un grand nombre (>= 1000) est souvent le prix.",
+    "Retourne un objet JSON avec un tableau products, chaque fiche: name, description, category, colors, size, price, stock_quantity, confidence.",
+    hint ? `Indication vendeur: ${hint}` : "",
+    "Si la dictee ne contient qu'un article, retourne products avec un seul element.",
+  ].filter(Boolean).join("\n");
+}
+
+function voiceProductSchema() {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      name: { type: "string", description: "Nom court et vendable du produit." },
+      description: { type: "string", description: "Description vendeuse courte." },
+      category: { type: "string", description: "Rayon simple du produit." },
+      colors: { type: "array", items: { type: "string" }, description: "Couleurs dictees." },
+      size: { type: "string", description: "Taille, pointure ou format dicte, sinon vide." },
+      price: { type: "string", description: "Prix en francs CFA en chiffres, uniquement si dicte." },
+      stock_quantity: { type: "string", description: "Quantite en stock, 1 par defaut." },
+      confidence: { type: "number", description: "Confiance entre 0 et 1." },
+    },
+    required: ["name", "description", "category", "colors", "size", "price", "stock_quantity", "confidence"],
+  };
+}
+
+function voiceBatchSchema() {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      products: {
+        type: "array",
+        items: voiceProductSchema(),
+      },
+    },
+    required: ["products"],
+  };
+}
+
+function normalizeVoiceProduct(parsed = {}) {
+  const priceRaw = String(parsed.price ?? "").replace(/[^\d]/g, "");
+  const stockRaw = String(parsed.stock_quantity ?? "").replace(/[^\d]/g, "");
+  return {
+    name: String(parsed.name || "").trim(),
+    description: String(parsed.description || "").trim(),
+    category: String(parsed.category || "").trim(),
+    colors: Array.isArray(parsed.colors) ? parsed.colors.filter(Boolean).map(String).slice(0, 5) : [],
+    size: String(parsed.size || "").trim().toUpperCase(),
+    price: priceRaw,
+    stock_quantity: stockRaw || "1",
+    confidence: Number.isFinite(Number(parsed.confidence)) ? Number(parsed.confidence) : 0,
+  };
+}
+
 function getVisionProviderOrder() {
   const configured = [
     process.env.GEMINI_API_KEY ? "gemini" : "",

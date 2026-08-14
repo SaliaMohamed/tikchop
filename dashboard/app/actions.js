@@ -4,6 +4,8 @@ import {
   removeProductBackground,
   analyzeProductImage,
   analyzeProductImagesBatch,
+  parseVoiceProductWithAI,
+  parseVoiceProductsWithAI,
 } from "./lib/actions/products";
 
 import {
@@ -55,6 +57,8 @@ export {
   removeProductBackground,
   analyzeProductImage,
   analyzeProductImagesBatch,
+  parseVoiceProductWithAI,
+  parseVoiceProductsWithAI,
   createOrder,
   initiatePayment,
   updateOrderStatus,

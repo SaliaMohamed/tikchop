@@ -20,7 +20,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { addProduct, addProductsBulk, analyzeProductImage, analyzeProductImagesBatch, removeProductBackground, uploadProductImage } from "../actions";
+import { addProduct, addProductsBulk, analyzeProductImage, analyzeProductImagesBatch, removeProductBackground, uploadProductImage, parseVoiceProductWithAI, parseVoiceProductsWithAI } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
@@ -72,6 +72,8 @@ export default function AddProductPage() {
   const formRef = useRef(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
+  const bulkVoiceParseTimerRef = useRef(null);
+  const voiceParseTimerRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageAnalyzing, setImageAnalyzing] = useState(false);
@@ -788,7 +790,31 @@ export default function AddProductPage() {
     setExpandedBulkItemId(nextIncomplete.id);
   }
 
-  function applyVoiceText(text) {
+  async function applyVoiceText(text) {
+    setVoiceNotice("Tikchop relit vos paroles...");
+    try {
+      const aiParsed = await parseVoiceProductWithAI(text, buildBulkAnalysisHint(bulkPreset, productProfile));
+      if (aiParsed && aiParsed.name) {
+        setFormData((current) => ({
+          ...current,
+          name: aiParsed.name,
+          description: aiParsed.description || current.description,
+          category: aiParsed.category || current.category,
+          colors: (aiParsed.colors || []).length ? aiParsed.colors : current.colors,
+          size: aiParsed.size || current.size,
+          price: aiParsed.price ? normalizeMoneyInput(aiParsed.price) : current.price,
+          stock_quantity: aiParsed.stock_quantity || current.stock_quantity || "1",
+          variants_text: aiParsed.size
+            ? buildVariantText(aiParsed.size, aiParsed.stock_quantity || current.stock_quantity || "1")
+            : current.variants_text,
+        }));
+        setVoiceNotice("");
+        return;
+      }
+    } catch (error) {
+      console.warn("AI voice parse failed, regex fallback:", error);
+    }
+
     const parsed = parseVoiceProduct(text);
     setFormData((current) => ({
       ...current,
@@ -799,6 +825,7 @@ export default function AddProductPage() {
       variants_text: parsed.size ? buildVariantText(parsed.size, parsed.stock_quantity || current.stock_quantity || "1") : current.variants_text,
       description: text || current.description,
     }));
+    setVoiceNotice("");
   }
 
   function startVoiceCapture() {
@@ -827,7 +854,35 @@ export default function AddProductPage() {
     recognition.start();
   }
 
-  function applyBulkVoiceText(id, text) {
+  async function commitBulkVoiceText(id, text) {
+    setVoiceNotice("Tikchop relit vos paroles...");
+    try {
+      const aiParsed = await parseVoiceProductWithAI(text, buildItemAnalysisHint(bulkPhotoItems.find((entry) => entry.id === id), bulkPreset, productProfile));
+      if (aiParsed && aiParsed.name) {
+        setBulkPhotoItems((current) => current.map((item) => (
+          item.id === id
+            ? {
+              ...item,
+              name: aiParsed.name || item.name,
+              description: aiParsed.description || item.description,
+              category: aiParsed.category || item.category,
+              colors: (aiParsed.colors || []).length ? aiParsed.colors : item.colors,
+              size: aiParsed.size || item.size,
+              price: aiParsed.price ? normalizeMoneyInput(aiParsed.price) : item.price,
+              stock_quantity: aiParsed.stock_quantity || item.stock_quantity || 1,
+              variants_text: aiParsed.size
+                ? buildVariantText(aiParsed.size, aiParsed.stock_quantity || item.stock_quantity || 1)
+                : item.variants_text,
+            }
+            : item
+        )));
+        setVoiceNotice("");
+        return;
+      }
+    } catch (error) {
+      console.warn("AI bulk voice parse failed, regex fallback:", error);
+    }
+
     const parsed = parseVoiceProduct(text);
     setBulkPhotoItems((current) => current.map((item) => (
       item.id === id
@@ -842,6 +897,16 @@ export default function AddProductPage() {
         }
         : item
     )));
+    setVoiceNotice("");
+  }
+
+  function applyBulkVoiceText(id, text) {
+    if (bulkVoiceParseTimerRef.current) {
+      clearTimeout(bulkVoiceParseTimerRef.current);
+    }
+    bulkVoiceParseTimerRef.current = setTimeout(() => {
+      commitBulkVoiceText(id, text);
+    }, 650);
   }
 
   function startBulkVoiceCapture(id) {
@@ -865,7 +930,7 @@ export default function AddProductPage() {
     recognition.onresult = (event) => {
       const text = event.results?.[0]?.[0]?.transcript || "";
       setVoiceNotice("");
-      applyBulkVoiceText(id, text);
+      commitBulkVoiceText(id, text);
     };
     recognition.start();
   }
