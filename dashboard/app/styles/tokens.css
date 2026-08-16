@@ -174,8 +174,9 @@
   --radius-lg: 32px;
 
   /* ── Typography ── */
-  --font-display: var(--font-sora);
-  --font-sans: var(--font-manrope);
+  /* Replit-inspired: Manrope for headings, DM Sans for body (épuré). */
+  --font-display: var(--font-manrope);
+  --font-sans: var(--font-dm);
 
   /* ── Safe Area ── */
   --safe-bottom: env(safe-area-inset-bottom, 0px);

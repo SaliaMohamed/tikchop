@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Manrope, Sora } from "next/font/google";
+import { DM_Sans, Manrope } from "next/font/google";
 import AppChrome from "./AppChrome";
 
 const manrope = Manrope({
@@ -9,11 +9,11 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const sora = Sora({
+const dm = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-sora",
+  variable: "--font-dm",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata = {
@@ -49,7 +49,7 @@ viewportFit: "cover",
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" className={`${manrope.variable} ${sora.variable}`}>
+    <html lang="fr" className={`${manrope.variable} ${dm.variable}`}>
       <body>
         <AppChrome>{children}</AppChrome>
       </body>
