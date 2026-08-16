@@ -38,3 +38,6 @@ n8n-workflows/credentials_list.json
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+
+# Replit reference prototype (preserved in replit-work branch)
+artifacts/
