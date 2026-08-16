@@ -59,7 +59,7 @@ import {
 } from "../../lib/product-analysis-utils";
 import { MobileBulkPrepCard, MobileProductCockpit } from "./components/MobilePrep";
 import { ImageQualitySwitch } from "./components/ImageQuality";
-import { BulkQuickPricePanel, BulkItemMoreOptions } from "./components/BulkItem";
+import { BulkQuickPricePanel, BulkItemMoreOptions, InlinePriceField } from "./components/BulkItem";
 import { BatchReviewSummary, DesktopPublishPanel, PublishDock } from "./components/PublishPanels";
 import { Field, HeroMiniStat, NoticeBanner, QuickValueButton, PublishSuccess } from "./components/SharedUI";
 import { AngleDecisionCard } from "./components/AnalysisDeck";
@@ -142,6 +142,63 @@ export default function AddProductPage() {
       setExpandedBulkItemId(firstIncomplete.id);
     }
   }, [bulkPhotoItems, expandedBulkItemId, mode]);
+
+  const draftKey = `tikchop:add-product:draft:${activeSeller.slug || "default"}`;
+  const [resumedCount, setResumedCount] = useState(0);
+
+  useEffect(() => {
+    if (!activeSeller.slug) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (!saved) return;
+      const items = (saved.items || []).filter((item) => item.image_url);
+      if (items.length === 0) return;
+
+      const restored = items.map((item) => ({
+        ...item,
+        preview: item.image_url,
+        extra_previews: item.extra_images || [],
+        uploading: false,
+        analyzing: false,
+        uploadError: "",
+        analysisError: "",
+      }));
+      setBulkPhotoItems(restored);
+      if (saved.mode) setMode(saved.mode);
+      if (saved.bulkPreset) setBulkPreset(saved.bulkPreset);
+      if (saved.formData?.seller_id) setFormData((current) => ({ ...current, ...saved.formData }));
+      setResumedCount(restored.length);
+    } catch (error) {
+      console.warn("Brouillon non restorable:", error);
+    }
+  }, [draftKey, activeSeller.slug]);
+
+  useEffect(() => {
+    if (!activeSeller.slug) return;
+    const hasContent = bulkPhotoItems.some((item) => item.image_url || item.price || item.name)
+      || Boolean(formData.image_url || formData.name || formData.price);
+    if (!hasContent) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const snapshot = {
+          mode,
+          bulkPreset,
+          formData,
+          items: bulkPhotoItems.map((item) => {
+            const { preview, extra_previews, uploading, analyzing, uploadError, analysisError, reviewNotice, ...rest } = item;
+            return rest;
+          }),
+        };
+        localStorage.setItem(draftKey, JSON.stringify(snapshot));
+      } catch (error) {
+        console.warn("Brouillon non sauvegarde:", error);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [bulkPhotoItems, formData, mode, bulkPreset, activeSeller.slug, draftKey]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -314,6 +371,31 @@ export default function AddProductPage() {
     setBulkPhotoItems((current) => [...current, ...pendingItems]);
 
     const uploadedItems = [];
+    const analysisQueue = [];
+    let analysisFlushTimer = null;
+    let analysisChain = Promise.resolve();
+
+    const flushAnalysisNow = () => {
+      if (analysisFlushTimer) {
+        clearTimeout(analysisFlushTimer);
+        analysisFlushTimer = null;
+      }
+      if (analysisQueue.length === 0) return;
+      const batch = analysisQueue.splice(0, analysisQueue.length);
+      analysisChain = analysisChain.then(() => analyzeBulkItemsInBatches(batch, {
+        notice: "Tikchop analyse le lot...",
+      }));
+    };
+
+    const queueAnalysis = (item) => {
+      analysisQueue.push(item);
+      if (analysisFlushTimer) clearTimeout(analysisFlushTimer);
+      if (analysisQueue.length >= 3) {
+        flushAnalysisNow();
+      } else {
+        analysisFlushTimer = setTimeout(flushAnalysisNow, 350);
+      }
+    };
 
     await runLimited(pendingItems, 3, async (item, index) => {
       try {
@@ -339,6 +421,7 @@ export default function AddProductPage() {
             }
             : entry
         )));
+        queueAnalysis(uploadedItems[index]);
       } catch (error) {
         console.error("Bulk image upload error:", error);
         setBulkPhotoItems((current) => current.map((entry) => (
@@ -349,18 +432,11 @@ export default function AddProductPage() {
       }
     });
 
-    await analyzeUploadedBulkItems(uploadedItems.filter(Boolean));
+    flushAnalysisNow();
+    await analysisChain;
 
     setBulkUploading(false);
     event.target.value = "";
-  }
-
-  async function analyzeUploadedBulkItems(uploadedItems) {
-    if (uploadedItems.length === 0) return;
-
-    await analyzeBulkItemsInBatches(uploadedItems, {
-      notice: "Tikchop analyse le lot...",
-    });
   }
 
   async function analyzeBulkItemsInBatches(itemsToAnalyze, options = {}) {
@@ -1018,6 +1094,12 @@ export default function AddProductPage() {
     setVoiceNotice("");
     setBulkText("");
     setBulkPhotoItems([]);
+    setResumedCount(0);
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (error) {
+      console.warn("Brouillon non efface:", error);
+    }
     setImagePreview("");
     setImageError("");
     setAnalysisError("");
@@ -1091,6 +1173,42 @@ export default function AddProductPage() {
 
         {voiceNotice && (
           <NoticeBanner tone="info" icon={<Mic size={18} />} title="Option vocale" text={voiceNotice} />
+        )}
+
+        {resumedCount > 0 && (
+          <section className="flex items-start gap-3 rounded-[20px] border border-[var(--primary)]/18 bg-[var(--surface-soft)] p-4 shadow-[var(--shadow-sm)]">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--primary)]">
+              <PackagePlus size={18} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-extrabold text-[var(--text-main)]">Mise en vente retrouvee</p>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[var(--text-dim)]">
+                {resumedCount} article{resumedCount > 1 ? "s" : ""} deja prepare{resumedCount > 1 ? "s" : ""} sur cet appareil. Reprenez ou tout effacer.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setResumedCount(0)}
+              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-2xl bg-white px-3 text-xs font-extrabold text-[var(--primary)] ring-1 ring-[var(--primary)]/20"
+            >
+              Reprendre
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkPhotoItems([]);
+                setResumedCount(0);
+                try {
+                  localStorage.removeItem(draftKey);
+                } catch (error) {
+                  console.warn("Brouillon non efface:", error);
+                }
+              }}
+              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-soft)] px-3 text-xs font-extrabold text-[var(--text-dim)] ring-1 ring-[var(--outline)]/30"
+            >
+              Tout effacer
+            </button>
+          </section>
         )}
 
         <form id="add-product-form" ref={formRef} onSubmit={handleSubmit} className="space-y-6 md:space-y-7">
@@ -1343,11 +1461,13 @@ export default function AddProductPage() {
                     const duplicateHint = getLikelyDuplicateHint(item, previousItem);
                     return (
                     <article key={item.id} className={`${focusedOnMobile ? "" : "hidden md:block"} overflow-hidden rounded-[28px] bg-white shadow-[0_18px_42px_rgb(43_34_25_/_0.07)] ring-1 ring-[#0F2B20]/8 md:rounded-[24px] md:p-3 md:shadow-[0_10px_26px_rgb(43_34_25_/_0.045)]`}>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedBulkItemId((current) => current === item.id ? "" : item.id)}
-                        className="w-full p-3 text-left md:p-0"
-                      >
+                      <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setExpandedBulkItemId((current) => current === item.id ? "" : item.id)}
+                          onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setExpandedBulkItemId((current) => current === item.id ? "" : item.id); } }}
+                          className="w-full cursor-pointer p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#059669] md:p-0"
+                        >
                         <div className="flex gap-3">
                           <div className="relative h-32 w-28 shrink-0 overflow-hidden rounded-[24px] bg-[var(--surface-mid)] md:h-28 md:w-24 md:rounded-[20px]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1401,7 +1521,17 @@ export default function AddProductPage() {
                             </div>
                           </div>
                         </div>
-                      </button>
+                        {expandedBulkItemId !== item.id && (
+                          <div className="mt-3" onClick={(event) => event.stopPropagation()}>
+                            <InlinePriceField
+                              item={item}
+                              itemFieldCopy={itemFieldCopy}
+                              onUpdate={updateBulkPhotoItem}
+                              onNext={markCurrentAndNext}
+                            />
+                          </div>
+                        )}
+                      </div>
 
                       {expandedBulkItemId === item.id && (
                         <div className="mt-4 space-y-3 border-t border-[var(--outline)]/20 pt-4">

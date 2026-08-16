@@ -1,10 +1,62 @@
 "use client";
 
-import { ArrowRight, Boxes, Layers3, Loader2, Mic, Ruler, Sparkles } from "lucide-react";
+import { ArrowRight, Boxes, CheckCircle2, Layers3, Loader2, Mic, Ruler, Sparkles } from "lucide-react";
 import { normalizeMoneyInput } from "../../../lib/product-utils";
 import { buildVariantText, getSizeOptions } from "../../../lib/product-analysis-utils";
 import { ImageQualitySwitch } from "./ImageQuality";
 import { Field, QuickValueButton } from "./SharedUI";
+
+/**
+ * Prix compact affiche directement sur la carte, sans ouvrir le panneau.
+ * Le prix suffit pour publier la fiche: on le rend saisissable partout.
+ */
+function InlinePriceField({ item, itemFieldCopy, onUpdate, onNext }) {
+  const hasPrice = Boolean(normalizeMoneyInput(item.price));
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative min-w-0 flex-1">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.62rem] font-black uppercase tracking-wide text-[#059669]">
+          F
+        </span>
+        <input
+          value={item.price}
+          onChange={(event) => onUpdate(item.id, "price", event.target.value)}
+          placeholder={itemFieldCopy?.pricePlaceholder || "Prix (F)"}
+          inputMode="numeric"
+          aria-label={`Prix de ${item.name || `l'article ${1}`}`}
+          className="h-11 w-full rounded-[16px] bg-[#F6FBF7] pl-7 pr-3 text-sm font-black text-[#0F2B20] outline-none ring-1 ring-[#0F2B20]/8 focus:ring-[#059669]/35"
+        />
+      </div>
+      {hasPrice && (
+        <CheckCircle2 size={18} className="shrink-0 text-[#059669]" aria-hidden="true" />
+      )}
+      <button
+        type="button"
+        onClick={() => onNext(item.id)}
+        disabled={!hasPrice}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#0F2B20] text-white disabled:opacity-40"
+        aria-label="Valider ce prix et passer a la suite"
+      >
+        <ArrowRight size={18} />
+      </button>
+      {itemFieldCopy?.priceSuggestions?.length > 0 && !hasPrice && (
+        <div className="hidden shrink-0 items-center gap-1.5 md:flex">
+          {itemFieldCopy.priceSuggestions.slice(0, 3).map((price) => (
+            <button
+              key={price}
+              type="button"
+              onClick={() => onUpdate(item.id, "price", price)}
+              className="flex h-11 min-w-14 items-center justify-center rounded-[16px] bg-[#E6F5EC] px-3 text-xs font-black text-[#059669] ring-1 ring-[#059669]/15"
+            >
+              {Number(price).toLocaleString("fr-FR")}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function BulkQuickPricePanel({ item, itemFieldCopy, onUpdate, onNext }) {
   const hasPrice = Boolean(normalizeMoneyInput(item.price));
@@ -194,4 +246,4 @@ function BulkItemMoreOptions({
   );
 }
 
-export { BulkQuickPricePanel, BulkItemMoreOptions };
+export { BulkQuickPricePanel, BulkItemMoreOptions, InlinePriceField };
