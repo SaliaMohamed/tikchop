@@ -23,6 +23,12 @@ import { friendlyError } from "../../lib/user-facing-error";
 import { IllustrationBrandPulse } from "../components/TikchopIllustrations";
 import { getPaymentOption } from "../../lib/local-commerce";
 import { compressImage } from "../../lib/image-compressor";
+import {
+  Field,
+  Notice,
+  SettingsSection,
+  StatusPill,
+} from "../components/settings-ui";
 
 const defaultProfile = {
   name: "",
@@ -226,16 +232,16 @@ export default function ShopInfoPage() {
 
       <main className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
         <form onSubmit={saveProfile} className="space-y-5">
-          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
-                <Store size={17} />
-              </span>
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Identite</p>
-                <h2 className="font-display text-lg font-black text-[#0F2B20]">Identite boutique</h2>
-              </div>
-            </div>
+          <SettingsSection
+            icon={<Store size={17} />}
+            title="Identité boutique"
+            sub="Identite"
+            right={
+              profile.name.trim().length >= 2 && profile.phone_number.replace(/\D/g, "").length >= 8
+                ? <StatusPill ok>Complète</StatusPill>
+                : <StatusPill ok={false} warning>À compléter</StatusPill>
+            }
+          >
             <div className="p-4 grid gap-3 md:grid-cols-2">
               <Field label="Nom boutique">
                 <input value={profile.name} onChange={(event) => updateField("name", event.target.value)} className="mobile-input" placeholder="Salia Boutique" />
@@ -255,18 +261,18 @@ export default function ShopInfoPage() {
                 </div>
               </Field>
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
-                <Store size={17} />
-              </span>
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Design & Branding</p>
-                <h2 className="font-display text-lg font-black text-[#0F2B20]">Personnalisation boutique</h2>
-              </div>
-            </div>
+          <SettingsSection
+            icon={<Store size={17} />}
+            title="Personnalisation boutique"
+            sub="Design & Branding"
+            right={
+              brandingReady
+                ? <StatusPill ok>Personnalisée</StatusPill>
+                : <StatusPill ok={false} warning>Basique</StatusPill>
+            }
+          >
             <div className="p-4 space-y-4">
               <div className="grid gap-4 md:grid-cols-[140px_1fr]">
                 <div className="flex flex-col items-center justify-center">
@@ -333,18 +339,18 @@ export default function ShopInfoPage() {
                 </div>
               </div>
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
-                <Bot size={17} />
-              </span>
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Bot</p>
-                <h2 className="font-display text-lg font-black text-[#0F2B20]">Consignes du Djassaman digital</h2>
-              </div>
-            </div>
+          <SettingsSection
+            icon={<Bot size={17} />}
+            title="Consignes du Djassaman digital"
+            sub="Bot"
+            right={
+              profile.bot_greeting.trim().length >= 10
+                ? <StatusPill ok>Consignées</StatusPill>
+                : <StatusPill ok={false} warning>À compléter</StatusPill>
+            }
+          >
             <div className="p-4 grid gap-3">
               <Field label="Ton vendeur">
                 <input value={profile.bot_tone} onChange={(event) => updateField("bot_tone", event.target.value)} className="mobile-input" placeholder="Poli, direct, convaincant, style Abidjan" />
@@ -362,7 +368,7 @@ export default function ShopInfoPage() {
                 <textarea value={profile.bot_special_rules} onChange={(event) => updateField("bot_special_rules", event.target.value)} className="mobile-input min-h-20 resize-none py-3" placeholder="Ne pas negocier sous tel prix. Confirmer taille avant paiement..." />
               </Field>
             </div>
-          </section>
+          </SettingsSection>
 
           <button disabled={saving} className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[24px] bg-[#0F2B20] px-5 text-base font-black text-white disabled:opacity-60 active:scale-[0.99]">
             {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
@@ -396,16 +402,16 @@ export default function ShopInfoPage() {
             action="Gerer livraison"
           />
 
-          <section className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10">
-            <div className="flex items-center gap-2.5 border-b border-[#0F2B20]/8 px-4 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
-                <MapPin size={17} />
-              </span>
-              <div>
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">Zones</p>
-                <h2 className="font-display text-lg font-black text-[#0F2B20]">{zones.length} zone{zones.length > 1 ? "s" : ""} configuree{zones.length > 1 ? "s" : ""}</h2>
-              </div>
-            </div>
+          <SettingsSection
+            icon={<MapPin size={17} />}
+            title={`${zones.length} zone${zones.length > 1 ? "s" : ""} configuree${zones.length > 1 ? "s" : ""}`}
+            sub="Zones"
+            right={
+              zones.length > 0
+                ? <StatusPill ok>Prêtes</StatusPill>
+                : <StatusPill ok={false} warning>Vides</StatusPill>
+            }
+          >
             <div className="p-3 space-y-2">
               {zones.slice(0, 6).map((zone) => (
                 <div key={zone.id} className="flex items-center justify-between rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#0F2B20]/8">
@@ -415,7 +421,7 @@ export default function ShopInfoPage() {
               ))}
               {zones.length === 0 && <p className="rounded-xl bg-white p-3 text-sm font-bold text-[#0F2B20]/50 ring-1 ring-[#0F2B20]/8">Aucune zone. Le bot devra demander la zone au client.</p>}
             </div>
-          </section>
+          </SettingsSection>
 
           <section className="overflow-hidden rounded-[26px] bg-[#0F2B20] text-white">
             <div className="border-b border-white/10 px-4 py-3">
@@ -455,27 +461,6 @@ function deliverySummary(seller, zones, drivers) {
   return "Livraison a configurer.";
 }
 
-function PanelTitle({ icon, title, text }) {
-  return (
-    <div>
-      <h2 className="flex items-center gap-2 font-display text-xl font-black text-[var(--text-main)]">
-        {icon}
-        {title}
-      </h2>
-      <p className="mt-1 text-xs font-bold text-[var(--text-dim)]">{text}</p>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">{label}</span>
-      {children}
-    </label>
-  );
-}
-
 function InfoStatusCard({ icon, title, ok, text, href, action }) {
   return (
     <section className={`overflow-hidden rounded-[24px] ring-1 ${
@@ -500,17 +485,5 @@ function InfoStatusCard({ icon, title, ok, text, href, action }) {
       </div>
       <p className="px-4 py-3 text-sm font-bold leading-5 text-[#0F2B20]/55">{text}</p>
     </section>
-  );
-}
-
-function Notice({ children, tone = "success" }) {
-  return (
-    <div className={`mt-4 rounded-[22px] p-4 text-sm font-extrabold ring-1 ${
-      tone === "error"
-        ? "bg-amber-50 text-amber-900 ring-amber-200"
-        : "bg-emerald-50 text-emerald-900 ring-emerald-200"
-    }`}>
-      {children}
-    </div>
   );
 }

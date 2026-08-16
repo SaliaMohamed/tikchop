@@ -20,6 +20,14 @@ import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { ABIDJAN_DELIVERY_AREAS } from "../../lib/local-commerce";
 import { IllustrationDelivery } from "../components/TikchopIllustrations";
+import {
+  ChoiceButton,
+  SettingsHeader,
+  SettingsSection,
+  StatCard,
+  StatusPill,
+  ToggleRow,
+} from "../components/settings-ui";
 
 const defaultSettings = {
   delivery_enabled: true,
@@ -253,18 +261,16 @@ export default function DeliverySettingsPage() {
   return (
     <div className="app-shell">
       {/* Desktop Header */}
-      <header className="mobile-top hidden md:block">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="quiet-label text-[#059669]">Livraison</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-10 text-[#0F2B20]">Livraison client</h1>
-            <p className="mt-1 text-base text-[#0F2B20]/55">Retrait, communes, frais et livreurs WhatsApp.</p>
-          </div>
+      <SettingsHeader
+        label="Livraison"
+        title="Livraison client"
+        text="Retrait, communes, frais et livreurs WhatsApp."
+        action={
           <button onClick={saveSettings} disabled={saving || !seller} className="app-icon-button bg-[#0F2B20] text-[#34D399] disabled:bg-[#0F2B20]/30" aria-label="Enregistrer">
             <Save size={19} strokeWidth={1.6} />
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {error && (
         <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
@@ -292,9 +298,9 @@ export default function DeliverySettingsPage() {
 
           {/* Stats Row — desktop */}
           <section className="hidden grid-cols-3 gap-3 md:grid">
-            <DeliveryStat icon={<MapPin size={17} />} label="Communes" value={zones.length} tone="primary" />
-            <DeliveryStat icon={<Truck size={17} />} label="Livreurs" value={drivers.length} tone="info" />
-            <DeliveryStat icon={<CircleDollarSign size={17} />} label="Frais" value={`${Number(settings.fixed_delivery_fee || 0).toLocaleString("fr-FR")} F`} tone="accent" />
+            <StatCard icon={<MapPin size={17} />} label="Communes" value={zones.length} tone="primary" />
+            <StatCard icon={<Truck size={17} />} label="Livreurs" value={drivers.length} tone="info" />
+            <StatCard icon={<CircleDollarSign size={17} />} label="Frais" value={`${Number(settings.fixed_delivery_fee || 0).toLocaleString("fr-FR")} F`} tone="accent" />
           </section>
 
           <div className="grid gap-5 md:grid-cols-[0.95fr_1.05fr] md:items-start">
@@ -303,11 +309,15 @@ export default function DeliverySettingsPage() {
             <section className="space-y-4">
 
               {/* Delivery options toggles */}
-              <div className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10 shadow-[0_2px_12px_rgba(15, 43, 32,0.07)]">
-                <div className="flex items-center gap-2 border-b border-[#0F2B20]/8 px-4 py-3">
-                  <Truck className="text-[#059669]" size={19} />
-                  <h2 className="font-display text-lg font-black text-[#0F2B20]">Options client</h2>
-                </div>
+              <SettingsSection
+                icon={<Truck className="text-[#059669]" size={19} />}
+                title="Options client"
+                right={
+                  settings.delivery_enabled || settings.pickup_enabled
+                    ? <StatusPill ok>Configuré</StatusPill>
+                    : <StatusPill ok={false} warning>À compléter</StatusPill>
+                }
+              >
                 <div className="divide-y divide-[#0F2B20]/7">
                   <ToggleRow
                     title="Livraison"
@@ -328,14 +338,18 @@ export default function DeliverySettingsPage() {
                     onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
                   />
                 </div>
-              </div>
+              </SettingsSection>
 
               {/* Delivery fee + payment timing */}
-              <div className="overflow-hidden rounded-[26px] bg-[#F6FBF7] ring-1 ring-[#0F2B20]/10 shadow-[0_2px_12px_rgba(15, 43, 32,0.07)]">
-                <div className="flex items-center gap-2 border-b border-[#0F2B20]/8 px-4 py-3">
-                  <CircleDollarSign className="text-[#059669]" size={19} />
-                  <h2 className="font-display text-lg font-black text-[#0F2B20]">Prix de livraison</h2>
-                </div>
+              <SettingsSection
+                icon={<CircleDollarSign className="text-[#059669]" size={19} />}
+                title="Prix de livraison"
+                right={
+                  Number(settings.fixed_delivery_fee || 0) >= 0
+                    ? <StatusPill ok>Renseigné</StatusPill>
+                    : <StatusPill ok={false} warning>À régler</StatusPill>
+                }
+              >
                 <div className="p-4 space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">Frais par défaut</span>
@@ -354,20 +368,20 @@ export default function DeliverySettingsPage() {
                   <div>
                     <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">Quand payer ?</p>
                     <div className="grid gap-2">
-                      <PaymentChoice
-                        title="Après réception"
+                      <ChoiceButton
+                        label="Après réception"
                         text="Le client paie le livreur à la livraison."
                         active={settings.delivery_payment_timing === "AT_RECEPTION"}
                         onClick={() => setSettings({ ...settings, delivery_payment_timing: "AT_RECEPTION" })}
                       />
-                      <PaymentChoice
-                        title="Inclus au paiement"
+                      <ChoiceButton
+                        label="Inclus au paiement"
                         text="Le client paie article + livraison ensemble."
                         active={settings.delivery_payment_timing === "INCLUDED"}
                         onClick={() => setSettings({ ...settings, delivery_payment_timing: "INCLUDED" })}
                       />
-                      <PaymentChoice
-                        title="Livraison offerte"
+                      <ChoiceButton
+                        label="Livraison offerte"
                         text="Vous offrez les frais de livraison au client."
                         active={settings.delivery_payment_timing === "OFFERED"}
                         onClick={() => setSettings({ ...settings, delivery_payment_timing: "OFFERED" })}
@@ -384,7 +398,7 @@ export default function DeliverySettingsPage() {
                     {saving ? "Enregistrement..." : <><Save size={17} /> Enregistrer livraison</>}
                   </button>
                 </div>
-              </div>
+              </SettingsSection>
             </section>
 
             {/* Right column: zones + drivers */}
@@ -401,6 +415,9 @@ export default function DeliverySettingsPage() {
                     )}
                   </div>
                   <div className="flex gap-2">
+                    {zones.length > 0
+                      ? <StatusPill ok>Prêtes</StatusPill>
+                      : <StatusPill ok={false} warning>Vides</StatusPill>}
                     <button
                       onClick={handleAddAbidjanZones}
                       disabled={saving}
@@ -516,13 +533,20 @@ export default function DeliverySettingsPage() {
                       <span className="rounded-full bg-[#059669]/10 px-2.5 py-0.5 text-xs font-black text-[#059669]">{drivers.length}</span>
                     )}
                   </div>
-                  <button
-                    onClick={() => openDriverModal()}
-                    className="flex min-h-11 items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
-                  >
-                    <Plus size={15} strokeWidth={1.6} />
-                    Ajouter
-                  </button>
+                  <div className="flex gap-2">
+                    {settings.auto_share_to_driver && drivers.length > 0
+                      ? <StatusPill ok>Connectés</StatusPill>
+                      : drivers.length === 0
+                        ? <StatusPill ok={false} warning>Manquants</StatusPill>
+                        : null}
+                    <button
+                      onClick={() => openDriverModal()}
+                      className="flex min-h-11 items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
+                    >
+                      <Plus size={15} strokeWidth={1.6} />
+                      Ajouter
+                    </button>
+                  </div>
                 </div>
 
                 {drivers.length === 0 ? (
@@ -747,57 +771,5 @@ function DeliveryNextActionCard({ action, saving }) {
         {!saving && <ArrowRight size={17} />}
       </button>
     </section>
-  );
-}
-
-function DeliveryStat({ icon, label, value, tone }) {
-  const toneClass = {
-    primary: "bg-[#059669]/10 text-[#059669]",
-    info: "bg-blue-50 text-blue-600",
-    accent: "bg-amber-50 text-amber-600",
-  }[tone];
-
-  return (
-    <div className="rounded-[18px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/8">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
-        {icon}
-      </span>
-      <p className="mt-3 font-display text-lg font-bold leading-none text-[#0F2B20]">{value}</p>
-      <p className="mt-1 text-xs font-bold text-[#0F2B20]/50">{label}</p>
-    </div>
-  );
-}
-
-function ToggleRow({ title, text, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex min-h-[70px] w-full items-center justify-between gap-4 px-4 py-3 text-left"
-    >
-      <div>
-        <p className="text-sm font-black text-[#0F2B20]">{title}</p>
-        <p className="mt-0.5 text-xs font-bold leading-4 text-[#0F2B20]/50">{text}</p>
-      </div>
-      <div className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 ${active ? "bg-[#059669]" : "bg-[#0F2B20]/15"}`}>
-        <div className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? "translate-x-5" : ""}`} />
-      </div>
-    </button>
-  );
-}
-
-function PaymentChoice({ title, text, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex min-h-[60px] w-full items-center justify-between gap-4 rounded-2xl border p-3 text-left transition-colors ${
-        active ? "border-[#059669]/40 bg-[#EAF8F0]" : "border-[#0F2B20]/10 bg-white"
-      }`}
-    >
-      <div>
-        <p className={`text-sm font-black ${active ? "text-[#0F2B20]" : "text-[#0F2B20]"}`}>{title}</p>
-        <p className="mt-0.5 text-xs font-bold leading-4 text-[#0F2B20]/50">{text}</p>
-      </div>
-      {active && <CheckCircle2 className="shrink-0 text-[#059669]" size={19} />}
-    </button>
   );
 }
