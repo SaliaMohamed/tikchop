@@ -46,6 +46,49 @@ self.addEventListener("message", (event) => {
   }
 });
 
+self.addEventListener("push", (event) => {
+  let data = { title: "Tikchop", body: "", url: "/dashboard" };
+
+  try {
+    const payload = event.data?.json();
+    if (payload) {
+      data = { ...data, ...payload };
+    }
+  } catch (error) {
+    const text = event.data?.text();
+    if (text) data.body = text;
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Tikchop", {
+      body: data.body || "",
+      icon: data.icon || "/icon-192.png",
+      badge: data.badge || "/icon-192.png",
+      data: { url: data.url || "/dashboard" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/dashboard";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if ("focus" in client) {
+          client.focus();
+          client.navigate?.(url);
+          return;
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(url);
+      }
+    }),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 

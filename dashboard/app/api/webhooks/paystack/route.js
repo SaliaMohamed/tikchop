@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { markOrderPaidFromPaystack, sendPaystackReceiptMessage } from "../../../../lib/order-payments";
+import { sendPushToSeller } from "../../../../lib/push-notifications";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
@@ -30,12 +31,21 @@ export async function POST(req) {
       const orderId = data.metadata?.order_id;
 
       if (orderId) {
-        const { error } = await markOrderPaidFromPaystack(orderId, data);
+        const { data: paidOrder, error } = await markOrderPaidFromPaystack(orderId, data);
 
         if (error) {
           console.error("Supabase update error:", error);
           return NextResponse.json({ error: "DB update failed" }, { status: 500 });
         }
+
+        sendPushToSeller(
+          { sellerId: paidOrder?.seller_id },
+          {
+            title: "Paiement reçu",
+            body: `Commande ${paidOrder?.order_ref || orderId.slice(0, 8).toUpperCase()} payée — à préparer.`,
+            url: "/orders",
+          },
+        ).catch(() => {});
 
         try {
           await sendPaystackReceiptMessage(orderId, data);

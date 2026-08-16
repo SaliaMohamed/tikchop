@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/*.test.mjs\"",
     "check:readiness": "node scripts/check-readiness.mjs",
     "check:seller-isolation": "node scripts/check-seller-isolation.mjs",
     "check:whatsapp-stack": "node scripts/check-whatsapp-stack.mjs",
@@ -20,7 +22,7 @@
     "test:onboarding-ui": "node scripts/test-onboarding-ui.mjs",
     "qa:api": "npx newman run qa/postman/tikchop-api.postman_collection.json",
     "qa:load": "k6 run qa/k6/public-smoke.js",
-    "qa:all": "npm run lint && npm run build && npm run check:readiness && npm run check:seller-isolation && npm run check:whatsapp-stack && npm run smoke:beta && npm run qa:ui",
+    "qa:all": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:readiness && npm run check:seller-isolation && npm run check:whatsapp-stack && npm run smoke:beta && npm run qa:ui",
     "test:paystack": "node scripts/test-paystack-webhook.js",
     "test:vision": "node scripts/test-vision-provider.mjs",
     "test:background-clean": "node scripts/test-background-clean-flow.mjs"
@@ -34,7 +36,8 @@
     "lucide-react": "^1.14.0",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",
