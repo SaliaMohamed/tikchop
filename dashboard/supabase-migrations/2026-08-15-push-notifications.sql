@@ -43,4 +43,9 @@ AS $$
   WHERE endpoint = p_endpoint;
 $$;
 
+REVOKE ALL ON FUNCTION public.delete_push_subscription(p_endpoint text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.delete_push_subscription(p_endpoint text) FROM anon;
+REVOKE ALL ON FUNCTION public.delete_push_subscription(p_endpoint text) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_push_subscription(p_endpoint text) TO service_role;
+
 NOTIFY pgrst, 'reload schema';
