@@ -58,7 +58,7 @@ export function AngleDecisionCard({ index, extraCount, onAttachPrevious, onSepar
           <button
             type="button"
             onClick={onSeparateLast}
-            className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl bg-[var(--surface-soft)] px-3 text-xs font-black text-[var(--primary)]"
+            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--surface-soft)] px-3 text-xs font-black text-[var(--primary)]"
           >
             Séparer la dernière photo
           </button>

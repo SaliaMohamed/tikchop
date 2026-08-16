@@ -24,6 +24,11 @@ async function pageText(page) {
   return page.locator("body").innerText({ timeout: 10000 }).catch(() => "");
 }
 
+async function goto(page, path) {
+  await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(2200);
+}
+
 async function run() {
   console.log("Tikchop UI QA");
   console.log("------------");
@@ -32,57 +37,68 @@ async function run() {
   const browser = await chromium.launch({ headless: true });
 
   try {
+    // Routes publiques sans session => onboarding (auth unique)
     const mobile = await browser.newContext({
       ...devices["Pixel 7"],
       locale: "fr-FR",
     });
     const mobilePage = await mobile.newPage();
 
-    await mobilePage.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
-    await mobilePage.waitForTimeout(1600);
-    const mobileUrl = mobilePage.url();
-    const mobileHomeText = await pageText(mobilePage);
+    // 1. / : landing -> onboarding connexion
+    await goto(mobilePage, "/");
+    const homeUrl = mobilePage.url();
     await expect(
-      mobileUrl.replace(/\/+$/, "") === baseUrl,
-      "mobile / reste sur le site vitrine",
-      mobileUrl,
-    );
-    await expect(
-      mobileHomeText.includes("VENDRE MIEUX SUR WHATSAPP"),
-      "site vitrine mobile charge",
+      homeUrl.includes("/onboarding") && homeUrl.includes("mode=signin"),
+      "mobile / redirige vers l'onboarding de connexion",
+      homeUrl,
     );
 
-    await mobilePage.goto(`${baseUrl}/signup`, { waitUntil: "domcontentloaded" });
-    await mobilePage.waitForTimeout(700);
-    const signupText = await pageText(mobilePage);
-    await expect(signupText.includes("Ouvrez votre boutique"), "creation affiche l'ouverture boutique");
-    await expect(signupText.includes("Numero WhatsApp"), "creation affiche WhatsApp");
-    await expect(signupText.includes("+225"), "creation affiche indicatif ivoirien");
-    await expect(!signupText.includes("Google"), "creation masque Google tant qu'il n'est pas configure");
-    await expect(!signupText.includes("Connexion par email"), "creation sans texte email long");
+    // 2. /login -> onboarding connexion
+    await goto(mobilePage, "/login");
+    const loginUrl = mobilePage.url();
+    await expect(
+      loginUrl.includes("/onboarding") && loginUrl.includes("mode=signin"),
+      "login redirige vers l'onboarding de connexion",
+      loginUrl,
+    );
 
-    await mobilePage.goto(`${baseUrl}/login`, { waitUntil: "domcontentloaded" });
-    await mobilePage.waitForTimeout(700);
+    // 3. onboardoing connexion affiche le formulaire
     const loginText = await pageText(mobilePage);
-    await expect(loginText.includes("Bonjour,"), "login affiche accueil vendeur");
-    await expect(!loginText.includes("Google"), "login masque Google tant qu'il n'est pas configure");
-    await expect(loginText.includes("Email"), "login affiche Email");
-    await expect(loginText.includes("+225"), "login affiche indicatif ivoirien");
-    await expect(!loginText.includes("Etape 1/2"), "login sans etape onboarding");
+    await expect(loginText.includes("Bon retour"), "connexion affiche 'Bon retour'");
+    await expect(loginText.includes("+225"), "connexion affiche l'indicatif ivoirien");
+    await expect(loginText.includes("MOT DE PASSE"), "connexion affiche mot de passe");
+    await expect(loginText.includes("Se connecter"), "connexion affiche 'Se connecter'");
+    await expect(!loginText.includes("Consultation de cours"), "connexion sans contenu etranger");
+
+    // 4. /signup -> onboarding creation
+    await goto(mobilePage, "/signup");
+    const signupUrl = mobilePage.url();
+    await expect(
+      signupUrl.includes("/onboarding") && signupUrl.includes("new=1"),
+      "signup redirige vers l'onboarding de creation",
+      signupUrl,
+    );
+
+    // 5. onboarding creation affiche le parcours vendeur
+    const signupText = await pageText(mobilePage);
+    await expect(signupText.includes("Vendez sur WhatsApp"), "creation affiche l'accroche vendeur");
+    await expect(signupText.includes("Créez votre compte vendeur"), "creation affiche l'etape compte");
+    await expect(signupText.includes("Créer ma boutique"), "creation affiche 'Creer ma boutique'");
+    await expect(signupText.includes("J'ai déjà un compte"), "creation donne acces a la connexion");
     await mobile.close();
 
+    // 6. Desktop: /app sans session -> onboarding connexion
     const desktop = await browser.newContext({
       viewport: { width: 1366, height: 768 },
       locale: "fr-FR",
     });
     const desktopPage = await desktop.newPage();
-    await desktopPage.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
-    const desktopText = await pageText(desktopPage);
-    await expect(desktopText.includes("assistant WhatsApp"), "desktop garde la page de presentation");
-
-    await desktopPage.goto(`${baseUrl}/app`, { waitUntil: "domcontentloaded" });
-    await desktopPage.waitForTimeout(900);
-    await expect(/\/onboarding\?mode=signin/.test(desktopPage.url()), "app sans session va vers login", desktopPage.url());
+    await goto(desktopPage, "/app");
+    await expect(
+      /\/onboarding\?mode=signin/.test(desktopPage.url()),
+      "app sans session va vers l'onboarding de connexion",
+      desktopPage.url(),
+    );
     await desktop.close();
 
     if (shopSlug) {

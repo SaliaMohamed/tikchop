@@ -141,7 +141,7 @@ export async function removeProductBackground(imageUrl, options = {}) {
     throw new Error("Fond propre disponible seulement apres envoi de la photo.");
   }
 
-  const serviceUrl = String(process.env.REMBG_API_URL || process.env.BACKGROUND_REMOVAL_API_URL || "").replace(/\/+$/, "");
+  const serviceUrl = String(process.env.REMBG_API_URL || "").replace(/\/+$/, "");
   if (!serviceUrl) {
     throw new Error("Fond propre pas encore active. Ajoutez REMBG_API_URL cote serveur.");
   }

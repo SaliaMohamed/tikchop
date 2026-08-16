@@ -9,6 +9,7 @@ import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
 import AppIcon3D from "./components/AppIcon3D";
 import BrandLogo from "./components/BrandLogo";
+import OfflineBanner from "./components/OfflineBanner";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import SetupResumeBanner from "./components/SetupResumeBanner";
 import { clearActiveSeller, getSellerInitials, readActiveSeller, useActiveSeller, writeActiveSeller } from "./components/sellerContext";
@@ -151,6 +152,7 @@ export default function AppChrome({ children }) {
 
   return (
     <SellerAccountGate>
+      <OfflineBanner />
       {showMobileTopbar && (
         <header className="mobile-seller-topbar">
           <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">

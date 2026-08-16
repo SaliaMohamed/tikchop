@@ -313,8 +313,12 @@ function OrderCard({ order, onClick, index = 0 }) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="animate-rise-in cursor-pointer w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(43_34_25_/_0.035)] ring-1 ring-[#0F2B20]/7 active:scale-[0.99] transition hover:shadow-md"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
+      aria-label={`Commande ${order.order_ref || order.id?.slice(0, 8).toUpperCase()}, ${statusLabel}, ${formatPrice(total)}`}
+      className="animate-rise-in cursor-pointer w-full text-left rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgb(43_34_25_/_0.035)] ring-1 ring-[#0F2B20]/7 active:scale-[0.99] transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#059669]"
       style={{ animationDelay: delay }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -323,7 +327,7 @@ function OrderCard({ order, onClick, index = 0 }) {
             <h3 className="font-display text-base font-black text-[#0F2B20] truncate">
               {order.order_ref || order.id?.slice(0, 8).toUpperCase()}
             </h3>
-            <span className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${statusColors[simpleStatus] || "bg-zinc-50 text-zinc-600"}`}>
+            <span aria-live="polite" className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${statusColors[simpleStatus] || "bg-zinc-50 text-zinc-600"}`}>
               {statusLabel}
             </span>
           </div>
@@ -346,14 +350,15 @@ function OrderCard({ order, onClick, index = 0 }) {
 
       {/* Visual Stepper Bar on List Card */}
       <div className="mt-3 flex items-center justify-between border-t border-[#0F2B20]/5 pt-2.5">
-        <div className="flex items-center gap-1.5">
-          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Reçue" />
-          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Colis prêt" />
-          <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Livreur" />
-          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Livré" />
-          <span className="ml-1 text-[0.6rem] font-black text-[#059669] uppercase tracking-wider">
-            {simpleStatus === "DELIVERED" ? "Livrée" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Prête" : simpleStatus === "PAID" ? "En prépa" : "Reçue"}
-          </span>
+        <div className="flex items-center gap-1.5" aria-hidden="true">
+          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} />
+          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} />
+          <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} />
+          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} />
+        </div>
+        <span className="ml-1 text-[0.6rem] font-black text-[#059669] uppercase tracking-wider">
+          {simpleStatus === "DELIVERED" ? "Livrée" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Prête" : simpleStatus === "PAID" ? "En prépa" : "Reçue"}
+        </span>
         </div>
         {order.delivery_zone && (
           <span className="text-[0.64rem] font-extrabold text-[#54685E]/60 flex items-center gap-1">
