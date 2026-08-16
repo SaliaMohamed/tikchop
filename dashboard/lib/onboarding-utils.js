@@ -15,7 +15,9 @@ export function slugify(value) {
 // +225 is always prepended ? user only types local digits
 export function buildFullPhone(localDigits) {
   const clean = String(localDigits || "").replace(/\D/g, "");
-  return `+225${clean}`;
+  // Remove leading 0 if present
+  const local = clean.startsWith("0") ? clean.slice(1) : clean;
+  return `+225${local.slice(0, 10)}`;
 }
 
 export function hasValidLocalPhone(localDigits) {
@@ -25,7 +27,7 @@ export function hasValidLocalPhone(localDigits) {
 
 export function getPhoneAliasEmail(localDigits) {
   const full = buildFullPhone(localDigits).replace(/\D/g, "");
-  return full ? `seller-${full}@phone.tikchop.local` : "";
+  return full.length >= 11 ? `seller-${full}@phone.tikchop.local` : "";
 }
 
 export function withTimeout(promise, message, timeoutMs = 14000) {

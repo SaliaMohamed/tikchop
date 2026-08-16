@@ -201,6 +201,14 @@ export default function OnboardingPage() {
       setNotice("Boutique créée. Configuration de votre DJASSAMAN...");
       window.location.replace("/setup");
     } catch (err) {
+      const msg = err?.message || "";
+      if (/existe déjà|already.*exist|already.*register/i.test(msg)) {
+        // Account exists — switch to sign-in mode automatically
+        setMode("SIGN_IN");
+        setNotice("Ce numéro a déjà un compte. Connectez-vous avec votre mot de passe.");
+        setSaving(false);
+        return;
+      }
       setError(friendlyError(err, "Création boutique incomplète. Vérifiez et réessayez."));
     } finally {
       setSaving(false);

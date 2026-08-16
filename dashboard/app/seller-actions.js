@@ -26,21 +26,39 @@ function cleanPhone(value) {
 function cleanAuthPhone(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (!digits) return "";
-  if (digits.startsWith("225")) return `+${digits}`;
-  return `+225${digits}`;
+  // Strip leading 0 after country code if present (e.g. 2250... → 225...)
+  let local = digits;
+  if (local.startsWith("225")) local = local.slice(3);
+  // Remove leading 0 (local CI format: 07... → 07...)
+  if (local.startsWith("0")) local = local.slice(1);
+  // Take exactly 10 local digits max
+  local = local.slice(0, 10);
+  return `+225${local}`;
 }
 
 function getPhoneAliasEmail(value) {
-  const digits = cleanAuthPhone(value).replace(/\D/g, "");
-  return digits ? `seller-${digits}@phone.tikchop.local` : "";
+  const normalized = cleanAuthPhone(value);
+  const digits = normalized.replace(/\D/g, "");
+  return digits.length >= 11 ? `seller-${digits}@phone.tikchop.local` : "";
+}
+
+// Legacy: some accounts were created with 13-digit format
+function getLegacyPhoneAliasEmail(value) {
+  const raw = String(value || "").replace(/\D/g, "");
+  let digits = raw;
+  if (digits.startsWith("225")) digits = digits.slice(3);
+  if (digits.length === 10) digits = "225" + digits;
+  return digits.length === 13 ? `seller-${digits}@phone.tikchop.local` : null;
 }
 
 function cleanEvolutionPhone(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (!digits) return "";
-  if (digits.startsWith("225")) return digits;
-  if (digits.length === 10) return `225${digits}`;
-  return digits;
+  let local = digits;
+  if (local.startsWith("225")) local = local.slice(3);
+  if (local.startsWith("0")) local = local.slice(1);
+  local = local.slice(0, 10);
+  return local.length >= 8 ? `225${local}` : local;
 }
 
 function normalizeSellerWhatsAppNumber(value) {
@@ -698,6 +716,25 @@ export async function createSellerAccount(payload) {
 
   if (error) {
     if (/already|registered|exists|existe|duplicate/i.test(error.message || "")) {
+      // Try legacy 13-digit format
+      const legacyEmail = getLegacyPhoneAliasEmail(phone);
+      let existingUser = null;
+      if (legacyEmail && legacyEmail !== accountPayload.email) {
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers({ query: legacyEmail });
+        existingUser = users?.users?.find((u) => u.email === legacyEmail);
+      }
+      if (!existingUser) {
+        const { data: users2 } = await supabaseAdmin.auth.admin.listUsers({ query: accountPayload.email });
+        existingUser = users2?.users?.find((u) => u.email === accountPayload.email);
+      }
+      if (existingUser) {
+        return {
+          id: existingUser.id,
+          email: existingUser.email || accountPayload.email,
+          phone: phone,
+          method,
+        };
+      }
       throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
     }
     throw new Error(error.message || "Impossible de créer le compte vendeur.");
@@ -788,16 +825,33 @@ throw new Error("Ajoute un numéro de téléphone valide avec indicatif pays.");
 
     if (authError) {
       if (/already|registered|exists|existe|duplicate/i.test(authError.message || "")) {
-throw new Error("Ce compte existe déjà. Appuyez sur 'Déjà inscrit' puis connectez-vous.");
+        // Account may exist with legacy 13-digit format — try to find it
+        const legacyEmail = getLegacyPhoneAliasEmail(accountPhone);
+        let existingUser = null;
+        if (legacyEmail && legacyEmail !== accountPayload.email) {
+          const { data: users } = await supabaseAdmin.auth.admin.listUsers({ query: legacyEmail });
+          existingUser = users?.users?.find((u) => u.email === legacyEmail);
+        }
+        if (!existingUser) {
+          // Also search by primary email in case it was created with a different format
+          const { data: users2 } = await supabaseAdmin.auth.admin.listUsers({ query: accountPayload.email });
+          existingUser = users2?.users?.find((u) => u.email === accountPayload.email);
+        }
+        if (existingUser) {
+          // Found existing user — set createdUserId and continue to create seller
+          createdUserId = existingUser.id;
+        } else {
+          throw new Error("Ce compte existe déjà. Appuyez sur 'Déjà inscrit' puis connectez-vous.");
+        }
+      } else {
+        throw new Error(authError.message || "Impossible de creer le compte vendeur.");
       }
-      throw new Error(authError.message || "Impossible de creer le compte vendeur.");
     }
 
-    const user = authData?.user;
+    const user = authData?.user || (createdUserId ? { id: createdUserId, email: accountPayload.email } : null);
     if (!user?.id) {
       throw new Error("Compte vendeur non cree. Reessayez.");
     }
-    createdUserId = user.id;
 
     const ownerEmail = method === "EMAIL" ? email : "";
 
