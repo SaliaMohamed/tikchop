@@ -17,7 +17,7 @@ export async function GET(request) {
     );
   }
 
-  const buffer = buildReceiptPdfBuffer(receipt.order, receipt.payment);
+  const buffer = await buildReceiptPdfBuffer(receipt.order, receipt.payment);
 
   return new NextResponse(buffer, {
     headers: {
