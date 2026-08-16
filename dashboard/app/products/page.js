@@ -340,16 +340,17 @@ export default function ProductsPage() {
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
       {/* 1. Header Pur et Aéré */}
-      <header className="py-8 flex items-center justify-between border-b border-[#0F2B20]/5">
+      <header className="py-8 flex items-end justify-between gap-4 border-b border-[#0F2B20]/5">
         <div>
-          <h1 className="font-display text-3xl font-black text-[#0F2B20] leading-none">Catalogue</h1>
+          <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#059669]">Votre catalogue</p>
+          <h1 className="mt-1.5 font-display text-3xl font-black text-[#0F2B20] leading-none">Catalogue</h1>
           <p className="mt-2 text-xs font-semibold text-[#54685E]/60">
             {stockStats.live} article{stockStats.live > 1 ? "s" : ""} en ligne
           </p>
         </div>
         <Link 
           href="/add-product" 
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0F2B20] text-white hover:bg-[#0A1F16] active:scale-95 transition shadow-md shadow-[#0F2B20]/10" 
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#059669] text-white hover:bg-[#047857] active:scale-95 transition shadow-md shadow-[#059669]/25" 
           aria-label="Ajouter un produit"
         >
           <Plus size={20} strokeWidth={1.5} />
