@@ -5,21 +5,25 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bot,
-  Camera,
   ChevronRight,
   ClipboardList,
   PackageCheck,
   ShoppingBag,
   Store,
-  TrendingUp,
 } from "lucide-react";
 import { getDashboardData } from "../actions";
 import { getSellerInitials, useActiveSeller } from "../components/sellerContext";
-import { TkActionCard, TkIconButton, TkMetric, TkPrimary, TkScreen, TkTop } from "../components/TikchopUI";
+import { TkActionCard, TkIconButton, TkMetric, TkScreen, TkTop } from "../components/TikchopUI";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import TikchopLottie from "../components/TikchopLottie";
 
 const money = (value) => `${Number(value || 0).toLocaleString("fr-FR")} F`;
+
+const todayLabel = () => {
+  const d = new Date();
+  const date = d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  return date.replace(/^\w/, (c) => c.toUpperCase());
+};
 
 const emptyStats = {
   sales: 0,
@@ -116,43 +120,12 @@ export default function Dashboard() {
 
   const openOrders = Number(stats.pendingOrders || 0) + Number(stats.paidOrders || 0) + Number(stats.preparedOrders || 0);
   const hasProducts = Number(stats.products || 0) > 0;
-  const mainAction = !hasProducts
-    ? {
-        kicker: "A faire",
-        title: "Ajoutez votre premier article",
-        href: "/add-product",
-        cta: "Publier",
-        icon: <Camera size={20} />,
-      }
-    : openOrders > 0
-      ? {
-          kicker: "Aujourd'hui",
-          title: `${openOrders} vente${openOrders > 1 ? "s" : ""} en cours`,
-          href: "/orders",
-          cta: "Traiter",
-          icon: <ClipboardList size={20} />,
-        }
-      : !stats.whatsappConnected
-        ? {
-            kicker: "WhatsApp",
-            title: "Connectez WhatsApp",
-            href: "/setup",
-            cta: "Configurer",
-            icon: <Bot size={20} />,
-          }
-        : {
-            kicker: "Pret",
-            title: "Discussions DJASSAMAN",
-            href: "/messages",
-            cta: "Voir les discussions",
-            icon: <Bot size={20} />,
-          };
 
   return (
     <TkScreen>
       <TkTop
-        eyebrow="Accueil"
-        title={seller.name || "Boutique"}
+        eyebrow={todayLabel()}
+        title={seller.name ? `Bonjour ${seller.name.split(" ")[0]}` : "Bonjour"}
         avatar={(
           <span
             className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[20px] font-display text-sm font-black"
@@ -176,28 +149,49 @@ export default function Dashboard() {
         )}
       />
 
-      <section className="mt-5 app-dashboard-hero tk-fade-up-1">
-        <div className="flex items-start justify-between gap-4" style={{ position: "relative", zIndex: 1 }}>
-          <div className="min-w-0">
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.15em]" style={{ color: "var(--primary)" }}>{mainAction.kicker}</p>
-            <h2 className="mt-2 max-w-[15rem] font-display text-[2.15rem] font-black leading-[0.98] tracking-tight text-white">
-              {mainAction.title}
-            </h2>
+      <section className="mt-4 tk-fade-up-1">
+        <div
+          className="flex items-center justify-between gap-3 rounded-[28px] px-4 py-3.5 ring-1"
+          style={{
+            background: "var(--color-mint-soft)",
+            borderColor: "rgba(5, 150, 105, 0.16)",
+            boxShadow: "0 4px 18px var(--primary-10)",
+          }}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
+              style={{ background: "var(--surface)", color: "var(--primary-hover)" }}
+            >
+              <ShoppingBag size={20} strokeWidth={1.6} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-[0.95rem] font-black leading-tight" style={{ color: "var(--text-main)" }}>
+                {openOrders > 0 ? "Des commandes vous attendent" : hasProducts ? "Votre boutique est en forme" : "Démarrez votre boutique"}
+              </p>
+              <p className="mt-0.5 truncate text-xs font-bold" style={{ color: "rgba(15, 43, 32, 0.5)" }}>
+                {openOrders > 0 ? `${openOrders} vente${openOrders > 1 ? "s" : ""} à traiter` : hasProducts ? "Continuez comme ça" : "Ajoutez votre premier article"}
+              </p>
+            </div>
           </div>
-          <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px]"
-            style={{ background: "var(--white-08)", color: "var(--primary)" }}
-          >
-            <ShoppingBag size={30} strokeWidth={1.6} />
-          </span>
+          {openOrders > 0 && (
+            <Link
+              href="/orders"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full no-underline"
+              style={{ background: "var(--primary)", color: "white" }}
+              aria-label="Voir les commandes"
+            >
+              <ChevronRight size={17} />
+            </Link>
+          )}
         </div>
-        <TkPrimary href={mainAction.href} icon={mainAction.icon} label={mainAction.cta} className="mt-5" />
       </section>
 
-      <section className="mt-3 grid grid-cols-3 gap-2.5 tk-fade-up-2">
-        <TkMetric value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} active={hasProducts} />
-        <TkMetric value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} warn={openOrders > 0} />
-        <TkMetric value={stats.whatsappConnected ? "OK" : "Off"} label="WhatsApp" icon={<Bot size={15} />} active={stats.whatsappConnected} />
+      <section className="mt-3 grid grid-cols-2 gap-2.5 tk-fade-up-2">
+        <TkMetric value={stats.products || 0} label="Articles" icon={<PackageCheck size={15} />} active={hasProducts} tone="blue" />
+        <TkMetric value={stats.orders || 0} label="Ventes" icon={<ClipboardList size={15} />} warn={openOrders > 0} tone="green" />
+        <TkMetric value={stats.clientsFollowedUp || 0} label="Suivis" icon={<Store size={15} />} tone="purple" />
+        <TkMetric value={stats.whatsappConnected ? "OK" : "Off"} label="WhatsApp" icon={<Bot size={15} />} active={stats.whatsappConnected} tone="orange" />
       </section>
 
       <section className="mt-5 tk-fade-up-3">

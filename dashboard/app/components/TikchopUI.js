@@ -110,7 +110,16 @@ export function TkActionCard({ href, icon, title, value, label, tone = "soft", u
   );
 }
 
-export function TkMetric({ icon, value, label, active = false, warn = false }) {
+const metricTones = {
+  green: { chip: "var(--color-mint-soft)", color: "var(--primary-hover)" },
+  blue: { chip: "#e9f0fc", color: "#4e7db5" },
+  purple: { chip: "#f0eafa", color: "#8065bb" },
+  orange: { chip: "#FFF1D7", color: "#df941e" },
+  neutral: { chip: "var(--surface-soft)", color: "var(--primary-hover)" },
+};
+
+export function TkMetric({ icon, value, label, active = false, warn = false, tone = "green" }) {
+  const chip = metricTones[tone] || metricTones.green;
   return (
     <div
       className="min-w-0 rounded-[26px] p-4 text-center ring-1 transition-all"
@@ -127,12 +136,8 @@ export function TkMetric({ icon, value, label, active = false, warn = false }) {
       <span
         className="mx-auto flex h-11 w-11 items-center justify-center rounded-[18px]"
         style={{
-          background: warn
-            ? "rgba(255, 196, 0, 0.2)"
-            : active
-            ? "var(--primary)"
-            : "var(--surface-soft)",
-          color: warn ? "#8a5d22" : active ? "var(--text-main)" : "var(--primary-hover)",
+          background: warn ? "rgba(255, 196, 0, 0.2)" : active ? "var(--primary)" : chip.chip,
+          color: warn ? "#8a5d22" : active ? "var(--text-main)" : chip.color,
         }}
       >
         {icon}
