@@ -41,3 +41,10 @@ Thumbs.db
 
 # Replit reference prototype (preserved in replit-work branch)
 artifacts/
+
+# local dev/agent tooling (not shared on GitHub)
+AGENTS.md
+CLAUDE.md
+.n8nac/
+.agents/
+.github/agents/
