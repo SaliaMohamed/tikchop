@@ -83,7 +83,17 @@ export default function OrdersPage() {
 
   return (
     <TkScreen className="md:max-w-[1180px] md:px-8">
-      <nav className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-2">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#059669]">Votre activité</p>
+          <h1 className="mt-1.5 font-display text-3xl font-black text-[#0F2B20] leading-none">Commandes</h1>
+          <p className="mt-2 text-xs font-semibold text-[#54685E]/60">
+            Confirmez, préparez et suivez vos ventes
+          </p>
+        </div>
+      </header>
+
+      <nav className="no-scrollbar -mx-4 mt-5 overflow-x-auto px-4 pb-2">
         <div className="flex min-w-max gap-2">
           {orderTabs.map(({ key, label, icon: Icon }) => (
             <button
