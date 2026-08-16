@@ -1,4 +1,4 @@
-﻿
+
 /* ========= ANIMATIONS PREMIUM ========= */
 
 @keyframes fadeIn {
@@ -85,7 +85,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Apparition avec lÃ©gÃ¨re montÃ©e (list items) */
+/* Apparition avec légère montée (list items) */
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -97,7 +97,7 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Pulse glow â€“ pour les CTA et boutons d'action importants */
+/* Pulse glow – pour les CTA et boutons d'action importants */
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.35); }
   50%       { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); }
@@ -127,7 +127,7 @@
 .tk-fade-up-3 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both; }
 .tk-fade-up-4 { animation: tkFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both; }
 
-/* Shimmer texte â€“ pour les mÃ©triques importantes */
+/* Shimmer texte – pour les métriques importantes */
 @keyframes shimmerText {
   0%   { background-position: -200% center; }
   100% { background-position: 200% center; }
@@ -142,7 +142,7 @@
   animation: shimmerText 3.5s linear infinite;
 }
 
-/* Pop-in â€“ pour les badges et alertes */
+/* Pop-in – pour les badges et alertes */
 @keyframes popIn {
   0%   { opacity: 0; transform: scale(0.8); }
   70%  { transform: scale(1.04); }
@@ -191,7 +191,7 @@
   animation: imgReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Stagger delays â€” Ã  appliquer via style={{ animationDelay }} */
+/* Stagger delays — à appliquer via style={{ animationDelay }} */
 .stagger-1 { animation-delay: 0.04s; }
 .stagger-2 { animation-delay: 0.08s; }
 .stagger-3 { animation-delay: 0.13s; }

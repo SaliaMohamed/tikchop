@@ -11,7 +11,7 @@ export function getPairingValidityLabel(pairing) {
   const expiresAt = new Date(pairing.pairingExpiresAt).getTime();
   if (!Number.isFinite(expiresAt)) return "Valable quelques minutes.";
   const minutes = Math.max(1, Math.ceil((expiresAt - Date.now()) / 60000));
-  return `Valable environ ${minutes} min. Regenere si WhatsApp refuse.`;
+  return `Valable environ ${minutes} min. Régénérez si WhatsApp refuse.`;
 }
 
 export function normalizeWhatsAppInput(value) {
@@ -30,7 +30,7 @@ export function getPhoneDigits(value) {
 export function statusCopy(connection) {
   if (!connection) {
     return {
-      label: "Verification...",
+      label: "Vérification...",
       tone: "bg-[var(--surface-mid)] text-[var(--text-dim)]",
       icon: <Loader2 className="animate-spin" size={18} />,
     };
@@ -38,7 +38,7 @@ export function statusCopy(connection) {
 
   if (connection.isConnected) {
     return {
-      label: connection.provider === "tikchop_standard" ? "Standard actif" : "Connecte",
+      label: connection.provider === "tikchop_standard" ? "Standard actif" : "Connecté",
       tone: "bg-emerald-100 text-emerald-800",
       icon: <CheckCircle2 size={18} />,
     };
@@ -61,7 +61,7 @@ export function statusCopy(connection) {
   }
 
   return {
-    label: "Deconnecte",
+    label: "Déconnecté",
     tone: "bg-zinc-100 text-zinc-700",
     icon: <Unplug size={18} />,
   };

@@ -35,6 +35,7 @@ import {
   buildBulkAnalysisHint,
   buildItemAnalysisHint,
   reviewBulkAnalysis,
+  runLimited,
   applyAnalysisToProduct,
   getFallbackProductName,
   sanitizeAiProductName,
@@ -598,7 +599,7 @@ export default function AddProductPage() {
     setBulkBackgroundProgress({ total: itemsToClean.length, done: 0, failed: 0 });
     setBulkPhotoItems((current) => current.map((entry) => (
       itemsToClean.some((item) => item.id === entry.id)
-        ? { ...entry, reviewNotice: "Fond propre en preparation..." }
+        ? { ...entry, reviewNotice: "Fond propre en préparation..." }
         : entry
     )));
 
@@ -642,7 +643,7 @@ export default function AddProductPage() {
     if (currentIndex <= 0) {
       setBulkPhotoItems((current) => current.map((item) => (
         item.id === id
-          ? { ...item, reviewNotice: "Cette photo est deja la premiere. Gardez-la comme article principal." }
+          ? { ...item, reviewNotice: "Cette photo est déjà la première. Gardez-la comme article principal." }
           : item
       )));
       return;
@@ -694,7 +695,7 @@ export default function AddProductPage() {
         clean_image_url: imageUrl,
         image_version: "original",
         background_image_url: "",
-        name: item.name ? `${item.name} - autre photo` : "Article a verifier",
+        name: item.name ? `${item.name} - autre photo` : "Article à vérifier",
         price: "",
         size: item.size || "",
         category: item.category || "",
@@ -848,7 +849,7 @@ export default function AddProductPage() {
     setVoiceNotice("");
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setVoiceNotice("La dictee directe n'est pas disponible ici. Appuyez dans un champ puis utilisez le micro du clavier du telephone.");
+      setVoiceNotice("La dictée directe n'est pas disponible ici. Appuyez dans un champ puis utilisez le micro du clavier du téléphone.");
       return;
     }
 
@@ -941,7 +942,7 @@ export default function AddProductPage() {
     recognition.onend = () => setBulkListeningId("");
     recognition.onerror = () => {
       setBulkListeningId("");
-      setVoiceNotice("Je n'ai pas bien entendu. Reessayez pour cet article ou ecrivez le prix a la main.");
+      setVoiceNotice("Je n'ai pas bien entendu. Réessayez pour cet article ou écrivez le prix à la main.");
     };
     recognition.onresult = (event) => {
       const text = event.results?.[0]?.[0]?.transcript || "";
@@ -1203,7 +1204,7 @@ export default function AddProductPage() {
                   </span>
                   <span>
                     <span className="block">{bulkUploading ? "Envoi des photos..." : "Choisir les photos"}</span>
-                    <span className="block text-xs font-semibold text-white/58">Depuis votre t?l?phone</span>
+                    <span className="block text-xs font-semibold text-white/58">Depuis votre téléphone</span>
                   </span>
                 </span>
                 <span className="rounded-full bg-[var(--primary-bright)] px-3 py-1 text-xs font-extrabold text-[var(--text-main)]">Recommande</span>
@@ -1262,7 +1263,7 @@ export default function AddProductPage() {
                       ? getBackgroundProgressLabel(bulkBackgroundProgress, "Nettoyage du lot...")
                       : cleanableBulkPhotos.length > 0
                         ? `Nettoyer le lot (${cleanableBulkPhotos.length})`
-                        : `Photos pr?tes (${backgroundCleanedBulkPhotos.length})`}
+                        : `Photos prêtes (${backgroundCleanedBulkPhotos.length})`}
                   </button>
                 )}
               </div>
@@ -1685,7 +1686,7 @@ export default function AddProductPage() {
                   <div>
                     <p className="quiet-label text-[var(--secondary)]">Aide Tikchop</p>
                     <p className="mt-1 text-sm font-semibold text-[var(--text-main)]">
-                      {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom propose a verifier" : "Ajoutez une photo pour que Tikchop propose le nom"}
+                      {imageAnalyzing ? "Analyse en cours..." : formData.name ? "Nom proposé à vérifier" : "Ajoutez une photo pour que Tikchop propose le nom"}
                     </p>
                   </div>
                   {imageAnalyzing

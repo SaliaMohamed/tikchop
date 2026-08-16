@@ -13,13 +13,13 @@ function getDeviceHelp(isIOS) {
   if (isIOS) {
     return {
       title: "Installer sur iPhone",
-      body: "Depuis Safari, ajoutez la PWA Tikchop a l'ecran d'accueil.",
+      body: "Depuis Safari, ajoutez la PWA Tikchop à l'écran d'accueil.",
     };
   }
 
   return {
     title: "Installer la PWA",
-    body: "Ajoutez Tikchop sur votre telephone depuis le navigateur.",
+    body: "Ajoutez Tikchop sur votre téléphone depuis le navigateur.",
   };
 }
 
@@ -86,7 +86,6 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
     || pathname === "/login"
     || pathname?.startsWith("/account/");
   const showFloating = variant === "floating"
-    && false
     && isMobileViewport
     && !installed
     && !dismissed
@@ -99,7 +98,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
     const timer = window.setTimeout(() => {
       setDismissed(true);
       window.localStorage.setItem(INSTALL_DISMISSED_KEY, "1");
-    }, 5000);
+    }, 15000);
 
     return () => window.clearTimeout(timer);
   }, [showFloating]);
@@ -143,7 +142,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
             className="mt-5 flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] bg-[var(--primary-bright)] text-base font-extrabold text-[var(--text-main)]"
           >
             <Download size={20} />
-            {deferredPrompt ? "Installer maintenant" : isIOS ? "Voir les etapes iPhone" : "Voir les etapes Android"}
+            {deferredPrompt ? "Installer maintenant" : isIOS ? "Voir les étapes iPhone" : "Voir les étapes Android"}
           </button>
           {!deferredPrompt && (
             <p className="mt-3 rounded-2xl bg-white/10 p-3 text-sm font-semibold leading-5 text-white/82">
@@ -166,17 +165,17 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
         <button
           type="button"
           onClick={installApp}
-          className="flex min-h-[40px] items-center justify-center gap-1.5 rounded-2xl bg-[var(--primary)] px-3 text-xs font-extrabold text-white"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-2xl bg-[var(--primary)] px-3 text-xs font-extrabold text-white"
         >
           <Download size={15} />
-          {deferredPrompt ? "Ajouter" : "Etapes"}
+          {deferredPrompt ? "Ajouter" : "Étapes"}
         </button>
-        <button type="button" onClick={dismiss} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Masquer">
+        <button type="button" onClick={dismiss} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-dim)]" aria-label="Masquer">
           <X size={16} />
         </button>
       </div>
       {manualHelp && (
-        <Link href="/install" className="mt-2 flex min-h-[38px] items-center justify-center rounded-2xl bg-[var(--surface-soft)] px-3 text-xs font-extrabold text-[var(--primary)] no-underline">
+        <Link href="/install" className="mt-2 flex min-h-[44px] items-center justify-center rounded-2xl bg-[var(--surface-soft)] px-3 text-xs font-extrabold text-[var(--primary)] no-underline">
           Voir le guide complet
         </Link>
       )}

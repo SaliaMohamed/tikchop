@@ -24,13 +24,13 @@ export default function CrmSettingsPage() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#059669]">Parametres globaux</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#059669]">Paramètres globaux</p>
             <h1 className="font-display text-xl font-black leading-7 text-[#0F2B20]">DJASSAMAN</h1>
           </div>
         </div>
         <Link
           href="/messages"
-          className="flex h-10 items-center gap-1.5 rounded-full bg-[#0F2B20] px-3.5 text-xs font-black text-white no-underline"
+          className="flex min-h-11 items-center gap-1.5 rounded-full bg-[#0F2B20] px-3.5 text-xs font-black text-white no-underline"
         >
           <Bot size={14} />
           DJASSAMAN
@@ -38,7 +38,7 @@ export default function CrmSettingsPage() {
       </header>
 
       <p className="mt-3 text-sm font-semibold leading-5 text-[#0F2B20]/55">
-        Modifiez la connexion WhatsApp et le style de reponse du DJASSAMAN. Les changements s&apos;appliquent immediatement a vos discussions.
+        Modifiez la connexion WhatsApp et le style de réponse du DJASSAMAN. Les changements s&apos;appliquent immédiatement à vos discussions.
       </p>
 
       {/* ── WhatsApp connection ── */}
@@ -49,7 +49,7 @@ export default function CrmSettingsPage() {
           </span>
           <div>
             <p className="text-sm font-black text-[#0F2B20]">Connexion WhatsApp</p>
-            <p className="text-[0.62rem] font-bold text-[#0F2B20]/45">Numero lie a la boutique</p>
+            <p className="text-[0.62rem] font-bold text-[#0F2B20]/45">Numéro lié à la boutique</p>
           </div>
         </div>
         <WhatsAppConnector />
@@ -63,7 +63,7 @@ export default function CrmSettingsPage() {
           </span>
           <div>
             <p className="text-sm font-black text-[#0F2B20]">Style du DJASSAMAN</p>
-            <p className="text-[0.62rem] font-bold text-[#0F2B20]/45">Comment il repond, encaisse et livre</p>
+            <p className="text-[0.62rem] font-bold text-[#0F2B20]/45">Comment il répond, encaisse et livre</p>
           </div>
         </div>
         <StyleEditor />

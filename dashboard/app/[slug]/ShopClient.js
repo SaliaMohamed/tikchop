@@ -60,18 +60,18 @@ function getDirectPaymentInstruction(seller, selectedPayment, amountToPay, deliv
   }
 
   if (selectedPayment.value === "CASH_ON_DELIVERY") {
-    return `Paiement apres reception: prevoyez ${formatPrice(amountToPay)}. (Note: le vendeur peut vous demander une avance pour valider la livraison)`;
+    return `Paiement après réception: prévoyez ${formatPrice(amountToPay)}. (Note: le vendeur peut vous demander une avance pour valider la livraison)`;
   }
 
   const phone = formatPhoneDisplay(getSellerPaymentPhone(seller));
   const method = selectedPayment.shortLabel || selectedPayment.label;
   const amountText = formatPrice(amountToPay);
   const deliveryText = deliveryType === "DELIVERY" && deliveryPaymentTiming === "AT_RECEPTION" && Number(deliveryFee || 0) > 0
-    ? ` La livraison (${formatPrice(deliveryFee)}) se paie apres reception.`
+    ? ` La livraison (${formatPrice(deliveryFee)}) se paie après réception.`
     : "";
 
   if (!phone) {
-    return `${method}: le vendeur confirme le numero de paiement sur WhatsApp.${deliveryText}`;
+    return `${method}: le vendeur confirme le numéro de paiement sur WhatsApp.${deliveryText}`;
   }
 
   return `${method}: payez ${amountText} directement au ${phone}, puis envoyez la preuve sur WhatsApp.${deliveryText}`;
@@ -278,7 +278,7 @@ const featuredProducts = filteredProducts
 
   async function handleCheckout(selectedMethod = effectivePaymentMethod) {
     if (!customerPhone || (deliveryType === "DELIVERY" && (!deliveryZone || !deliveryAddress))) {
-      setCheckoutNotice("Ajoutez votre numero WhatsApp, la commune et l'adresse de livraison.");
+      setCheckoutNotice("Ajoutez votre numéro WhatsApp, la commune et l'adresse de livraison.");
       return;
     }
 
@@ -337,16 +337,16 @@ const featuredProducts = filteredProducts
         `Frais livraison: ${formatPrice(deliveryFee)}`,
         `TOTAL: ${formatPrice(productsTotal + deliveryFee)}`,
         `---`,
-        `Numero client: ${customerPhone}`,
+        `Numéro client: ${customerPhone}`,
         `Commune: ${deliveryType === "PICKUP" ? "Retrait" : deliveryZone}`,
         `Adresse: ${deliveryType === "PICKUP" ? "Retrait boutique" : deliveryAddress}`,
         customerNote ? `Details client: ${customerNote}` : `Details client: A confirmer si besoin`,
         `Paiement souhaite: ${selectedPayment.label}`,
         `Instruction paiement: ${paymentInstruction}`,
         selectedPayment.value === "CASH_ON_DELIVERY"
-          ? `Montant a payer apres reception: ${formatPrice(productsTotal + deliveryFee)}`
+          ? `Montant à payer après réception: ${formatPrice(productsTotal + deliveryFee)}`
           : deliveryPaymentTiming === "AT_RECEPTION" && deliveryType === "DELIVERY"
-            ? `Livraison a payer apres reception: ${formatPrice(deliveryFee)}`
+            ? `Livraison à payer après réception: ${formatPrice(deliveryFee)}`
             : `Montant a regler maintenant: ${formatPrice(totalToPay)}`,
         `Recu client: ${receiptUrl}`,
         `---`,
@@ -367,8 +367,8 @@ const featuredProducts = filteredProducts
     } catch (error) {
       console.error(error);
       setCheckoutNotice(createdOrder?.orderRef
-        ? `Commande ${createdOrder.orderRef} enregistree, mais le paiement en ligne ne s'ouvre pas. Reessayez ou choisissez Wave/WhatsApp.`
-        : "Commande non terminee. Verifiez la connexion puis reessayez.");
+        ? `Commande ${createdOrder.orderRef} enregistrée, mais le paiement en ligne ne s'ouvre pas. Réessayez ou choisissez Wave/WhatsApp.`
+        : "Commande non terminée. Vérifiez la connexion puis réessayez.");
     } finally {
       setIsSubmitting(false);
     }
@@ -700,7 +700,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
               Les articles arrivent.
             </h3>
             <p className="mt-3 max-w-sm text-sm font-semibold leading-6 text-white/55 md:text-base">
-              La boutique se prepare. Vous pouvez deja demander les photos, les tailles ou les prix directement sur WhatsApp.
+              La boutique se prépare. Vous pouvez déjà demander les photos, les tailles ou les prix directement sur WhatsApp.
             </p>
           </div>
         </div>
@@ -718,7 +718,7 @@ function EmptyShopState({ seller, isOwnerView = false }) {
               <span className="mt-1 block text-sm font-semibold leading-5 text-[var(--text-dim)]">
                 {isOwnerView
                   ? "Ajoutez une photo, un prix et un stock pour ouvrir une vraie boutique client."
-                  : "Envoyez un message au vendeur sans attendre que tout le catalogue soit publie."}
+                  : "Envoyez un message au vendeur sans attendre que tout le catalogue soit publié."}
               </span>
             </span>
           </div>
@@ -791,7 +791,7 @@ function ShopMobileTrustRail({ availableProducts, deliveryZones, paymentLabels }
       <div className="flex max-w-full flex-wrap gap-1.5 overflow-hidden pb-0.5">
         {cashOnDelivery && (
           <span className="shrink-0 rounded-full bg-[var(--primary-bright)] px-2.5 py-1.5 text-[0.62rem] font-extrabold text-[#091D14]">
-            Paiement a la livraison
+            Paiement à la livraison
           </span>
         )}
         {paymentLabels.slice(0, 2).map((option) => (
@@ -1301,7 +1301,7 @@ function CartSheet({
   });
   const canCheckout = checkoutReadiness.ready && !isSubmitting;
   const deliveryNote = deliveryPaymentTiming === "AT_RECEPTION"
-    ? "Livraison payable apres reception"
+    ? "Livraison payable après réception"
     : deliveryPaymentTiming === "OFFERED"
       ? "Livraison offerte par la boutique"
       : "Livraison incluse au paiement";
@@ -1527,7 +1527,7 @@ function CartSheet({
                   Paiement
                 </h4>
                 <div className="rounded-[20px] bg-[#EBF8F0] p-3 text-sm font-bold leading-5 text-[#0E2A1F] ring-1 ring-[#EEF7F1]">
-                  A Abidjan, beaucoup de clients paient a la livraison. La boutique choisit les options disponibles.
+                  À Abidjan, beaucoup de clients paient à la livraison. La boutique choisit les options disponibles.
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {directPaymentOptions.map((option) => (
@@ -1642,20 +1642,20 @@ function getCheckoutReadiness({ cartItems, deliveryType, deliveryZone, deliveryA
   ];
 
   if (!hasCart) return { ready: false, label: "Ajoutez un article", steps };
-  if (!hasPhone) return { ready: false, label: "Ajoutez votre numero", steps };
+  if (!hasPhone) return { ready: false, label: "Ajoutez votre numéro", steps };
   if (!hasReception) return { ready: false, label: deliveryType === "PICKUP" ? "Choisissez la reception" : "Completez la livraison", steps };
 
-  return { ready: true, label: "Pret", steps };
+  return { ready: true, label: "Prêt", steps };
 }
 
 function CheckoutActionHint({ readiness }) {
   const doneCount = readiness.steps.filter((step) => step.done).length;
   const nextStep = readiness.steps.find((step) => !step.done);
-  const title = readiness.ready ? "Tout est pret" : `Encore ${readiness.steps.length - doneCount} etape${readiness.steps.length - doneCount > 1 ? "s" : ""}`;
+  const title = readiness.ready ? "Tout est prêt" : `Encore ${readiness.steps.length - doneCount} étape${readiness.steps.length - doneCount > 1 ? "s" : ""}`;
   const text = readiness.ready
-    ? "Vous pouvez confirmer. Le vendeur recevra un recap propre avec le lien du recu."
+    ? "Vous pouvez confirmer. Le vendeur recevra un récap propre avec le lien du reçu."
     : nextStep?.label === "Contact"
-      ? "Ajoutez votre numero WhatsApp pour que la boutique puisse vous joindre."
+      ? "Ajoutez votre numéro WhatsApp pour que la boutique puisse vous joindre."
       : nextStep?.label === "Reception"
         ? "Choisissez comment recevoir la commande et ajoutez l'adresse si livraison."
         : "Ajoutez au moins un article au panier.";
@@ -1695,10 +1695,10 @@ function OrderSuccessSheet({ order, sellerSlug, onClose }) {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary-bright)] text-[var(--text-main)]">
             <CheckCircle2 size={27} />
           </div>
-          <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.14em] text-white/50">Commande creee</p>
-          <h2 className="mt-2 font-display text-3xl font-bold leading-9">Commande enregistree</h2>
+          <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.14em] text-white/50">Commande créée</p>
+          <h2 className="mt-2 font-display text-3xl font-bold leading-9">Commande enregistrée</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-white/66">
-            Le message vendeur est pret et votre recu est deja disponible.
+            Le message vendeur est prêt et votre reçu est déjà disponible.
           </p>
         </div>
         <div className="space-y-3 p-5">
@@ -1715,7 +1715,7 @@ function OrderSuccessSheet({ order, sellerSlug, onClose }) {
           )}
           <a href={order.receiptUrl} className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] text-sm font-extrabold text-white no-underline">
             <ReceiptText size={18} />
-            Voir ou telecharger le recu
+            Voir ou télécharger le reçu
           </a>
           <div className="grid grid-cols-2 gap-2">
             <a href={`/${sellerSlug}`} className="flex min-h-[52px] items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-sm font-extrabold text-[var(--primary)] no-underline">

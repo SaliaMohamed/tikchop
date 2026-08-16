@@ -38,7 +38,7 @@ function MobileBulkPrepCard({
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-lg font-black">Choisir photos</span>
-                  <span className="mt-0.5 block text-xs font-bold text-white/52">Galerie du telephone</span>
+                  <span className="mt-0.5 block text-xs font-bold text-white/52">Galerie du téléphone</span>
                 </span>
               </span>
               <ArrowRight size={20} className="shrink-0 text-[#34D399]" />

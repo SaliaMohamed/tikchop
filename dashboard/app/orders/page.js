@@ -37,6 +37,12 @@ import {
   formatPrice,
   cleanPhone,
   getSimpleOrderStatus,
+  getNextAction,
+  getOrderItemCount,
+  isDemoOrder,
+  getCardActionLabel,
+  getCardActionTone,
+  getTemplateToneClass,
   statusLabels,
   orderTabs,
 } from "../../lib/order-utils";
@@ -67,7 +73,12 @@ export default function OrdersPage() {
     handleResumeBot,
     handleManualReply,
     handleCreateDemoOrder,
+    loadMoreOrders,
+    loadingMoreOrders,
+    hasMoreOrders,
   } = useOrders();
+
+  const seller = useActiveSeller();
 
 
   return (
@@ -142,6 +153,23 @@ export default function OrdersPage() {
                 index={i}
               />
             ))}
+            {hasMoreOrders && (
+              <button
+                type="button"
+                disabled={loadingMoreOrders}
+                onClick={loadMoreOrders}
+                className="mt-1 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-white font-extrabold text-[#0F2B20] ring-1 ring-[#0F2B20]/10 transition active:scale-[0.98] disabled:opacity-50"
+              >
+                {loadingMoreOrders ? (
+                  <>
+                    <Loader2 size={17} strokeWidth={2.2} className="animate-spin" />
+                    Chargement...
+                  </>
+                ) : (
+                  "Charger plus de commandes"
+                )}
+              </button>
+            )}
           </div>
         )}
       </main>
@@ -218,7 +246,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
         <IllustrationNoOrders size={120} className="opacity-90" />
         <h3 className="mt-3 font-display text-xl font-bold text-white">Aucune vente</h3>
         <p className="mt-2 text-sm font-medium leading-relaxed text-white/55 max-w-[280px]">
-          Partagez votre boutique pour recevoir vos premi?res commandes.
+          Partagez votre boutique pour recevoir vos premières commandes.
         </p>
         
         <button
@@ -227,7 +255,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
           className="mt-6 flex min-h-[50px] w-full max-w-[260px] items-center justify-center gap-2 rounded-2xl bg-[#34D399] text-sm font-extrabold text-[#0F2B20] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(52, 211, 153,0.25)]"
         >
           <Share2 size={16} />
-          {copied ? "Lien copi? !" : "Partager la boutique"}
+          {copied ? "Lien copié !" : "Partager la boutique"}
         </button>
 
         <button
@@ -236,7 +264,7 @@ function EmptyOrdersGuide({ creating, onCreateDemo }) {
           disabled={creating}
           className="mt-4 text-xs font-bold text-white/40 hover:text-white/80 py-1 transition disabled:opacity-60"
         >
-          {creating ? "Cr?ation en cours..." : "Cr?er une commande test"}
+          {creating ? "Création en cours..." : "Créer une commande test"}
         </button>
       </div>
     </div>
@@ -319,12 +347,12 @@ function OrderCard({ order, onClick, index = 0 }) {
       {/* Visual Stepper Bar on List Card */}
       <div className="mt-3 flex items-center justify-between border-t border-[#0F2B20]/5 pt-2.5">
         <div className="flex items-center gap-1.5">
-          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Re?ue" />
-          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Colis pr?t" />
+          <span className={`h-2 rounded-full transition-all ${stepConfirmActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Reçue" />
+          <span className={`h-2 rounded-full transition-all ${stepPackActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Colis prêt" />
           <span className={`h-2 rounded-full transition-all ${stepDriverActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Livreur" />
-          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Livr?" />
+          <span className={`h-2 rounded-full transition-all ${stepDoneActive ? "w-5 bg-[#059669]" : "w-2 bg-[#0F2B20]/10"}`} title="Livré" />
           <span className="ml-1 text-[0.6rem] font-black text-[#059669] uppercase tracking-wider">
-            {simpleStatus === "DELIVERED" ? "Livr?e" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Pr?te" : simpleStatus === "PAID" ? "En pr?pa" : "Re?ue"}
+            {simpleStatus === "DELIVERED" ? "Livrée" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Prête" : simpleStatus === "PAID" ? "En prépa" : "Reçue"}
           </span>
         </div>
         {order.delivery_zone && (
@@ -474,7 +502,7 @@ function OrderSheet({
             <div className="mt-3 grid gap-2">
               <InfoBlock icon={<Phone size={18} />} label="Client" value={displayClientPhone} />
               <InfoBlock icon={<MapPin size={18} />} label="Adresse" value={`${order.delivery_zone || "Zone non renseignee"} - ${order.delivery_address || "Adresse non renseignee"}`} />
-              <InfoBlock icon={<Truck size={18} />} label="Livreur" value={order.delivery_drivers?.name || "Pas encore assigne"} />
+              <InfoBlock icon={<Truck size={18} />} label="Livreur" value={order.delivery_drivers?.name || "Pas encore assigné"} />
             </div>
             {(isPrepared || isDone || isInDelivery) ? (
               <DriverSharePanel
@@ -547,12 +575,12 @@ function OrderSheet({
           ) : isInDelivery ? (
             <button onClick={onDelivered} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#059669] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(0,143,90,0.15)] active:scale-[0.99] transition">
               <CheckCircle2 size={20} />
-              Marquer livree
+              Marquer livrée
             </button>
           ) : isDone ? (
             <div className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm font-extrabold text-zinc-500">
               <CheckCircle2 size={18} />
-              Commande livree
+              Commande livrée
             </div>
           ) : (
             <button onClick={() => openDriverWhatsapp()} className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#0F2B20] text-base font-extrabold text-white shadow-[0_14px_34px_rgba(16,24,20,0.15)] active:scale-[0.99] transition">
@@ -575,7 +603,7 @@ function OrderSheet({
           <div className="grid grid-cols-2 gap-2">
             <button onClick={onDelivered} disabled={!canMarkDelivered || isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${canMarkDelivered && !isDone && !isCancelled ? "bg-[#F6FBF7] text-[#059669] border border-[#DCEFE3]/60 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
               <CheckCircle2 size={15} />
-              {isReadyForDriver ? "Livree sans livreur" : "Marquer livree"}
+              {isReadyForDriver ? "Livrée sans livreur" : "Marquer livrée"}
             </button>
             <button onClick={onCancel} disabled={isDone || isCancelled} className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl text-xs font-black transition ${!isDone && !isCancelled ? "bg-rose-50 text-rose-700 border border-rose-100 shadow-sm active:scale-98" : "bg-zinc-100 text-zinc-400"}`}>
               <X size={15} />
@@ -752,8 +780,8 @@ function DemoOrderChecklist() {
   const checks = [
     "Appuyez sur Marquer colis pret pour simuler l'emballage.",
     "Ouvre la fiche livreur pour voir le message de livraison.",
-    "Ouvre Recu pour verifier le recap client.",
-    "Marquez livree pour fermer le cycle.",
+    "Ouvre Reçu pour vérifier le récap client.",
+    "Marquez livrée pour fermer le cycle.",
   ];
 
   return (
@@ -777,7 +805,7 @@ function DemoOrderChecklist() {
 function OrderCaseNotes({ notes }) {
   return (
     <section>
-      <p className="quiet-label">Cas a verifier</p>
+      <p className="quiet-label">Cas à vérifier</p>
       <div className="mt-3 grid gap-2">
         {notes.map((note) => (
           <div key={note.id} className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-[var(--outline)]/20">
@@ -836,7 +864,7 @@ function OrderActionPath({ verifyCount, prepareCount, readyCount, deliveryCount,
     },
     {
       key: "prepare",
-      title: "Preparer",
+      title: "Préparer",
       count: prepareCount,
       detail: "Articles en sachet",
       icon: <Package size={18} />,
@@ -854,7 +882,7 @@ function OrderActionPath({ verifyCount, prepareCount, readyCount, deliveryCount,
       key: "delivery",
       title: "Fermer",
       count: deliveryCount,
-      detail: doneCount > 0 ? `${doneCount} livree${doneCount > 1 ? "s" : ""}` : "Apres reception",
+      detail: doneCount > 0 ? `${doneCount} livrée${doneCount > 1 ? "s" : ""}` : "Après réception",
       icon: <CheckCircle2 size={18} />,
       className: "bg-white text-[var(--text-main)] ring-[var(--outline)]/28",
     },
@@ -893,36 +921,36 @@ function OrderNextActionCard({ order }) {
   const simpleStatus = getSimpleOrderStatus(order);
   const content = {
     PENDING: {
-      label: "Etape 1",
+      label: "Étape 1",
       title: "Confirmer le client",
       body: "Verifiez client, commune, adresse et paiement choisi avant de preparer.",
       icon: <CheckCircle2 size={18} />,
       className: "bg-amber-50 text-amber-900 ring-amber-100",
     },
     PAID: {
-      label: "Etape 2",
-      title: "Preparer le colis",
+      label: "Étape 2",
+      title: "Préparer le colis",
       body: "Mettez les articles dans le sachet, puis marquez colis pret.",
       icon: <Package size={18} />,
       className: "bg-green-50 text-green-900 ring-green-100",
     },
     PREPARED: {
-      label: "Etape 3",
+      label: "Étape 3",
       title: "Envoyer au livreur",
       body: "Choisissez un livreur ou partagez la fiche WhatsApp avec client, adresse et frais.",
       icon: <Truck size={18} />,
       className: "bg-blue-50 text-blue-900 ring-blue-100",
     },
     IN_DELIVERY: {
-      label: "Etape 4",
-      title: "Attendre la reception",
-      body: "Le livreur a la fiche. Quand le client confirme, marquez livree.",
+      label: "Étape 4",
+      title: "Attendre la réception",
+      body: "Le livreur a la fiche. Quand le client confirme, marquez livrée.",
       icon: <Truck size={18} />,
       className: "bg-indigo-50 text-indigo-900 ring-indigo-100",
     },
     DELIVERED: {
       label: "Finie",
-      title: "Commande livree",
+      title: "Commande livrée",
       body: "Le cycle est ferme. Le recu reste disponible.",
       icon: <CheckCircle2 size={18} />,
       className: "bg-zinc-50 text-zinc-700 ring-zinc-100",
@@ -937,7 +965,7 @@ function OrderNextActionCard({ order }) {
   }[simpleStatus] || {
     label: "Action",
     title: "Verifier la vente",
-    body: "Ouvrez les details avant de passer a l'etape suivante.",
+    body: "Ouvrez les détails avant de passer à l'étape suivante.",
     icon: <Clock3 size={18} />,
     className: "bg-[var(--surface-soft)] text-[var(--text-main)] ring-[var(--outline)]/20",
   };
@@ -962,9 +990,9 @@ function OrderProgress({ status, deliveryStatus }) {
   const simpleStatus = getSimpleOrderStatus({ status, delivery_status: deliveryStatus });
   const steps = [
     { key: "CONFIRM", label: "Nouveau", active: ["PENDING", "PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
-    { key: "PACK", label: "Colis pr?t", active: ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "PACK", label: "Colis prêt", active: ["PAID", "PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
     { key: "DRIVER", label: "Livreur", active: ["PREPARED", "IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
-    { key: "DONE", label: "Livr?", active: ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
+    { key: "DONE", label: "Livré", active: ["IN_DELIVERY", "DELIVERED"].includes(simpleStatus) },
   ];
 
   return (

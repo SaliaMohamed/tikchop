@@ -55,7 +55,7 @@ export async function initializeTransaction({ email, amount, metadata, subaccoun
 
   const data = await response.json();
   if (!data.status) {
-    throw new Error(data.message || "Paiement en ligne indisponible. Reessayez ou choisissez WhatsApp.");
+    throw new Error(data.message || "Paiement en ligne indisponible. Réessayez ou choisissez WhatsApp.");
   }
 
   return data.data;
@@ -97,15 +97,15 @@ export async function createPaystackSubaccount({ sellerId, businessName, payoutN
   const accountNumber = getPaystackAccountNumber(payoutPhone);
 
   if (!network) {
-    throw new Error("Choisissez un moyen de depot valide.");
+    throw new Error("Choisissez un moyen de dépôt valide.");
   }
 
   if (!network.autoSubaccount || !network.bankCode) {
-    throw new Error("Ce moyen de depot doit etre verifie manuellement avant activation.");
+    throw new Error("Ce moyen de dépôt doit être vérifié manuellement avant activation.");
   }
 
   if (!accountNumber || accountNumber.length < 8) {
-    throw new Error("Numero de depot invalide.");
+    throw new Error("Numéro de dépôt invalide.");
   }
 
   const response = await fetch("https://api.paystack.co/subaccount", {
@@ -130,7 +130,7 @@ export async function createPaystackSubaccount({ sellerId, businessName, payoutN
 
   const data = await response.json();
   if (!response.ok || !data.status) {
-    throw new Error(data.message || "Compte de reception non active. Verifiez le numero puis reessayez.");
+    throw new Error(data.message || "Compte de réception non activé. Vérifiez le numéro puis réessayez.");
   }
 
   return data.data;

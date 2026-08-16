@@ -47,6 +47,9 @@ export default function DeliverySettingsPage() {
   const [newZone, setNewZone] = useState({ name: "", fee: "" });
   const [editingDriver, setEditingDriver] = useState(null);
   const [editingZone, setEditingZone] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const driverValid = Boolean(newDriver.name.trim()) && String(newDriver.phone_number).replace(/\D/g, "").length >= 8;
+  const zoneValid = Boolean(newZone.name.trim()) && newZone.fee !== "" && Number.isFinite(Number(newZone.fee)) && Number(newZone.fee) >= 0;
   const nextAction = getDeliveryNextAction({
     zones,
     drivers,
@@ -76,7 +79,7 @@ export default function DeliverySettingsPage() {
       setZones(zoneData || []);
     } catch (err) {
       console.error("Error fetching delivery settings:", err);
-      setError(friendlyError(err, "Livraison non chargee. Verifiez la connexion puis actualisez."));
+      setError(friendlyError(err, "Livraison non chargée. Vérifiez la connexion puis actualisez."));
     } finally {
       setLoading(false);
     }
@@ -99,10 +102,10 @@ export default function DeliverySettingsPage() {
       setNotice("");
       const token = await getSellerAccessToken();
       await saveSellerDeliverySettings(seller.id, settings, token);
-      setNotice("Parametres enregistres.");
+      setNotice("Paramètres enregistrés.");
       await fetchData();
     } catch (err) {
-      setError(friendlyError(err, "Reglages non sauvegardes. Gardez la page ouverte puis relancez l'enregistrement."));
+      setError(friendlyError(err, "Réglages non sauvegardés. Gardez la page ouverte puis relancez l'enregistrement."));
     } finally {
       setSaving(false);
     }
@@ -141,7 +144,7 @@ export default function DeliverySettingsPage() {
       ));
       closeDriverModal();
     } catch (err) {
-      setError(friendlyError(err, "Livreur non enregistre. Verifiez le nom et le numero WhatsApp."));
+      setError(friendlyError(err, "Livreur non enregistré. Vérifiez le nom et le numéro WhatsApp."));
     } finally {
       setSaving(false);
     }
@@ -184,7 +187,7 @@ export default function DeliverySettingsPage() {
       });
       closeZoneModal();
     } catch (err) {
-      setError(friendlyError(err, "Commune non enregistree. Verifiez le nom du quartier et le tarif."));
+      setError(friendlyError(err, "Commune non enregistrée. Vérifiez le nom du quartier et le tarif."));
     } finally {
       setSaving(false);
     }
@@ -205,35 +208,45 @@ export default function DeliverySettingsPage() {
       );
 
       if (inserted.length === 0) {
-      setError("Les communes Abidjan sont deja dans votre liste. Vous pouvez modifier les frais une par une.");
+      setError("Les communes Abidjan sont déjà dans votre liste. Vous pouvez modifier les frais une par une.");
         return;
       }
 
       setZones((current) => [...current, ...inserted].sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
-      setError(friendlyError(err, "Communes non ajoutees. Reessayez avec une bonne connexion."));
+      setError(friendlyError(err, "Communes non ajoutées. Réessayez avec une bonne connexion."));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDeleteZone(zoneId) {
+    if (!confirmDelete || confirmDelete.type !== "zone" || confirmDelete.id !== zoneId) {
+      setConfirmDelete({ type: "zone", id: zoneId });
+      return;
+    }
+    setConfirmDelete(null);
     try {
       const token = await getSellerAccessToken();
       await deleteDeliveryZone(zoneId, token);
       setZones((current) => current.filter((zone) => zone.id !== zoneId));
     } catch (err) {
-      setError(friendlyError(err, "Commune gardee pour le moment."));
+      setError(friendlyError(err, "Commune gardée pour le moment."));
     }
   }
 
   async function handleDeleteDriver(driverId) {
+    if (!confirmDelete || confirmDelete.type !== "driver" || confirmDelete.id !== driverId) {
+      setConfirmDelete({ type: "driver", id: driverId });
+      return;
+    }
+    setConfirmDelete(null);
     try {
       const token = await getSellerAccessToken();
       await deleteDeliveryDriver(driverId, token);
       setDrivers((current) => current.filter((driver) => driver.id !== driverId));
     } catch (err) {
-      setError(friendlyError(err, "Livreur garde pour le moment."));
+      setError(friendlyError(err, "Livreur gardé pour le moment."));
     }
   }
 
@@ -304,13 +317,13 @@ export default function DeliverySettingsPage() {
                   />
                   <ToggleRow
                     title="Retrait"
-                    text="Le client vient recuperer la commande."
+                    text="Le client vient récupérer la commande."
                     active={settings.pickup_enabled}
                     onClick={() => setSettings({ ...settings, pickup_enabled: !settings.pickup_enabled })}
                   />
                   <ToggleRow
                     title="Envoyer au livreur auto"
-                    text="Quand le colis est pret, Tikchop envoie la fiche au livreur."
+                    text="Quand le colis est prêt, Tikchop envoie la fiche au livreur."
                     active={settings.auto_share_to_driver}
                     onClick={() => setSettings({ ...settings, auto_share_to_driver: !settings.auto_share_to_driver })}
                   />
@@ -325,7 +338,7 @@ export default function DeliverySettingsPage() {
                 </div>
                 <div className="p-4 space-y-4">
                   <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">Frais par defaut</span>
+                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">Frais par défaut</span>
                     <div className="flex items-center gap-2 overflow-hidden rounded-2xl bg-white ring-1 ring-[#0F2B20]/12">
                       <span className="flex h-[54px] items-center justify-center border-r border-[#0F2B20]/10 px-4 text-sm font-black text-[#059669]">FCFA</span>
                       <input
@@ -342,8 +355,8 @@ export default function DeliverySettingsPage() {
                     <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">Quand payer ?</p>
                     <div className="grid gap-2">
                       <PaymentChoice
-                        title="Apres reception"
-                        text="Le client paie le livreur a la livraison."
+                        title="Après réception"
+                        text="Le client paie le livreur à la livraison."
                         active={settings.delivery_payment_timing === "AT_RECEPTION"}
                         onClick={() => setSettings({ ...settings, delivery_payment_timing: "AT_RECEPTION" })}
                       />
@@ -391,13 +404,13 @@ export default function DeliverySettingsPage() {
                     <button
                       onClick={handleAddAbidjanZones}
                       disabled={saving}
-                      className="hidden min-h-[38px] items-center gap-1.5 rounded-full bg-[#F6FBF7] px-3 text-sm font-extrabold text-[#059669] ring-1 ring-[#059669]/20 disabled:opacity-60 min-[390px]:flex"
+                      className="hidden min-h-11 items-center gap-1.5 rounded-full bg-[#F6FBF7] px-3 text-sm font-extrabold text-[#059669] ring-1 ring-[#059669]/20 disabled:opacity-60 min-[390px]:flex"
                     >
                       Abidjan
                     </button>
                     <button
                       onClick={() => openZoneModal()}
-                      className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
+                      className="flex min-h-11 items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
                     >
                       <Plus size={15} strokeWidth={1.6} />
                       Ajouter
@@ -430,7 +443,7 @@ export default function DeliverySettingsPage() {
                         <button
                           key={name}
                           onClick={() => openSuggestedZone(name)}
-                          className="min-h-[36px] rounded-full bg-white px-3 text-sm font-extrabold text-[#059669] ring-1 ring-[#059669]/20"
+                          className="min-h-[44px] rounded-full bg-white px-3 text-sm font-extrabold text-[#059669] ring-1 ring-[#059669]/20"
                         >
                           {name}
                         </button>
@@ -440,32 +453,53 @@ export default function DeliverySettingsPage() {
                 ) : (
                   <div className="space-y-2">
                     {zones.map((zone) => (
-                      <div key={zone.id} className="flex items-center justify-between rounded-[18px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/8">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#059669] shadow-sm">
-                            <MapPin size={17} />
+                      <div key={zone.id} className="rounded-[18px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/8">
+                        <div className="flex items-center justify-between">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#059669] shadow-sm">
+                              <MapPin size={17} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-black text-[#0F2B20]">{zone.name}</p>
+                              <p className="truncate text-xs font-bold text-[#059669]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-black text-[#0F2B20]">{zone.name}</p>
-                            <p className="truncate text-xs font-bold text-[#059669]">{Number(zone.fee || 0).toLocaleString("fr-FR")} F</p>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              onClick={() => openZoneModal(zone)}
+                              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-white text-[#0F2B20]/50 shadow-sm"
+                              aria-label={`Modifier ${zone.name}`}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteZone(zone.id)}
+                              className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[#0F2B20]/25"
+                              aria-label={`Supprimer ${zone.name}`}
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            onClick={() => openZoneModal(zone)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#0F2B20]/50 shadow-sm"
-                            aria-label={`Modifier ${zone.name}`}
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteZone(zone.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#0F2B20]/25"
-                            aria-label={`Supprimer ${zone.name}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        {confirmDelete?.type === "zone" && confirmDelete.id === zone.id && (
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-2 ring-1 ring-[#DC3D43]/25">
+                            <p className="px-2 text-xs font-bold leading-4 text-[#B3261E]">Supprimer cette commune ?</p>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleDeleteZone(zone.id)}
+                                className="flex min-h-11 items-center rounded-full bg-[#DC3D43] px-4 text-xs font-black text-white"
+                              >
+                                Supprimer
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="flex min-h-11 items-center rounded-full bg-[#0F2B20]/7 px-4 text-xs font-black text-[#0F2B20]"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -484,7 +518,7 @@ export default function DeliverySettingsPage() {
                   </div>
                   <button
                     onClick={() => openDriverModal()}
-                    className="flex min-h-[38px] items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
+                    className="flex min-h-11 items-center gap-1 rounded-full bg-[#0F2B20] px-3 text-sm font-extrabold text-white"
                   >
                     <Plus size={15} strokeWidth={1.6} />
                     Ajouter
@@ -497,38 +531,59 @@ export default function DeliverySettingsPage() {
                     <div className="relative z-10 flex flex-col items-center">
                       <IllustrationDelivery size={96} className="opacity-90" />
                       <p className="mt-2 font-display text-base font-black text-white">Aucun livreur</p>
-                      <p className="mt-1 text-xs font-semibold text-white/50 max-w-[220px]">Ajoutez les numeros WhatsApp des livreurs pour envoyer automatiquement les fiches.</p>
+                      <p className="mt-1 text-xs font-semibold text-white/50 max-w-[220px]">Ajoutez les numéros WhatsApp des livreurs pour envoyer automatiquement les fiches.</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {drivers.map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between rounded-[18px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/8">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#059669] shadow-sm">
-                            <User size={17} />
+                      <div key={driver.id} className="rounded-[18px] bg-[#F6FBF7] p-3 ring-1 ring-[#0F2B20]/8">
+                        <div className="flex items-center justify-between">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#059669] shadow-sm">
+                              <User size={17} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-black text-[#0F2B20]">{driver.name}</p>
+                              <p className="truncate text-xs font-bold text-[#0F2B20]/50">{driver.phone_number} / {driver.zone || "Toutes communes"}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-black text-[#0F2B20]">{driver.name}</p>
-                            <p className="truncate text-xs font-bold text-[#0F2B20]/50">{driver.phone_number} / {driver.zone || "Toutes communes"}</p>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              onClick={() => openDriverModal(driver)}
+                              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-white text-[#0F2B20]/50 shadow-sm"
+                              aria-label={`Modifier ${driver.name}`}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDriver(driver.id)}
+                              className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[#0F2B20]/25"
+                              aria-label={`Supprimer ${driver.name}`}
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            onClick={() => openDriverModal(driver)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#0F2B20]/50 shadow-sm"
-                            aria-label={`Modifier ${driver.name}`}
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteDriver(driver.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#0F2B20]/25"
-                            aria-label={`Supprimer ${driver.name}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        {confirmDelete?.type === "driver" && confirmDelete.id === driver.id && (
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-2 ring-1 ring-[#DC3D43]/25">
+                            <p className="px-2 text-xs font-bold leading-4 text-[#B3261E]">Supprimer ce livreur ?</p>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleDeleteDriver(driver.id)}
+                                className="flex min-h-11 items-center rounded-full bg-[#DC3D43] px-4 text-xs font-black text-white"
+                              >
+                                Supprimer
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="flex min-h-11 items-center rounded-full bg-[#0F2B20]/7 px-4 text-xs font-black text-[#0F2B20]"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -545,7 +600,7 @@ export default function DeliverySettingsPage() {
           <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#F6FBF7] shadow-2xl ring-1 ring-[#0F2B20]/10">
             <div className="flex items-center justify-between border-b border-[#0F2B20]/8 px-5 py-4">
               <h2 className="font-display text-xl font-black text-[#0F2B20]">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h2>
-              <button onClick={closeDriverModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0F2B20]/8" aria-label="Fermer">
+              <button onClick={closeDriverModal} className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[#0F2B20]/8" aria-label="Fermer">
                 <X size={17} />
               </button>
             </div>
@@ -570,11 +625,16 @@ export default function DeliverySettingsPage() {
               />
               <button
                 onClick={handleSaveDriver}
-                disabled={saving}
+                disabled={saving || !driverValid}
                 className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#0F2B20] text-base font-extrabold text-white disabled:bg-[#0F2B20]/30"
               >
-                {editingDriver ? "Mettre a jour" : "Enregistrer"}
+                {editingDriver ? "Mettre à jour" : "Enregistrer"}
               </button>
+              {!driverValid && (
+                <p role="status" className="text-center text-xs font-bold text-[#0F2B20]/45">
+                  Renseignez le nom et un WhatsApp complet (8+ chiffres).
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -586,14 +646,14 @@ export default function DeliverySettingsPage() {
           <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[26px] bg-[#F6FBF7] shadow-2xl ring-1 ring-[#0F2B20]/10">
             <div className="flex items-center justify-between border-b border-[#0F2B20]/8 px-5 py-4">
               <h2 className="font-display text-xl font-black text-[#0F2B20]">{editingZone ? "Modifier la commune" : "Nouvelle commune"}</h2>
-              <button onClick={closeZoneModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0F2B20]/8" aria-label="Fermer">
+              <button onClick={closeZoneModal} className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[#0F2B20]/8" aria-label="Fermer">
                 <X size={17} />
               </button>
             </div>
             <div className="space-y-3 p-5">
               <input
                 className="mobile-input bg-white ring-1 ring-[#0F2B20]/12"
-                placeholder="Ex: Cocody, Angre, Riviera..."
+                placeholder="Ex: Cocody, Angré, Riviera..."
                 value={newZone.name}
                 onChange={(event) => setNewZone({ ...newZone, name: event.target.value })}
               />
@@ -609,11 +669,16 @@ export default function DeliverySettingsPage() {
               </div>
               <button
                 onClick={handleSaveZone}
-                disabled={saving}
+                disabled={saving || !zoneValid}
                 className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#0F2B20] text-base font-extrabold text-white disabled:bg-[#0F2B20]/30"
               >
-                {editingZone ? "Mettre a jour" : "Enregistrer"}
+                {editingZone ? "Mettre à jour" : "Enregistrer"}
               </button>
+              {!zoneValid && (
+                <p role="status" className="text-center text-xs font-bold text-[#0F2B20]/45">
+                  Renseignez le nom de la commune et un tarif (F à partir de 0).
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -627,7 +692,7 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
     return {
       step: "1",
       title: "Ajoutez les communes",
-      body: "Indiquez les communes ou quartiers ou vous livrez et leurs frais.",
+      body: "Indiquez les communes ou quartiers où vous livrez et leurs frais.",
       label: "Ajouter une commune",
       icon: <MapPin size={20} />,
       onClick: onAddZone,
@@ -638,7 +703,7 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
     return {
       step: "2",
       title: "Ajoutez un livreur",
-      body: "Son numero WhatsApp recevra la fiche client quand le colis est pret.",
+      body: "Son numéro WhatsApp recevra la fiche client quand le colis est prêt.",
       label: "Ajouter un livreur",
       icon: <Truck size={20} />,
       onClick: onAddDriver,
@@ -647,9 +712,9 @@ function getDeliveryNextAction({ zones, drivers, settings, onAddZone, onAddDrive
 
   return {
     step: "✓",
-    title: "Livraison prete",
-    body: "Les clients peuvent choisir retrait ou livraison selon vos reglages.",
-    label: "Enregistrer les reglages",
+    title: "Livraison prête",
+    body: "Les clients peuvent choisir retrait ou livraison selon vos réglages.",
+    label: "Enregistrer les réglages",
     icon: <Save size={20} />,
     onClick: onSave,
     strong: true,

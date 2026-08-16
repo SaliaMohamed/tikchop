@@ -9,11 +9,11 @@ import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { friendlyError } from "../../lib/user-facing-error";
 
 export const DJASSAMAN_PRESET = {
-  bot_tone: "Francais ivoirien simple, chaud et convaincant. Parle comme un bon vendeur WhatsApp: poli, direct, rassurant, jamais robotique.",
-  bot_greeting: "Bonjour, bienvenue chez nous. Dites-moi ce que vous cherchez, je vous montre les articles disponibles et je vous aide a commander rapidement.",
-  bot_payment_preferences: "Proposer le paiement a la livraison en premier quand la zone le permet, puis Wave, Orange Money, MTN MoMo ou Djamo. Toujours confirmer le montant total avant d'encaisser.",
-  bot_delivery_notes: "Demander quartier, commune, point de repere et numero joignable. Apres paiement ou confirmation, envoyer les infos utiles au livreur par WhatsApp et tenir le client informe.",
-  bot_special_rules: "Toujours verifier stock, taille/couleur et prix avant de confirmer. Envoyer un recu ou recap clair au client. Relancer poliment si le client hesite, sans forcer.",
+  bot_tone: "Français ivoirien simple, chaud et convaincant. Parle comme un bon vendeur WhatsApp: poli, direct, rassurant, jamais robotique.",
+  bot_greeting: "Bonjour, bienvenue chez nous. Dites-moi ce que vous cherchez, je vous montre les articles disponibles et je vous aide à commander rapidement.",
+  bot_payment_preferences: "Proposer le paiement à la livraison en premier quand la zone le permet, puis Wave, Orange Money, MTN MoMo ou Djamo. Toujours confirmer le montant total avant d'encaisser.",
+  bot_delivery_notes: "Demander quartier, commune, point de repère et numéro joignable. Après paiement ou confirmation, envoyer les infos utiles au livreur par WhatsApp et tenir le client informé.",
+  bot_special_rules: "Toujours vérifier stock, taille/couleur et prix avant de confirmer. Envoyer un reçu ou récap clair au client. Relancer poliment si le client hésite, sans forcer.",
 };
 
 const EMPTY_SETTINGS = {
@@ -27,15 +27,15 @@ const EMPTY_SETTINGS = {
 const FIELDS = [
   {
     key: "bot_tone",
-    label: "Ton & personnalite",
-    hint: "Comment DJASSAMAN parle a vos clients.",
+    label: "Ton & personnalité",
+    hint: "Comment DJASSAMAN parle à vos clients.",
     placeholder: DJASSAMAN_PRESET.bot_tone,
     rows: 4,
   },
   {
     key: "bot_greeting",
     label: "Message d'accueil",
-    hint: "Le premier message quand un client ecrit.",
+    hint: "Le premier message quand un client écrit.",
     placeholder: DJASSAMAN_PRESET.bot_greeting,
     rows: 2,
   },
@@ -55,7 +55,7 @@ const FIELDS = [
   },
   {
     key: "bot_special_rules",
-    label: "Regles speciales",
+    label: "Règles spéciales",
     hint: "Les consignes importantes pour la vente.",
     placeholder: DJASSAMAN_PRESET.bot_special_rules,
     rows: 3,
@@ -76,7 +76,7 @@ export default function StyleEditor({ onSaved }) {
     getSellerAccessToken()
       .then((token) => getSellerChatbotSettings(seller, token))
       .then((data) => { if (alive) setSettings((c) => ({ ...EMPTY_SETTINGS, ...(data || {}) })); })
-      .catch(() => { if (alive) setError("Style non charge. Actualisez."); })
+      .catch(() => { if (alive) setError("Style non chargé. Actualisez."); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [seller]);
@@ -87,7 +87,7 @@ export default function StyleEditor({ onSaved }) {
 
   function applyPreset() {
     setSettings((c) => ({ ...c, ...DJASSAMAN_PRESET }));
-    setMessage("Preset applique. Relisez, puis enregistrez.");
+    setMessage("Preset appliqué. Relisez, puis enregistrez.");
     setError("");
   }
 
@@ -99,10 +99,10 @@ export default function StyleEditor({ onSaved }) {
       const token = await getSellerAccessToken();
       const data = await saveSellerChatbotSettings(seller, settings, token);
       setSettings((c) => ({ ...EMPTY_SETTINGS, ...(data || c) }));
-      setMessage("Style DJASSAMAN enregistre.");
+      setMessage("Style DJASSAMAN enregistré.");
       onSaved?.();
     } catch (err) {
-      setError(friendlyError(err, "Style non enregistre."));
+      setError(friendlyError(err, "Style non enregistré."));
     } finally {
       setBusy("");
     }
@@ -126,7 +126,7 @@ export default function StyleEditor({ onSaved }) {
           </span>
           <div>
             <p className="text-sm font-black text-[#0F2B20]">Personnalisez DJASSAMAN</p>
-            <p className="text-xs font-bold text-[#0F2B20]/45">Il repond et vend pour vous 24h/24</p>
+            <p className="text-xs font-bold text-[#0F2B20]/45">Il répond et vend pour vous 24h/24</p>
           </div>
         </div>
         <button
@@ -141,7 +141,7 @@ export default function StyleEditor({ onSaved }) {
 
       {(message || error) && (
         <div className={`flex items-center gap-2.5 rounded-[16px] p-3 text-sm font-bold leading-5 ${error ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-[#E7F6ED] text-[#047857] ring-1 ring-[#EAF8F0]"}`}>
-          {!error && <TikchopLottie name="sparkle" size={20} speed={1.3} className="shrink-0" ariaLabel="Enregistre" />}
+          {!error && <TikchopLottie name="sparkle" size={20} speed={1.3} className="shrink-0" ariaLabel="Enregistré" />}
           {error || message}
         </div>
       )}
@@ -174,7 +174,7 @@ export default function StyleEditor({ onSaved }) {
         Enregistrer le style
       </button>
 
-      <p className="text-center text-xs font-bold text-[#0F2B20]/40">Etape 2 sur 3</p>
+      <p className="text-center text-xs font-bold text-[#0F2B20]/40">Étape 2 sur 3</p>
     </div>
   );
 }

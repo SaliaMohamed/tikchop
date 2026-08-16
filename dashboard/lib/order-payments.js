@@ -24,7 +24,7 @@ export async function markOrderPaidFromPaystack(orderId, payment = {}) {
     .from("orders")
     .update(fullPayload)
     .eq("id", orderId)
-    .select("id, order_ref, status")
+    .select("id, seller_id, order_ref, status")
     .maybeSingle();
 
   if (!error) {
@@ -39,7 +39,7 @@ export async function markOrderPaidFromPaystack(orderId, payment = {}) {
     .from("orders")
     .update({ status: "PAID" })
     .eq("id", orderId)
-    .select("id, order_ref, status")
+    .select("id, seller_id, order_ref, status")
     .maybeSingle();
 }
 
@@ -192,8 +192,8 @@ export async function sendPaystackReceiptMessage(orderId, payment = {}) {
   const deliveryPlace = getDeliveryPlace(order);
   const paymentLabel = getPaymentOption(order.payment_method).label;
   const lines = [
-    "Paiement recu",
-    `${sellerName} a bien recu votre paiement.`,
+    "Paiement reçu",
+    `${sellerName} a bien reçu votre paiement.`,
     `Commande: ${orderRef}`,
     "",
     "Resume:",
@@ -206,7 +206,7 @@ export async function sendPaystackReceiptMessage(orderId, payment = {}) {
       ? `Livraison: ${deliveryPlace}`
       : "Envoyez votre zone si ce n'est pas encore fait.",
     "",
-    "Le recu PDF arrive juste apres.",
+    "Le reçu PDF arrive juste après.",
   ];
 
   const result = await sendEvolutionText({
@@ -223,7 +223,7 @@ export async function sendPaystackReceiptMessage(orderId, payment = {}) {
     mediatype: "document",
     mimetype: "application/pdf",
     fileName: getReceiptPdfFileName(order),
-    caption: `Recu Tikchop ${orderRef}`,
+    caption: `Reçu Tikchop ${orderRef}`,
   });
 
   if (result.ok && mediaResult.ok) {
@@ -268,8 +268,8 @@ function buildOrderStatusMessage(order, status, driver = null) {
 
   if (status === "DELIVERED") {
     return [
-      "Commande livree",
-      `Votre commande ${orderRef} est bien livree.`,
+"Commande livrée",
+    `Votre commande ${orderRef} est bien livrée.`,
       `Merci pour la confiance chez ${sellerName}.`,
     ].join(String.fromCharCode(10));
   }

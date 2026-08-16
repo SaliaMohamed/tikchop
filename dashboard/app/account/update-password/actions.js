@@ -7,7 +7,7 @@ export async function updateSellerPassword(password) {
   const value = String(password || "");
 
   if (value.length < 6) {
-    throw new Error("Le mot de passe doit avoir au moins 6 caracteres.");
+    throw new Error("Le mot de passe doit avoir au moins 6 caractères.");
   }
 
   await assertSafeSellerPassword(value);
@@ -20,7 +20,7 @@ export async function updateSellerPassword(password) {
   }
 
   if (!sessionData.session) {
-    throw new Error("Lien de recuperation expire ou deja utilise. Demandez un nouveau lien.");
+    throw new Error("Lien de récupération expiré ou déjà utilisé. Demandez un nouveau lien.");
   }
 
   const { error } = await supabase.auth.updateUser({ password: value });

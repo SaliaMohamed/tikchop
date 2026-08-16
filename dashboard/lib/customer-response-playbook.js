@@ -85,28 +85,28 @@ export function getPaymentSummary(order) {
 
 export function buildDriverShareMessage(order, { sellerName = "Tikchop", origin = "" } = {}) {
   const deliveryFee = Number(order?.delivery_fee || 0);
-  const deliveryText = deliveryFee > 0 ? `${formatCfa(deliveryFee)} a encaisser` : "Aucun frais";
+  const deliveryText = deliveryFee > 0 ? `${formatCfa(deliveryFee)} à encaisser` : "Aucun frais";
   const receiptUrl = getReceiptUrl(order, origin);
-  const receiptLine = receiptUrl ? `\nRecu client: ${receiptUrl}` : "";
+  const receiptLine = receiptUrl ? `\nReçu client: ${receiptUrl}` : "";
 
   return `FICHE LIVRAISON TIKCHOP
 
 Boutique: ${sellerName || "Tikchop"}
 Commande: ${getOrderRef(order)}
 
-Client: ${order?.customer_phone || "Non renseigne"}
-Zone: ${order?.delivery_zone || "Non renseignee"}
-Adresse: ${order?.delivery_address || "Non renseignee"}
+Client: ${order?.customer_phone || "Non renseigné"}
+Zone: ${order?.delivery_zone || "Non renseignée"}
+Adresse: ${order?.delivery_address || "Non renseignée"}
 
 Articles:
 ${getOrderItemsText(order)}
 
 Livraison: ${deliveryText}
-Paiement produit: ${order?.payment_method === "CASH_ON_DELIVERY" ? "A ENCAISSER A LA LIVRAISON" : order?.status === "PAID" || order?.payment_method === "PAYSTACK" ? "PAYE" : "A verifier"}
+Paiement produit: ${order?.payment_method === "CASH_ON_DELIVERY" ? "À ENCAISSER À LA LIVRAISON" : order?.status === "PAID" || order?.payment_method === "PAYSTACK" ? "PAYE" : "À vérifier"}
 Total commande: ${formatCfa(getOrderTotal(order))}
 ${receiptLine}
 
-Quand c'est livre, informe la boutique.`;
+Quand c'est livré, informe la boutique.`;
 }
 
 export function getOrderCaseNotes(order, { hasDrivers = true } = {}) {
@@ -115,39 +115,39 @@ export function getOrderCaseNotes(order, { hasDrivers = true } = {}) {
   if (!isKnownPhone(order?.customer_phone)) {
     notes.push({
       id: "missing-phone",
-      title: "Numero client manquant",
-      body: "Impossible d'envoyer WhatsApp directement. Demande ou complete le numero avant la livraison.",
+      title: "Numéro client manquant",
+      body: "Impossible d'envoyer WhatsApp directement. Demande ou complète le numéro avant la livraison.",
     });
   }
 
   if (order?.delivery_type !== "PICKUP" && !order?.delivery_zone && !order?.delivery_address) {
     notes.push({
       id: "missing-address",
-      title: "Adresse a confirmer",
-      body: "Avant d'emballer, demande commune, quartier, point de repere et heure de reception.",
+      title: "Adresse à confirmer",
+      body: "Avant d'emballer, demande commune, quartier, point de repère et heure de réception.",
     });
   }
 
   if (order?.status === "PENDING") {
     notes.push({
       id: "pending-payment",
-      title: "Commande pas encore confirmee",
-      body: "Confirme disponibilite, adresse et paiement avant de bloquer le stock trop longtemps.",
+      title: "Commande pas encore confirmée",
+      body: "Confirme disponibilité, adresse et paiement avant de bloquer le stock trop longtemps.",
     });
   }
 
   if ((order?.status === "PREPARED" || order?.delivery_status === "READY") && order?.delivery_type !== "PICKUP" && !order?.delivery_driver_id) {
     notes.push({
       id: "driver-needed",
-      title: "Livreur a assigner",
-      body: hasDrivers ? "Choisissez un livreur ou partagez la fiche manuellement." : "Ajoutez un livreur dans Livraison pour accelerer les prochaines commandes.",
+      title: "Livreur à assigner",
+      body: hasDrivers ? "Choisissez un livreur ou partagez la fiche manuellement." : "Ajoutez un livreur dans Livraison pour accélérer les prochaines commandes.",
     });
   }
 
   if (order?.status === "CANCELLED") {
     notes.push({
       id: "cancelled",
-      title: "Commande annulee",
+      title: "Commande annulée",
       body: "Propose un remplacement si l'article revient ou remets le stock en vente si besoin.",
     });
   }
@@ -156,7 +156,7 @@ export function getOrderCaseNotes(order, { hasDrivers = true } = {}) {
     notes.push({
       id: "clear",
       title: "Aucun blocage visible",
-      body: "La commande peut avancer normalement. Garde le client informe a chaque etape.",
+      body: "La commande peut avancer normalement. Garde le client informé à chaque étape.",
     });
   }
 
@@ -169,7 +169,7 @@ export function getOrderResponseTemplates(order, { sellerName = "Tikchop", origi
   const delivery = getDeliverySummary(order);
   const payment = getPaymentSummary(order);
   const receiptUrl = getReceiptUrl(order, origin);
-  const receiptLine = receiptUrl ? `\nRecu: ${receiptUrl}` : "";
+  const receiptLine = receiptUrl ? `\nReçu: ${receiptUrl}` : "";
   const shopName = sellerName || "Tikchop";
   const templates = [];
 
@@ -181,12 +181,12 @@ export function getOrderResponseTemplates(order, { sellerName = "Tikchop", origi
       scenario: "Adresse ou commune manquante",
       tone: "warning",
       priority: 1,
-      text: `Bonjour, c'est ${shopName}. Pour finaliser votre commande ${ref}, envoyez-moi s'il vous plait:
+      text: `Bonjour, c'est ${shopName}. Pour finaliser votre commande ${ref}, envoyez-moi s'il vous plaît:
 
 1. Commune
 2. Quartier
 3. Point de repere
-4. Heure de reception
+4. Heure de réception
 
 Total actuel: ${total}`,
     });
@@ -197,10 +197,10 @@ Total actuel: ${total}`,
       id: "confirm-order",
       shortTitle: "Confirmer",
       title: "Confirmer la commande",
-      scenario: "Commande recue, details a valider",
+      scenario: "Commande reçue, détails à valider",
       tone: "primary",
       priority: 2,
-      text: `Bonjour, c'est ${shopName}. Votre commande ${ref} est bien recue.
+      text: `Bonjour, c'est ${shopName}. Votre commande ${ref} est bien reçue.
 
 Articles:
 ${getOrderItemsText(order)}
@@ -216,7 +216,7 @@ Confirmez-vous la commande maintenant ?`,
       id: "payment-instructions",
       shortTitle: "Paiement",
       title: "Envoyer instructions paiement",
-      scenario: "Paiement manuel ou a verifier",
+      scenario: "Paiement manuel ou à vérifier",
       tone: "soft",
       priority: 4,
       text: `Bonjour, pour valider la commande ${ref}, le total est ${total}.
@@ -224,7 +224,7 @@ Confirmez-vous la commande maintenant ?`,
 Mode choisi: ${payment}
 Livraison: ${delivery}
 
-Apres paiement, envoyez la preuve ici. Nous emballons la commande juste apres confirmation.`,
+Après paiement, envoyez la preuve ici. Nous emballons la commande juste après confirmation.`,
     });
   }
 
@@ -232,11 +232,11 @@ Apres paiement, envoyez la preuve ici. Nous emballons la commande juste apres co
     templates.push({
       id: "paid-preparing",
       shortTitle: "Emballage",
-      title: "Paiement recu, emballage",
-      scenario: "Commande confirmee",
+      title: "Paiement reçu, emballage",
+      scenario: "Commande confirmée",
       tone: "success",
       priority: 2,
-      text: `Bonjour, votre paiement pour la commande ${ref} est confirme.
+      text: `Bonjour, votre paiement pour la commande ${ref} est confirmé.
 
 Nous emballons maintenant:
 ${getOrderItemsText(order)}
@@ -250,16 +250,16 @@ Total: ${total}${receiptLine}`,
     templates.push({
       id: "ready-delivery",
       shortTitle: "Livraison",
-      title: "Commande prete",
-      scenario: "Colis pret pour livreur",
+      title: "Commande prête",
+      scenario: "Colis prêt pour livreur",
       tone: "info",
       priority: 2,
-      text: `Bonjour, votre commande ${ref} est prete.
+      text: `Bonjour, votre commande ${ref} est prête.
 
 Livraison: ${delivery}
 Total: ${total}
 
-Confirmez votre disponibilite pour recevoir le livreur s'il vous plait.${receiptLine}`,
+Confirmez votre disponibilité pour recevoir le livreur s'il vous plaît.${receiptLine}`,
     });
   }
 
@@ -267,13 +267,13 @@ Confirmez votre disponibilite pour recevoir le livreur s'il vous plait.${receipt
     templates.push({
       id: "thank-you",
       shortTitle: "Merci",
-      title: "Remercier apres livraison",
-      scenario: "Commande livree",
+      title: "Remercier après livraison",
+      scenario: "Commande livrée",
       tone: "success",
       priority: 2,
       text: `Bonjour, merci pour votre achat chez ${shopName}.
 
-Commande ${ref} livree: ${getOrderItemsSummary(order)}
+Commande ${ref} livrée: ${getOrderItemsSummary(order)}
 
 Si l'article vous plait, je peux aussi vous envoyer les nouveautes avant publication.`,
     });
@@ -282,12 +282,12 @@ Si l'article vous plait, je peux aussi vous envoyer les nouveautes avant publica
   if (order?.status === "CANCELLED") {
     templates.push({
       id: "cancelled",
-      shortTitle: "Annulee",
-      title: "Repondre apres annulation",
-      scenario: "Commande annulee ou article indisponible",
+      shortTitle: "Annulée",
+      title: "Répondre après annulation",
+      scenario: "Commande annulée ou article indisponible",
       tone: "danger",
       priority: 2,
-      text: `Bonjour, la commande ${ref} est annulee pour le moment.
+      text: `Bonjour, la commande ${ref} est annulée pour le moment.
 
 Si vous voulez, je peux vous proposer un article similaire ou vous prevenir quand celui-ci revient.`,
     });
@@ -296,12 +296,12 @@ Si vous voulez, je peux vous proposer un article similaire ou vous prevenir quan
   if (receiptUrl) {
     templates.push({
       id: "receipt",
-      shortTitle: "Recu",
-      title: "Envoyer le recu",
+      shortTitle: "Reçu",
+      title: "Envoyer le reçu",
       scenario: "Client demande une preuve",
       tone: "soft",
       priority: 8,
-      text: `Bonjour, voici le recu de votre commande ${ref}:
+      text: `Bonjour, voici le reçu de votre commande ${ref}:
 ${receiptUrl}
 
 Total: ${total}
@@ -324,13 +324,13 @@ export function getCustomerResponseTemplates(customer, context = {}) {
     templates.push({
       id: "loyal-new-items",
       shortTitle: "VIP",
-      title: "Nouveautes client fidele",
-      scenario: "Client qui achete souvent",
+      title: "Nouveautés client fidèle",
+      scenario: "Client qui achète souvent",
       tone: "success",
       priority: 3,
-      text: `Bonjour, c'est ${shopName}. Je vous ecris en priorite parce que vous faites partie de nos meilleurs clients.
+      text: `Bonjour, c'est ${shopName}. Je vous écris en priorité parce que vous faites partie de nos meilleurs clients.
 
-J'ai de nouveaux articles disponibles. Voulez-vous que je vous envoie une petite selection ?`,
+J'ai de nouveaux articles disponibles. Voulez-vous que je vous envoie une petite sélection ?`,
     });
   }
 
@@ -339,12 +339,12 @@ J'ai de nouveaux articles disponibles. Voulez-vous que je vous envoie une petite
       id: "first-buyer",
       shortTitle: "2e achat",
       title: "Transformer premier achat",
-      scenario: "Client qui a achete une seule fois",
+      scenario: "Client qui a acheté une seule fois",
       tone: "soft",
       priority: 5,
       text: `Bonjour, c'est ${shopName}. Merci encore pour votre premier achat.
 
-Je peux vous envoyer les nouveautes ou vous aider a trouver une taille/couleur precise.`,
+Je peux vous envoyer les nouveautés ou vous aider à trouver une taille/couleur précise.`,
     });
   }
 
@@ -357,7 +357,7 @@ Je peux vous envoyer les nouveautes ou vous aider a trouver une taille/couleur p
       scenario: "Client inactif depuis plusieurs jours",
       tone: "warning",
       priority: 4,
-      text: `Bonjour, c'est ${shopName}. J'espere que vous allez bien.
+      text: `Bonjour, c'est ${shopName}. J'espère que vous allez bien.
 
 J'ai de nouveaux articles disponibles cette semaine. Voulez-vous recevoir les photos ?`,
     });

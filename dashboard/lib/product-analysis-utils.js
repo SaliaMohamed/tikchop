@@ -3,13 +3,15 @@
  */
 import { ImagePlus, ListChecks, Loader2, Mic, Upload } from "lucide-react";
 import { normalizeMoneyInput } from "./product-utils";
+import { getProductProfile } from "./product-profiles";
+import { normalizeSpokenText } from "./voice-parsing";
 
 // Kept only as a rollback reference for older mojibake voice parsing.
 export function canSingleProductSubmit(formData, imageUploading, imageAnalyzing) {
   return Boolean(formData.seller_id && formData.image_url && formData.name && formData.price && Number(normalizeMoneyInput(formData.price)) > 0 && !imageUploading && !imageAnalyzing);
 }
 
-async function runLimited(items, limit, worker) {
+export async function runLimited(items, limit, worker) {
   let cursor = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (cursor < items.length) {
@@ -64,7 +66,7 @@ export function buildBulkAnalysisHint(preset = {}, profile = getProductProfile("
 export function buildItemAnalysisHint(item = {}, preset = {}, profile = getProductProfile("general")) {
   return [
     buildBulkAnalysisHint(preset, profile),
-    String(item.description || "").trim() ? `Note deja saisie sur cet article: ${String(item.description).trim()}` : "",
+    String(item.description || "").trim() ? `Note déjà saisie sur cet article: ${String(item.description).trim()}` : "",
     String(item.name || "").trim() ? `Nom provisoire actuel: ${String(item.name).trim()}` : "",
   ].filter(Boolean).join("\n");
 }
@@ -159,7 +161,7 @@ export function formatConfidence(confidence) {
   if (!Number.isFinite(numeric) || numeric <= 0) return "A confirmer";
   if (numeric >= 0.85) return "Tres probable";
   if (numeric >= 0.65) return "Probable";
-  return "A verifier";
+  return "À vérifier";
 }
 
 export function inferProductKind(product) {
@@ -275,12 +277,12 @@ export function getBackgroundProgressLabel(progress, fallback = "Nettoyage...") 
 export function getBackgroundProgressAdvice(progress) {
   if (!progress?.total) return "";
   if (progress.done < progress.total) {
-    return `${progress.done}/${progress.total} photos nettoyees. Gardez la page ouverte.`;
+    return `${progress.done}/${progress.total} photos nettoyées. Gardez la page ouverte.`;
   }
   if (progress.failed > 0) {
-    return `${progress.total - progress.failed}/${progress.total} photos nettoyees. ${progress.failed} a garder en photo claire.`;
+    return `${progress.total - progress.failed}/${progress.total} photos nettoyées. ${progress.failed} à garder en photo claire.`;
   }
-  return `${progress.total}/${progress.total} photos nettoyees. Vous pouvez verifier les prix.`;
+  return `${progress.total}/${progress.total} photos nettoyées. Vous pouvez vérifier les prix.`;
 }
 
 export function getBulkItemName(item, index = 0) {
@@ -447,7 +449,7 @@ export function getPublishHint({
     if (readyBulkPhotos.length === 0 && bulkProducts.length === 0) return "2. Mettez le prix sur au moins une fiche.";
     if (bulkPhotoItems.length > readyBulkPhotos.length && readyBulkPhotos.length > 0) {
       const remaining = bulkPhotoItems.length - readyBulkPhotos.length;
-      return `${remaining} fiche${remaining > 1 ? "s" : ""} peuvent attendre. Vous pouvez deja publier les articles prets.`;
+      return `${remaining} fiche${remaining > 1 ? "s" : ""} peuvent attendre. Vous pouvez déjà publier les articles prêts.`;
     }
     return "3. Publiez, puis partagez la boutique.";
   }
@@ -457,7 +459,7 @@ export function getPublishHint({
   if (!formData.image_url) return "Ajoutez une photo depuis la galerie.";
   if (!formData.name) return "Confirmez le nom visible dans la boutique.";
   if (!formData.price) return "Ajoutez le prix de vente.";
-  return "L'article est pret. Publiez puis partagez.";
+  return "L'article est prêt. Publiez puis partagez.";
 }
 
 export function getSizeOptions(item) {
@@ -472,8 +474,8 @@ export function BatchReviewSummary({ items, backgroundProgress = null }) {
     : stats.missingPrice > 0
       ? `${stats.missingPrice} prix a saisir avant de publier tout le lot.`
       : stats.weakNames > 0
-        ? `${stats.weakNames} nom${stats.weakNames > 1 ? "s" : ""} a verifier, mais vous pouvez deja publier.`
-        : "Le lot est propre. Les articles prets peuvent etre publies.";
+        ? `${stats.weakNames} nom${stats.weakNames > 1 ? "s" : ""} à vérifier, mais vous pouvez déjà publier.`
+        : "Le lot est propre. Les articles prêts peuvent être publiés.";
 
   return (
     <div className="space-y-2">
@@ -484,7 +486,7 @@ export function BatchReviewSummary({ items, backgroundProgress = null }) {
       </div>
       <div className="rounded-2xl bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--text-dim)]">
         {backgroundProgress ? getBackgroundProgressAdvice(backgroundProgress) : advice}
-        {stats.failedUploads > 0 ? ` ${stats.failedUploads} photo${stats.failedUploads > 1 ? "s" : ""} n'ont pas ete envoyees.` : ""}
+        {stats.failedUploads > 0 ? ` ${stats.failedUploads} photo${stats.failedUploads > 1 ? "s" : ""} n'ont pas été envoyées.` : ""}
       </div>
     </div>
   );

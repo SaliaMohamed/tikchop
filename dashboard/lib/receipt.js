@@ -135,7 +135,7 @@ export function getReceiptTotals(order) {
 
 export async function getReceiptOrder({ order, reference } = {}) {
   if (!supabaseAdmin) {
-    return { order: null, payment: null, error: "Recu indisponible pour le moment. Reessayez dans quelques instants." };
+    return { order: null, payment: null, error: "Reçu indisponible pour le moment. Réessayez dans quelques instants." };
   }
 
   const lookup = cleanLookup(order);
@@ -188,5 +188,5 @@ export async function getReceiptOrder({ order, reference } = {}) {
     }
   }
 
-  return { order: null, payment, error: "Recu introuvable pour cette commande." };
+  return { order: null, payment, error: "Reçu introuvable pour cette commande." };
 }

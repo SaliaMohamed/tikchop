@@ -16,7 +16,7 @@ export default function ReceiptActions({ title, downloadUrl }) {
     try {
       await navigator.share({
         title: title || "Recu Tikchop",
-        text: "Voici mon recu de commande Tikchop.",
+        text: "Voici mon reçu de commande Tikchop.",
         url: window.location.href,
       });
     } catch {

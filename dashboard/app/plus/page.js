@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getDashboardData } from "../actions";
 import { clearActiveSeller, useActiveSeller } from "../components/sellerContext";
+import PushNotificationsManager from "../components/PushNotificationsManager";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
 import { supabase } from "../../lib/supabase";
 import TikchopLottie from "../components/TikchopLottie";
@@ -109,7 +110,7 @@ export default function SellerMenuPage() {
           </div>
           <Link
             href={shopLink}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E8F7EE] text-[#059669] no-underline"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#E8F7EE] text-[#059669] no-underline"
           >
             <Eye size={17} />
           </Link>
@@ -142,12 +143,13 @@ export default function SellerMenuPage() {
       <MenuSection title="Vendre">
         <MenuItem href="/add-product" icon={<Camera size={20} />} label="Publier un article" sub={hasProducts ? `${stats.products} en ligne` : "Aucun article"} accent={!hasProducts} />
         <MenuItem href="/orders" icon={<ClipboardList size={20} />} label="Ventes" sub={workCount > 0 ? `${workCount} à traiter` : "Aucune"} warn={workCount > 0} />
-        <MenuItem href="/messages" icon={<Bot size={20} />} label="DJASSAMAN" sub="Discussions et reponses clients" />
+        <MenuItem href="/messages" icon={<Bot size={20} />} label="DJASSAMAN" sub="Discussions et réponses clients" />
         <MenuItem href={shopLink} icon={<Store size={20} />} label="Voir ma boutique" sub="Vue client" />
       </MenuSection>
 
       {/* Réglages */}
       <MenuSection title="Réglages">
+        <PushNotificationsManager />
         <MenuItem href="/crm" icon={<Bot size={20} />} label="Parametres DJASSAMAN" sub={statusLoading ? "…" : whatsappConnected ? "Connecté" : "Non connecté"} />
         <MenuItem href="/delivery-settings" icon={<Truck size={20} />} label="Livraison" sub="Zones et frais" />
         <MenuItem href="/payment-settings" icon={<Wallet size={20} />} label="Paiement" sub={payoutReady ? "Configuré" : "À configurer"} />

@@ -23,9 +23,9 @@ export const ABIDJAN_DELIVERY_AREAS = [
 export const LOCAL_PAYMENT_OPTIONS = [
   {
     value: "CASH_ON_DELIVERY",
-    label: "Paiement a la livraison",
-    shortLabel: "A la livraison",
-    hint: "Le plus courant: paiement apres reception",
+    label: "Paiement à la livraison",
+    shortLabel: "À la livraison",
+    hint: "Le plus courant: paiement après réception",
     online: false,
     recommended: true,
   },
@@ -40,14 +40,14 @@ export const LOCAL_PAYMENT_OPTIONS = [
     value: "ORANGE_MONEY",
     label: "Orange Money",
     shortLabel: "Orange",
-    hint: "Paiement direct au numero vendeur",
+    hint: "Paiement direct au numéro vendeur",
     online: false,
   },
   {
     value: "MTN_MONEY",
     label: "MTN MoMo",
     shortLabel: "MTN MoMo",
-    hint: "Paiement direct au numero vendeur",
+    hint: "Paiement direct au numéro vendeur",
     online: false,
   },
   {

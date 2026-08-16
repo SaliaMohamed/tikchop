@@ -22,6 +22,8 @@ export function useOrders() {
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMoreOrders, setLoadingMoreOrders] = useState(false);
+  const [hasMoreOrders, setHasMoreOrders] = useState(true);
   const [loadingNote, setLoadingNote] = useState("Chargement des ventes...");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filter, setFilter] = useState("PENDING");
@@ -61,7 +63,7 @@ export function useOrders() {
         try {
           deliveryData = await withTimeout(
             getSellerDeliverySettings(seller.slug, token),
-            "Reglages livraison trop longs a charger.",
+            "Réglages livraison trop longs à charger.",
             8000,
           );
         } catch (deliveryError) {
@@ -69,6 +71,7 @@ export function useOrders() {
         }
 
         setOrders(orderData || []);
+        setHasMoreOrders((orderData || []).length >= 100);
         setDrivers(deliveryData?.drivers || []);
       } finally {
         clearTimeout(slowTimer);
@@ -78,12 +81,45 @@ export function useOrders() {
       const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
       setError(sessionExpired
         ? "Reconnectez-vous pour voir vos ventes."
-        : friendlyError(err, "Commandes non chargees. Verifiez la connexion puis actualisez."));
+        : friendlyError(err, "Commandes non chargées. Vérifiez la connexion puis actualisez."));
     } finally {
       setLoadingNote("Chargement des ventes...");
       setLoading(false);
     }
   }, [seller.slug]);
+
+  async function loadMoreOrders() {
+    if (!seller.slug || loadingMoreOrders || orders.length === 0) return;
+    const last = orders[orders.length - 1];
+    if (!last?.created_at) {
+      setHasMoreOrders(false);
+      return;
+    }
+
+    try {
+      setLoadingMoreOrders(true);
+      setError("");
+      const token = await getSellerAccessToken();
+      const moreData = await withTimeout(
+        getSellerOrders(seller.slug, token, { limit: 100, before: last.created_at }),
+        "Commandes trop longues a charger. Actualisez la page.",
+      );
+      if (!moreData || moreData.length === 0) {
+        setHasMoreOrders(false);
+        return;
+      }
+      setOrders((current) => {
+        const existing = new Set(current.map((order) => order.id));
+        return [...current, ...moreData.filter((order) => !existing.has(order.id))];
+      });
+      setHasMoreOrders(moreData.length >= 100);
+    } catch (err) {
+      console.warn("More orders unavailable:", err);
+      setError(friendlyError(err, "Commandes supplémentaires non chargées. Actualisez puis réessayez."));
+    } finally {
+      setLoadingMoreOrders(false);
+    }
+  }
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -123,7 +159,7 @@ export function useOrders() {
       )));
       setSelectedOrder((current) => current?.id === order.id ? { ...current, ...result, delivery_drivers: driver } : current);
     } catch (err) {
-      setError(friendlyError(err, "Partage livreur non fait. Verifiez le numero du livreur."));
+      setError(friendlyError(err, "Partage livreur non fait. Vérifiez le numéro du livreur."));
     }
   }
 
@@ -154,7 +190,7 @@ export function useOrders() {
       updateOrderHandoff(order.id, result?.handoff || null);
       return result;
     } catch (err) {
-      const message = friendlyError(err, "Pause bot non appliquee. Verifiez le numero client.");
+      const message = friendlyError(err, "Pause bot non appliquée. Vérifiez le numéro client.");
       setError(message);
       throw new Error(message);
     }
@@ -167,7 +203,7 @@ export function useOrders() {
       updateOrderHandoff(order.id, null);
       return { ok: true };
     } catch (err) {
-      const message = friendlyError(err, "Bot non reactive. Reessayez dans quelques secondes.");
+      const message = friendlyError(err, "Bot non réactivé. Réessayez dans quelques secondes.");
       setError(message);
       throw new Error(message);
     }
@@ -180,7 +216,7 @@ export function useOrders() {
       updateOrderHandoff(order.id, result?.handoff || order.handoff || null);
       return result;
     } catch (err) {
-      const message = friendlyError(err, "Message client non envoye. Verifiez WhatsApp puis reessayez.");
+      const message = friendlyError(err, "Message client non envoyé. Vérifiez WhatsApp puis réessayez.");
       setError(message);
       throw new Error(message);
     }
@@ -199,7 +235,7 @@ export function useOrders() {
       }
     } catch (err) {
       console.warn("Demo order create unavailable:", err);
-      setError(friendlyError(err, "Commande test non creee. Verifiez qu'une boutique est bien active."));
+      setError(friendlyError(err, "Commande test non créée. Vérifiez qu'une boutique est bien active."));
     } finally {
       setDemoBusy(false);
     }
@@ -235,6 +271,8 @@ export function useOrders() {
     orders,
     drivers,
     loading,
+    loadingMoreOrders,
+    hasMoreOrders,
     loadingNote,
     selectedOrder,
     filter,
@@ -253,6 +291,7 @@ export function useOrders() {
     setFilter,
     setSelectedOrder,
     fetchOrders,
+    loadMoreOrders,
     markPaid,
     markStatus,
     cancelOrder,

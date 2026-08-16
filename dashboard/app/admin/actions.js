@@ -355,7 +355,7 @@ export async function adminUpdateSellerWhatsAppStatus(formData) {
     .from("sellers")
     .update({
       whatsapp_status: whatsappStatus,
-      whatsapp_last_error: whatsappStatus === "disconnected" ? "Deconnecte depuis l'admin Tikchop." : null,
+      whatsapp_last_error: whatsappStatus === "disconnected" ? "Déconnecté depuis l'admin Tikchop." : null,
     })
     .eq("id", sellerId);
 

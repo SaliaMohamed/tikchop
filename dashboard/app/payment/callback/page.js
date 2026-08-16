@@ -23,7 +23,7 @@ export default async function PaymentCallbackPage({ searchParams }) {
         </p>
 
         <div className="mt-8 rounded-2xl bg-zinc-50 p-4">
-          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-zinc-400">Numero de commande</p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-zinc-400">Numéro de commande</p>
           <p className="mt-1 font-display text-2xl font-bold text-zinc-950">#{orderRef || "En verification"}</p>
         </div>
 

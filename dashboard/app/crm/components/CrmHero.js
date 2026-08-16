@@ -12,7 +12,7 @@ export function CrmHero({ stats, totalCustomers }) {
           <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#34D399]/80">Carnet client</p>
           <h2 className="mt-1 font-display text-4xl font-black leading-none text-white">{totalCustomers}</h2>
           <p className="mt-1 text-sm font-bold leading-5 text-white/55">
-            {totalCustomers > 0 ? "clients enregistres" : "Aucun client"}
+            {totalCustomers > 0 ? "clients enregistrés" : "Aucun client"}
           </p>
         </div>
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-white/10 text-[#34D399] ring-1 ring-white/10">

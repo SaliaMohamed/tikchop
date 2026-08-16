@@ -2,12 +2,14 @@
 
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { savePaystackInitialization, sendOrderLifecycleMessage } from "../../../lib/order-payments";
-import { initializeTransaction, createPaystackSubaccount } from "../../../lib/paystack";
+import { initializeTransaction, createPaystackSubaccount, normalizePayoutNetwork, getPayoutNetworkConfig, normalizePayoutPhone } from "../../../lib/paystack";
 import { sendEvolutionText } from "../../../lib/evolution";
+import { sendPushToSeller } from "../../../lib/push-notifications";
 import { getPaymentOption, getSellerDefaultPaymentMethod, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone } from "../../../lib/local-commerce";
 
-import { requireSellerBySlug, requireOrderForSeller } from "./auth";
-import { attachHandoffsToOrders, buildDriverDeliveryMessage, chooseDriverForOrder, parseStoredMessageClient, getMessagePhone, getMessageName, normalizeStoredMessage, mergeMessageRows, normalizeMessageMedia, getActiveSellerHandoffs, saveSellerCustomerHandoff, getHandoffSellerKeys, MESSAGE_SELECT_BASE, MESSAGE_SELECT_WITH_MEDIA } from "./shared";
+import { requireSellerBySlug, requireOrderForSeller, requireSellerById, requireSellerUser } from "./auth";
+import { normalizeCustomerPhone, formatCustomerPhone, getSellerEvolutionInstance, formatCfa, handoffKey } from "./formatters";
+import { attachHandoffsToOrders, buildDriverDeliveryMessage, chooseDriverForOrder, parseStoredMessageClient, getMessagePhone, getMessageName, normalizeStoredMessage, mergeMessageRows, normalizeMessageMedia, getActiveSellerHandoffs, saveSellerCustomerHandoff, getHandoffSellerKeys, MESSAGE_SELECT_BASE, MESSAGE_SELECT_WITH_MEDIA, autoSharePreparedOrderToDriver, sendOrderToAssignedDriver } from "./shared";
 
 /**
  * Order management, payments & WhatsApp conversations.
@@ -200,14 +202,14 @@ export async function createOrder(sellerId, cartItems, options = {}) {
     throw new Error("Failed to create order items");
   }
 
-  // --- D?cr?mentation de stock ---
+  // --- Décrémentation de stock ---
   // Tentative via RPC atomique (FOR UPDATE PostgreSQL, pas de race condition).
-  // Si la migration 2026-05-13-security-and-atomic-stock.sql n'est pas encore appliqu?e,
+  // Si la migration 2026-05-13-security-and-atomic-stock.sql n'est pas encore appliquée,
   // la RPC est absente : on retombe sur l'optimistic lock manuel.
   let stockDecremented = false;
 
   try {
-    // M?thode 1 : RPC atomique (recommand?e)
+    // Méthode 1 : RPC atomique (recommandée)
     const stockResults = await Promise.all(
       orderItemsData.map((item) =>
         supabaseAdmin.rpc("decrement_stock_atomic", {
@@ -221,7 +223,7 @@ export async function createOrder(sellerId, cartItems, options = {}) {
     for (let i = 0; i < stockResults.length; i++) {
       const { data: rpcRows, error: rpcError } = stockResults[i];
 
-      // RPC absente ? basculer sur la m?thode 2
+      // RPC absente ? basculer sur la méthode 2
       if (rpcError && /function.*does not exist|PGRST202/i.test(rpcError.message || "")) {
         stockDecremented = false;
         break;
@@ -242,16 +244,16 @@ export async function createOrder(sellerId, cartItems, options = {}) {
       stockDecremented = true;
     }
   } catch (rpcErr) {
-    // Ne relancer que si le stock a d?j? ?t? partiellement d?cr?ment? (incoh?rence)
+    // Ne relancer que si le stock a déjà été partiellement décrémenté (incohérence)
     if (stockDecremented) {
       await supabaseAdmin.from("order_items").delete().eq("order_id", order.id);
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
       throw new Error(rpcErr.message || "Stock non mis a jour. Reessayez la commande.");
     }
-    // Sinon : RPC absente, utiliser m?thode 2 ci-dessous
+    // Sinon : RPC absente, utiliser méthode 2 ci-dessous
   }
 
-  // M?thode 2 : Optimistic lock manuel (fallback si RPC non d?ploy?e)
+  // Méthode 2 : Optimistic lock manuel (fallback si RPC non déployée)
   if (!stockDecremented) {
     const decrementedProducts = [];
     try {
@@ -292,9 +294,19 @@ export async function createOrder(sellerId, cartItems, options = {}) {
   }
 
 
+  const notificationRef = order.order_ref || order.id.split("-")[0].toUpperCase();
+  await sendPushToSeller(
+    { sellerId },
+    {
+      title: "Nouvelle commande",
+      body: `Commande ${notificationRef} — ${formatCfa(totalAmount)} a traiter.`,
+      url: "/orders",
+    },
+  ).catch(() => {});
+
   return {
     orderId: order.id,
-    orderRef: order.order_ref || order.id.split("-")[0].toUpperCase(),
+    orderRef: notificationRef,
     productsTotal,
     deliveryFee,
     totalToPay: totalAmount,
@@ -353,7 +365,7 @@ export async function initiatePayment(orderId) {
       payableAmount += Number(orderForPayment.delivery_fee || 0);
     }
 
-    // R?cup?rer le vrai num?ro de t?l?phone pour g?n?rer un email de re?u
+    // Récupérer le vrai numéro de téléphone pour générer un email de reçu
     const cleanPhone = String(orderForPayment.customer_phone || "").replace(/[^\d]/g, "");
     const customerEmail = cleanPhone ? `client-${cleanPhone}@phone.tikchop.local` : `customer-${orderId}@tikchop.app`;
 
@@ -522,7 +534,7 @@ export async function getSellerOrders(slug, accessToken, { limit = 100, before }
 
   const seller = await requireSellerBySlug(slug, accessToken, "id, slug, evolution_instance");
 
-  // Pagination curseur : `before` = valeur de created_at de la derni?re commande vue
+  // Pagination curseur : `before` = valeur de created_at de la dernière commande vue
   let ordersQuery = supabaseAdmin
     .from("orders")
     .select(`
@@ -578,7 +590,7 @@ export async function resumeBotForCustomer(slug, customerPhone, accessToken) {
   const seller = await requireSellerBySlug(slug, accessToken, "id, slug, evolution_instance");
   const cleanPhone = normalizeCustomerPhone(customerPhone);
   if (cleanPhone.length < 6) {
-    throw new Error("Numero client invalide.");
+    throw new Error("Numéro client invalide.");
   }
 
   const { error } = await supabaseAdmin
@@ -858,7 +870,7 @@ export async function createDemoOrder(slug, accessToken) {
   }
 
   if (orderError || !order) {
-    throw new Error(orderError?.message || "Commande demo non creee.");
+    throw new Error(orderError?.message || "Commande démo non créée.");
   }
 
   const { error: itemError } = await supabaseAdmin
@@ -1087,7 +1099,7 @@ export async function saveSellerBusinessProfile(sellerId, profile, accessToken) 
   }
 
   if (payload.phone_number.replace(/\D/g, "").length < 8) {
-    throw new Error("Ajoute un numero WhatsApp valide.");
+    throw new Error("Ajoute un numéro WhatsApp valide.");
   }
 
   const { data, error } = await supabaseAdmin
@@ -1145,7 +1157,7 @@ export async function saveSellerPaymentSettings(sellerId, settings, accessToken)
   }
 
   if (directPhoneNeeded && (!payoutPhone || payoutPhone.length < 11)) {
-    throw new Error("Numero de depot invalide. Ajoutez le numero qui recoit l'argent.");
+    throw new Error("Numéro de dépôt invalide. Ajoutez le numéro qui reçoit l'argent.");
   }
 
   const existingNetwork = normalizePayoutNetwork(seller.payout_network);
@@ -1266,56 +1278,5 @@ export async function getSellersForProductForm() {
   }
 
   return data || [];
-}
-
-const PRODUCT_SELECT_LEGACY = "id, name, price, stock_quantity, image_url, description, created_at";
-const PRODUCT_SELECT_BASIC = `${PRODUCT_SELECT_LEGACY}, product_variants, product_keywords`;
-const PRODUCT_SELECT_FULL = `${PRODUCT_SELECT_BASIC}, is_active`;
-
-function isSchemaColumnError(error) {
-  return /schema cache|column|is_active|product_variants|product_keywords/i.test(error?.message || "");
-}
-
-function normalizeNumericString(value) {
-  return String(value ?? "").replace(/[^\d]/g, "");
-}
-
-function normalizeProductPrice(value) {
-  const normalized = normalizeNumericString(value);
-  return Number(normalized || 0);
-}
-
-function normalizeProductStock(value, fallback = 1) {
-  const normalized = Number.parseInt(normalizeNumericString(value), 10);
-  return Number.isFinite(normalized) ? normalized : fallback;
-}
-
-async function updateProductWithFallback(productId, sellerId, payload) {
-  let { data, error } = await supabaseAdmin
-    .from("products")
-    .update(payload)
-    .eq("id", productId)
-    .eq("seller_id", sellerId)
-    .select(PRODUCT_SELECT_FULL)
-    .single();
-
-  if (error && isSchemaColumnError(error)) {
-    const { product_variants, product_keywords, is_active, ...fallbackPayload } = payload;
-    const fallback = await supabaseAdmin
-      .from("products")
-      .update(fallbackPayload)
-      .eq("id", productId)
-      .eq("seller_id", sellerId)
-      .select(PRODUCT_SELECT_LEGACY)
-      .single();
-    data = fallback.data;
-    error = fallback.error;
-  }
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
 }
 

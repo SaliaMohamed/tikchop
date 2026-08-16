@@ -12,8 +12,8 @@ import StyleEditor from "../components/StyleEditor";
 import TikchopLottie from "../components/TikchopLottie";
 
 const STEPS = [
-  { key: "whatsapp", title: "Connecter WhatsApp", sub: "Liez le numero de votre boutique" },
-  { key: "style", title: "Style de DJASSAMAN", sub: "Comment il repond a vos clients" },
+  { key: "whatsapp", title: "Connecter WhatsApp", sub: "Liez le numéro de votre boutique" },
+  { key: "style", title: "Style de DJASSAMAN", sub: "Comment il répond à vos clients" },
   { key: "done", title: "C'est pret", sub: "Vos discussions vous attendent" },
 ];
 
@@ -63,7 +63,7 @@ export default function SetupPage() {
     return (
       <div className="app-shell flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="animate-spin text-[#059669]" size={28} />
-        <p className="mt-3 text-sm font-black text-[#0F2B20]/45">Verification de la configuration...</p>
+        <p className="mt-3 text-sm font-black text-[#0F2B20]/45">Vérification de la configuration...</p>
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function SetupPage() {
       {/* ── Step content ── */}
       <main className="mt-6">
         <div className="mb-5">
-          <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#059669]">Etape {step + 1} / 3</p>
+          <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#059669]">Étape {step + 1} / 3</p>
           <h2 className="mt-1 font-display text-2xl font-black leading-8 text-[#0F2B20]">{current.title}</h2>
           <p className="mt-1 text-sm font-semibold text-[#0F2B20]/50">{current.sub}</p>
         </div>
@@ -164,7 +164,7 @@ export default function SetupPage() {
             <ArrowLeft size={15} />
             Retour
           </button>
-          <span className="text-xs font-bold text-[#0F2B20]/40">Il reste {2 - step} etape{2 - step > 1 ? "s" : ""}</span>
+          <span className="text-xs font-bold text-[#0F2B20]/40">Il reste {2 - step} étape{2 - step > 1 ? "s" : ""}</span>
         </div>
       )}
 
@@ -185,7 +185,7 @@ function DoneStep({ whatsappDone, onContinue, onBack }) {
       <TikchopLottie name="success" size={150} />
       <h3 className="mt-4 font-display text-2xl font-black text-[#0F2B20]">DJASSAMAN est pret</h3>
       <p className="mt-2 max-w-[300px] text-sm font-semibold leading-6 text-[#0F2B20]/55">
-        WhatsApp est connecte et le style enregistre. Vos clients peuvent deja ecrire : DJASSAMAN repond automatiquement.
+        WhatsApp est connecté et le style enregistré. Vos clients peuvent déjà écrire : DJASSAMAN répond automatiquement.
       </p>
       <button
         type="button"

@@ -62,7 +62,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#0C271C]">{getConversationTitle(conversation)}</h2>
-            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">{conversation.display_phone || "Numero inconnu"}</p>
+            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">{conversation.display_phone || "Numéro inconnu"}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {canReply && (
@@ -96,7 +96,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
         {(conversation.messages || []).length === 0 ? (
           <div className="mx-auto mt-4 max-w-[78%] rounded-[16px] bg-[#fbeec0] px-4 py-3 text-center text-[#54656f] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
             <MessageCircle className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="mt-2 text-sm font-extrabold text-[#0C271C]">{canReply ? "Pret a repondre" : "Numero manquant"}</p>
+            <p className="mt-2 text-sm font-extrabold text-[#0C271C]">{canReply ? "Prêt à répondre" : "Numéro manquant"}</p>
             <p className="mt-1 text-xs font-semibold leading-4">{canReply ? "Ecrivez en bas." : "Completez la vente."}</p>
           </div>
         ) : (
@@ -112,7 +112,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
           <textarea
             value={reply}
             onChange={(event) => setReply(event.target.value)}
-            placeholder={canReply ? "Message..." : "Numero indisponible"}
+            placeholder={canReply ? "Message..." : "Numéro indisponible"}
             disabled={!canReply || busy === "send"}
             className="max-h-32 min-h-[44px] resize-none rounded-[22px] bg-white px-4 py-3 text-[0.92rem] font-medium leading-5 text-[#0C271C] shadow-sm outline-none placeholder:text-[#4C6B5E]/70 disabled:opacity-60"
           />
@@ -138,7 +138,7 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
 export function SellerConversationHint({ paused, canReply }) {
   const content = !canReply
     ? {
-      title: "Numero a completer",
+      title: "Numéro à compléter",
       body: "La vente reste consultable.",
       className: "bg-white text-[#0F2B20] ring-1 ring-[#0F2B20]/8",
     }
@@ -228,7 +228,7 @@ export function MessageBubble({ message }) {
         )}
         <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#4C6B5E]">
           {isOut ? "Vous" : isBot ? "DJASSAMAN" : "Client"}
-          <span>Â·</span>
+          <span>·</span>
           <Clock3 size={11} />
           {formatDateTime(message.created_at)}
         </div>

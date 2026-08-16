@@ -21,7 +21,7 @@ import {
 } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
-import { fetchSellerProductsFromMobileApi, withClientTimeout } from "../../lib/seller-products-client";
+import { withClientTimeout } from "../../lib/seller-products-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { compressImage } from "../../lib/image-compressor";
 import { IllustrationEmptyShop } from "../components/TikchopIllustrations";
@@ -43,6 +43,8 @@ export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [stockFilter, setStockFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [busyProductId, setBusyProductId] = useState("");
@@ -74,24 +76,16 @@ export default function ProductsPage() {
         setLoading(true);
         setError("");
         const token = await getSellerAccessToken();
-        let data;
-        try {
-          data = await withClientTimeout(
-            fetchSellerProductsFromMobileApi(token),
-            "Catalogue trop long a charger.",
-          );
-        } catch (apiError) {
-          console.warn("Seller products mobile API unavailable, using server action fallback:", apiError);
-          data = await withClientTimeout(
-            getSellerProducts(seller.slug, token),
-            "Catalogue trop long a charger.",
-          );
-        }
+        const data = await withClientTimeout(
+          getSellerProducts(seller.slug, token),
+          "Catalogue trop long a charger.",
+        );
         setProducts(data || []);
+        setHasMore((data || []).length >= 50);
       } catch (err) {
         const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
         setError(sessionExpired
-          ? "Session vendeur expiree. Reconnectez-vous pour voir vos articles."
+          ? "Session vendeur expirée. Reconnectez-vous pour voir vos articles."
           : friendlyError(err, "Articles non charges. Verifiez la connexion puis reessayez."));
       } finally {
         setLoading(false);
@@ -100,6 +94,41 @@ export default function ProductsPage() {
 
     loadProducts();
   }, [seller.slug]);
+
+  async function loadMoreProducts() {
+    if (!seller.slug || loadingMore || products.length === 0) return;
+    const last = products[products.length - 1];
+    if (!last?.created_at) {
+      setHasMore(false);
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+      setError("");
+      const token = await getSellerAccessToken();
+      const data = await withClientTimeout(
+        getSellerProducts(seller.slug, token, { limit: 50, before: last.created_at }),
+        "Catalogue trop long a charger.",
+      );
+      if (!data || data.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      setProducts((current) => {
+        const existing = new Set(current.map((product) => product.id));
+        return [...current, ...data.filter((product) => !existing.has(product.id))];
+      });
+      setHasMore(data.length >= 50);
+    } catch (err) {
+      const sessionExpired = /session vendeur|reconnecte/i.test(String(err?.message || ""));
+      setError(sessionExpired
+        ? "Session vendeur expirée. Reconnectez-vous pour voir vos articles."
+        : friendlyError(err, "Articles supplementaires non charges. Reessayez."));
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const stockStats = useMemo(() => {
     const live = products.filter(isProductLive).length;
@@ -169,7 +198,7 @@ export default function ProductsPage() {
       patchProduct(updated);
       setNotice(successMessage);
     } catch (err) {
-      setError(friendlyError(err, "Modification non enregistree. Reessayez."));
+      setError(friendlyError(err, "Modification non enregistrée. Réessayez."));
     } finally {
       setBusyProductId("");
     }
@@ -197,7 +226,7 @@ export default function ProductsPage() {
       const token = await getSellerAccessToken();
       const created = await duplicateProduct(product.id, seller.slug, token);
       setProducts((current) => [created, ...current]);
-      setNotice("Copie creee. Vous pouvez corriger son nom ou son stock.");
+      setNotice("Copie créée. Vous pouvez corriger son nom ou son stock.");
     } catch (err) {
       setError(friendlyError(err, "Article non duplique. Reessayez."));
     } finally {
@@ -277,9 +306,9 @@ export default function ProductsPage() {
       }, seller.slug, token);
       patchProduct(product);
       closeEditor();
-      setNotice("Article enregistre.");
+      setNotice("Article enregistré.");
     } catch (err) {
-      setError(friendlyError(err, "Article non enregistre. Verifiez le prix et le stock."));
+      setError(friendlyError(err, "Article non enregistré. Vérifiez le prix et le stock."));
     } finally {
       setSaving(false);
     }
@@ -310,7 +339,7 @@ export default function ProductsPage() {
 
   return (
     <div className="app-shell pb-[calc(7rem+env(safe-area-inset-bottom,0px))] px-4 md:px-8">
-      {/* 1. Header Pur et A?r? */}
+      {/* 1. Header Pur et Aéré */}
       <header className="py-8 flex items-center justify-between border-b border-[#0F2B20]/5">
         <div>
           <h1 className="font-display text-3xl font-black text-[#0F2B20] leading-none">Catalogue</h1>
@@ -333,7 +362,7 @@ export default function ProductsPage() {
           {[
             { value: "ALL", label: "Tous", count: stockStats.total },
             { value: "LIVE", label: "En vente", count: stockStats.live },
-            { value: "HIDDEN", label: "Non publi?s", count: stockStats.unpublished },
+            { value: "HIDDEN", label: "Non publiés", count: stockStats.unpublished },
             { value: "OUT", label: "Rupture", count: stockStats.outOfStock },
             { value: "LOW", label: "Faible", count: stockStats.lowStock },
           ].map((item) => (
@@ -386,7 +415,7 @@ export default function ProductsPage() {
               onClick={() => window.location.reload()}
               className="inline-flex min-h-[38px] items-center justify-center rounded-xl bg-white px-4 text-xs font-black text-amber-900 ring-1 ring-amber-200"
             >
-              R?essayer
+              Réessayer
             </button>
           </div>
         </div>
@@ -398,7 +427,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* 4. Liste des Produits ?pur?e en Ligne verticale */}
+      {/* 4. Liste des Produits épurée en Ligne verticale */}
       <main className="mt-8">
         {loading ? (
           <div className="space-y-2.5">
@@ -428,6 +457,23 @@ export default function ProductsPage() {
                 index={i}
               />
             ))}
+            {hasMore && (
+              <button
+                type="button"
+                disabled={loadingMore}
+                onClick={loadMoreProducts}
+                className="mt-2 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[var(--secondary)]/8 font-extrabold text-[#0F2B20] ring-1 ring-[#0F2B20]/10 transition active:scale-[0.98] disabled:opacity-50"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 size={17} strokeWidth={2.2} className="animate-spin" />
+                    Chargement...
+                  </>
+                ) : (
+                  "Charger plus"
+                )}
+              </button>
+            )}
           </div>
         )}
       </main>
@@ -478,11 +524,11 @@ function EmptyProductsState({ hasProducts }) {
       <div className="relative z-10 flex flex-col items-center">
         <IllustrationEmptyShop size={120} className="opacity-90" />
         <h3 className="mt-3 font-display text-xl font-bold text-white">
-          {hasProducts ? "Aucun article trouv?" : "Aucun article en ligne"}
+          {hasProducts ? "Aucun article trouvé" : "Aucun article en ligne"}
         </h3>
         <p className="mt-2 text-sm font-medium leading-relaxed text-white/55 max-w-[260px]">
           {hasProducts
-            ? "Modifiez vos filtres ou ?crivez un autre mot-cl? dans la recherche."
+            ? "Modifiez vos filtres ou écrivez un autre mot-clé dans la recherche."
             : "Ajoutez une photo, un prix et un stock pour commencer ? vendre en ligne."}
         </p>
         <Link href="/add-product" className="mt-6 flex min-h-[50px] w-full max-w-[240px] items-center justify-center gap-2 rounded-2xl bg-[#34D399] text-sm font-extrabold text-[#0F2B20] transition active:scale-[0.98] shadow-[0_12px_28px_rgba(52, 211, 153,0.25)] no-underline">
@@ -535,7 +581,7 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
         onClick={() => onEdit(product)}
         className="flex h-9 shrink-0 px-3.5 items-center justify-center rounded-full bg-[#0F2B20]/5 text-xs font-black text-[#0F2B20] hover:bg-[#0F2B20]/10 active:scale-95 transition"
       >
-        ?dit
+        Édit
       </button>
     </article>
   );
@@ -605,7 +651,7 @@ function ProductEditor({
                 : "text-[#54685E]"
             }`}
           >
-            Masqu?
+            Masqué
           </button>
         </div>
 
@@ -615,7 +661,7 @@ function ProductEditor({
             <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Nom du produit</span>
             <input 
               className="w-full min-h-[50px] px-4 rounded-xl border border-[#DCEFE3]/55 bg-[#F6FBF7]/45 text-sm font-semibold text-[#0F2B20] focus:bg-white focus:ring-1 focus:ring-[#059669] focus:border-[#059669] outline-none transition" 
-              placeholder="Ex: Robe en soie pliss?e" 
+              placeholder="Ex: Robe en soie plissée" 
               value={formData.name} 
               onChange={(event) => setFormData({ ...formData, name: event.target.value })} 
             />
@@ -634,7 +680,7 @@ function ProductEditor({
             </div>
             
             <div className="space-y-1">
-              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Quantit? Stock</span>
+              <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Quantité Stock</span>
               <input 
                 className="w-full min-h-[50px] px-4 rounded-xl border border-[#DCEFE3]/55 bg-[#F6FBF7]/45 text-sm font-semibold text-[#0F2B20] focus:bg-white focus:ring-1 focus:ring-[#059669] focus:border-[#059669] outline-none transition" 
                 type="number" 
@@ -686,7 +732,7 @@ function ProductEditor({
             <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Description WhatsApp</span>
             <textarea 
               className="w-full min-h-[84px] p-3.5 rounded-xl border border-[#DCEFE3]/55 bg-[#F6FBF7]/45 text-sm font-semibold text-[#0F2B20] focus:bg-white focus:ring-1 focus:ring-[#059669] focus:border-[#059669] outline-none resize-none transition" 
-              placeholder="Ex: Robe fluide 100% soie sauvage, id?ale pour les c?r?monies..." 
+              placeholder="Ex: Robe fluide 100% soie sauvage, idéale pour les cérémonies..." 
               value={formData.description} 
               onChange={(event) => setFormData({ ...formData, description: event.target.value })} 
             />
@@ -703,7 +749,7 @@ function ProductEditor({
           </div>
 
           <div className="space-y-1">
-            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Mots-cl?s de recherche</span>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider text-[#54685E]/80 pl-1">Mots-clés de recherche</span>
             <input 
               className="w-full min-h-[50px] px-4 rounded-xl border border-[#DCEFE3]/55 bg-[#F6FBF7]/45 text-sm font-semibold text-[#0F2B20] focus:bg-white focus:ring-1 focus:ring-[#059669] focus:border-[#059669] outline-none transition" 
               placeholder="Ex: robe, ceremonie, soie, rouge" 

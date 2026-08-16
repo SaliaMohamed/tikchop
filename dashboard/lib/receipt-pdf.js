@@ -45,25 +45,25 @@ function getPaymentStatus(order, payment = {}) {
 }
 
 function getOrderStatus(order, payment = {}) {
-  if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "livree";
+  if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "livrée";
   if (order?.delivery_status === "ASSIGNED") return "chez le livreur";
-  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "colis pret";
-  if (getPaymentStatus(order, payment) === "confirme") return "confirmee";
-  if (order?.status === "CANCELLED") return "annulee";
+  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "colis prêt";
+  if (getPaymentStatus(order, payment) === "confirme") return "confirmée";
+  if (order?.status === "CANCELLED") return "annulée";
   return "en attente";
 }
 
 function getDeliveryLine(order) {
   if (order?.delivery_type === "PICKUP") return "Retrait boutique";
 
-  const zone = order?.delivery_zone || "Zone a confirmer";
-  const address = order?.delivery_address || "Adresse a confirmer";
+  const zone = order?.delivery_zone || "Zone à confirmer";
+  const address = order?.delivery_address || "Adresse à confirmer";
   return `${zone} - ${address}`;
 }
 
 function getHandlingLine(order) {
   if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") {
-    return "Commande livree. Merci de garder ce recu en cas de verification.";
+    return "Commande livrée. Merci de garder ce reçu en cas de vérification.";
   }
 
   if (order?.delivery_status === "ASSIGNED") {
@@ -78,7 +78,7 @@ function getHandlingLine(order) {
     return "Paiement confirme. La boutique emballe les articles.";
   }
 
-  return "Commande recue. Le paiement, l'adresse ou la disponibilite peuvent encore etre confirmes.";
+  return "Commande reçue. Le paiement, l'adresse ou la disponibilité peuvent encore être confirmés.";
 }
 
 function wrapLine(text, maxLength = 76) {
@@ -111,14 +111,14 @@ function buildReceiptLines(order, payment = {}) {
   const paymentStatus = getPaymentStatus(order, payment);
   const orderStatus = getOrderStatus(order, payment);
   const paymentOption = getPaymentOption(order.payment_method);
-  const client = order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Non renseigne";
+  const client = order.customer_phone && order.customer_phone !== "UNKNOWN" ? order.customer_phone : "Non renseigné";
   const sellerPhone = seller?.phone_number || "Via WhatsApp boutique";
 
   const lines = [
-    { text: "RECU DE COMMANDE TIKCHOP", size: 20, gap: 22 },
+    { text: "REÇU DE COMMANDE TIKCHOP", size: 20, gap: 22 },
     { text: `Reference: ${getOrderRef(order)}`, size: 14 },
     { text: `Statut: ${orderStatus}`, size: 11 },
-    { text: `Genere le: ${generatedAt}`, size: 10, gap: 16 },
+    { text: `Généré le: ${generatedAt}`, size: 10, gap: 16 },
     { text: "PRISE EN CHARGE", size: 13, gap: 14 },
     { text: getHandlingLine(order), size: 11, gap: 16 },
     { text: "BOUTIQUE ET CLIENT", size: 13, gap: 14 },
@@ -149,7 +149,7 @@ function buildReceiptLines(order, payment = {}) {
       lines.push({ text: `Prix unitaire: ${formatCfa(price)} | Ligne: ${formatCfa(total)}`, size: 9 });
     }
   } else {
-    lines.push({ text: "Articles non detailles dans le recu.", size: 10 });
+    lines.push({ text: "Articles non détaillés dans le reçu.", size: 10 });
   }
 
   lines.push(
@@ -158,7 +158,7 @@ function buildReceiptLines(order, payment = {}) {
     { text: `Livraison: ${formatCfa(totals.deliveryFee)}`, size: 11 },
     { text: `${paymentStatus === "confirme" ? "TOTAL COMMANDE" : "TOTAL A PREVOIR"}: ${formatCfa(totals.total)}`, size: 15, gap: 18 },
     { text: "A presenter si besoin a la boutique ou au livreur.", size: 10 },
-    { text: "Ce recu ne remplace pas une facture fiscale.", size: 10 },
+    { text: "Ce reçu ne remplace pas une facture fiscale.", size: 10 },
   );
 
   return lines.flatMap((line) => {

@@ -8,7 +8,7 @@ export const aynidInspiredRoadmap = [
   },
   {
     id: "no-shop-empty-state",
-    title: "Ecran aucun boutique",
+    title: "Écran aucune boutique",
     percent: 60,
     status: "in_progress",
     next: "Ajouter une vraie illustration et un seul bouton creer boutique.",
@@ -81,7 +81,7 @@ export const aynidInspiredRoadmap = [
     title: "Profil vendeur simple",
     percent: 45,
     status: "planned",
-    next: "Ajouter profil, securite, photo et appareils connectes.",
+    next: "Ajouter profil, sécurité, photo et appareils connectés.",
   },
 ];
 

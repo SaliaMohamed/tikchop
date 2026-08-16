@@ -2,8 +2,8 @@
 
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 
-import { requireSellerBySlug } from "./auth";
-import { normalizeProductVariants } from "./shared";
+import { requireSellerBySlug, requireSellerById } from "./auth";
+import { normalizeProductVariants, normalizeProductPrice, normalizeProductStock, PRODUCT_SELECT_FULL, PRODUCT_SELECT_LEGACY, isSchemaColumnError, updateProductWithFallback } from "./shared";
 
 /**
  * Product CRUD, delivery zones & drivers.
@@ -107,25 +107,38 @@ export async function addProductsBulk(products, accessToken) {
   return data || [];
 }
 
-export async function getSellerProducts(slug, accessToken) {
+export async function getSellerProducts(slug, accessToken, { limit = 50, before } = {}) {
   if (!supabaseAdmin) {
     throw new Error("Supabase admin client not initialized.");
   }
 
   const seller = await requireSellerBySlug(slug, accessToken, "id, slug");
 
-  const { data, error } = await supabaseAdmin
+  // Pagination curseur : `before` = valeur de created_at du dernier produit vu
+  let productsQuery = supabaseAdmin
     .from("products")
     .select(PRODUCT_SELECT_FULL)
     .eq("seller_id", seller.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Number(limit) || 50, 200));
+
+  if (before) {
+    productsQuery = productsQuery.lt("created_at", before);
+  }
+
+  const { data, error } = await productsQuery;
 
   if (error && isSchemaColumnError(error)) {
-    const fallback = await supabaseAdmin
+    let fallbackQuery = supabaseAdmin
       .from("products")
       .select(PRODUCT_SELECT_LEGACY)
       .eq("seller_id", seller.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(Math.min(Number(limit) || 50, 200));
+    if (before) {
+      fallbackQuery = fallbackQuery.lt("created_at", before);
+    }
+    const fallback = await fallbackQuery;
     if (fallback.error) throw new Error(fallback.error.message);
     return fallback.data || [];
   }
@@ -183,7 +196,7 @@ export async function updateProductQuick(productId, updates, slug, accessToken) 
   }
 
   if (Object.keys(payload).length === 0) {
-    throw new Error("Aucune modification a enregistrer.");
+    throw new Error("Aucune modification à enregistrer.");
   }
 
   return updateProductWithFallback(productId, seller.id, payload);

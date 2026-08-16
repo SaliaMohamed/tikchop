@@ -8,6 +8,7 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
   const [message, setMessage] = useState(bestResponse?.text || "");
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
+  const [noticeIsError, setNoticeIsError] = useState(false);
   const active = isHandoffActive(order.handoff);
   const pauseUntil = formatPauseUntil(order.handoff?.paused_until);
 
@@ -15,9 +16,11 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
     try {
       setBusy(kind);
       setNotice("");
+      setNoticeIsError(false);
       await action();
     } catch (err) {
-      setNotice(err?.message || "Action impossible. Reessayez.");
+      setNotice(err?.message || "Action impossible. Réessayez.");
+      setNoticeIsError(true);
     } finally {
       setBusy("");
     }
@@ -40,14 +43,14 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
             Bot WhatsApp
           </p>
           <h3 className={`mt-1 font-display text-lg font-bold ${active ? "text-white" : "text-[var(--text-main)]"}`}>
-            {active ? "Vous repondez vous-meme" : "Le bot peut repondre"}
+            {active ? "Vous répondez vous-même" : "Le bot peut répondre"}
           </h3>
           <p className={`mt-1 text-sm font-semibold leading-5 ${active ? "text-white/68" : "text-[var(--text-dim)]"}`}>
             {disabled
-              ? "Ajoutez un vrai numero client pour gerer la conversation depuis Tikchop."
+              ? "Ajoutez un vrai numéro client pour gérer la conversation depuis Tikchop."
               : active
-                ? `Le bot ne repond plus a ce client${pauseUntil ? ` jusqu'a ${pauseUntil}` : ""}.`
-                : "Pausez le bot si vous voulez reprendre cette discussion a la main."}
+                ? `Le bot ne répond plus à ce client${pauseUntil ? ` jusqu'à ${pauseUntil}` : ""}.`
+                : "Pausez le bot si vous voulez reprendre cette discussion à la main."}
           </p>
         </div>
       </div>
@@ -60,7 +63,8 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
                 type="button"
                 onClick={() => runAction("resume", async () => {
                   await onResumeBot(order);
-                  setNotice("Bot reactive pour ce client.");
+                  setNotice("Bot réactivé pour ce client.");
+                  setNoticeIsError(false);
                 })}
                 disabled={Boolean(busy)}
                 className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white text-sm font-extrabold text-[#091D14] ring-1 ring-white/20 disabled:opacity-60"
@@ -73,7 +77,8 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
                 type="button"
                 onClick={() => runAction("pause", async () => {
                   await onPauseBot(order);
-                  setNotice("Vous avez la main pendant 24h. Le bot ne repond plus a ce client.");
+                  setNotice("Vous avez la main pendant 24h. Le bot ne répond plus à ce client.");
+                  setNoticeIsError(false);
                 })}
                 disabled={Boolean(busy)}
                 className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--text-main)] text-sm font-extrabold text-white disabled:opacity-60"
@@ -98,7 +103,7 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
             onChange={(event) => setMessage(event.target.value)}
             rows={4}
             maxLength={1200}
-            placeholder="Ecrivez votre reponse au client..."
+            placeholder="Écrivez votre réponse au client..."
             className={`mt-3 min-h-[112px] w-full resize-none rounded-[20px] border-0 p-3 text-sm font-semibold leading-5 outline-none ring-1 focus:ring-2 ${
               active
                 ? "bg-white/10 text-white placeholder:text-white/35 ring-white/12 focus:ring-[var(--primary-bright)]"
@@ -110,21 +115,30 @@ export function BotControlPanel({ order, bestResponse, disabled, onPauseBot, onR
             type="button"
             onClick={() => runAction("reply", async () => {
               await onManualReply(order, message);
-              setNotice("Message envoye. Le bot reste en pause 24h.");
+              setNotice("Message envoyé. Le bot reste en pause 24h.");
+              setNoticeIsError(false);
             })}
             disabled={Boolean(busy) || !message.trim()}
             className="mt-2 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-bright)] text-sm font-extrabold text-[#091D14] shadow-[0_12px_28px_rgba(52, 211, 153,0.20)] disabled:opacity-55"
           >
             {busy === "reply" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
-            Envoyer moi-meme
+            Envoyer moi-même
           </button>
         </>
       )}
 
       {notice && (
-        <p className={`mt-3 rounded-2xl px-3 py-2 text-sm font-bold ${
-          active ? "bg-white/10 text-white/78" : "bg-[var(--surface-soft)] text-[var(--text-dim)]"
-        }`}>
+        <p
+          role={noticeIsError ? "alert" : "status"}
+          aria-live="polite"
+          className={`mt-3 rounded-2xl px-3 py-2 text-sm font-bold ring-1 ${
+            noticeIsError
+              ? "bg-[#FEF3F2] text-[#B3261E] ring-[#F5C6C2]"
+              : active
+                ? "bg-white/10 text-white/78 ring-white/10"
+                : "bg-[var(--surface-soft)] text-[var(--text-dim)] ring-[var(--outline)]/20"
+          }`}
+        >
           {notice}
         </p>
       )}

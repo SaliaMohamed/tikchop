@@ -60,7 +60,7 @@ export function getConversationAction(conversation) {
     return {
       label: "A vous",
       title: "Vous avez la main",
-      detail: "Repondez, puis rendez au bot.",
+      detail: "Répondez, puis rendez au bot.",
       chipClass: "bg-amber-100 text-amber-800",
     };
   }
@@ -68,8 +68,8 @@ export function getConversationAction(conversation) {
   if (stats.inbound > 0) {
     return {
       label: "A lire",
-      title: "Client a lire",
-      detail: "Ouvrez et verifiez si le bot a besoin d'aide.",
+      title: "Client à lire",
+      detail: "Ouvrez et vérifiez si le bot a besoin d'aide.",
       chipClass: "bg-[var(--primary-bright)] text-[#061812]",
     };
   }
@@ -111,21 +111,21 @@ export function getDefaultResponseTemplates(sellerName) {
       shortTitle: "Photo article",
       scenario: "Client demande un article",
       tone: "primary",
-      text: `Bonjour, c'est ${shopName}. Envoyez-moi la photo ou le nom de l'article qui vous interesse. Je verifie la disponibilite tout de suite.`,
+      text: `Bonjour, c'est ${shopName}. Envoyez-moi la photo ou le nom de l'article qui vous intéresse. Je vérifie la disponibilité tout de suite.`,
     },
     {
       id: "ask-size",
       shortTitle: "Taille",
-      scenario: "Preciser taille ou couleur",
+      scenario: "Préciser taille ou couleur",
       tone: "soft",
-      text: "Quelle taille ou couleur souhaitez-vous ? Je confirme la disponibilite avant de valider la commande.",
+      text: "Quelle taille ou couleur souhaitez-vous ? Je confirme la disponibilité avant de valider la commande.",
     },
     {
       id: "ask-delivery",
       shortTitle: "Livraison",
-      scenario: "Adresse a completer",
+      scenario: "Adresse à compléter",
       tone: "warning",
-      text: "Pour la livraison, envoyez-moi votre commune, quartier, point de repere et heure de reception.",
+      text: "Pour la livraison, envoyez-moi votre commune, quartier, point de repère et heure de réception.",
     },
   ];
 }

@@ -43,7 +43,7 @@ export async function sendSellerWelcomeEmail({ email, name }) {
   return sendTransactionalEmail({
     to: email,
     subject: "Bienvenue sur Tikchop",
-    text: `Bienvenue ${displayName}. Votre compte vendeur Tikchop est pret. Connectez-vous pour creer ou gerer votre boutique.`,
+    text: `Bienvenue ${displayName}. Votre compte vendeur Tikchop est prêt. Connectez-vous pour créer ou gérer votre boutique.`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0B1D14">
         <h1 style="margin:0 0 12px">Bienvenue sur Tikchop</h1>

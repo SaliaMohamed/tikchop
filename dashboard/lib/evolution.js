@@ -77,7 +77,7 @@ export async function sendEvolutionMedia({
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = Array.isArray(payload?.message) ? payload.message.join(" ") : payload?.message;
-    throw new Error(message || payload?.error || "La photo ou le recu WhatsApp n'a pas pu etre envoye.");
+    throw new Error(message || payload?.error || "La photo ou le reçu WhatsApp n'a pas pu être envoyé.");
   }
 
   return { ok: true, payload };

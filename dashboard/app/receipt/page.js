@@ -68,8 +68,8 @@ function getOrderProgress(order, paid) {
 
   if (status === "DELIVERED" || deliveryStatus === "DELIVERED") {
     return {
-      title: "Commande livree",
-      text: "Merci pour votre confiance. Gardez ce recu si vous devez verifier l'achat plus tard.",
+      title: "Commande livrée",
+      text: "Merci pour votre confiance. Gardez ce reçu si vous devez vérifier l'achat plus tard.",
       accent: "green",
     };
   }
@@ -77,15 +77,15 @@ function getOrderProgress(order, paid) {
   if (deliveryStatus === "ASSIGNED") {
     return {
       title: "Livraison prise en charge",
-      text: "Votre colis est confie au livreur. Le vendeur ou le livreur peut vous appeler si une precision est necessaire.",
+      text: "Votre colis est confié au livreur. Le vendeur ou le livreur peut vous appeler si une précision est nécessaire.",
       accent: "blue",
     };
   }
 
   if (status === "PREPARED" || deliveryStatus === "READY") {
     return {
-      title: "Colis pret",
-      text: "La boutique a prepare la commande. La prochaine etape est le retrait ou la livraison.",
+      title: "Colis prêt",
+      text: "La boutique a préparé la commande. La prochaine étape est le retrait ou la livraison.",
       accent: "amber",
     };
   }
@@ -93,14 +93,14 @@ function getOrderProgress(order, paid) {
   if (paid) {
     return {
       title: "Commande prise en charge",
-      text: "Le paiement est confirme. La boutique prepare maintenant vos articles.",
+      text: "Le paiement est confirmé. La boutique prépare maintenant vos articles.",
       accent: "green",
     };
   }
 
   return {
-    title: "Commande recue",
-    text: "La boutique a recu votre commande. Le paiement ou les details de livraison peuvent encore etre confirmes.",
+    title: "Commande reçue",
+    text: "La boutique a reçu votre commande. Le paiement ou les détails de livraison peuvent encore être confirmés.",
     accent: "amber",
   };
 }
@@ -122,7 +122,7 @@ function getCurrentStep(order, paid) {
 function getStatusLabel(order, paid) {
   if (order?.status === "DELIVERED" || order?.delivery_status === "DELIVERED") return "Livree";
   if (order?.delivery_status === "ASSIGNED") return "Chez le livreur";
-  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "Colis pret";
+  if (order?.status === "PREPARED" || order?.delivery_status === "READY") return "Colis prêt";
   if (paid) return "Confirmee";
   if (order?.status === "CANCELLED") return "Annulee";
   return "En attente";
@@ -222,7 +222,7 @@ export default async function ReceiptPage({ searchParams }) {
             paid ? "bg-green-400 text-zinc-950" : "bg-amber-300 text-zinc-950"
           }`}>
             {paid ? <CheckCircle2 size={15} /> : <Clock3 size={15} />}
-            {paid ? "Paiement confirme" : "Paiement a confirmer"} - {statusLabel}
+            {paid ? "Paiement confirmé" : "Paiement à confirmer"} - {statusLabel}
           </div>
 
           <div className="mt-5 grid grid-cols-[1fr_auto] gap-3 rounded-2xl bg-white/9 p-4 ring-1 ring-white/10">
@@ -248,7 +248,7 @@ export default async function ReceiptPage({ searchParams }) {
               <div className="min-w-0">
                 <p className="font-display text-base font-bold text-[var(--text-main)]">Preuve de commande Tikchop</p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-[var(--text-dim)]">
-                  Reference #{receiptRef}. Recu genere le {formatDate(new Date().toISOString())}.
+                  Reference #{receiptRef}. Reçu généré le {formatDate(new Date().toISOString())}.
                 </p>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default async function ReceiptPage({ searchParams }) {
             <p className="mt-2 text-sm font-bold leading-5 text-[var(--text-main)]">
               {order.delivery_type === "PICKUP"
                 ? "Retrait en boutique. Confirmez l'heure avec le vendeur."
-                : `${order.delivery_zone || "Zone a confirmer"} - ${order.delivery_address || "Adresse a confirmer"}`}
+                : `${order.delivery_zone || "Zone à confirmer"} - ${order.delivery_address || "Adresse à confirmer"}`}
             </p>
           </div>
 
@@ -349,7 +349,7 @@ export default async function ReceiptPage({ searchParams }) {
                   </div>
                 );
               }) : (
-                <div className="p-3 text-sm font-semibold text-[var(--text-dim)]">Articles non disponibles dans le recu.</div>
+                <div className="p-3 text-sm font-semibold text-[var(--text-dim)]">Articles non disponibles dans le reçu.</div>
               )}
             </div>
           </div>
@@ -381,7 +381,7 @@ export default async function ReceiptPage({ searchParams }) {
               <div>
                 <p className="font-display text-sm font-bold text-[var(--text-main)]">A presenter si besoin</p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-[var(--text-dim)]">
-                  Ce recu aide la boutique ou le livreur a retrouver rapidement votre commande. Il ne remplace pas une facture fiscale.
+                  Ce reçu aide la boutique ou le livreur à retrouver rapidement votre commande. Il ne remplace pas une facture fiscale.
                 </p>
               </div>
             </div>

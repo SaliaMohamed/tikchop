@@ -33,9 +33,9 @@ const steps = [
 ];
 
 const benefits = [
-  "Tikchop reste sur l'ecran d'accueil",
+  "Tikchop reste sur l'écran d'accueil",
   "Les vendeuses ouvrent commandes et articles plus vite",
-  "Fonctionne deja sur Android, iPhone et ordinateur",
+  "Fonctionne déjà sur Android, iPhone et ordinateur",
 ];
 
 export default function InstallPage() {

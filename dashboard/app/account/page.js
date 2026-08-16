@@ -89,9 +89,9 @@ export default function AccountPage() {
       form.append("image", compressed);
       const result = await uploadSellerLogo(form);
       updateField("logo_url", result.cleanUrl || result.url);
-      setNotice("Photo mise a jour. Enregistrez pour confirmer.");
+      setNotice("Photo mise à jour. Enregistrez pour confirmer.");
     } catch (err) {
-      setLogoError(friendlyError(err, "Photo non envoyee. Essayez une image plus legere."));
+      setLogoError(friendlyError(err, "Photo non envoyée. Essayez une image plus légère."));
     } finally {
       setLogoUploading(false);
       event.target.value = "";
@@ -108,9 +108,9 @@ export default function AccountPage() {
       const token = await getSellerAccessToken();
       const updated = await saveSellerBusinessProfile(seller.id, profile, token);
       setSeller((s) => ({ ...s, ...updated }));
-      setNotice("Profil enregistre.");
+      setNotice("Profil enregistré.");
     } catch (err) {
-      setError(friendlyError(err, "Impossible d'enregistrer. Verifiez les informations."));
+      setError(friendlyError(err, "Impossible d'enregistrer. Vérifiez les informations."));
     } finally {
       setSaving(false);
     }
@@ -305,7 +305,7 @@ export default function AccountPage() {
           className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white text-sm font-black text-[#0F2B20]/60 ring-1 ring-[#0F2B20]/10 active:bg-[#F6FBF7] active:scale-[0.98]"
         >
           <LogOut size={16} />
-          Se deconnecter
+          Se déconnecter
         </button>
       </div>
 

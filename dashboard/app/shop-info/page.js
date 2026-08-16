@@ -110,7 +110,7 @@ export default function ShopInfoPage() {
         physical_address: sellerData.physical_address || "",
       });
     } catch (err) {
-      setError(friendlyError(err, "Informations boutique non chargees. Reessayez."));
+      setError(friendlyError(err, "Informations boutique non chargées. Réessayez."));
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export default function ShopInfoPage() {
       payload.append("image", compressedFile);
       const result = await uploadSellerLogo(payload);
       updateField("logo_url", result.cleanUrl || result.url);
-      setNotice("Logo televerse. Enregistrez pour confirmer.");
+      setNotice("Logo téléversé. Enregistrez pour confirmer.");
     } catch (err) {
       setLogoError(friendlyError(err, "Logo non envoye. Essayez une image plus legere."));
     } finally {
@@ -163,9 +163,9 @@ export default function ShopInfoPage() {
       const token = await getSellerAccessToken();
       const updated = await saveSellerBusinessProfile(seller.id, profile, token);
       setSeller((current) => ({ ...current, ...updated }));
-      setNotice("Informations boutique enregistrees.");
+      setNotice("Informations boutique enregistrées.");
     } catch (err) {
-      setError(friendlyError(err, "Informations non sauvegardees. Verifiez le nom et le numero."));
+      setError(friendlyError(err, "Informations non sauvegardées. Vérifiez le nom et le numéro."));
     } finally {
       setSaving(false);
     }
@@ -375,7 +375,7 @@ export default function ShopInfoPage() {
             icon={<Phone size={20} />}
             title="DJASSAMAN"
             ok={whatsappReady}
-            text={whatsappReady ? "Assistant connecte." : "Connectez WhatsApp pour recevoir et repondre aux clients."}
+            text={whatsappReady ? "Assistant connecté." : "Connectez WhatsApp pour recevoir et répondre aux clients."}
             href="/crm"
             action="Gerer DJASSAMAN"
           />
@@ -427,7 +427,7 @@ export default function ShopInfoPage() {
               <p className="mt-2 text-xs font-bold leading-5 text-white/55">
                 Paiement: {paymentSummary(seller)}<br />
                 Livraison: {deliverySummary(seller, zones, drivers)}<br />
-                WhatsApp: {whatsappReady ? "connecte" : "a connecter"}
+                WhatsApp: {whatsappReady ? "connecté" : "à connecter"}
               </p>
             </div>
           </section>

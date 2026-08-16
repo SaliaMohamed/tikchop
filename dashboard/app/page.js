@@ -145,25 +145,19 @@ export async function generateMetadata() {
 
 const whatsappTrialMessage = "Bonjour, je veux activer Tikchop gratuitement pour ma boutique.";
 const whatsappContactNumber = process.env.NEXT_PUBLIC_TIKCHOP_WHATSAPP || "";
-const publicContactEmail = process.env.NEXT_PUBLIC_TIKCHOP_CONTACT_EMAIL || "saliamohamed05@gmail.com";
+const publicContactEmail = process.env.NEXT_PUBLIC_TIKCHOP_CONTACT_EMAIL || "";
 const whatsappTrialHref = whatsappContactNumber
   ? `https://wa.me/${whatsappContactNumber}?text=${encodeURIComponent(whatsappTrialMessage)}`
   : `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappTrialMessage)}`;
-const trialFallbackHref = `mailto:${publicContactEmail}?subject=${encodeURIComponent("Acces gratuit Tikchop")}&body=${encodeURIComponent(whatsappTrialMessage)}`;
+const trialFallbackHref = publicContactEmail
+  ? `mailto:${publicContactEmail}?subject=${encodeURIComponent("Acces gratuit Tikchop")}&body=${encodeURIComponent(whatsappTrialMessage)}`
+  : whatsappTrialHref;
 
 function WhatsappTrialButton({ className = "tk-dark-button tk-big-button", label = "Demander l'essai sur WhatsApp", showArrow = true }) {
-  if (!whatsappContactNumber) {
-    return (
-      <a href={trialFallbackHref} className={`tk-whatsapp-button ${className}`}>
-        <MessageCircle size={18} />
-        {label}
-        {showArrow ? <ArrowRight size={18} /> : null}
-      </a>
-    );
-  }
-
+  const href = !whatsappContactNumber && publicContactEmail ? trialFallbackHref : whatsappTrialHref;
+  const mailto = href.startsWith("mailto:");
   return (
-    <a href={whatsappTrialHref} className={`tk-whatsapp-button ${className}`} target="_blank" rel="noreferrer">
+    <a href={href} className={`tk-whatsapp-button ${className}`} target={mailto ? undefined : "_blank"} rel={mailto ? undefined : "noreferrer"}>
       <MessageCircle size={18} />
       {label}
       {showArrow ? <ArrowRight size={18} /> : null}

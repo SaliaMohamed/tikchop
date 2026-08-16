@@ -100,7 +100,7 @@ export default async function AdminPage({ searchParams }) {
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <StatCard icon={<Store size={20} />} label="Boutiques" value={stats.sellers} detail={`${stats.connectedSellers || 0} WhatsApp OK`} />
-          <StatCard icon={<WifiOff size={20} />} label="A corriger" value={stats.disconnectedSellers} detail="WhatsApp non connecte" danger={stats.disconnectedSellers > 0} />
+          <StatCard icon={<WifiOff size={20} />} label="A corriger" value={stats.disconnectedSellers} detail="WhatsApp non connecté" danger={stats.disconnectedSellers > 0} />
           <StatCard icon={<Package size={20} />} label="Articles" value={stats.products} detail={`${stats.lowStockProducts || 0} stock faible`} />
           <StatCard icon={<ReceiptText size={20} />} label="Commandes" value={stats.orders} detail={`${stats.pendingOrders || 0} a traiter`} danger={stats.pendingOrders > 0} />
           <StatCard icon={<CreditCard size={20} />} label="CA recent" value={formatMoney(stats.revenueSample)} detail={`${stats.payoutMissing || 0} paiement a configurer`} />
@@ -272,7 +272,7 @@ function CommandCenter({ attention = {} }) {
   return (
     <AdminPanel title="Priorites" icon={<AlertTriangle size={19} />} action="Ce que tu dois traiter en premier">
       <div className="grid gap-3">
-        <PriorityBlock title="WhatsApp deconnecte" rows={attention.disconnectedSellers} empty="Aucun WhatsApp critique.">
+        <PriorityBlock title="WhatsApp déconnecté" rows={attention.disconnectedSellers} empty="Aucun WhatsApp critique.">
           {(seller) => (
             <div className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate font-black">{seller.name || seller.slug}</span>
@@ -370,11 +370,11 @@ function SellerCard({ seller }) {
         <form action={adminUpdateSellerWhatsAppStatus} className="flex min-h-11 overflow-hidden rounded-2xl bg-white ring-1 ring-black/10">
           <input type="hidden" name="seller_id" value={seller.id} />
           <select name="whatsapp_status" defaultValue={status || "disconnected"} className="min-w-0 flex-1 bg-white px-3 text-xs font-black outline-none">
-            <option value="connected">Connecte</option>
+            <option value="connected">Connecté</option>
             <option value="standard_active">Assistant standard</option>
             <option value="pairing">Appairage</option>
             <option value="pending">En attente</option>
-            <option value="disconnected">Deconnecte</option>
+            <option value="disconnected">Déconnecté</option>
             <option value="error">Erreur</option>
           </select>
           <button className="bg-[#0F2B20] px-3 text-xs font-black text-white">OK</button>
@@ -427,12 +427,12 @@ function OrderRow({ order }) {
           ["pending", "Commande a traiter"],
           ["paid", "Commande payee"],
           ["prepared", "Commande preparee"],
-          ["delivered", "Commande livree"],
+          ["delivered", "Commande livrée"],
           ["cancelled", "Commande annulee"],
         ]} />
         <FilterSelect name="delivery_status" defaultValue={String(order.delivery_status || "PENDING").toLowerCase()} options={[
           ["pending", "Livraison attente"],
-          ["assigned", "Livreur assigne"],
+          ["assigned", "Livreur assigné"],
           ["ready", "Colis pret"],
           ["delivered", "Livraison faite"],
           ["cancelled", "Livraison annulee"],

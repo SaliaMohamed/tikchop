@@ -40,6 +40,7 @@ export default function WhatsAppConnector({ onConnected }) {
   const [error, setError] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("+225 ");
   const [phoneEdited, setPhoneEdited] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   const status = useMemo(() => statusCopy(connection), [connection]);
   const storedWhatsAppNumber = normalizeWhatsAppInput(connection?.phone ? `+${connection.phone}` : seller.phone_number || "+225 ");
@@ -56,9 +57,9 @@ export default function WhatsAppConnector({ onConnected }) {
       const token = await getSellerAccessToken();
       const data = await getSellerWhatsAppConnection(seller, token);
       setConnection(data);
-      if (data.isConnected) setMessage("WhatsApp connecte.");
+      if (data.isConnected) setMessage("WhatsApp connecté.");
     } catch (err) {
-      setError(friendlyError(err, "Connexion non verifiee. Actualisez."));
+      setError(friendlyError(err, "Connexion non vérifiée. Actualisez."));
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,7 @@ export default function WhatsAppConnector({ onConnected }) {
     getSellerAccessToken()
       .then((token) => getSellerWhatsAppConnection(seller, token))
       .then((data) => { if (alive) setConnection(data); })
-      .catch(() => { if (alive) setError("WhatsApp non verifie. Actualisez."); })
+      .catch(() => { if (alive) setError("WhatsApp non vérifié. Actualisez."); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [seller]);
@@ -89,11 +90,11 @@ export default function WhatsAppConnector({ onConnected }) {
         if (data.isConnected) {
           setWatchingConnection(false);
           setPairing(null);
-          setMessage("WhatsApp connecte. Passons au style du DJASSAMAN.");
+          setMessage("WhatsApp connecté. Passons au style du DJASSAMAN.");
           window.clearInterval(interval);
         } else if (attempts >= 18) {
           setWatchingConnection(false);
-          setMessage("Le code attend la validation. Generez un nouveau code si besoin.");
+          setMessage("Le code attend la validation. Générez un nouveau code si besoin.");
           window.clearInterval(interval);
         }
       } catch { /* keep waiting */ }
@@ -108,7 +109,7 @@ export default function WhatsAppConnector({ onConnected }) {
       setMessage("");
       const normalizedPhone = normalizeWhatsAppInput(currentWhatsAppNumber);
       if (getPhoneDigits(normalizedPhone).length < 11) {
-        setError("Ajoutez le numero complet (11 chiffres).");
+        setError("Ajoutez le numéro complet (11 chiffres).");
         setBusy("");
         return;
       }
@@ -122,10 +123,10 @@ export default function WhatsAppConnector({ onConnected }) {
       setConnection((c) => ({ ...(c || {}), instanceName: data.instanceName, phone: data.phone, state: "pairing", isConnected: false, webhookUrl: data.webhookUrl, error: "" }));
       setWatchingConnection(true);
       setMessage(data.pairingCode
-        ? "Code genere. Entrez-le dans WhatsApp > Appareils connectes > Lier avec un numero."
-        : "QR genere. Scannez-le avec WhatsApp.");
+        ? "Code généré. Entrez-le dans WhatsApp > Appareils connectés > Lier avec un numéro."
+        : "QR généré. Scannez-le avec WhatsApp.");
     } catch (err) {
-      setError(friendlyError(err, "Connexion non lancee. Verifiez le numero."));
+      setError(friendlyError(err, "Connexion non lancée. Vérifiez le numéro."));
     } finally {
       setBusy("");
     }
@@ -138,7 +139,7 @@ export default function WhatsAppConnector({ onConnected }) {
       setMessage("");
       const normalizedPhone = normalizeWhatsAppInput(currentWhatsAppNumber);
       if (getPhoneDigits(normalizedPhone).length < 11) {
-        setError("Ajoutez le numero complet (11 chiffres).");
+        setError("Ajoutez le numéro complet (11 chiffres).");
         setBusy("");
         return;
       }
@@ -151,16 +152,19 @@ export default function WhatsAppConnector({ onConnected }) {
       setPairing(data);
       setConnection((c) => ({ ...(c || {}), instanceName: data.instanceName, phone: data.phone, state: "pairing", isConnected: false, error: "" }));
       setWatchingConnection(true);
-      setMessage("Nouveau code genere.");
+      setMessage("Nouveau code généré.");
     } catch (err) {
-      setError(friendlyError(err, "Code non regenere. Reessayez."));
+      setError(friendlyError(err, "Code non régénéré. Réessayez."));
     } finally {
       setBusy("");
     }
   }
 
   async function disconnectWhatsApp() {
-    if (!window.confirm("Deconnecter ce numero WhatsApp ?")) return;
+    if (!confirmDisconnect) {
+      setConfirmDisconnect(true);
+      return;
+    }
     try {
       setBusy("disconnect");
       setError("");
@@ -169,10 +173,11 @@ export default function WhatsAppConnector({ onConnected }) {
       const data = await disconnectSellerWhatsApp(seller, token);
       setPairing(null);
       setWatchingConnection(false);
+      setConfirmDisconnect(false);
       setConnection((c) => ({ ...(c || {}), ...data }));
-      setMessage("WhatsApp deconnecte.");
+      setMessage("WhatsApp déconnecté. Vous pouvez en reconnecter un autre à tout moment.");
     } catch (err) {
-      setError(friendlyError(err, "Deconnexion echouee."));
+      setError(friendlyError(err, "Déconnexion échouée. Réessayez."));
     } finally {
       setBusy("");
     }
@@ -181,14 +186,14 @@ export default function WhatsAppConnector({ onConnected }) {
   async function copyPairingCode() {
     if (!pairing?.pairingCode) return;
     await navigator.clipboard.writeText(pairing.pairingCode);
-    setMessage("Code copie.");
+    setMessage("Code copié.");
   }
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Loader2 className="animate-spin text-[#059669]" size={30} />
-        <p className="mt-3 text-sm font-black text-[#0F2B20]/45">Verification de la connexion...</p>
+        <p className="mt-3 text-sm font-black text-[#0F2B20]/45">Vérification de la connexion...</p>
       </div>
     );
   }
@@ -198,21 +203,45 @@ export default function WhatsAppConnector({ onConnected }) {
       <div className="space-y-4">
         <div className="flex items-center gap-3 rounded-[20px] bg-[#EAF8F0] p-4 ring-1 ring-[#059669]/15">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#059669]/15 text-[#059669]">
-            <TikchopLottie name="success" size={34} loop={false} ariaLabel="WhatsApp connecte" />
+            <TikchopLottie name="success" size={34} loop={false} ariaLabel="WhatsApp connecté" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-[#0F2B20]">WhatsApp connecte</p>
+            <p className="text-sm font-black text-[#0F2B20]">WhatsApp connecté</p>
             <p className="truncate text-xs font-bold text-[#0F2B20]/50">{connection.phone ? `+${connection.phone}` : seller.phone_number}</p>
           </div>
-          <button
-            type="button"
-            onClick={disconnectWhatsApp}
-            disabled={busy === "disconnect"}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#0F2B20]/8 px-3 text-xs font-black text-[#0F2B20] disabled:opacity-50"
-          >
-            {busy === "disconnect" ? <Loader2 className="animate-spin" size={13} /> : <Power size={13} />}
-            Retirer
-          </button>
+          {busy === "disconnect" ? (
+            <Loader2 className="shrink-0 animate-spin text-[#0F2B20]/60" size={18} />
+          ) : (confirmDisconnect ? (
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={disconnectWhatsApp}
+                  className="flex min-h-11 items-center gap-1.5 rounded-full bg-[#DC3D43] px-3 text-xs font-black text-white"
+                >
+                  <Power size={13} />
+                  Confirmer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDisconnect(false)}
+                  className="flex min-h-11 items-center rounded-full bg-[#0F2B20]/8 px-3 text-xs font-black text-[#0F2B20]"
+                >
+                  Annuler
+                </button>
+              </div>
+              <p className="text-right text-[0.68rem] font-bold leading-4 text-[#0F2B20]/50">Déconnecter ce numéro WhatsApp ?</p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDisconnect(true)}
+              className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-[#0F2B20]/8 px-3 text-xs font-black text-[#0F2B20]"
+            >
+              <Power size={13} />
+              Retirer
+            </button>
+          ))}
         </div>
 
         {onConnected && (
@@ -238,7 +267,7 @@ export default function WhatsAppConnector({ onConnected }) {
       )}
 
       <div>
-        <label className="block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#0F2B20]/60">Numero WhatsApp vendeur</label>
+        <label className="block text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#0F2B20]/60">Numéro WhatsApp vendeur</label>
         <div className="mt-2 grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden rounded-[18px] bg-white ring-1 ring-[#0F2B20]/10 px-3 py-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#059669]/10 text-[#059669]">
             <Phone size={17} />
@@ -275,8 +304,8 @@ export default function WhatsAppConnector({ onConnected }) {
 
       {watchingConnection && (
         <p className="flex items-center gap-2 rounded-[14px] bg-[#EAF8F0] px-3 py-2.5 text-sm font-bold text-[#047857]">
-          <TikchopLottie name="sparkle" size={20} speed={1.5} className="shrink-0" ariaLabel="Verification en cours" />
-          Verification en cours...
+          <TikchopLottie name="sparkle" size={20} speed={1.5} className="shrink-0" ariaLabel="Vérification en cours" />
+          Vérification en cours...
         </p>
       )}
 
@@ -288,7 +317,7 @@ export default function WhatsAppConnector({ onConnected }) {
           className="flex min-h-[54px] items-center justify-center gap-2 rounded-[20px] bg-[#0F2B20] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(15,43,32,0.18)] disabled:opacity-50"
         >
           {busy === "pairing" || busy === "code" ? <Loader2 className="animate-spin" size={18} /> : <KeyRound size={18} />}
-          {!phoneReady ? "Ajoutez le numero" : pairing ? "Regenerer le code" : "Generer le code WhatsApp"}
+          {!phoneReady ? "Ajoutez le numéro" : pairing ? "Régénérer le code" : "Générer le code WhatsApp"}
         </button>
         <button
           type="button"
@@ -297,7 +326,7 @@ export default function WhatsAppConnector({ onConnected }) {
           className="flex min-h-[46px] items-center justify-center gap-2 rounded-[16px] bg-[#0F2B20]/7 px-4 text-sm font-black text-[#0F2B20] disabled:opacity-50"
         >
           <RefreshCw className={loading ? "animate-spin" : ""} size={15} />
-          Verifier la connexion
+          Vérifier la connexion
         </button>
       </div>
 
@@ -306,18 +335,18 @@ export default function WhatsAppConnector({ onConnected }) {
           <Smartphone size={13} className="text-[#059669]" />
           Comment connecter :
         </p>
-        <p className="mt-1.5">1. Entrez votre numero WhatsApp vendeur.</p>
-        <p>2. Appuyez sur &quot;Generer le code&quot;.</p>
-        <p>3. Sur le telephone: WhatsApp &gt; Appareils connectes &gt; Lier avec un numero.</p>
-        <p>4. Entrez le code affiche. Tikchop verifie automatiquement.</p>
+        <p className="mt-1.5">1. Entrez votre numéro WhatsApp vendeur.</p>
+        <p>2. Appuyez sur &quot;Générer le code&quot;.</p>
+        <p>3. Sur le téléphone : WhatsApp &gt; Appareils connectés &gt; Lier avec un numéro.</p>
+        <p>4. Entrez le code affiché. Tikchop vérifie automatiquement.</p>
       </div>
 
       <p className="flex items-center gap-2 text-center text-xs font-bold text-[#0F2B20]/40">
-        <span className={`inline-flex items-center gap-1 rounded-full bg-[#0F2B20]/6 px-2.5 py-1 text-[0.62rem] font-black text-[#0F2B20]/60`}>
+        <span className={`inline-flex items-center gap-1 rounded-full bg-[#0F2B20]/6 px-2.5 py-1 text-[0.68rem] font-black text-[#0F2B20]/60`}>
           {status?.icon}
-          {status?.label || "Pret"}
+          {status?.label || "Prêt"}
         </span>
-        Etape 1 sur 3
+        Étape 1 sur 3
       </p>
     </div>
   );

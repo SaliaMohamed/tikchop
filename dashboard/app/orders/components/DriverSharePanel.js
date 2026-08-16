@@ -40,7 +40,7 @@ export function DriverSharePanel({ availableDrivers, order, onShare }) {
             >
               <span className="block">{driver.name}</span>
               <span className={`block text-xs font-bold ${assignedDriverId === driver.id ? "text-[#15382C]" : "text-white/48"}`}>
-                {assignedDriverId === driver.id ? "Deja envoye" : (driver.zone || "Toutes zones")}
+                {assignedDriverId === driver.id ? "Déjà envoyé" : (driver.zone || "Toutes zones")}
               </span>
             </button>
           ))}

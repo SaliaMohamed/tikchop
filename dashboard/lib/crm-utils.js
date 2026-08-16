@@ -69,7 +69,7 @@ export function getItemsLabel(order) {
 
 export function getCustomerName(customer) {
   if (customer.phone) return customer.phone;
-  return "Client sans numero";
+  return "Client sans numéro";
 }
 
 export function isUnknownPhone(phone) {

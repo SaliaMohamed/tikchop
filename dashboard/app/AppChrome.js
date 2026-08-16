@@ -84,7 +84,7 @@ function getMobilePageMeta(pathname) {
   return mobilePageMeta[pathname] || "Tikchop";
 }
 
-function accountSyncTimeout(promise, message = "Verification du compte trop longue.") {
+function accountSyncTimeout(promise, message = "Vérification du compte trop longue.") {
   let timer;
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => reject(new Error(message)), ACCOUNT_SYNC_TIMEOUT_MS);
@@ -300,7 +300,7 @@ function SellerAccountGate({ children }) {
   const pathname = usePathname();
   const [clientReady, setClientReady] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [message, setMessage] = useState("Verification de votre compte...");
+  const [message, setMessage] = useState("Vérification de votre compte...");
 
   useEffect(() => {
     const timer = window.setTimeout(() => setClientReady(true), 0);
@@ -328,10 +328,10 @@ function SellerAccountGate({ children }) {
 
       try {
         if (!canUseStoredSeller) setChecking(true);
-        setMessage("Verification de votre compte...");
+        setMessage("Vérification de votre compte...");
         const { data, error } = await accountSyncTimeout(
           supabase.auth.getSession(),
-          "Session vendeur trop lente a verifier.",
+          "Session vendeur trop lente à vérifier.",
         );
         if (error) throw error;
 
@@ -345,7 +345,7 @@ function SellerAccountGate({ children }) {
         setMessage("Chargement de la boutique...");
         const seller = await accountSyncTimeout(
           getSellerByOwner(user.id, data.session?.access_token),
-          "Boutique trop longue a charger.",
+          "Boutique trop longue à charger.",
         );
         if (seller) {
           writeActiveSeller(seller);
@@ -412,7 +412,7 @@ function SignOutButton() {
   }
 
   return (
-    <button type="button" onClick={handleSignOut} className="app-icon-button" aria-label="Se deconnecter">
+    <button type="button" onClick={handleSignOut} className="app-icon-button" aria-label="Se déconnecter">
       <LogOut size={17} />
     </button>
   );

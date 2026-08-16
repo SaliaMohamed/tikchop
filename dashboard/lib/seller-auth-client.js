@@ -9,7 +9,7 @@ export async function getSellerAccessToken() {
 
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session?.access_token) {
-    throw new Error("Session vendeur expiree. Reconnecte-toi.");
+    throw new Error("Session vendeur expirée. Reconnecte-toi.");
   }
 
   return data.session.access_token;

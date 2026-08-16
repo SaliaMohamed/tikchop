@@ -40,7 +40,7 @@ export const statusHints = {
   PENDING: "Confirmer le client",
   PAID: "Mettre dans le sachet",
   PREPARED: "Envoyer au livreur",
-  IN_DELIVERY: "Marquer livree",
+  IN_DELIVERY: "Marquer livrée",
   DELIVERED: "Vente fermee",
   CANCELLED: "Commande annulee",
 };
@@ -68,7 +68,7 @@ export function getCardActionLabel(status) {
   if (status === "PENDING") return "Confirmer";
   if (status === "PAID") return "Colis";
   if (status === "PREPARED") return "Livreur";
-  if (status === "IN_DELIVERY") return "Livree";
+  if (status === "IN_DELIVERY") return "Livrée";
   if (status === "DELIVERED") return "Finie";
   if (status === "CANCELLED") return "Annulee";
   return "Voir";
@@ -83,7 +83,7 @@ export function getCardActionTone(status) {
 export function getQuickAction(order, onPaid, onPrepared, onDelivered, onOpenDelivery) {
   if (order.delivery_status === "ASSIGNED" && order.status !== "DELIVERED") {
     return {
-      label: "Marquer livree",
+      label: "Marquer livrée",
       icon: <CheckCircle2 size={18} />,
       className: "bg-[#059669] text-white hover:bg-[#047857]",
       onClick: onDelivered,
@@ -166,7 +166,7 @@ export function getNextAction(order) {
   if (order.delivery_status === "ASSIGNED" && order.status !== "DELIVERED") {
     return {
       title: "En livraison",
-      subtitle: "Le livreur a la fiche. Fermez apres reception client.",
+      subtitle: "Le livreur a la fiche. Fermez après réception client.",
       icon: <Truck size={17} />,
       iconTone: "bg-indigo-100 text-indigo-700",
       barClass: "bg-indigo-50 text-indigo-800",
@@ -194,10 +194,10 @@ export function getNextAction(order) {
   }
 
   return {
-    title: order.status === "PAID" ? "Preparer le colis" : "Client a confirmer",
+    title: order.status === "PAID" ? "Préparer le colis" : "Client à confirmer",
     subtitle: order.status === "PAID"
       ? "Commande confirmee. Mettez les articles dans le sachet."
-      : "Verifiez client, adresse et mode de paiement avant d'emballer.",
+      : "Vérifiez client, adresse et mode de paiement avant d'emballer.",
     icon: order.status === "PAID" ? <CheckCircle2 size={17} /> : <Clock3 size={17} />,
     iconTone: order.status === "PAID" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700",
     barClass: order.status === "PAID" ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800",

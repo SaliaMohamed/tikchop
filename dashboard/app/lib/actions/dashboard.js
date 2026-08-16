@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 
-import { requireSellerBySlug } from "./auth";
+import { requireSellerBySlug, requireSellerById } from "./auth";
 
 /**
  * Dashboard data & delivery driver management.

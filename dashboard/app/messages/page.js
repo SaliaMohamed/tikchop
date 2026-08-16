@@ -126,7 +126,7 @@ export default function MessagesPage() {
       setNotice("");
       const token = await getSellerAccessToken();
       await pauseBotForCustomer(seller.slug, conversation.customer_phone, token);
-      await refreshAfterAction("Vous avez la main. Le bot ne repond plus a ce client pour le moment.");
+      await refreshAfterAction("Vous avez la main. Le bot ne répond plus à ce client pour le moment.");
     } catch (err) {
       setError(friendlyError(err, "Impossible de reprendre la main sur cette discussion."));
     } finally {
@@ -161,7 +161,7 @@ export default function MessagesPage() {
       setReply("");
       await refreshAfterAction("Message envoye. Tikchop vous laisse la main sur cette conversation.");
     } catch (err) {
-      setError(friendlyError(err, "Message non envoye. Verifiez que WhatsApp est connecte."));
+      setError(friendlyError(err, "Message non envoyé. Vérifiez que WhatsApp est connecté."));
     } finally {
       setBusy("");
     }
@@ -318,7 +318,7 @@ function EmptyMessages({ whatsappConnected }) {
       <h3 className="font-display text-xl font-bold text-[#0F2B20]">Aucun message encore</h3>
       <p className="mt-2 text-sm font-medium leading-relaxed text-[#0F2B20]/60 max-w-[280px]">
         {whatsappConnected
-          ? "Les messages clients arrivent ici. DJASSAMAN repond automatiquement."
+          ? "Les messages clients arrivent ici. DJASSAMAN répond automatiquement."
           : "Connectez WhatsApp : DJASSAMAN repondra a vos clients."}
       </p>
       {!whatsappConnected && (

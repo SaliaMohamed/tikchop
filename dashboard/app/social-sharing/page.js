@@ -18,7 +18,7 @@ import {
 import { getSellerProducts } from "../actions";
 import { useActiveSeller } from "../components/sellerContext";
 import { getSellerAccessToken } from "../../lib/seller-auth-client";
-import { fetchSellerProductsFromMobileApi, withClientTimeout } from "../../lib/seller-products-client";
+import { withClientTimeout } from "../../lib/seller-products-client";
 import { friendlyError } from "../../lib/user-facing-error";
 import { IllustrationShare } from "../components/TikchopIllustrations";
 
@@ -90,19 +90,10 @@ export default function SocialSharingPage() {
         setLoading(true);
         setError("");
         const token = await getSellerAccessToken();
-        let data;
-        try {
-          data = await withClientTimeout(
-            fetchSellerProductsFromMobileApi(token),
-            "Articles trop longs a charger.",
-          );
-        } catch (apiError) {
-          console.warn("Social sharing mobile API unavailable, using server action fallback:", apiError);
-          data = await withClientTimeout(
-            getSellerProducts(seller.slug, token),
-            "Articles trop longs a charger.",
-          );
-        }
+        const data = await withClientTimeout(
+          getSellerProducts(seller.slug, token),
+          "Articles trop longs à charger.",
+        );
         if (alive) setProducts(data || []);
       } catch (loadError) {
         if (alive) setError(friendlyError(loadError, "Impossible de charger les articles."));

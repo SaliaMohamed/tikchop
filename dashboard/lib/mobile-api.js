@@ -138,7 +138,7 @@ function attachHandoffsToOrders(orders = [], handoffs = []) {
 async function saveMobileHandoff(seller, customerPhone, durationMinutes = DEFAULT_HANDOFF_MINUTES) {
   const cleanPhone = normalizeCustomerPhone(customerPhone);
   if (cleanPhone.length < 6) {
-    throw new MobileApiError("Numero client invalide.", 400);
+    throw new MobileApiError("Numéro client invalide.", 400);
   }
 
   const minutes = Math.max(15, Math.min(Number.parseInt(durationMinutes, 10) || DEFAULT_HANDOFF_MINUTES, 7 * 24 * 60));
@@ -343,7 +343,7 @@ export async function getMobileConversationMessages(request, customerPhone) {
   const { seller } = await requireMobileSeller(request);
   const cleanPhone = normalizeCustomerPhone(customerPhone);
   if (cleanPhone.length < 6) {
-    throw new MobileApiError("Numero client invalide.", 400);
+    throw new MobileApiError("Numéro client invalide.", 400);
   }
 
   const sellerKeys = getHandoffSellerKeys(seller);
@@ -391,7 +391,7 @@ export async function resumeMobileBotForCustomer(request, customerPhone) {
   const { seller } = await requireMobileSeller(request);
   const cleanPhone = normalizeCustomerPhone(customerPhone);
   if (cleanPhone.length < 6) {
-    throw new MobileApiError("Numero client invalide.", 400);
+    throw new MobileApiError("Numéro client invalide.", 400);
   }
 
   const { error } = await supabaseAdmin
@@ -422,7 +422,7 @@ export async function sendMobileManualReply(request, customerPhone) {
   });
 
   if (!result?.ok) {
-    throw new MobileApiError("Message non envoye. Verifiez la connexion WhatsApp de la boutique.", 503);
+    throw new MobileApiError("Message non envoyé. Vérifiez la connexion WhatsApp de la boutique.", 503);
   }
 
   const messageRow = {

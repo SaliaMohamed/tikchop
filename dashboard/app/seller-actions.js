@@ -48,12 +48,12 @@ function normalizeSellerWhatsAppNumber(value) {
   return digits ? `+${digits}` : "";
 }
 
-function requirePairingPhone(value, label = "generer la connexion WhatsApp") {
+function requirePairingPhone(value, label = "générer la connexion WhatsApp") {
   const phoneDisplay = normalizeSellerWhatsAppNumber(value);
   const phone = cleanEvolutionPhone(phoneDisplay);
 
   if (phone.length < 11) {
-    throw new Error(`Ajoute le numero WhatsApp vendeur avant de ${label}.`);
+    throw new Error(`Ajoute le numéro WhatsApp vendeur avant de ${label}.`);
   }
 
   return { phoneDisplay, phone };
@@ -537,7 +537,7 @@ export async function getSellerWhatsAppConnection(seller, accessToken) {
 }
 
 export async function activateSellerStandardAssistant(seller, accessToken) {
-  throw new Error("L'assistant standard centralise n'est plus supporte. Vous devez connecter votre propre numero WhatsApp.");
+  throw new Error("L'assistant standard centralisé n'est plus supporté. Vous devez connecter votre propre numéro WhatsApp.");
 }
 
 export async function getSellerChatbotSettings(seller, accessToken) {
@@ -700,7 +700,7 @@ export async function createSellerAccount(payload) {
     if (/already|registered|exists|existe|duplicate/i.test(error.message || "")) {
       throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
     }
-    throw new Error(error.message || "Impossible de creer le compte vendeur.");
+    throw new Error(error.message || "Impossible de créer le compte vendeur.");
   }
 
   if (method === "EMAIL") {
@@ -741,7 +741,7 @@ export async function createSellerAccountAndShop(payload) {
     }
 
     if (method === "PHONE" && accountPhone.replace(/\D/g, "").length < 8) {
-      throw new Error("Ajoute un numero de telephone valide avec indicatif pays.");
+throw new Error("Ajoute un numéro de téléphone valide avec indicatif pays.");
     }
 
     if (password.length < 6) {
@@ -753,7 +753,7 @@ export async function createSellerAccountAndShop(payload) {
     }
 
     if (shopPhone.length < 8) {
-      throw new Error("Ajoute un numero WhatsApp valide.");
+      throw new Error("Ajoute un numéro WhatsApp valide.");
     }
 
     await assertSafeSellerPassword(password);
@@ -788,7 +788,7 @@ export async function createSellerAccountAndShop(payload) {
 
     if (authError) {
       if (/already|registered|exists|existe|duplicate/i.test(authError.message || "")) {
-        throw new Error("Ce compte existe deja. Appuyez sur 'Deja inscrit' puis connectez-vous.");
+throw new Error("Ce compte existe déjà. Appuyez sur 'Déjà inscrit' puis connectez-vous.");
       }
       throw new Error(authError.message || "Impossible de creer le compte vendeur.");
     }
@@ -819,13 +819,13 @@ export async function createSellerAccountAndShop(payload) {
 
     const sellerWithPhone = await loadSellerByPhoneNumber(shopPhone);
     if (sellerWithPhone && sellerWithPhone.owner_user_id !== user.id) {
-      throw new Error("Ce numero WhatsApp est deja utilise par une autre boutique.");
+      throw new Error("Ce numéro WhatsApp est déjà utilisé par une autre boutique.");
     }
 
     if (ownerEmail) {
       const sellerWithEmail = await loadSellerByOwnerEmail(ownerEmail);
       if (sellerWithEmail && sellerWithEmail.owner_user_id !== user.id) {
-        throw new Error("Cet email est deja rattache a une autre boutique.");
+        throw new Error("Cet email est déjà rattaché à une autre boutique.");
       }
     }
 
@@ -936,7 +936,7 @@ export async function createSellerFromOnboarding(payload) {
     }
 
     if (phone.length < 8) {
-      throw new Error("Ajoute un numero WhatsApp valide.");
+      throw new Error("Ajoute un numéro WhatsApp valide.");
     }
 
     const existingSeller = await loadSellerByOwnerId(ownerUserId);
@@ -946,13 +946,13 @@ export async function createSellerFromOnboarding(payload) {
 
     const sellerWithPhone = await loadSellerByPhoneNumber(phone);
     if (sellerWithPhone && sellerWithPhone.owner_user_id !== ownerUserId) {
-      throw new Error("Ce numero WhatsApp est deja utilise par une autre boutique.");
+      throw new Error("Ce numéro WhatsApp est déjà utilisé par une autre boutique.");
     }
 
     if (ownerEmail) {
       const sellerWithEmail = await loadSellerByOwnerEmail(ownerEmail);
       if (sellerWithEmail && sellerWithEmail.owner_user_id !== ownerUserId) {
-        throw new Error("Cet email est deja rattache a une autre boutique.");
+        throw new Error("Cet email est déjà rattaché à une autre boutique.");
       }
     }
 
@@ -982,7 +982,7 @@ export async function createSellerFromOnboarding(payload) {
         return { success: true, data: existingSeller };
       }
 
-      throw new Error("Ce compte possede deja une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
+      throw new Error("Ce compte possède déjà une boutique. Connecte-toi avec ce compte puis utilise la boutique existante.");
     }
 
     if (isOwnerSchemaError(error)) {
@@ -1027,7 +1027,7 @@ export async function createSellerFromOnboarding(payload) {
 export async function requestSellerWhatsAppPairing(seller, accessToken, whatsappNumber = "") {
   const ownedSeller = await requireOwnedSeller(seller, accessToken);
   const slug = slugify(ownedSeller.slug);
-  const { phoneDisplay, phone } = requirePairingPhone(whatsappNumber || ownedSeller.phone_number, "generer le QR");
+  const { phoneDisplay, phone } = requirePairingPhone(whatsappNumber || ownedSeller.phone_number, "générer le QR");
 
   if (!slug) throw new Error("Boutique introuvable.");
 
@@ -1072,7 +1072,7 @@ export async function requestSellerWhatsAppPairing(seller, accessToken, whatsapp
 
   const existingState = normalizeEvolutionState(existing);
   if (["open", "connected"].includes(existingState)) {
-    throw new Error("Ce numero WhatsApp est deja connecte a Tikchop.");
+    throw new Error("Ce numéro WhatsApp est déjà connecté à Tikchop.");
   }
 
   if (existing) {
@@ -1108,7 +1108,7 @@ export async function requestSellerWhatsAppPairing(seller, accessToken, whatsapp
         body: JSON.stringify(body),
       });
     } else {
-      throw new Error("Ce numero WhatsApp est deja connecte a Tikchop.");
+      throw new Error("Ce numéro WhatsApp est déjà connecté à Tikchop.");
     }
 
   }
@@ -1152,7 +1152,7 @@ export async function requestSellerWhatsAppPairing(seller, accessToken, whatsapp
 export async function refreshSellerWhatsAppPairingCode(seller, accessToken, whatsappNumber = "") {
   const ownedSeller = await requireOwnedSeller(seller, accessToken);
   const slug = slugify(ownedSeller.slug);
-  const { phoneDisplay, phone } = requirePairingPhone(whatsappNumber || ownedSeller.phone_number, "regenerer le code");
+  const { phoneDisplay, phone } = requirePairingPhone(whatsappNumber || ownedSeller.phone_number, "régénérer le code");
 
   if (!slug) throw new Error("Boutique introuvable.");
 
@@ -1204,7 +1204,7 @@ export async function refreshSellerWhatsAppPairingCode(seller, accessToken, what
 
   const existingState = normalizeEvolutionState(existing);
   if (["open", "connected"].includes(existingState)) {
-    throw new Error("Ce numero WhatsApp est deja connecte a Tikchop.");
+    throw new Error("Ce numéro WhatsApp est déjà connecté à Tikchop.");
   }
 
   if (existing) {

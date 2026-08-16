@@ -24,7 +24,7 @@ export async function assertSafeSellerPassword(password) {
   const value = String(password || "");
 
   if (isTooSimple(value)) {
-    throw new Error("Choisissez un mot de passe moins facile a deviner.");
+    throw new Error("Choisissez un mot de passe moins facile à deviner.");
   }
 
   if (process.env.TIKCHOP_SKIP_PWNED_PASSWORD_CHECK === "1") {

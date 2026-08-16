@@ -53,7 +53,7 @@ export default function UpdatePasswordPage() {
         const { data, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!data.session) {
-          throw new Error("Lien de recuperation expire ou deja utilise. Demandez un nouveau lien.");
+          throw new Error("Lien de récupération expiré ou déjà utilisé. Demandez un nouveau lien.");
         }
 
         if (active) setLinkReady(true);
@@ -133,7 +133,7 @@ export default function UpdatePasswordPage() {
                 {success ? "Mot de passe change" : "Nouveau mot de passe"}
               </h1>
               <p className="mt-1 text-sm font-bold leading-5 text-[#0F2B20]/50">
-                {success ? "Vous pouvez maintenant vous reconnecter a votre espace vendeur." : "Choisissez un nouveau mot de passe pour votre compte vendeur."}
+                {success ? "Vous pouvez maintenant vous reconnecter à votre espace vendeur." : "Choisissez un nouveau mot de passe pour votre compte vendeur."}
               </p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function UpdatePasswordPage() {
               {checkingLink && (
                 <p className="flex items-center gap-2 rounded-[20px] bg-[#F6FBF7] p-3 text-sm font-bold leading-5 text-[#0F2B20]/50 ring-1 ring-[#0F2B20]/10">
                   <Loader2 className="animate-spin text-[#059669]" size={18} />
-                  Verification du lien de recuperation...
+                  Vérification du lien de récupération...
                 </p>
               )}
               {!checkingLink && !linkReady && (
@@ -162,7 +162,7 @@ export default function UpdatePasswordPage() {
                   onChange={(event) => setPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
-                  placeholder="Minimum 6 caracteres"
+                  placeholder="Minimum 6 caractères"
                   disabled={checkingLink || !linkReady}
                   className="mobile-input bg-[#F6FBF7] text-base font-bold text-[#0F2B20] placeholder:text-[#0F2B20]/30"
                 />
@@ -175,7 +175,7 @@ export default function UpdatePasswordPage() {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
-                  placeholder="Retape le mot de passe"
+                  placeholder="Retapez le mot de passe"
                   disabled={checkingLink || !linkReady}
                   className="mobile-input bg-[#F6FBF7] text-base font-bold text-[#0F2B20] placeholder:text-[#0F2B20]/30"
                 />

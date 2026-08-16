@@ -41,7 +41,7 @@ export async function signInWithPasswordControlled(credentials, timeoutMs = 2200
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey || typeof fetch === "undefined") {
-    return withTimeout(supabase.auth.signInWithPassword(credentials), "Connexion trop longue. R?essayez.", timeoutMs)
+    return withTimeout(supabase.auth.signInWithPassword(credentials), "Connexion trop longue. Réessayez.", timeoutMs)
       .catch((error) => ({ data: null, error }));
   }
   const controller = new AbortController();
@@ -55,12 +55,12 @@ export async function signInWithPasswordControlled(credentials, timeoutMs = 2200
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) return { data: null, error: new Error(payload.msg || payload.error_description || payload.error || "Connexion impossible.") };
-    if (!payload.access_token || !payload.refresh_token) return { data: null, error: new Error("Session incompl?te. R?essayez.") };
+    if (!payload.access_token || !payload.refresh_token) return { data: null, error: new Error("Session incomplète. Réessayez.") };
     const { data, error } = await supabase.auth.setSession({ access_token: payload.access_token, refresh_token: payload.refresh_token });
     if (error) return { data: null, error };
     return { data: { session: data.session || payload, user: data.user || payload.user }, error: null };
   } catch (error) {
-    const message = error?.name === "AbortError" ? "Connexion lente. R?essayez dans quelques secondes." : "Connexion impossible. V?rifiez votre r?seau.";
+    const message = error?.name === "AbortError" ? "Connexion lente. Réessayez dans quelques secondes." : "Connexion impossible. Vérifiez votre réseau.";
     return { data: null, error: new Error(message) };
   } finally {
     clearTimeout(timer);

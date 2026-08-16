@@ -20,7 +20,7 @@ function getRecommendation(customer) {
     return {
       icon: <Clock3 size={20} />,
       title: "Confirmer ce client",
-      body: "Le client a commence l'achat. Envoie un message court pour verifier adresse et paiement.",
+      body: "Le client a commencé l'achat. Envoie un message court pour vérifier adresse et paiement.",
     };
   }
 
@@ -28,7 +28,7 @@ function getRecommendation(customer) {
     return {
       icon: <ShoppingBag size={20} />,
       title: "Finir la livraison",
-      body: "Le paquet semble pret. Confirme le passage du livreur et ferme la commande apres reception.",
+      body: "Le paquet semble prêt. Confirme le passage du livreur et ferme la commande après réception.",
     };
   }
 
@@ -36,7 +36,7 @@ function getRecommendation(customer) {
     return {
       icon: <Star size={20} />,
       title: "Bon client",
-      body: "Il a deja achete plusieurs fois. Envoyez les nouveautes en priorite avec un message personnel.",
+      body: "Il a déjà acheté plusieurs fois. Envoyez les nouveautés en priorité avec un message personnel.",
     };
   }
 

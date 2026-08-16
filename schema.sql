@@ -1,3 +1,12 @@
+-- ⚠️ DOCUMENT HISTORIQUE — NE PAS UTILISER TEL QUEL
+-- Ce fichier est le bootstrap initial du projet. Il est INCOMPLET et RLS désuet.
+-- La source de vérité du schéma est :
+--   dashboard/supabase-migrations/            (23 migrations ordonnées)
+--   dashboard/supabase-migrations/APPLY_IN_SUPABASE_SQL_EDITOR.sql  (patch live appliqué)
+-- Un nouveau projet doit rejouer schema.sql PUIS APPLY (qui est idempotent),
+-- jamais schema.sql seul.
+-- ============================================================
+
 -- Schéma Supabase pour Plateforme de Mini-boutiques (TikTok Sellers)
 
 -- 1. Table: Vendeurs (sellers)
@@ -129,17 +138,16 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
--- Les produits et les vendeurs sont lisibles par tout le monde (pour les boutiques publiques)
-CREATE POLICY "Public profiles are viewable by everyone."
-ON public.sellers FOR SELECT
-USING ( true );
-
-CREATE POLICY "Products are viewable by everyone."
-ON public.products FOR SELECT
-USING ( true );
-
--- Les vendeurs peuvent tout faire sur leurs propres produits (l'authentification sera gérée par l'API/Supabase)
--- (Pour l'instant, on laisse ces politiques simples. À adapter selon l'authentification n8n/Next.js)
-CREATE POLICY "Sellers can manage their own products."
-ON public.products FOR ALL
-USING ( auth.uid() = seller_id );
+-- ⚠️ Les policies ci-dessous sont OBSOLÈTES. Elles ne sont PLUS en vigueur en production.
+-- La migration 2026-05-16-seller-auth-isolation-rls.sql a SUPPRIMÉ toutes les policies
+-- larges ("viewable by everyone", anon read, auth.uid() = seller_id) et les a remplacées
+-- par des politiques owner-based (owner_user_id = auth.uid()). Ne jamais restaurer
+-- un SELECT USING (true) sur sellers/products/orders sans revue sécurité.
+--
+-- Anciennes policies (supprimées par la migration 2026-05-16) :
+--   CREATE POLICY "Public profiles are viewable by everyone." ON sellers FOR SELECT USING ( true );
+--   CREATE POLICY "Products are viewable by everyone."      ON products FOR SELECT USING ( true );
+--   CREATE POLICY "Sellers can manage their own products."  ON products FOR ALL USING ( auth.uid() = seller_id );
+--
+-- Les boutiques publiques passent par les routes serveur Tikchop (service_role),
+-- pas par un SELECT anon direct sur ces tables.

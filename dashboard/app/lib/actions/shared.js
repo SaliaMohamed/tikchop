@@ -146,7 +146,7 @@ export async function getActiveSellerHandoffs(seller) {
 export async function saveSellerCustomerHandoff(seller, customerPhone, durationMinutes = 24 * 60) {
   const cleanPhone = normalizeCustomerPhone(customerPhone);
   if (cleanPhone.length < 6) {
-    throw new Error("Numero client invalide.");
+    throw new Error("Numéro client invalide.");
   }
 
   const minutes = Math.max(15, Math.min(Number.parseInt(durationMinutes, 10) || 24 * 60, 7 * 24 * 60));
@@ -220,10 +220,10 @@ export function buildDriverDeliveryMessage(order, driver) {
   const deliveryFee = Number(order.delivery_fee || 0);
   const productPaid = order.status === "PAID" || order.payment_method === "PAYSTACK";
   const productPaymentText = order.payment_method === "CASH_ON_DELIVERY"
-    ? "A ENCAISSER A LA LIVRAISON"
-    : productPaid ? "PAYE" : "A verifier";
+    ? "À ENCAISSER À LA LIVRAISON"
+    : productPaid ? "PAYE" : "À vérifier";
   const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "");
-  const receiptLine = appUrl && order.id ? `\nRecu client: ${appUrl}/receipt?order=${order.id}` : "";
+  const receiptLine = appUrl && order.id ? `\nReçu client: ${appUrl}/receipt?order=${order.id}` : "";
 
   return `Nouvelle livraison Tikchop
 
@@ -231,19 +231,19 @@ Commande: ${orderRef}
 Boutique: ${order.sellers?.name || "Tikchop"}
 Livreur: ${driver.name}
 
-Client: ${order.customer_phone || "Non renseigne"}
-Zone: ${order.delivery_zone || "Non renseignee"}
-Adresse: ${order.delivery_address || "Non renseignee"}
+Client: ${order.customer_phone || "Non renseigné"}
+Zone: ${order.delivery_zone || "Non renseignée"}
+Adresse: ${order.delivery_address || "Non renseignée"}
 
 Articles:
 ${items || "- Articles dans la commande"}
 
 Produits: ${formatCfa(order.total_amount)}
-Livraison: ${deliveryFee > 0 ? `${formatCfa(deliveryFee)} a encaisser` : "Aucun frais"}
+Livraison: ${deliveryFee > 0 ? `${formatCfa(deliveryFee)} à encaisser` : "Aucun frais"}
 Paiement produit: ${productPaymentText}
 ${receiptLine}
 
-Quand c'est livre, informe la boutique.`;
+Quand c'est livré, informe la boutique.`;
 }
 
 export function chooseDriverForOrder(order, drivers) {
@@ -389,4 +389,59 @@ export async function sendOrderToAssignedDriver(orderId, driver) {
     number: driver.phone_number,
     text: buildDriverDeliveryMessage(order, driver),
   });
+}
+
+/**
+ * Product serialization helpers used by server actions in orders.js and seller.js.
+ */
+
+export const PRODUCT_SELECT_LEGACY = "id, name, price, stock_quantity, image_url, description, created_at";
+export const PRODUCT_SELECT_BASIC = `${PRODUCT_SELECT_LEGACY}, product_variants, product_keywords`;
+export const PRODUCT_SELECT_FULL = `${PRODUCT_SELECT_BASIC}, is_active`;
+
+export function isSchemaColumnError(error) {
+  return /schema cache|column|is_active|product_variants|product_keywords/i.test(error?.message || "");
+}
+
+function normalizeNumericString(value) {
+  return String(value ?? "").replace(/[^\d]/g, "");
+}
+
+export function normalizeProductPrice(value) {
+  const normalized = normalizeNumericString(value);
+  return Number(normalized || 0);
+}
+
+export function normalizeProductStock(value, fallback = 1) {
+  const normalized = Number.parseInt(normalizeNumericString(value), 10);
+  return Number.isFinite(normalized) ? normalized : fallback;
+}
+
+export async function updateProductWithFallback(productId, sellerId, payload) {
+  let { data, error } = await supabaseAdmin
+    .from("products")
+    .update(payload)
+    .eq("id", productId)
+    .eq("seller_id", sellerId)
+    .select(PRODUCT_SELECT_FULL)
+    .single();
+
+  if (error && isSchemaColumnError(error)) {
+    const { product_variants, product_keywords, is_active, ...fallbackPayload } = payload;
+    const fallback = await supabaseAdmin
+      .from("products")
+      .update(fallbackPayload)
+      .eq("id", productId)
+      .eq("seller_id", sellerId)
+      .select(PRODUCT_SELECT_LEGACY)
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
 }

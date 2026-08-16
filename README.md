@@ -39,7 +39,7 @@ tikchop/
 ├── mobile/             # App Android native (en pause)
 ├── docs/               # Documentation architecture et décisions
 ├── deployment/         # Config déploiement WAHA
-└── schema.sql          # Schéma base de données Supabase
+└── dashboard/supabase-migrations/   # Source de vérité du schéma (voir section Base de données)
 ```
 
 ---
@@ -121,6 +121,7 @@ AI_VISION_PROVIDER=gemini,openrouter,openai
 npm run dev                    # Serveur de développement
 npm run build                  # Build production
 npm run lint                   # ESLint
+npm run typecheck              # Type-check TypeScript (tsc --noEmit)
 npm run check:readiness        # Vérifie que tous les services sont configurés
 npm run check:seller-isolation # Teste l'isolation multi-vendeur
 npm run check:whatsapp-stack   # Vérifie Evolution API + WAHA
@@ -153,14 +154,22 @@ Le client envoie `wa.me/?text=PRODUIT_ID` → n8n détecte la référence → r�
 
 ## Base de données
 
-Le schéma est dans `schema.sql` à la racine. Tables principales :
+**La source de vérité du schéma est `dashboard/supabase-migrations/`** (23 migrations
+ordonnées + `APPLY_IN_SUPABASE_SQL_EDITOR.sql`, le patch live idempotent).
+
+> ⚠️ `schema.sql` à la racine est un **bootstrap historique obsolète** (RLS désuète,
+> tables manquantes). Ne pas l'utiliser comme référence ; un nouveau projet doit
+> rejouer `schema.sql` **puis** `APPLY_IN_SUPABASE_SQL_EDITOR.sql`.
+
+Tables principales :
 
 | Table | Rôle |
 |---|---|
-| `sellers` | Vendeurs (slug, WhatsApp, config bot, paiements) |
-| `products` | Produits (nom, prix, stock, images, variantes) |
-| `orders` | Commandes (client, produits, statut, livraison) |
-| `delivery_zones` | Zones de livraison par vendeur |
+| `sellers` | Vendeurs (slug, WhatsApp, config bot, paiements, owner_user_id) |
+| `products` | Produits (nom, prix, stock, images, variantes, visibilité) |
+| `orders` | Commandes (client, produits, statut, livraison, Paystack) |
+| `delivery_zones` / `delivery_drivers` | Livraison par vendeur |
+| `messages` | Messages WhatsApp (avec dedup par external_message_id) |
 
 ---
 
