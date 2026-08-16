@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ArrowRight, Boxes, CheckCircle2, Layers3, Loader2, Mic, Ruler, Sparkles } from "lucide-react";
 import { normalizeMoneyInput } from "../../../lib/product-utils";
 import { buildVariantText, getSizeOptions } from "../../../lib/product-analysis-utils";
@@ -182,7 +183,7 @@ function BulkItemMoreOptions({
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
             {(item.extra_previews || []).slice(0, 6).map((preview, previewIndex) => (
               <span key={`${preview}-${previewIndex}`} className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-white shadow-sm">
-                <img src={preview} alt="" className="h-full w-full object-cover" />
+                <Image src={preview} alt="" width={56} height={56} unoptimized className="h-full w-full object-cover" />
               </span>
             ))}
           </div>
