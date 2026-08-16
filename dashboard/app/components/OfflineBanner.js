@@ -2,24 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+function getInitialOffline() {
+  if (typeof navigator === "undefined") return false;
+  return !navigator.onLine;
+}
+
 /**
  * Banniere fixe qui s'affiche quand le navigateur est hors-ligne.
  * Disparait automatiquement a la reconnexion.
  */
 export default function OfflineBanner() {
-  const [offline, setOffline] = useState(false);
+  const [offline, setOffline] = useState(getInitialOffline);
 
   useEffect(() => {
-    if (typeof navigator === "undefined") return;
-
-    setOffline(!navigator.onLine);
-
-    function handleOnline() {
-      setOffline(false);
-    }
-    function handleOffline() {
-      setOffline(true);
-    }
+    function handleOnline() { setOffline(false); }
+    function handleOffline() { setOffline(true); }
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);

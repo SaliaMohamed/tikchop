@@ -359,7 +359,6 @@ function OrderCard({ order, onClick, index = 0 }) {
         <span className="ml-1 text-[0.6rem] font-black text-[#059669] uppercase tracking-wider">
           {simpleStatus === "DELIVERED" ? "Livrée" : simpleStatus === "IN_DELIVERY" ? "En route" : simpleStatus === "PREPARED" ? "Prête" : simpleStatus === "PAID" ? "En prépa" : "Reçue"}
         </span>
-        </div>
         {order.delivery_zone && (
           <span className="text-[0.64rem] font-extrabold text-[#54685E]/60 flex items-center gap-1">
             <MapPin size={11} className="text-[#059669]" /> {order.delivery_zone}
