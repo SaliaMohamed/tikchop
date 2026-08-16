@@ -139,6 +139,10 @@ export function ChoiceButton({ active, label, text, onClick }) {
 export function StatCard({ icon, label, value, tone = "primary" }) {
   const tones = {
     primary: "bg-[#059669]/10 text-[#059669]",
+    green: "bg-[#059669]/10 text-[#059669]",
+    orange: "bg-[#FFF1D7] text-[#df941e]",
+    blue: "bg-[#e9f0fc] text-[#4e7db5]",
+    purple: "bg-[#f0eafa] text-[#8065bb]",
     info: "bg-blue-50 text-blue-600",
     accent: "bg-amber-50 text-amber-600",
   }[tone];
