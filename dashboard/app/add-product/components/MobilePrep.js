@@ -143,10 +143,16 @@ function MobileBulkPrepCard({
   );
 }
 
-function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyCount, selectedCount, totalCount }) {
+function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyCount, selectedCount, totalCount, uploadingCount = 0, analyzingCount = 0 }) {
   const photosDone = selectedCount > 0;
   const total = totalCount || selectedCount || 0;
   const progress = photosDone ? Math.max(8, Math.round((readyCount / Math.max(total || selectedCount, 1)) * 100)) : 0;
+  const busyCount = uploadingCount + analyzingCount;
+  const busyLabel = uploadingCount > 0
+    ? `${uploadingCount} photo${uploadingCount > 1 ? "s" : ""} en envoi...`
+    : analyzingCount > 0
+      ? "Tikchop prepare les fiches..."
+      : "";
   const mobileModes = [
     { value: "BULK", label: "Plusieurs", icon: <ImagePlus size={18} strokeWidth={1.6} /> },
     { value: "MANUAL", label: "Simple", icon: <Camera size={18} strokeWidth={1.6} /> },
@@ -202,6 +208,14 @@ function MobileProductCockpit({ assistant, canSubmit, mode, onModeChange, readyC
         <div className="mt-2 overflow-hidden rounded-full bg-white/10">
           <span className="block h-2 rounded-full bg-[#34D399]" style={{ width: `${progress}%` }} />
         </div>
+        {busyCount > 0 && (
+          <div className="mt-2 flex items-center justify-center gap-2 rounded-2xl bg-white/8 px-2 py-1.5 ring-1 ring-white/10">
+            {uploadingCount > 0
+              ? <TikchopLottie name="sparkle" size={14} speed={1.2} ariaLabel={busyLabel} />
+              : <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/25 border-t-[#34D399]" />}
+            <span className="text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-white/64">{busyLabel}</span>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -60,7 +60,7 @@ import {
 import { MobileBulkPrepCard, MobileProductCockpit } from "./components/MobilePrep";
 import { ImageQualitySwitch } from "./components/ImageQuality";
 import { BulkQuickPricePanel, BulkItemMoreOptions, InlinePriceField } from "./components/BulkItem";
-import { BatchReviewSummary, DesktopPublishPanel, PublishDock } from "./components/PublishPanels";
+import { DesktopPublishPanel, PublishDock } from "./components/PublishPanels";
 import { Field, HeroMiniStat, NoticeBanner, QuickValueButton, PublishSuccess } from "./components/SharedUI";
 import { AngleDecisionCard } from "./components/AnalysisDeck";
 import TikchopLottie from "../components/TikchopLottie";
@@ -1165,6 +1165,8 @@ export default function AddProductPage() {
           readyCount={readyBulkPhotos.length || bulkProducts.length}
           selectedCount={selectedCount}
           totalCount={bulkPhotoItems.length || bulkProducts.length || selectedCount}
+          uploadingCount={bulkPhotoItems.filter((item) => item.uploading).length}
+          analyzingCount={bulkPhotoItems.filter((item) => item.analyzing && !item.uploading).length}
         />
 
         {submitError && (
@@ -1224,11 +1226,10 @@ export default function AddProductPage() {
           )}
 
           <section className="hidden rounded-[24px] border border-[var(--outline)]/35 bg-white p-2 shadow-[var(--shadow-sm)] md:block">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {[
                 { value: "BULK", label: "Photos", hint: "Plusieurs" },
-                { value: "MANUAL", label: "Standard", hint: "A la main" },
-                { value: "VOICE", label: "Vocal", hint: "Dicter" },
+                { value: "MANUAL", label: "Simple", hint: "Une fiche" },
               ].map((option) => {
                 const active = mode === option.value;
                 return (
@@ -1249,31 +1250,6 @@ export default function AddProductPage() {
               })}
             </div>
           </section>
-
-          {mode === "VOICE" && (
-            <section className="app-card bg-[var(--surface-soft)] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-[var(--text-main)]">Dicter les infos</p>
-                  <p className="mt-1 text-sm text-[var(--text-dim)]">Ex: savon 3000, stock 5 ou robe rouge 15000</p>
-                </div>
-                <button type="button" onClick={startVoiceCapture} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${listening ? "bg-red-500" : "bg-[var(--primary)]"}`} aria-label="Dicter le produit">
-                  <Mic size={22} />
-                </button>
-              </div>
-              <textarea
-                value={formData.description}
-                onChange={(event) => {
-                  handleChange(event);
-                  applyVoiceText(event.target.value);
-                }}
-                name="description"
-                rows="2"
-                placeholder="Dictez ou collez le texte du vocal ici..."
-                className="mobile-input mt-4 resize-none"
-              />
-            </section>
-          )}
 
           {mode === "BULK" && (
             <section className="space-y-4">
@@ -1389,10 +1365,7 @@ export default function AddProductPage() {
                 <div className="mt-4 space-y-3">
                   <div className="hidden items-center justify-between rounded-2xl bg-[var(--surface-soft)] px-3 py-2 text-sm md:flex">
                     <span className="font-semibold text-[var(--text-dim)]">Validation rapide</span>
-                    <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length}</strong>
-                  </div>
-                  <div className="hidden md:block">
-                    <BatchReviewSummary items={bulkPhotoItems} backgroundProgress={bulkBackgroundProgress} />
+                    <strong className="text-[var(--primary)]">{readyBulkPhotos.length}/{bulkPhotoItems.length} prets</strong>
                   </div>
                   <div className="hidden grid-cols-[1fr_auto_auto] gap-2 md:grid">
                     <button
@@ -1413,45 +1386,6 @@ export default function AddProductPage() {
                         Stock {quantity}
                       </button>
                     ))}
-                  </div>
-                  <div className="hidden">
-                    <button
-                      type="button"
-                      onClick={openBulkGallery}
-                      disabled={bulkUploading}
-                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[var(--outline)]/30 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <ImagePlus size={16} />
-                      Photos
-                    </button>
-                    <button
-                      type="button"
-                      onClick={openNextIncompleteBulkItem}
-                      className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#0F2B20] px-3 text-sm font-black text-white shadow-[0_14px_30px_rgb(43_34_25_/_0.16)]"
-                    >
-                      <ListChecks size={16} />
-                      Suivant
-                    </button>
-                    {BACKGROUND_REMOVAL_ENABLED && (
-                      <button
-                        type="button"
-                        onClick={cleanAllBulkBackgrounds}
-                        disabled={backgroundBusyId === "bulk-all" || cleanableBulkPhotos.length === 0}
-                        className="col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#F4FAF6] px-3 text-sm font-black text-[var(--primary)] shadow-sm ring-1 ring-[rgba(0,143,90,0.16)] disabled:opacity-55"
-                      >
-                        {backgroundBusyId === "bulk-all" ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />}
-                        {backgroundBusyId === "bulk-all"
-                          ? getBackgroundProgressLabel(bulkBackgroundProgress, "Nettoyage en cours...")
-                          : cleanableBulkPhotos.length > 0
-                            ? `Fond propre (${cleanableBulkPhotos.length})`
-                            : "Fond propre"}
-                      </button>
-                    )}
-                    {bulkBackgroundProgress && (
-                      <div className="col-span-2 hidden rounded-2xl bg-white px-3 py-2 text-center text-xs font-extrabold text-[var(--text-dim)] ring-1 ring-[var(--outline)]/25 md:block">
-                        {getBackgroundProgressAdvice(bulkBackgroundProgress)}
-                      </div>
-                    )}
                   </div>
                   <div id="bulk-products" className="space-y-3">
                   {bulkPhotoItems.map((item, index) => {
