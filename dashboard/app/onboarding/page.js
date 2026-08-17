@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { createSellerAccountAndShop, getSellerByOwner, createSellerFromOnboarding } from "../seller-actions";
+import { createSellerAccountAndShop, getSellerByOwner, createSellerFromOnboarding, requestLoginOtp, verifyLoginOtp } from "../seller-actions";
 import { clearActiveSeller, writeActiveSeller } from "../components/sellerContext";
 import { supabase } from "../../lib/supabase";
 import { friendlyError } from "../../lib/user-facing-error";
@@ -18,6 +18,7 @@ import { resolveSellerLanding } from "../../lib/seller-landing";
 import { OnboardingSplash } from "./components/OnboardingSplash";
 import { AccountStep } from "./components/AccountStep";
 import { ShopStep } from "./components/ShopStep";
+import { OtpStep } from "./components/OtpStep";
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export default function OnboardingPage() {
   const [notice, setNotice] = useState("");
   const [sellerAccount, setSellerAccount] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [otpPhone, setOtpPhone] = useState("");
 
   // Step 1 — account
   const [localPhone, setLocalPhone] = useState(""); // only the digits after +225
@@ -142,6 +144,48 @@ export default function OnboardingPage() {
 
     // SIGN_UP: just move to step 2 to collect shop info
     setStep(2);
+  }
+
+  // ── WhatsApp OTP sign-in ─────────────────────────────────────────────────────
+  async function handleRequestOtp() {
+    setError(""); setNotice("");
+    const fullPhone = buildFullPhone(localPhone);
+    try {
+      const result = await requestLoginOtp(fullPhone);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setOtpPhone(fullPhone);
+      setStep(3);
+    } catch (err) {
+      setError(friendlyError(err, "Impossible d'envoyer le code. Réessayez."));
+    }
+  }
+
+  async function handleResendOtp() {
+    const result = await requestLoginOtp(buildFullPhone(localPhone));
+    if (!result.ok) throw new Error(result.error);
+  }
+
+  async function handleVerifyOtp(code) {
+    const result = await verifyLoginOtp(otpPhone, code);
+    if (!result.ok) throw new Error(result.error);
+    if (!supabase) throw new Error("Connexion indisponible.");
+
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: result.tokenHash, type: "email" });
+    if (error || !data.session) throw new Error("Connexion impossible. Réessayez.");
+
+    const user = data.session.user;
+    const seller = await withTimeout(
+      getSellerByOwner(user.id, data.session.access_token),
+      "Chargement boutique trop long.", 10000,
+    );
+    if (!seller) throw new Error("Ce numéro n'a pas de boutique. Créez-en une.");
+
+    writeActiveSeller(seller);
+    const landing = await resolveSellerLanding(seller);
+    window.location.replace(landing);
   }
 
   // ── Step 2 submit (create shop) ──────────────────────────────────────────────
@@ -254,6 +298,19 @@ export default function OnboardingPage() {
         onBack={() => { setStep(0); setError(""); setNotice(""); }}
         onSwitchMode={() => { setMode(mode === "SIGN_UP" ? "SIGN_IN" : "SIGN_UP"); setError(""); setNotice(""); }}
         onSignOut={handleSignOut}
+        onRequestOtp={handleRequestOtp}
+      />
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <OtpStep
+        phone={otpPhone}
+        phoneDisplay={otpPhone}
+        onBack={() => { setStep(1); setError(""); setNotice(""); }}
+        onResend={handleResendOtp}
+        onVerify={handleVerifyOtp}
       />
     );
   }

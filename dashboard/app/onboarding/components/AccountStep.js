@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, LogOut, Store, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, LogOut, MessageCircle, Store, X } from "lucide-react";
 import { COMMON_PASSWORDS } from "../../../lib/onboarding-utils";
 import { StepDots } from "./StepDots";
 
@@ -23,6 +23,7 @@ export function AccountStep({
   onBack,
   onSwitchMode,
   onSignOut,
+  onRequestOtp,
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F1F8F3] px-4 py-8">
@@ -167,6 +168,27 @@ export function AccountStep({
         {notice && (
           <div className="rounded-[18px] bg-emerald-50 p-3.5 text-sm font-bold text-emerald-900 ring-1 ring-emerald-200">
             {notice}
+          </div>
+        )}
+
+        {/* OTP WhatsApp — primary path for sign-in */}
+        {mode === "SIGN_IN" && (
+          <div className="pt-1">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-[#0F2B20]/10" />
+              <span className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#0F2B20]/30">ou</span>
+              <span className="h-px flex-1 bg-[#0F2B20]/10" />
+            </div>
+            <button
+              id="onb-otp-btn"
+              type="button"
+              onClick={onRequestOtp}
+              disabled={!phoneOk || saving}
+              className="mt-4 flex min-h-[60px] w-full items-center justify-center gap-2 rounded-[22px] bg-white text-base font-black text-[#0F2B20] ring-1 ring-[#0F2B20]/10 shadow-[0_8px_22px_rgba(15,43,32,0.06)] active:scale-[0.98] disabled:opacity-50 transition"
+            >
+              <MessageCircle size={18} className="text-[#059669]" />
+              Se connecter avec un code WhatsApp
+            </button>
           </div>
         )}
 

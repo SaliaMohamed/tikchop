@@ -4,6 +4,16 @@ import { supabaseAdmin } from "../lib/supabase-admin";
 import { sendSellerWelcomeEmail } from "../lib/email";
 import { createClient } from "../lib/supabase/server";
 import { assertSafeSellerPassword } from "../lib/password-security";
+import { sendEvolutionText } from "../lib/evolution";
+import {
+  generateOtpCode,
+  hashOtpCode,
+  safeCompare,
+  isOtpExpired,
+  OTP_TTL_MS,
+  OTP_MAX_ATTEMPTS,
+  OTP_RESEND_COOLDOWN_MS,
+} from "../lib/login-otp";
 
 const OWNER_SCHEMA_ERROR = /owner_user_id|owner_email|schema cache|column/i;
 const OWNER_SCHEMA_MESSAGE = "Applique d'abord la migration des comptes vendeurs dans Supabase.";
@@ -1349,4 +1359,138 @@ export async function disconnectSellerWhatsApp(seller, accessToken) {
     state: "disconnected",
     isConnected: false,
   };
+}
+
+/* ============================================================
+   WhatsApp OTP login (Phase 1 — connexion sans mot de passe)
+   ============================================================ */
+
+async function findAuthUserByPhone(rawPhone) {
+  const alias = getPhoneAliasEmail(rawPhone);
+  const legacy = getLegacyPhoneAliasEmail(rawPhone);
+
+  const emails = [alias, legacy].filter(Boolean);
+  for (const email of emails) {
+    const { data, error } = await supabaseAdmin
+      .from("auth.users")
+      .select("id, email")
+      .eq("email", email)
+      .maybeSingle();
+    if (!error && data) return data;
+  }
+  return null;
+}
+
+export async function requestLoginOtp(rawPhone) {
+  const phone = cleanAuthPhone(rawPhone);
+  if (!phone || phone.length < 11) {
+    return { ok: false, error: "Numéro WhatsApp invalide." };
+  }
+
+  const user = await findAuthUserByPhone(phone);
+  if (!user) {
+    return { ok: false, error: "Aucun compte avec ce numéro. Créez d'abord une boutique." };
+  }
+
+  // Cooldown / rate-limit : 1 code par minute, 3 par heure
+  const sinceMinute = new Date(Date.now() - 60 * 1000).toISOString();
+  const sinceHour = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const recent = await supabaseAdmin
+    .from("login_otps")
+    .select("id")
+    .eq("phone", phone)
+    .gte("created_at", sinceMinute);
+  if (!recent.error && (recent.data?.length || 0) >= 1) {
+    return { ok: false, error: "Un code a déjà été envoyé. Attendez 1 minute." };
+  }
+  const hourCount = await supabaseAdmin
+    .from("login_otps")
+    .select("id")
+    .eq("phone", phone)
+    .gte("created_at", sinceHour);
+  if (!hourCount.error && (hourCount.data?.length || 0) >= 3) {
+    return { ok: false, error: "Trop de codes demandés. Réessayez dans une heure." };
+  }
+
+  const code = generateOtpCode();
+  const codeHash = hashOtpCode(code);
+  const { error: insertError } = await supabaseAdmin.from("login_otps").insert({
+    phone,
+    code_hash: codeHash,
+    expires_at: new Date(Date.now() + OTP_TTL_MS).toISOString(),
+  });
+  if (insertError) {
+    return { ok: false, error: "Impossible d'envoyer le code. Réessayez." };
+  }
+
+  const instance = process.env.EVOLUTION_OTP_INSTANCE;
+  if (!instance) {
+    return { ok: false, error: "Envoi WhatsApp non configuré pour le moment. Utilisez la connexion par mot de passe." };
+  }
+
+  try {
+    await sendEvolutionText({
+      instanceName: instance,
+      number: phone,
+      text: `Tikchop : votre code de connexion est ${code}. Valide 5 minutes. Ne le partagez avec personne.`,
+    });
+  } catch (err) {
+    return { ok: false, error: err?.message || "Le code n'a pas pu être envoyé par WhatsApp." };
+  }
+
+  return { ok: true, phone };
+}
+
+export async function verifyLoginOtp(rawPhone, code) {
+  const phone = cleanAuthPhone(rawPhone);
+  const otpCode = String(code || "").replace(/\D/g, "");
+  if (!phone || otpCode.length !== 6) {
+    return { ok: false, error: "Code invalide." };
+  }
+
+  const { data: row, error } = await supabaseAdmin
+    .from("login_otps")
+    .select("id, code_hash, expires_at, attempts, consumed_at")
+    .eq("phone", phone)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !row) {
+    return { ok: false, error: "Aucun code actif. Demandez un nouveau code." };
+  }
+  if (row.consumed_at || isOtpExpired(row.expires_at)) {
+    return { ok: false, error: "Code expiré. Demandez un nouveau code." };
+  }
+  if (row.attempts >= OTP_MAX_ATTEMPTS) {
+    return { ok: false, error: "Trop de tentatives. Demandez un nouveau code." };
+  }
+
+  await supabaseAdmin
+    .from("login_otps")
+    .update({ attempts: Number(row.attempts || 0) + 1 })
+    .eq("id", row.id);
+
+  if (!safeCompare(row.code_hash, hashOtpCode(otpCode))) {
+    const remaining = OTP_MAX_ATTEMPTS - (Number(row.attempts || 0) + 1);
+    return { ok: false, error: remaining > 0 ? `Code incorrect. ${remaining} tentative${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""}.` : "Code incorrect." };
+  }
+
+  await supabaseAdmin.from("login_otps").update({ consumed_at: new Date().toISOString() }).eq("id", row.id);
+
+  const user = await findAuthUserByPhone(phone);
+  if (!user) {
+    return { ok: false, error: "Compte introuvable." };
+  }
+
+  const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email: user.email,
+    options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || undefined },
+  });
+  if (linkError || !linkData?.properties?.token_hash) {
+    return { ok: false, error: "Session impossible à créer. Réessayez." };
+  }
+
+  return { ok: true, tokenHash: linkData.properties.token_hash };
 }
