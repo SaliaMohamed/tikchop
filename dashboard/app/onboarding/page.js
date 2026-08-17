@@ -19,6 +19,7 @@ import { OnboardingSplash } from "./components/OnboardingSplash";
 import { AccountStep } from "./components/AccountStep";
 import { ShopStep } from "./components/ShopStep";
 import { OtpStep } from "./components/OtpStep";
+import { SuccessCelebration } from "./components/SuccessCelebration";
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ export default function OnboardingPage() {
   const [sellerAccount, setSellerAccount] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [otpPhone, setOtpPhone] = useState("");
+  const [celebrate, setCelebrate] = useState(false);
 
   // Step 1 — account
   const [localPhone, setLocalPhone] = useState(""); // only the digits after +225
@@ -243,7 +245,8 @@ export default function OnboardingPage() {
 
       writeActiveSeller(created.seller);
       setNotice("Boutique créée. Configuration de votre DJASSAMAN...");
-      window.location.replace("/setup");
+      setCelebrate(true);
+      window.setTimeout(() => { window.location.replace("/setup"); }, 1500);
     } catch (err) {
       const msg = err?.message || "";
       if (/existe déjà|already.*exist|already.*register/i.test(msg)) {
@@ -333,5 +336,5 @@ export default function OnboardingPage() {
     );
   }
 
-  return <div key={step} className="animate-rise-in">{screen}</div>;
+  return <div key={step} className="animate-rise-in">{screen}{celebrate && <SuccessCelebration />}</div>;
 }
