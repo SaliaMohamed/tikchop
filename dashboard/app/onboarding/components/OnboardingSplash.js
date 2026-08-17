@@ -1,60 +1,57 @@
 "use client";
 
-import { ArrowRight, LockKeyhole } from "lucide-react";
-import TikchopLottie from "../../components/TikchopLottie";
+import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react";
+import { OnboardingLayout } from "./OnboardingLayout";
 
 export function OnboardingSplash({ onCreate, onSignIn }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[#0F2B20] px-5 py-12 text-white">
-      <div className="mb-8 flex h-28 w-28 items-center justify-center rounded-[30px] bg-[#34D399]/12 ring-1 ring-[#34D399]/25">
-        <TikchopLottie name="sparkle" size={104} />
-      </div>
+    <OnboardingLayout>
+      <div className="flex min-h-dvh w-full flex-col px-4 py-8 lg:justify-center">
+        <div className="hidden lg:block">
+          <span className="flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#059669]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#059669]" />
+            Accès vendeur
+          </span>
+        </div>
 
-      <h1 className="font-display text-4xl font-black leading-[1.08] text-white text-center">
-        Vendez sur WhatsApp.<br />
-        <span className="text-[#34D399]">Automatiquement.</span>
-      </h1>
-
-      <p className="mt-4 max-w-[260px] text-center text-sm font-bold leading-6 text-white/50">
-        Boutique, commandes et bot en 2 minutes.
-      </p>
-
-      {/* Steps preview */}
-      <div className="mt-8 w-full max-w-xs space-y-2">
-        {[
-          { n: "1", label: "Créez votre compte vendeur" },
-          { n: "2", label: "Nommez et personnalisez votre boutique" },
-          { n: "3", label: "Commencez à vendre sur WhatsApp" },
-        ].map(({ n, label }) => (
-          <div key={n} className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#34D399]/15 text-[0.68rem] font-black text-[#34D399]">{n}</span>
-            <span className="text-sm font-bold text-white/70">{label}</span>
+        <div className="mx-auto mt-auto w-full max-w-sm lg:mt-8">
+          <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[30px] bg-white shadow-[0_16px_40px_rgba(15,43,32,0.08)] ring-1 ring-[#0F2B20]/8 lg:hidden">
+            <Sparkles size={44} className="text-[#0F2B20]" />
           </div>
-        ))}
-      </div>
 
-      <div className="mt-10 w-full max-w-xs space-y-3">
-        <button
-          id="onboarding-start-btn"
-          type="button"
-          onClick={onCreate}
-          className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#34D399] text-base font-black text-[#0F2B20] shadow-[0_18px_44px_rgba(52, 211, 153,0.32)] active:scale-[0.98] transition"
-        >
-          Créer ma boutique <ArrowRight size={18} />
-        </button>
-        <button
-          id="onboarding-signin-btn"
-          type="button"
-          onClick={onSignIn}
-          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white/8 text-sm font-black text-white/80 ring-1 ring-white/10 active:scale-[0.98] transition"
-        >
-          <LockKeyhole size={16} /> J&apos;ai déjà un compte
-        </button>
-      </div>
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#059669] lg:hidden">Accès vendeur</p>
+          <h1 className="mt-2 font-display text-4xl font-black leading-[1.08] text-[#0F2B20]">
+            Vendez sur WhatsApp.<br />
+            <span className="text-[#059669]">Automatiquement.</span>
+          </h1>
+          <p className="mt-3 text-sm font-bold leading-6 text-[#0F2B20]/50">
+            Boutique, commandes et bot en 2 minutes.
+          </p>
 
-      <p className="mt-8 text-center text-[0.62rem] font-bold text-white/20">
-        Tikchop · Commerce local en Afrique
-      </p>
-    </div>
+          <div className="mt-8 space-y-3">
+            <button
+              id="onboarding-start-btn"
+              type="button"
+              onClick={onCreate}
+              className="flex min-h-[58px] w-full items-center justify-center gap-2 rounded-[22px] bg-[#059669] text-base font-black text-white shadow-[0_18px_44px_rgba(5,150,105,0.28)] active:scale-[0.98] transition"
+            >
+              Créer ma boutique <ArrowRight size={18} />
+            </button>
+            <button
+              id="onboarding-signin-btn"
+              type="button"
+              onClick={onSignIn}
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[20px] bg-white text-sm font-black text-[#0F2B20]/70 ring-1 ring-[#0F2B20]/10 shadow-[0_8px_22px_rgba(15,43,32,0.05)] active:scale-[0.98] transition"
+            >
+              <LockKeyhole size={16} /> J&apos;ai déjà un compte
+            </button>
+          </div>
+
+          <p className="mt-8 text-center text-[0.62rem] font-bold text-[#0F2B20]/30">
+            Tikchop · Commerce local en Afrique
+          </p>
+        </div>
+      </div>
+    </OnboardingLayout>
   );
 }

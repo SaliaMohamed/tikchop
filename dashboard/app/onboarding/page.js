@@ -268,17 +268,17 @@ export default function OnboardingPage() {
 
   if (!hydrated) return null;
 
+  let screen = null;
+
   if (step === 0) {
-    return (
+    screen = (
       <OnboardingSplash
         onCreate={() => { setMode("SIGN_UP"); setStep(1); }}
         onSignIn={() => { setMode("SIGN_IN"); setStep(1); }}
       />
     );
-  }
-
-  if (step === 1) {
-    return (
+  } else if (step === 1) {
+    screen = (
       <AccountStep
         mode={mode}
         localPhone={localPhone}
@@ -301,10 +301,8 @@ export default function OnboardingPage() {
         onRequestOtp={handleRequestOtp}
       />
     );
-  }
-
-  if (step === 3) {
-    return (
+  } else if (step === 3) {
+    screen = (
       <OtpStep
         phone={otpPhone}
         phoneDisplay={otpPhone}
@@ -313,25 +311,27 @@ export default function OnboardingPage() {
         onVerify={handleVerifyOtp}
       />
     );
+  } else {
+    screen = (
+      <ShopStep
+        shopName={shopName}
+        onShopNameChange={(e) => setShopName(e.target.value)}
+        suggestedSlug={suggestedSlug}
+        shopCategory={shopCategory}
+        onShopCategory={setShopCategory}
+        shopCity={shopCity}
+        onShopCity={(value) => { setShopCity(value); setShopCommune(""); }}
+        shopCommune={shopCommune}
+        onShopCommune={setShopCommune}
+        canSubmit={canSubmitStep2}
+        saving={saving}
+        error={error}
+        notice={notice}
+        onSubmit={handleStep2}
+        onBack={() => { setStep(1); setError(""); setNotice(""); }}
+      />
+    );
   }
 
-  return (
-    <ShopStep
-      shopName={shopName}
-      onShopNameChange={(e) => setShopName(e.target.value)}
-      suggestedSlug={suggestedSlug}
-      shopCategory={shopCategory}
-      onShopCategory={setShopCategory}
-      shopCity={shopCity}
-      onShopCity={(value) => { setShopCity(value); setShopCommune(""); }}
-      shopCommune={shopCommune}
-      onShopCommune={setShopCommune}
-      canSubmit={canSubmitStep2}
-      saving={saving}
-      error={error}
-      notice={notice}
-      onSubmit={handleStep2}
-      onBack={() => { setStep(1); setError(""); setNotice(""); }}
-    />
-  );
+  return <div key={step} className="animate-rise-in">{screen}</div>;
 }

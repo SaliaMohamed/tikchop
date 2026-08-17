@@ -3,6 +3,7 @@
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, LogOut, MessageCircle, Store, X } from "lucide-react";
 import { COMMON_PASSWORDS } from "../../../lib/onboarding-utils";
 import { StepDots } from "./StepDots";
+import { OnboardingLayout } from "./OnboardingLayout";
 
 export function AccountStep({
   mode,
@@ -26,8 +27,9 @@ export function AccountStep({
   onRequestOtp,
 }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-[#F1F8F3] px-4 py-8">
-      <div className="mx-auto w-full max-w-sm">
+    <OnboardingLayout>
+      <div className="flex min-h-dvh w-full flex-col px-4 py-8 lg:justify-center">
+        <div className="mx-auto w-full max-w-sm">
         {/* Nav */}
         <div className="flex items-center justify-between">
           <button
@@ -232,6 +234,7 @@ export function AccountStep({
       <p className="mt-10 pb-4 text-center text-[0.62rem] font-bold text-[#0F2B20]/25">
         Tikchop · Espace vendeur
       </p>
-    </div>
+      </div>
+    </OnboardingLayout>
   );
 }
