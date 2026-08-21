@@ -1,5 +1,5 @@
-const SHELL_CACHE = "tikchop-shell-v6";
-const ASSET_CACHE = "tikchop-assets-v6";
+const SHELL_CACHE = "tikchop-shell-v7";
+const ASSET_CACHE = "tikchop-assets-v7";
 const LEGACY_CACHES = [
   "tikchop-shell-v1",
   "tikchop-runtime-v1",
@@ -11,6 +11,8 @@ const LEGACY_CACHES = [
   "tikchop-assets-v4",
   "tikchop-shell-v5",
   "tikchop-assets-v5",
+  "tikchop-shell-v6",
+  "tikchop-assets-v6",
 ];
 
 const SHELL_FILES = [
@@ -97,18 +99,45 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => new Response(
-        "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Tikchop</title><body style=\"margin:0;font-family:system-ui;background:#f6fbf7;color:#0f2b20;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px\"><main><strong style=\"font-size:22px\">Connexion indisponible</strong><p style=\"font-weight:700;color:#54685e\">Reconnectez internet puis actualisez Tikchop.</p></main></body>",
-        {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
-        },
-      )),
+      caches.open(ASSET_CACHE).then(async (cache) => {
+        try {
+          const response = await fetch(event.request);
+          if (response.ok) {
+            cache.put(event.request, response.clone()).catch(() => {});
+          }
+          return response;
+        } catch {
+          const cached = await cache.match(event.request);
+          if (cached) return cached;
+          return new Response(
+            "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Tikchop</title><body style=\"margin:0;font-family:system-ui;background:#f6fbf7;color:#0f2b20;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px\"><main><strong style=\"font-size:22px\">Connexion indisponible</strong><p style=\"font-weight:700;color:#54685e\">Reconnectez internet puis actualisez Tikchop.</p></main></body>",
+            {
+              headers: { "Content-Type": "text/html; charset=utf-8" },
+            },
+          );
+        }
+      }),
     );
     return;
   }
 
   if (url.pathname.startsWith("/_next/")) {
-    event.respondWith(fetch(event.request));
+    // Chunks _next/ immutables (hachés) : stale-while-revalidate pour servir
+    // le shell offline sans bloquer sur le réseau.
+    event.respondWith(
+      caches.open(ASSET_CACHE).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const network = fetch(event.request)
+          .then((response) => {
+            if (response.ok) {
+              cache.put(event.request, response.clone()).catch(() => {});
+            }
+            return response;
+          })
+          .catch(() => cached);
+        return cached || network;
+      }),
+    );
     return;
   }
 

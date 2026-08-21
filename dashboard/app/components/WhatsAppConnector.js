@@ -283,7 +283,7 @@ export default function WhatsAppConnector({ onConnected }) {
           />
         </div>
         {!phoneReady && (
-          <p className="mt-2 text-xs font-bold text-[#0F2B20]/40">11 chiffres requis (format +225 07 ...).</p>
+          <p className="mt-2 text-xs font-bold text-[#0F2B20]/55">11 chiffres requis (format +225 07 ...).</p>
         )}
       </div>
 
@@ -341,7 +341,7 @@ export default function WhatsAppConnector({ onConnected }) {
         <p>4. Entrez le code affiché. Tikchop vérifie automatiquement.</p>
       </div>
 
-      <p className="flex items-center gap-2 text-center text-xs font-bold text-[#0F2B20]/40">
+      <p className="flex items-center gap-2 text-center text-xs font-bold text-[#0F2B20]/55">
         <span className={`inline-flex items-center gap-1 rounded-full bg-[#0F2B20]/6 px-2.5 py-1 text-[0.68rem] font-black text-[#0F2B20]/60`}>
           {status?.icon}
           {status?.label || "Prêt"}

@@ -361,7 +361,7 @@ function ConversationCard({ conversation, active, onClick }) {
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="text-[0.64rem] font-bold text-[#0F2B20]/35">{formatDateTime(lastTime).split(",").pop()?.trim() || ""}</span>
+          <span className="text-[0.64rem] font-bold text-[#0F2B20]/50">{formatDateTime(lastTime).split(",").pop()?.trim() || ""}</span>
           <span className={`rounded-full px-2 py-0.5 text-[0.56rem] font-black ${action.chipClass}`}>
             {action.label}
           </span>

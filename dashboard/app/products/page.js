@@ -570,7 +570,7 @@ function ProductCard({ product, sellerSlug, busy, onEdit, index = 0 }) {
           <p className="mt-0.5 font-display text-xs font-bold text-[#059669]">
             {formatPrice(product.price)}
           </p>
-          <span className={`inline-flex items-center gap-1 mt-1 rounded-full px-2 py-0.5 text-[0.58rem] font-extrabold uppercase whitespace-nowrap ${status.toneClass}`}>
+          <span className={`inline-flex items-center gap-1 mt-1 rounded-full px-2 py-0.5 text-[0.7rem] font-extrabold uppercase whitespace-nowrap ${status.toneClass}`}>
             {status.label}
           </span>
         </div>

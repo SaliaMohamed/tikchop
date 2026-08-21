@@ -22,7 +22,8 @@
     "test:onboarding-ui": "node scripts/test-onboarding-ui.mjs",
     "qa:api": "npx newman run qa/postman/tikchop-api.postman_collection.json",
     "qa:load": "k6 run qa/k6/public-smoke.js",
-    "qa:all": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:readiness && npm run check:seller-isolation && npm run check:whatsapp-stack && npm run smoke:beta && npm run qa:ui",
+    "audit:mobile": "node scripts/audit-mobile-pages.mjs",
+    "qa:all": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:readiness && npm run check:seller-isolation && npm run check:whatsapp-stack && npm run smoke:beta && npm run qa:ui && npm run audit:mobile",
     "test:paystack": "node scripts/test-paystack-webhook.js",
     "test:vision": "node scripts/test-vision-provider.mjs",
     "test:background-clean": "node scripts/test-background-clean-flow.mjs"

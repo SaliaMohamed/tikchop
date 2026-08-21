@@ -262,7 +262,7 @@ export default function AccountPage() {
             </span>
             <span>
               <p className="text-sm font-black text-[#0F2B20]">Changer le mot de passe</p>
-              <p className="text-xs font-bold text-[#0F2B20]/45">Vous recevrez un lien par email</p>
+              <p className="text-xs font-bold text-[#0F2B20]/55">Vous recevrez un lien par email</p>
             </span>
           </div>
           <ChevronRight size={17} className="text-[#0F2B20]/30" />
@@ -289,7 +289,7 @@ export default function AccountPage() {
             </span>
             <span>
               <p className="text-sm font-black text-[#0F2B20]">Informations boutique</p>
-              <p className="text-xs font-bold text-[#0F2B20]/45">Logo, adresse, bot WhatsApp</p>
+              <p className="text-xs font-bold text-[#0F2B20]/55">Logo, adresse, bot WhatsApp</p>
             </span>
           </div>
           <ChevronRight size={17} className="text-[#0F2B20]/30" />

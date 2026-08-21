@@ -207,7 +207,7 @@ export default function CrmPage() {
 
       {/* Footer fantôme pour l'accessibilité visuelle */}
       {!loading && !error && customers.length > 0 && (
-        <p className="mt-4 text-center text-xs font-bold text-[#0F2B20]/40">
+        <p className="mt-4 text-center text-xs font-bold text-[#0F2B20]/55">
           {shown.length} client{shown.length > 1 ? "s" : ""} affiché{shown.length > 1 ? "s" : ""}
         </p>
       )}

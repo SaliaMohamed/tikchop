@@ -336,7 +336,7 @@ export default function SocialSharingPage() {
             <p className="quiet-label text-[#059669]">Lien public</p>
             <div className="mt-2 flex items-center gap-2 rounded-[20px] bg-[#F6FBF7] p-2 ring-1 ring-[#0F2B20]/5">
               <span className="min-w-0 flex-1 truncate px-2 text-sm font-black text-[#0F2B20]">{publicShopUrl}</span>
-              <button type="button" onClick={() => copyText(publicShopUrl, "Lien copie")} className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-white text-[#059669] shadow-sm ring-1 ring-[#0F2B20]/10 active:scale-[0.98]">
+              <button type="button" onClick={() => copyText(publicShopUrl, "Lien copie")} className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] bg-white text-[#059669] shadow-sm ring-1 ring-[#0F2B20]/10 active:scale-[0.98]">
                 <Copy size={17} />
               </button>
             </div>

@@ -21,6 +21,20 @@
 }
 
 @media (max-width: 700px) {
+  /* Plancher de lisibilité : remonte les micro-libellés/badges sous 11px
+     à 0.7rem (11.2px) sur mobile, sans toucher au design desktop. */
+  [class~="text-[0.56rem]"],
+  [class~="text-[0.58rem]"],
+  [class~="text-[0.6rem]"],
+  [class~="text-[0.62rem]"],
+  [class~="text-[0.63rem]"],
+  [class~="text-[0.64rem]"],
+  [class~="text-[0.65rem]"],
+  [class~="text-[0.66rem]"],
+  [class~="text-[0.68rem]"] {
+    font-size: 0.7rem !important;
+  }
+
   body {
     padding-bottom: calc(108px + var(--safe-bottom));
   }
@@ -135,7 +149,7 @@
 @media (max-width: 390px) {
   .mobile-tabbar-item,
   .mobile-tabbar-action {
-    font-size: 0.56rem;
+    font-size: 0.66rem;
     min-width: 50px;
     padding-left: 0.25rem;
     padding-right: 0.25rem;

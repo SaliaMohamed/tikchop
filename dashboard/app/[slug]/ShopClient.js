@@ -904,7 +904,7 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
       </div>
 
       <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-8">
-        {products.map((product) => {
+        {products.map((product, index) => {
           const stock = Number(product.stock_quantity || 0);
           const quantity = cart[product.id] || 0;
 
@@ -927,13 +927,14 @@ function FeaturedProductsCarousel({ products, cart, onOpen, onAdd, onMinus }) {
                     sizes="280px"
                     className="object-cover transition duration-700 active:scale-105"
                     transform={CLOUDINARY_FEATURED_TRANSFORM}
+                    priority={index === 0}
                   />
 {stock > 0 ? (
-                    <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#0F2B20] shadow-sm">
+                    <span className="absolute left-3 top-3 rounded-full bg-[var(--primary-bright)] px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.12em] text-[#0F2B20] shadow-sm">
                       En stock
                     </span>
                   ) : (
-                    <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-[0.12em] text-amber-700 shadow-sm">
+                    <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.12em] text-amber-700 shadow-sm">
                       Rupture
                     </span>
                   )}
@@ -1045,7 +1046,7 @@ function ProductTile({ product, quantity, onOpen, onAdd, onMinus }) {
         {/* Badge catégorie */}
         {/* Stock faible */}
         {lowStock && (
-          <span className="absolute right-3 top-3 rounded-full bg-white/92 px-2.5 py-0.5 text-[0.6rem] font-black text-amber-600 shadow-sm">
+          <span className="absolute right-3 top-3 rounded-full bg-white/92 px-2.5 py-0.5 text-[0.7rem] font-black text-amber-600 shadow-sm">
             Bientôt fini
           </span>
         )}
@@ -1095,7 +1096,7 @@ function CartControl({ quantity, stock, large = false, compact = false, onAdd, o
         large
           ? "h-12 w-12 bg-[var(--primary)] text-white shadow-lg disabled:bg-[var(--surface-mid)]"
           : compact
-            ? "h-10 w-10 rounded-full bg-[var(--primary)] text-white shadow-[0_8px_18px_rgba(0,143,90,0.22)] disabled:bg-[var(--surface-mid)]"
+            ? "h-11 w-11 rounded-full bg-[var(--primary)] text-white shadow-[0_8px_18px_rgba(0,143,90,0.22)] disabled:bg-[var(--surface-mid)]"
             : "h-11 min-w-[5.25rem] gap-1 bg-[var(--text-main)] px-3 text-white disabled:bg-[var(--surface-mid)]"
       }`}
       aria-label="Ajouter"
@@ -1731,7 +1732,7 @@ function OrderSuccessSheet({ order, sellerSlug, onClose }) {
   );
 }
 
-function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
+function SafeProductImage({ src, alt, sizes, className, transform = "", priority = false }) {
   const [prevProps, setPrevProps] = useState({ src, transform });
   const [imageSrc, setImageSrc] = useState(() => getCloudinaryOptimizedUrl(src, transform));
 
@@ -1756,6 +1757,7 @@ function SafeProductImage({ src, alt, sizes, className, transform = "" }) {
       src={imageSrc}
       alt={alt}
       fill
+      priority={priority}
       sizes={sizes}
       className={className}
       onError={() => setImageSrc("")}

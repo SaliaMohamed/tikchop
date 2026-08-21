@@ -177,7 +177,7 @@ export default function Dashboard() {
           {openOrders > 0 && (
             <Link
               href="/orders"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full no-underline"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full no-underline"
               style={{ background: "var(--primary)", color: "white" }}
               aria-label="Voir les commandes"
             >
@@ -201,7 +201,7 @@ export default function Dashboard() {
             <Link
               href="/orders"
               aria-label="Toutes les ventes"
-              className="flex h-9 w-9 items-center justify-center rounded-full no-underline ring-1"
+              className="flex h-11 w-11 items-center justify-center rounded-full no-underline ring-1"
               style={{
                 background: "var(--surface)",
                 color: "var(--primary-hover)",

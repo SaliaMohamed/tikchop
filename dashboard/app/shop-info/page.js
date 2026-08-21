@@ -294,12 +294,12 @@ export default function ShopInfoPage() {
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={profile.logo_url} alt="Logo" className="h-full w-full object-cover" />
-                        <span className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white text-[10px] font-black">Changer</span>
+                        <span className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white text-[11px] font-black">Changer</span>
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-[#059669]">
                         <Store size={22} className="opacity-80" />
-                        <span className="mt-1 text-[10px] font-black uppercase tracking-wider text-[#0F2B20]/50">Choisir</span>
+                        <span className="mt-1 text-[11px] font-black uppercase tracking-wider text-[#0F2B20]/50">Choisir</span>
                       </div>
                     )}
                     {logoUploading && (
@@ -308,7 +308,7 @@ export default function ShopInfoPage() {
                       </span>
                     )}
                   </button>
-                  {logoError && <p className="text-[10px] text-rose-600 font-semibold mt-1">{logoError}</p>}
+                  {logoError && <p className="text-[11px] text-rose-600 font-semibold mt-1">{logoError}</p>}
                 </div>
                 <div className="space-y-3">
                   <Field label="Couleur de marque">

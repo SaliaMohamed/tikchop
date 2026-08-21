@@ -151,7 +151,7 @@ export default function StyleEditor({ onSaved }) {
           <div key={field.key}>
             <div className="flex items-center justify-between">
               <label className="block text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#0F2B20]/50">{field.label}</label>
-              <span className="text-[0.6rem] font-bold text-[#0F2B20]/35">{field.hint}</span>
+              <span className="text-[0.6rem] font-bold text-[#0F2B20]/50">{field.hint}</span>
             </div>
             <textarea
               value={settings[field.key]}

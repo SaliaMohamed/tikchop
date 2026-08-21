@@ -51,7 +51,7 @@ export function Field({ label, children, hint }) {
     <label className="block">
       <span className="mb-2 flex items-center justify-between text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#059669]">
         {label}
-        {hint && <span className="text-[0.6rem] font-bold normal-case tracking-normal text-[#0F2B20]/35">{hint}</span>}
+        {hint && <span className="text-[0.6rem] font-bold normal-case tracking-normal text-[#0F2B20]/50">{hint}</span>}
       </span>
       {children}
     </label>
