@@ -6,6 +6,18 @@
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { normalizeCustomerPhone, formatCustomerPhone, getSellerEvolutionInstance, formatCfa, handoffKey } from "./formatters";
 import { sendEvolutionText } from "../../../lib/evolution";
+import {
+  CHANNEL_NATIVE,
+  CHANNEL_WHATSAPP,
+  NATIVE_CLIENT_SUFFIX,
+  NATIVE_DEFAULT_NAME,
+  getMessageChannel,
+  buildNativeClientKey,
+  buildWhatsAppClientKey,
+} from "./channels";
+
+export { CHANNEL_NATIVE, CHANNEL_WHATSAPP, NATIVE_CLIENT_SUFFIX, NATIVE_DEFAULT_NAME, getMessageChannel, buildNativeClientKey, buildWhatsAppClientKey };
+
 export function getHandoffSellerKeys(seller) {
   return Array.from(new Set([seller?.slug, getSellerEvolutionInstance(seller)].filter(Boolean)));
 }
@@ -23,31 +35,42 @@ export function attachHandoffsToOrders(orders = [], handoffs = []) {
 }
 
 export function parseStoredMessageClient(client = "") {
-  const parts = String(client || "")
+  const raw = String(client || "");
+  const parts = raw
     .split(":")
     .map((part) => part.trim())
     .filter(Boolean);
-  const phoneMatch = String(client || "").match(/(\d{8,})@?s?\.?whatsapp?\.?net?/i)
-    || String(client || "").match(/(\d{8,})/);
+  const isNative = raw.includes(NATIVE_CLIENT_SUFFIX);
+  const phoneMatch = isNative
+    ? null
+    : raw.match(/(\d{8,})@?s?\.?whatsapp?\.?net?/i)
+      || raw.match(/(\d{8,})/);
 
   return {
     sellerHint: parts[0] || "",
     name: parts.length >= 3 ? parts[1] : "",
-    phone: phoneMatch?.[1] || "",
+    phone: isNative ? parts[2] || "" : phoneMatch?.[1] || "",
+    channel: isNative ? CHANNEL_NATIVE : CHANNEL_WHATSAPP,
   };
 }
 
 export function getMessagePhone(row = {}) {
   const parsed = parseStoredMessageClient(row.client);
+  const channel = getMessageChannel(row);
+  if (channel === CHANNEL_NATIVE) {
+    return String(row.customer_phone || parsed.phone || "").trim();
+  }
   return normalizeCustomerPhone(row.customer_phone) || normalizeCustomerPhone(parsed.phone);
 }
 
 export function getMessageName(row = {}) {
+  const named = String(row.client_name || "").trim();
+  if (named) return named;
   const parsed = parseStoredMessageClient(row.client);
   return parsed.name || "";
 }
 
-export const MESSAGE_SELECT_BASE = "id,contenu,client,statut,created_at,external_message_id,seller_slug,customer_phone";
+export const MESSAGE_SELECT_BASE = "id,contenu,client,statut,created_at,external_message_id,seller_slug,customer_phone,channel,client_name";
 export const MESSAGE_SELECT_WITH_MEDIA = `${MESSAGE_SELECT_BASE},media_type,media_url,media_mime_type,media_caption,media_payload`;
 
 export function normalizeMessageMedia(row = {}) {
@@ -87,6 +110,7 @@ export function normalizeStoredMessage(row = {}) {
     id: String(row.id || `${row.created_at}-${row.external_message_id || ""}`),
     text: String(row.contenu || "").trim(),
     client: row.client || "",
+    channel: getMessageChannel(row),
     status: row.statut || "",
     direction,
     created_at: row.created_at || null,

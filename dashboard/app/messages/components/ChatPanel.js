@@ -42,13 +42,15 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
     );
   }
 
-  const canReply = Boolean(cleanPhone(conversation.customer_phone));
+  const isNative = conversation.channel === "native";
+  const hasPhone = Boolean(cleanPhone(conversation.customer_phone));
+  const canReply = Boolean(conversation.customer_phone);
   const lastOrder = conversation.last_order;
   const playbookTemplates = getCustomerResponseTemplates(buildCustomerForTemplates(conversation), {
     sellerName,
   });
   const responseTemplates = playbookTemplates.length ? playbookTemplates : getDefaultResponseTemplates(sellerName);
-  const pauseHelp = conversation.bot_paused ? "Mode humain" : "Bot actif";
+  const pauseHelp = conversation.bot_paused ? "Mode humain (vous avez la main)" : "Bot actif (DJASSAMAN répond)";
 
   return (
     <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#E7F1EA] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#E7F1EA] md:ring-1 md:ring-[#0F2B20]/10`}>
@@ -61,8 +63,17 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
             <UserRound size={19} />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#0C271C]">{getConversationTitle(conversation)}</h2>
-            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">{conversation.display_phone || "Numéro inconnu"}</p>
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#0C271C]">{getConversationTitle(conversation)}</h2>
+              <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
+                isNative ? "bg-[#E8F7EE] text-[#059669]" : "bg-[#25D366]/15 text-[#128C7E]"
+              }`}>
+                {isNative ? "🌐 Boutique" : "💬 WhatsApp"}
+              </span>
+            </div>
+            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">
+              {isNative ? `Client web (${conversation.display_phone?.slice(0, 16) || "ID unique"})` : (conversation.display_phone || "Numéro inconnu")}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {canReply && (
@@ -72,11 +83,12 @@ export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mob
               disabled={busy === "pause" || busy === "resume"}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#059669] shadow-sm disabled:opacity-50"
               aria-label={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
+              title={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
             >
               {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
             </button>
             )}
-            {canReply && (
+            {hasPhone && (
             <a
               href={`tel:${cleanPhone(conversation.customer_phone)}`}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#54656f] no-underline shadow-sm"

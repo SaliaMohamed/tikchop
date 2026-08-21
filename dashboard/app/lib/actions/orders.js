@@ -5,11 +5,11 @@ import { savePaystackInitialization, sendOrderLifecycleMessage } from "../../../
 import { initializeTransaction, createPaystackSubaccount, normalizePayoutNetwork, getPayoutNetworkConfig, normalizePayoutPhone } from "../../../lib/paystack";
 import { sendEvolutionText } from "../../../lib/evolution";
 import { sendPushToSeller } from "../../../lib/push-notifications";
-import { getPaymentOption, getSellerDefaultPaymentMethod, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone } from "../../../lib/local-commerce";
+import { getPaymentOption, getSellerDefaultPaymentMethod, normalizeAcceptedPaymentMethods, onlinePaymentsEnabled, paymentMethodsNeedDirectPhone, encodeLocalCommerceRules, parseLocalCommerceSettings } from "../../../lib/local-commerce";
 
 import { requireSellerBySlug, requireOrderForSeller, requireSellerById, requireSellerUser } from "./auth";
 import { normalizeCustomerPhone, formatCustomerPhone, getSellerEvolutionInstance, formatCfa, handoffKey } from "./formatters";
-import { attachHandoffsToOrders, buildDriverDeliveryMessage, chooseDriverForOrder, parseStoredMessageClient, getMessagePhone, getMessageName, normalizeStoredMessage, mergeMessageRows, normalizeMessageMedia, getActiveSellerHandoffs, saveSellerCustomerHandoff, getHandoffSellerKeys, MESSAGE_SELECT_BASE, MESSAGE_SELECT_WITH_MEDIA, autoSharePreparedOrderToDriver, sendOrderToAssignedDriver } from "./shared";
+import { attachHandoffsToOrders, buildDriverDeliveryMessage, chooseDriverForOrder, parseStoredMessageClient, getMessagePhone, getMessageName, normalizeStoredMessage, mergeMessageRows, normalizeMessageMedia, getActiveSellerHandoffs, saveSellerCustomerHandoff, getHandoffSellerKeys, MESSAGE_SELECT_BASE, MESSAGE_SELECT_WITH_MEDIA, autoSharePreparedOrderToDriver, sendOrderToAssignedDriver, CHANNEL_NATIVE, CHANNEL_WHATSAPP, NATIVE_DEFAULT_NAME } from "./shared";
 
 /**
  * Order management, payments & WhatsApp conversations.
@@ -588,9 +588,10 @@ export async function resumeBotForCustomer(slug, customerPhone, accessToken) {
   }
 
   const seller = await requireSellerBySlug(slug, accessToken, "id, slug, evolution_instance");
-  const cleanPhone = normalizeCustomerPhone(customerPhone);
-  if (cleanPhone.length < 6) {
-    throw new Error("Numéro client invalide.");
+  const isNative = String(customerPhone || "").includes("-") || String(customerPhone || "").startsWith("cli-") || String(customerPhone || "").includes("@native") || String(customerPhone || "").length > 20;
+  const cleanPhone = isNative ? String(customerPhone || "").trim() : normalizeCustomerPhone(customerPhone);
+  if (!cleanPhone || cleanPhone.length < 3) {
+    throw new Error("Identifiant client invalide.");
   }
 
   const { error } = await supabaseAdmin
@@ -618,30 +619,39 @@ export async function sendSellerManualReply(slug, customerPhone, text, accessTok
   }
 
   const seller = await requireSellerBySlug(slug, accessToken, "id, slug, evolution_instance");
-  const cleanPhone = normalizeCustomerPhone(customerPhone);
+  const isNative = String(customerPhone || "").includes("-") || String(customerPhone || "").startsWith("cli-") || String(customerPhone || "").includes("@native") || String(customerPhone || "").length > 20;
+  const cleanPhone = isNative ? String(customerPhone || "").trim() : normalizeCustomerPhone(customerPhone);
   const handoff = await saveSellerCustomerHandoff(seller, cleanPhone, durationMinutes);
-  const result = await sendEvolutionText({
-    instanceName: getSellerEvolutionInstance(seller),
-    number: cleanPhone,
-    text: message,
-  });
 
-  if (!result?.ok) {
-    throw new Error("Message non envoye. Verifiez la connexion WhatsApp de la boutique.");
+  // Si c'est un message WhatsApp, envoi via Evolution API
+  if (!isNative) {
+    const result = await sendEvolutionText({
+      instanceName: getSellerEvolutionInstance(seller),
+      number: cleanPhone,
+      text: message,
+    });
+
+    if (!result?.ok) {
+      throw new Error("Message non envoyé. Vérifiez la connexion WhatsApp de la boutique.");
+    }
   }
 
   const messageRow = {
     contenu: message,
-    client: `${seller.slug} : Vendeur : ${cleanPhone}@s.whatsapp.net`,
-    statut: "followup",
+    client: isNative
+      ? `${seller.slug} : Vendeur : ${cleanPhone}@native`
+      : `${seller.slug} : Vendeur : ${cleanPhone}@s.whatsapp.net`,
+    statut: "seller",
+    channel: isNative ? "native" : "whatsapp",
     seller_slug: seller.slug,
     customer_phone: cleanPhone,
+    external_message_id: `seller-reply:${seller.slug}:${cleanPhone}:${Date.now()}`,
   };
 
   const { data: savedMessage, error: messageError } = await supabaseAdmin
     .from("messages")
     .insert(messageRow)
-    .select("id,contenu,client,statut,created_at,seller_slug,customer_phone,external_message_id")
+    .select("id,contenu,client,statut,created_at,seller_slug,customer_phone,external_message_id,channel")
     .maybeSingle();
 
   if (messageError && !/messages|seller_slug|schema cache|column/i.test(messageError.message || "")) {
@@ -727,13 +737,17 @@ export async function getSellerWhatsAppConversations(slug, accessToken) {
   const conversations = new Map();
 
   function ensureConversation(phone, fallback = {}) {
-    const cleanPhone = normalizeCustomerPhone(phone);
+    const channel = fallback.channel === CHANNEL_NATIVE ? CHANNEL_NATIVE : CHANNEL_WHATSAPP;
+    const cleanPhone = channel === CHANNEL_NATIVE
+      ? String(phone || "").trim()
+      : normalizeCustomerPhone(phone);
     const key = cleanPhone || fallback.key || "unknown";
     if (!conversations.has(key)) {
       conversations.set(key, {
         key,
+        channel,
         customer_phone: cleanPhone,
-        display_phone: formatCustomerPhone(cleanPhone),
+        display_phone: channel === CHANNEL_NATIVE ? cleanPhone : formatCustomerPhone(cleanPhone),
         customer_name: fallback.customer_name || fallback.customerName || "",
         messages: [],
         orders: [],
@@ -749,7 +763,7 @@ export async function getSellerWhatsAppConversations(slug, accessToken) {
       conversation.customer_name = fallback.customer_name || fallback.customerName;
     }
     if (!conversation.display_phone && cleanPhone) {
-      conversation.display_phone = formatCustomerPhone(cleanPhone);
+      conversation.display_phone = channel === CHANNEL_NATIVE ? cleanPhone : formatCustomerPhone(cleanPhone);
     }
     return conversation;
   }
@@ -759,6 +773,7 @@ export async function getSellerWhatsAppConversations(slug, accessToken) {
       customer_name: message.customer_name,
       key: message.client,
       created_at: message.created_at,
+      channel: message.channel,
     });
     conversation.messages.push(message);
     conversation.last_message = message;
@@ -781,7 +796,7 @@ export async function getSellerWhatsAppConversations(slug, accessToken) {
   return Array.from(conversations.values())
     .map((conversation) => ({
       ...conversation,
-      customer_name: conversation.customer_name || conversation.display_phone || "Client WhatsApp",
+      customer_name: conversation.customer_name || (conversation.channel === CHANNEL_NATIVE ? NATIVE_DEFAULT_NAME : conversation.display_phone || "Client WhatsApp"),
       orders: conversation.orders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)),
       last_order: conversation.orders[0] || null,
       inbound_count: conversation.messages.filter((message) => message.direction === "in").length,
@@ -1065,6 +1080,7 @@ export async function getSellerBusinessProfile(slug, accessToken) {
   return {
     seller: {
       ...seller,
+      ...parseLocalCommerceSettings(seller),
       accepted_payment_methods: normalizeAcceptedPaymentMethods(seller.accepted_payment_methods),
       default_payment_method: getSellerDefaultPaymentMethod(seller, normalizeAcceptedPaymentMethods(seller.accepted_payment_methods)),
     },
@@ -1080,6 +1096,8 @@ export async function saveSellerBusinessProfile(sellerId, profile, accessToken) 
 
   await requireSellerById(sellerId, accessToken, "id");
 
+  const encodedRules = encodeLocalCommerceRules(profile);
+
   const payload = {
     name: String(profile?.name || "").trim(),
     phone_number: String(profile?.phone_number || "").replace(/[^\d+]/g, "").trim(),
@@ -1088,10 +1106,11 @@ export async function saveSellerBusinessProfile(sellerId, profile, accessToken) 
     bot_greeting: String(profile?.bot_greeting || "").trim(),
     bot_payment_preferences: String(profile?.bot_payment_preferences || "").trim(),
     bot_delivery_notes: String(profile?.bot_delivery_notes || "").trim(),
-    bot_special_rules: String(profile?.bot_special_rules || "").trim(),
+    bot_special_rules: encodedRules,
     logo_url: profile?.logo_url ? String(profile.logo_url).trim() : null,
     brand_color: profile?.brand_color ? String(profile.brand_color).trim() : "#059669",
     physical_address: profile?.physical_address ? String(profile.physical_address).trim() : null,
+    pickup_enabled: profile?.pickup_enabled !== false,
   };
 
   if (payload.name.length < 2) {
@@ -1106,28 +1125,29 @@ export async function saveSellerBusinessProfile(sellerId, profile, accessToken) 
     .from("sellers")
     .update(payload)
     .eq("id", sellerId)
-    .select("id,name,slug,phone_number,owner_email,bot_tone,bot_greeting,bot_payment_preferences,bot_delivery_notes,bot_special_rules,logo_url,brand_color,physical_address")
+    .select("id,name,slug,phone_number,owner_email,bot_tone,bot_greeting,bot_payment_preferences,bot_delivery_notes,bot_special_rules,logo_url,brand_color,physical_address,pickup_enabled")
     .single();
 
-  if (error && /owner_email|bot_|logo_url|brand_color|physical_address|schema cache|column/i.test(error.message || "")) {
+  if (error && /owner_email|bot_|logo_url|brand_color|physical_address|pickup_enabled|schema cache|column/i.test(error.message || "")) {
     const fallback = await supabaseAdmin
       .from("sellers")
       .update({
         name: payload.name,
         phone_number: payload.phone_number,
+        bot_special_rules: encodedRules,
       })
       .eq("id", sellerId)
-      .select("id,name,slug,phone_number")
+      .select("id,name,slug,phone_number,bot_special_rules")
       .single();
     if (fallback.error) throw new Error(fallback.error.message);
-    return fallback.data;
+    return { ...fallback.data, ...parseLocalCommerceSettings(fallback.data) };
   }
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return { ...data, ...parseLocalCommerceSettings(data) };
 }
 
 export async function saveSellerPaymentSettings(sellerId, settings, accessToken) {

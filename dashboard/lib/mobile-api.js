@@ -7,6 +7,9 @@ import {
   MESSAGE_SELECT_BASE,
   MESSAGE_SELECT_WITH_MEDIA,
   normalizeStoredMessage,
+  CHANNEL_NATIVE,
+  CHANNEL_WHATSAPP,
+  NATIVE_DEFAULT_NAME,
 } from "../app/lib/actions/shared";
 import { formatCustomerPhone, handoffKey, normalizeCustomerPhone } from "../app/lib/actions/formatters";
 
@@ -242,13 +245,17 @@ function buildMobileConversations(seller, rows, orders, handoffs) {
   const conversations = new Map();
 
   function ensureConversation(phone, fallback = {}) {
-    const cleanPhone = normalizeCustomerPhone(phone);
+    const channel = fallback.channel === CHANNEL_NATIVE ? CHANNEL_NATIVE : CHANNEL_WHATSAPP;
+    const cleanPhone = channel === CHANNEL_NATIVE
+      ? String(phone || "").trim()
+      : normalizeCustomerPhone(phone);
     const key = cleanPhone || fallback.key || "unknown";
     if (!conversations.has(key)) {
       conversations.set(key, {
         key,
+        channel,
         customer_phone: cleanPhone,
-        display_phone: formatCustomerPhone(cleanPhone),
+        display_phone: channel === CHANNEL_NATIVE ? cleanPhone : formatCustomerPhone(cleanPhone),
         customer_name: fallback.customer_name || fallback.customerName || "",
         messages: [],
         orders: [],
@@ -264,7 +271,7 @@ function buildMobileConversations(seller, rows, orders, handoffs) {
       conversation.customer_name = fallback.customer_name || fallback.customerName;
     }
     if (!conversation.display_phone && cleanPhone) {
-      conversation.display_phone = formatCustomerPhone(cleanPhone);
+      conversation.display_phone = channel === CHANNEL_NATIVE ? cleanPhone : formatCustomerPhone(cleanPhone);
     }
     return conversation;
   }
@@ -274,6 +281,7 @@ function buildMobileConversations(seller, rows, orders, handoffs) {
       customer_name: message.customer_name,
       key: message.client,
       created_at: message.created_at,
+      channel: message.channel,
     });
     conversation.messages.push(message);
     conversation.last_message = message;
@@ -296,7 +304,7 @@ function buildMobileConversations(seller, rows, orders, handoffs) {
   return Array.from(conversations.values())
     .map((conversation) => ({
       ...conversation,
-      customer_name: conversation.customer_name || conversation.display_phone || "Client WhatsApp",
+      customer_name: conversation.customer_name || (conversation.channel === CHANNEL_NATIVE ? NATIVE_DEFAULT_NAME : conversation.display_phone || "Client WhatsApp"),
       orders: conversation.orders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)),
       last_order: conversation.orders[0] || null,
       inbound_count: conversation.messages.filter((message) => message.direction === "in").length,
@@ -373,7 +381,7 @@ export async function getMobileConversationMessages(request, customerPhone) {
 
   return {
     customer_phone: cleanPhone,
-    customer_name: conversation?.customer_name || conversation?.display_phone || "Client WhatsApp",
+    customer_name: conversation?.customer_name || (conversation?.channel === CHANNEL_NATIVE ? NATIVE_DEFAULT_NAME : conversation?.display_phone || "Client WhatsApp"),
     messages,
     handoff,
     bot_paused: Boolean(handoff),

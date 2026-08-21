@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ShopClient from "./ShopClient";
 import { supabaseAdmin } from "../../lib/supabase-admin";
 
@@ -87,6 +87,11 @@ export default async function SellerShopPage({ params, searchParams }) {
   }
 
   const { seller, products, deliveryZones } = data;
+
+  // QR Code / lien direct → chat natif Djassaman
+  if (query?.chat === "1") {
+    redirect(`/${slug}/chat`);
+  }
 
   return (
     <div className="public-shop mx-auto max-w-[480px] pb-8 md:max-w-6xl">

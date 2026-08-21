@@ -113,6 +113,11 @@ export default function SocialSharingPage() {
     const path = seller.slug ? `/${seller.slug}` : "/onboarding";
     return origin ? `${origin}${path}` : path;
   }, [origin, seller.slug]);
+  const chatUrl = useMemo(() => {
+    if (!seller.slug) return "";
+    const path = `/${seller.slug}?chat=1`;
+    return origin ? `${origin}${path}` : path;
+  }, [origin, seller.slug]);
   const publishedProducts = useMemo(() => products.filter(isPublished), [products]);
   const filteredProducts = useMemo(() => {
     const cleanQuery = query.trim().toLowerCase();
@@ -332,6 +337,8 @@ export default function SocialSharingPage() {
             </div>
           </section>
 
+          <QrCodeSection chatUrl={chatUrl} sellerName={seller.name} onCopy={copyText} />
+
           <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/8 md:p-5">
             <p className="quiet-label text-[#059669]">Lien public</p>
             <div className="mt-2 flex items-center gap-2 rounded-[20px] bg-[#F6FBF7] p-2 ring-1 ring-[#0F2B20]/5">
@@ -398,5 +405,71 @@ function EmptyShareState({ hasProducts }) {
         Ajouter un article
       </Link>
     </div>
+  );
+}
+
+function QrCodeSection({ chatUrl, sellerName, onCopy }) {
+  const [downloaded, setDownloaded] = useState(false);
+
+  if (!chatUrl) return null;
+
+  const qrSize = 200;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(chatUrl)}&size=${qrSize}x${qrSize}&color=00c78e&bgcolor=07110d&margin=12&format=png`;
+
+  async function handleDownload() {
+    try {
+      const res = await fetch(qrSrc);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `qr-chat-${sellerName || "boutique"}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setDownloaded(true);
+      window.setTimeout(() => setDownloaded(false), 2000);
+    } catch {
+      // Fallback : ouvrir dans un nouvel onglet
+      window.open(qrSrc, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  return (
+    <section className="rounded-[26px] bg-white p-4 shadow-[var(--shadow-sm)] ring-1 ring-[#0F2B20]/8 md:p-5">
+      <p className="quiet-label text-[#059669]">Chat Djassaman</p>
+      <h2 className="mt-1 font-display text-xl font-black text-[#0F2B20]">QR Code boutique</h2>
+      <p className="mt-1 text-xs font-bold leading-5 text-[#0F2B20]/50">
+        Scannez pour ouvrir le chat directement.
+      </p>
+      <div className="mt-4 flex justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={qrSrc}
+          alt={`QR Code chat ${sellerName || "boutique"}`}
+          width={qrSize}
+          height={qrSize}
+          className="rounded-[18px] ring-1 ring-[#0F2B20]/10"
+        />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#0F2B20] px-3 text-sm font-black text-[#34D399] active:scale-[0.98] transition-transform"
+        >
+          {downloaded ? <CheckCircle2 size={17} /> : <ExternalLink size={17} />}
+          {downloaded ? "Téléchargé" : "Télécharger"}
+        </button>
+        <button
+          type="button"
+          onClick={() => onCopy(chatUrl, "Lien chat copié")}
+          className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] bg-[#EAF8F0] px-3 text-sm font-black text-[#047857] ring-1 ring-[#059669]/20 active:scale-[0.98] transition-transform"
+        >
+          <Copy size={17} />
+          Copier
+        </button>
+      </div>
+      <p className="mt-2 truncate text-center text-[0.65rem] font-black text-[#0F2B20]/30">{chatUrl}</p>
+    </section>
   );
 }

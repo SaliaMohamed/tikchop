@@ -7,9 +7,12 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  Handshake,
   Loader2,
   MapPin,
+  PackageOpen,
   Phone,
+  Repeat,
   Save,
   ShieldCheck,
   Store,
@@ -28,6 +31,7 @@ import {
   Notice,
   SettingsSection,
   StatusPill,
+  ToggleRow,
 } from "../components/settings-ui";
 
 const defaultProfile = {
@@ -42,6 +46,18 @@ const defaultProfile = {
   logo_url: "",
   brand_color: "#059669",
   physical_address: "",
+  // Pratiques commerciales locales personnalisables
+  bot_negotiation_enabled: true,
+  bot_max_discount_pct: 15,
+  bot_bulk_discount_pct: 20,
+  bot_deposit_enabled: true,
+  bot_min_deposit_pct: 30,
+  bot_min_deposit_amount: 2000,
+  bot_exchange_enabled: true,
+  bot_exchange_notes: "",
+  bot_used_items_enabled: true,
+  bot_used_items_notes: "",
+  pickup_enabled: true,
 };
 
 function formatPrice(value) {
@@ -114,6 +130,18 @@ export default function ShopInfoPage() {
         logo_url: sellerData.logo_url || "",
         brand_color: sellerData.brand_color || "#059669",
         physical_address: sellerData.physical_address || "",
+        // Pratiques commerciales locales personnalisées
+        bot_negotiation_enabled: sellerData.negotiation_enabled ?? sellerData.bot_negotiation_enabled ?? true,
+        bot_max_discount_pct: Number(sellerData.max_discount_pct ?? sellerData.bot_max_discount_pct ?? 15),
+        bot_bulk_discount_pct: Number(sellerData.bulk_discount_pct ?? sellerData.bot_bulk_discount_pct ?? 20),
+        bot_deposit_enabled: sellerData.deposit_enabled ?? sellerData.bot_deposit_enabled ?? true,
+        bot_min_deposit_pct: Number(sellerData.min_deposit_pct ?? sellerData.bot_min_deposit_pct ?? 30),
+        bot_min_deposit_amount: Number(sellerData.min_deposit_amount ?? sellerData.bot_min_deposit_amount ?? 2000),
+        bot_exchange_enabled: sellerData.exchange_enabled ?? sellerData.bot_exchange_enabled ?? true,
+        bot_exchange_notes: sellerData.exchange_notes ?? sellerData.bot_exchange_notes ?? "",
+        bot_used_items_enabled: sellerData.used_items_enabled ?? sellerData.bot_used_items_enabled ?? true,
+        bot_used_items_notes: sellerData.used_items_notes ?? sellerData.bot_used_items_notes ?? "",
+        pickup_enabled: sellerData.pickup_enabled ?? true,
       });
     } catch (err) {
       setError(friendlyError(err, "Informations boutique non chargées. Réessayez."));
@@ -364,9 +392,141 @@ export default function ShopInfoPage() {
               <Field label="Notes livraison">
                 <textarea value={profile.bot_delivery_notes} onChange={(event) => updateField("bot_delivery_notes", event.target.value)} className="mobile-input min-h-20 resize-none py-3" placeholder="Livraison Cocody, Marcory, Yopougon. Demander commune et quartier..." />
               </Field>
-              <Field label="Regles speciales">
-                <textarea value={profile.bot_special_rules} onChange={(event) => updateField("bot_special_rules", event.target.value)} className="mobile-input min-h-20 resize-none py-3" placeholder="Ne pas negocier sous tel prix. Confirmer taille avant paiement..." />
-              </Field>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            icon={<Handshake size={17} />}
+            title="Commerce local & Pratiques vendeur"
+            sub="Marchandage & Vente locale"
+            right={<StatusPill ok>Personnalisé</StatusPill>}
+          >
+            <div className="divide-y divide-[#0F2B20]/8">
+              {/* 1. Marchandage & Négociation */}
+              <div>
+                <ToggleRow
+                  title="🤝 Marchandage & Négociation de prix"
+                  text="Autorise le bot à négocier les prix avec les clients dans une limite sécurisée."
+                  active={profile.bot_negotiation_enabled}
+                  onClick={() => updateField("bot_negotiation_enabled", !profile.bot_negotiation_enabled)}
+                />
+                {profile.bot_negotiation_enabled && (
+                  <div className="bg-[#EAF8F0]/40 p-4 grid gap-3 md:grid-cols-2">
+                    <Field label="Remise maximale standard (%)" hint="ex: 15%">
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={profile.bot_max_discount_pct}
+                        onChange={(event) => updateField("bot_max_discount_pct", Number(event.target.value))}
+                        className="mobile-input"
+                        placeholder="15"
+                      />
+                    </Field>
+                    <Field label="Remise spéciale pour lot (3+ articles, %)" hint="ex: 20%">
+                      <input
+                        type="number"
+                        min="0"
+                        max="60"
+                        value={profile.bot_bulk_discount_pct}
+                        onChange={(event) => updateField("bot_bulk_discount_pct", Number(event.target.value))}
+                        className="mobile-input"
+                        placeholder="20"
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Réservation avec Acompte */}
+              <div>
+                <ToggleRow
+                  title="⏳ Réservation avec Acompte"
+                  text="Permet aux clients de bloquer des articles en versant un acompte en ligne."
+                  active={profile.bot_deposit_enabled}
+                  onClick={() => updateField("bot_deposit_enabled", !profile.bot_deposit_enabled)}
+                />
+                {profile.bot_deposit_enabled && (
+                  <div className="bg-[#EAF8F0]/40 p-4 grid gap-3 md:grid-cols-2">
+                    <Field label="Acompte recommandé (%)" hint="ex: 30%">
+                      <input
+                        type="number"
+                        min="10"
+                        max="90"
+                        value={profile.bot_min_deposit_pct}
+                        onChange={(event) => updateField("bot_min_deposit_pct", Number(event.target.value))}
+                        className="mobile-input"
+                        placeholder="30"
+                      />
+                    </Field>
+                    <Field label="Montant minimum d'acompte (F CFA)" hint="ex: 2000">
+                      <input
+                        type="number"
+                        min="500"
+                        step="500"
+                        value={profile.bot_min_deposit_amount}
+                        onChange={(event) => updateField("bot_min_deposit_amount", Number(event.target.value))}
+                        className="mobile-input"
+                        placeholder="2000"
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Troc & Échange de produit */}
+              <div>
+                <ToggleRow
+                  title="🔄 Troc & Échange de produit"
+                  text="Permet aux clients de proposer un échange d'article avec photo."
+                  active={profile.bot_exchange_enabled}
+                  onClick={() => updateField("bot_exchange_enabled", !profile.bot_exchange_enabled)}
+                />
+                {profile.bot_exchange_enabled && (
+                  <div className="bg-[#EAF8F0]/40 p-4">
+                    <Field label="Règles & Conditions d'échange du vendeur">
+                      <input
+                        value={profile.bot_exchange_notes}
+                        onChange={(event) => updateField("bot_exchange_notes", event.target.value)}
+                        className="mobile-input"
+                        placeholder="Ex: Échange accepté sur téléphones récents et vêtements neufs avec étiquette."
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Rachat & Reprise d'occasion */}
+              <div>
+                <ToggleRow
+                  title="📦 Rachat d'articles d'occasion"
+                  text="Permet aux clients de vous proposer des articles de seconde main à racheter."
+                  active={profile.bot_used_items_enabled}
+                  onClick={() => updateField("bot_used_items_enabled", !profile.bot_used_items_enabled)}
+                />
+                {profile.bot_used_items_enabled && (
+                  <div className="bg-[#EAF8F0]/40 p-4">
+                    <Field label="Conditions de rachat d'occasion">
+                      <input
+                        value={profile.bot_used_items_notes}
+                        onChange={(event) => updateField("bot_used_items_notes", event.target.value)}
+                        className="mobile-input"
+                        placeholder="Ex: Matériel électronique testé, vêtements propres en parfait état."
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Retrait en boutique physique */}
+              <div>
+                <ToggleRow
+                  title="📍 Retrait gratuit en boutique physique"
+                  text="Le client peut récupérer ses articles directement sur place sans frais de livraison."
+                  active={profile.pickup_enabled}
+                  onClick={() => updateField("pickup_enabled", !profile.pickup_enabled)}
+                />
+              </div>
             </div>
           </SettingsSection>
 

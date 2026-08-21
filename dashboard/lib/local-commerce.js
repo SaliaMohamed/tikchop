@@ -128,3 +128,56 @@ export function paymentMethodsNeedDirectPhone(methods) {
 export function getPaymentOption(value) {
   return LOCAL_PAYMENT_OPTIONS.find((option) => option.value === value) || LOCAL_PAYMENT_OPTIONS[0];
 }
+
+// ---------------------------------------------------------------------------
+// Personnalisation des pratiques commerciales locales par le vendeur
+// (Marchandage, Acompte, Échange/Troc, Rachat occasion, Retrait en boutique)
+// ---------------------------------------------------------------------------
+
+export function parseLocalCommerceSettings(seller = {}) {
+  let parsed = {};
+  if (seller?.bot_special_rules) {
+    try {
+      const raw = String(seller.bot_special_rules).trim();
+      if (raw.startsWith("{") && raw.endsWith("}")) {
+        parsed = JSON.parse(raw);
+      }
+    } catch {
+      // not json
+    }
+  }
+
+  return {
+    negotiation_enabled: seller?.bot_negotiation_enabled ?? parsed.negotiation_enabled ?? true,
+    max_discount_pct: Number(seller?.bot_max_discount_pct ?? parsed.max_discount_pct ?? 15),
+    bulk_discount_pct: Number(seller?.bot_bulk_discount_pct ?? parsed.bulk_discount_pct ?? 20),
+    deposit_enabled: seller?.bot_deposit_enabled ?? parsed.deposit_enabled ?? true,
+    min_deposit_pct: Number(seller?.bot_min_deposit_pct ?? parsed.min_deposit_pct ?? 30),
+    min_deposit_amount: Number(seller?.bot_min_deposit_amount ?? parsed.min_deposit_amount ?? 2000),
+    exchange_enabled: seller?.bot_exchange_enabled ?? parsed.exchange_enabled ?? true,
+    exchange_notes: seller?.bot_exchange_notes ?? parsed.exchange_notes ?? "",
+    used_items_enabled: seller?.bot_used_items_enabled ?? parsed.used_items_enabled ?? true,
+    used_items_notes: seller?.bot_used_items_notes ?? parsed.used_items_notes ?? "",
+    pickup_enabled: seller?.pickup_enabled ?? parsed.pickup_enabled ?? true,
+    pickup_address: seller?.physical_address ?? seller?.address ?? parsed.pickup_address ?? "",
+    special_notes: parsed.special_notes ?? (String(seller?.bot_special_rules || "").trim().startsWith("{") ? "" : seller?.bot_special_rules || ""),
+  };
+}
+
+export function encodeLocalCommerceRules(profile = {}) {
+  return JSON.stringify({
+    negotiation_enabled: profile.bot_negotiation_enabled !== false,
+    max_discount_pct: Number(profile.bot_max_discount_pct) || 15,
+    bulk_discount_pct: Number(profile.bot_bulk_discount_pct) || 20,
+    deposit_enabled: profile.bot_deposit_enabled !== false,
+    min_deposit_pct: Number(profile.bot_min_deposit_pct) || 30,
+    min_deposit_amount: Number(profile.bot_min_deposit_amount) || 2000,
+    exchange_enabled: profile.bot_exchange_enabled !== false,
+    exchange_notes: String(profile.bot_exchange_notes || "").trim(),
+    used_items_enabled: profile.bot_used_items_enabled !== false,
+    used_items_notes: String(profile.bot_used_items_notes || "").trim(),
+    pickup_enabled: profile.pickup_enabled !== false,
+    pickup_address: String(profile.physical_address || "").trim(),
+    special_notes: String(profile.bot_special_rules || "").trim(),
+  });
+}
