@@ -19,21 +19,21 @@ export function getSimpleOrderStatus(order) {
 
 export const statusLabels = {
   ALL: "Toutes",
-  WORK: "Ouvertes",
-  PENDING: "New",
-  PAID: "Colis",
-  DELIVERY: "Livreur",
-  PREPARED: "Livreur",
+  WORK: "À traiter",
+  PENDING: "À traiter",
+  PAID: "Payées",
+  DELIVERY: "Livraison",
+  PREPARED: "Prêtes",
   IN_DELIVERY: "En route",
-  DELIVERED: "OK",
-  CANCELLED: "Annulees",
+  DELIVERED: "Livrées",
+  CANCELLED: "Annulées",
 };
 
 export const orderTabs = [
-  { key: "PENDING", label: "New", icon: MessageCircle },
-  { key: "PAID", label: "Colis", icon: Package },
-  { key: "DELIVERY", label: "Livreur", icon: Truck },
-  { key: "DELIVERED", label: "OK", icon: CheckCircle2 },
+  { key: "PENDING", label: "À traiter", icon: MessageCircle },
+  { key: "PAID", label: "Payées", icon: Package },
+  { key: "DELIVERY", label: "Livraison", icon: Truck },
+  { key: "DELIVERED", label: "Livrées", icon: CheckCircle2 },
 ];
 
 export const statusHints = {

@@ -498,42 +498,8 @@ export async function uploadMobileProductImage(request) {
     throw new Error("Image trop lourde. Maximum 8 MB.");
   }
 
-  const cloudinary = getCloudinaryConfig();
-  if (!cloudinary.cloudName || !cloudinary.apiKey || !cloudinary.apiSecret) {
-    throw new Error("Cloudinary n'est pas configure.");
-  }
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const publicId = `tikchop/mobile-products/${timestamp}-${createHash("sha1")
-    .update(`${file.name || "mobile"}-${file.size}-${timestamp}`)
-    .digest("hex")
-    .slice(0, 12)}`;
-  const signature = createHash("sha1")
-    .update(`public_id=${publicId}&timestamp=${timestamp}${cloudinary.apiSecret}`)
-    .digest("hex");
-
-  const payload = new FormData();
-  payload.append("file", file);
-  payload.append("api_key", cloudinary.apiKey);
-  payload.append("timestamp", String(timestamp));
-  payload.append("public_id", publicId);
-  payload.append("signature", signature);
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinary.cloudName}/image/upload`, {
-    method: "POST",
-    body: payload,
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || "Upload image impossible.");
-  }
-
-  return {
-    url: data.secure_url,
-    cleanUrl: getCloudinaryCleanProductUrl(data.secure_url),
-    publicId: data.public_id,
-  };
+  const { uploadFileToR2 } = await import("./r2-storage.js");
+  return uploadFileToR2(file, "products/mobile");
 }
 
 export async function updateMobileProductStock(request, productId) {
@@ -576,40 +542,4 @@ export async function updateMobileOrderStatus(request, orderId) {
   return data;
 }
 
-function getCloudinaryConfig() {
-  const directConfig = {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    apiSecret: process.env.CLOUDINARY_API_SECRET,
-  };
 
-  if (directConfig.cloudName && directConfig.apiKey && directConfig.apiSecret) {
-    return directConfig;
-  }
-
-  const cloudinaryUrl = process.env.CLOUDINARY_URL;
-  if (!cloudinaryUrl) return directConfig;
-
-  try {
-    const url = new URL(cloudinaryUrl);
-    return {
-      cloudName: url.hostname,
-      apiKey: decodeURIComponent(url.username || ""),
-      apiSecret: decodeURIComponent(url.password || ""),
-    };
-  } catch {
-    return directConfig;
-  }
-}
-
-function getCloudinaryCleanProductUrl(imageUrl) {
-  const url = String(imageUrl || "").trim();
-  if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
-    return url;
-  }
-
-  return url.replace(
-    "/image/upload/",
-    "/image/upload/e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_pad,w_1200,h_1200,b_rgb:f6fbf7/f_auto,q_auto:good/",
-  );
-}

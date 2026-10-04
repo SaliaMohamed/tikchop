@@ -27,47 +27,8 @@ export async function uploadProductImage(formData) {
     throw new Error("Image trop lourde. Maximum 8 MB.");
   }
 
-  const cloudinary = getCloudinaryConfig();
-  const cloudName = cloudinary.cloudName;
-  const apiKey = cloudinary.apiKey;
-  const apiSecret = cloudinary.apiSecret;
-
-  if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error("Cloudinary n'est pas configure.");
-  }
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const publicId = `tikchop/products/${timestamp}-${createHash("sha1")
-    .update(`${file.name}-${file.size}-${timestamp}`)
-    .digest("hex")
-    .slice(0, 12)}`;
-  const signature = createHash("sha1")
-    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
-    .digest("hex");
-
-  const payload = new FormData();
-  payload.append("file", file);
-  payload.append("api_key", apiKey);
-  payload.append("timestamp", String(timestamp));
-  payload.append("public_id", publicId);
-  payload.append("signature", signature);
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: payload,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || "Upload image impossible.");
-  }
-
-  return {
-    url: data.secure_url,
-    cleanUrl: getCloudinaryCleanProductUrl(data.secure_url),
-    publicId: data.public_id,
-  };
+  const { uploadFileToR2 } = await import("../../../lib/r2-storage.js");
+  return uploadFileToR2(file, "products");
 }
 
 export async function uploadSellerLogo(formData) {
@@ -86,47 +47,8 @@ export async function uploadSellerLogo(formData) {
     throw new Error("Image trop lourde. Maximum 8 MB.");
   }
 
-  const cloudinary = getCloudinaryConfig();
-  const cloudName = cloudinary.cloudName;
-  const apiKey = cloudinary.apiKey;
-  const apiSecret = cloudinary.apiSecret;
-
-  if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error("Cloudinary n'est pas configure.");
-  }
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const publicId = `tikchop/logos/${timestamp}-${createHash("sha1")
-    .update(`${file.name}-${file.size}-${timestamp}`)
-    .digest("hex")
-    .slice(0, 12)}`;
-  const signature = createHash("sha1")
-    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
-    .digest("hex");
-
-  const payload = new FormData();
-  payload.append("file", file);
-  payload.append("api_key", apiKey);
-  payload.append("timestamp", String(timestamp));
-  payload.append("public_id", publicId);
-  payload.append("signature", signature);
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: payload,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || "Upload image impossible.");
-  }
-
-  return {
-    url: data.secure_url,
-    cleanUrl: data.secure_url,
-    publicId: data.public_id,
-  };
+  const { uploadFileToR2 } = await import("../../../lib/r2-storage.js");
+  return uploadFileToR2(file, "logos");
 }
 
 export async function removeProductBackground(imageUrl, options = {}) {
@@ -137,7 +59,11 @@ export async function removeProductBackground(imageUrl, options = {}) {
     throw new Error("Photo manquante.");
   }
 
-  if (!sourceUrl.startsWith("https://res.cloudinary.com/")) {
+  // Accept both Cloudinary URLs (legacy) and ImageKit URLs
+  const isValidSourceUrl =
+    sourceUrl.startsWith("https://res.cloudinary.com/") ||
+    sourceUrl.startsWith("https://ik.imagekit.io/");
+  if (!isValidSourceUrl) {
     throw new Error("Fond propre disponible seulement apres envoi de la photo.");
   }
 
@@ -178,90 +104,15 @@ export async function removeProductBackground(imageUrl, options = {}) {
     ? removeResponse.headers.get("content-type")
     : "image/png";
   const outputBuffer = Buffer.from(await removeResponse.arrayBuffer());
-  const cloudinary = getCloudinaryConfig();
-  const timestamp = Math.round(Date.now() / 1000);
-  const publicId = `tikchop/products-background/${timestamp}-${createHash("sha1")
-    .update(`${sourceUrl}-${outputBuffer.length}-${timestamp}`)
-    .digest("hex")
-    .slice(0, 12)}`;
-  const uploaded = await uploadBufferToCloudinary({
-    buffer: outputBuffer,
-    mimeType: outputType,
-    publicId,
-    cloudinary,
-  });
 
-  return {
-    url: uploaded.secure_url,
-    cleanUrl: getCloudinaryCleanProductUrl(uploaded.secure_url),
-    publicId: uploaded.public_id,
-  };
-}
-
-async function uploadBufferToCloudinary({ buffer, mimeType, publicId, cloudinary }) {
-  const cloudName = cloudinary.cloudName;
-  const apiKey = cloudinary.apiKey;
-  const apiSecret = cloudinary.apiSecret;
-
-  if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error("Cloudinary n'est pas configure.");
-  }
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const signature = createHash("sha1")
-    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
-    .digest("hex");
-
-  const payload = new FormData();
-  payload.append("file", new Blob([buffer], { type: mimeType }), "tikchop-product-clean.png");
-  payload.append("api_key", apiKey);
-  payload.append("timestamp", String(timestamp));
-  payload.append("public_id", publicId);
-  payload.append("signature", signature);
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: payload,
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || "Upload image impossible.");
-  }
-
-  return data;
+  const { uploadBufferToR2 } = await import("../../../lib/r2-storage.js");
+  return uploadBufferToR2(outputBuffer, outputType, "products-background", "tikchop-product-clean");
 }
 
 function normalizeBackgroundOption(value) {
   const background = String(value || "warm").trim().toLowerCase();
   if (["white", "gray", "warm", "transparent"].includes(background)) return background;
   return "warm";
-}
-
-function getCloudinaryConfig() {
-  const directConfig = {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    apiSecret: process.env.CLOUDINARY_API_SECRET,
-  };
-
-  if (directConfig.cloudName && directConfig.apiKey && directConfig.apiSecret) {
-    return directConfig;
-  }
-
-  const cloudinaryUrl = process.env.CLOUDINARY_URL;
-  if (!cloudinaryUrl) return directConfig;
-
-  try {
-    const url = new URL(cloudinaryUrl);
-    return {
-      cloudName: directConfig.cloudName || url.hostname,
-      apiKey: directConfig.apiKey || decodeURIComponent(url.username),
-      apiSecret: directConfig.apiSecret || decodeURIComponent(url.password),
-    };
-  } catch {
-    return directConfig;
-  }
 }
 
 export async function analyzeProductImage(imageUrl, voiceHint = "") {
@@ -982,19 +833,26 @@ function getVisionProviderOrder() {
 
 function getAiOptimizedImageUrl(imageUrl) {
   const url = String(imageUrl || "").trim();
-  if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
-    return url;
+  // Legacy Cloudinary URL → apply size reduction for AI
+  if (url.includes("res.cloudinary.com") && url.includes("/image/upload/")) {
+    return url.replace("/image/upload/", "/image/upload/f_auto,q_auto:good,w_768,c_limit/");
   }
-
-  return url.replace("/image/upload/", "/image/upload/f_auto,q_auto:good,w_768,c_limit/");
+  // ImageKit URL → apply tr: transformations for AI (resize to 768px, auto quality)
+  if (url.includes("ik.imagekit.io")) {
+    return url.replace(/\/tr:[^/]+\//, "/").replace("ik.imagekit.io/", "ik.imagekit.io/").replace(
+      /^(https:\/\/ik\.imagekit\.io\/[^/]+)\//,
+      "$1/tr:w-768,q-70,f-auto/"
+    );
+  }
+  return url;
 }
 
+// Kept for legacy Cloudinary URLs already stored in DB — returns url unchanged for ImageKit
 function getCloudinaryCleanProductUrl(imageUrl) {
   const url = String(imageUrl || "").trim();
   if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
     return url;
   }
-
   return url.replace(
     "/image/upload/",
     "/image/upload/e_improve:indoor,e_auto_brightness,e_auto_contrast,e_auto_color/c_pad,w_1200,h_1200,b_rgb:f6fbf7/f_auto,q_auto:good/",

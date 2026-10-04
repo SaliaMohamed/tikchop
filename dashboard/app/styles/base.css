@@ -1,10 +1,10 @@
-﻿
+
 * {
   box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
+  background: var(--color-bg);
   color: var(--text-main);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
@@ -62,7 +62,7 @@ h4 {
   h3 { font-size: clamp(1.05rem, 3.6vw, 1.28rem); }
 }
 
-/* ── Focus visible — ring émeraude accessible ── */
+/* ── Focus visible — ring émeraude électrique accessible ── */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -70,8 +70,8 @@ select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.35), 0 0 0 6px rgba(5, 150, 105, 0.12);
-  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(0, 199, 142, 0.80), 0 0 0 5px rgba(0, 199, 142, 0.20), 0 0 16px rgba(0, 199, 142, 0.30);
+  border-radius: 8px;
 }
 button:focus-visible:not(:active),
 a:focus-visible:not(:active) {
@@ -80,7 +80,7 @@ a:focus-visible:not(:active) {
 
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-display), var(--font-sans), sans-serif !important;
-  letter-spacing: -0.03em !important;
+  letter-spacing: -0.04em !important;
 }
 
 button,
@@ -103,6 +103,5 @@ button {
 img {
   max-width: 100%;
 }
-
 
 

@@ -1,9 +1,14 @@
 "use client";
 
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Bot,
+  Check,
+  CheckCheck,
   Clock3,
+  ExternalLink,
   FileText,
   Image as ImageIcon,
   Loader2,
@@ -14,282 +19,408 @@ import {
   PlayCircle,
   Send,
   ShoppingBag,
+  Sparkles,
+  User,
   UserRound,
   Video,
+  Zap,
 } from "lucide-react";
 import {
   cleanPhone,
-  formatDateTime,
   formatPrice,
   getConversationTitle,
   getMediaLabel,
   buildCustomerForTemplates,
   getDefaultResponseTemplates,
-  getTemplateToneClasses,
 } from "../../../lib/messages-utils";
 import { getCustomerResponseTemplates } from "../../../lib/customer-response-playbook";
-export function ChatPanel({ conversation, sellerName, reply, setReply, busy, mobileOpen, onBack, onSend, onPause, onResume }) {
+
+function formatTime(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+export function ChatPanel({
+  conversation,
+  sellerName,
+  reply,
+  setReply,
+  busy,
+  mobileOpen,
+  onBack,
+  onSend,
+  onPause,
+  onResume,
+}) {
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [conversation?.messages]);
+
   if (!conversation) {
     return (
-      <section className="hidden min-h-[560px] items-center justify-center rounded-[28px] bg-[#F6FBF7] p-8 text-center ring-1 ring-[#0F2B20]/8 md:flex">
-        <div>
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#059669] shadow-sm">
-            <MessageCircle size={30} />
-          </span>
-          <h2 className="mt-5 font-display text-2xl font-black text-[#0F2B20]">Choisis une discussion</h2>
+      <section className="hidden min-h-[600px] flex-col items-center justify-center rounded-3xl bg-[#F0F2F5] p-8 text-center ring-1 ring-zinc-200/80 md:flex">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-sm">
+          <MessageCircle size={38} />
         </div>
+        <h2 className="mt-5 font-display text-xl font-extrabold text-zinc-800">
+          Sélectionnez une discussion
+        </h2>
+        <p className="mt-1.5 max-w-sm text-xs font-medium text-zinc-500">
+          Répondez à vos clients en direct ou laissez l'assistant IA DJASSAMAN gérer les demandes et les ventes.
+        </p>
       </section>
     );
   }
 
   const isNative = conversation.channel === "native";
-  const hasPhone = Boolean(cleanPhone(conversation.customer_phone));
+  const rawPhone = cleanPhone(conversation.customer_phone);
+  const hasPhone = Boolean(rawPhone);
   const canReply = Boolean(conversation.customer_phone);
+  const isBotPaused = Boolean(conversation.bot_paused);
   const lastOrder = conversation.last_order;
-  const playbookTemplates = getCustomerResponseTemplates(buildCustomerForTemplates(conversation), {
-    sellerName,
-  });
-  const responseTemplates = playbookTemplates.length ? playbookTemplates : getDefaultResponseTemplates(sellerName);
-  const pauseHelp = conversation.bot_paused ? "Mode humain (vous avez la main)" : "Bot actif (DJASSAMAN répond)";
+
+  const playbookTemplates = getCustomerResponseTemplates(
+    buildCustomerForTemplates(conversation),
+    { sellerName }
+  );
+  const responseTemplates = playbookTemplates.length
+    ? playbookTemplates
+    : getDefaultResponseTemplates(sellerName);
+
+  const whatsAppDirectUrl = hasPhone
+    ? `https://wa.me/${rawPhone.startsWith("225") ? rawPhone : "225" + rawPhone}`
+    : null;
 
   return (
-    <section className={`${mobileOpen ? "fixed flex" : "hidden"} inset-0 z-[220] flex-col bg-[#E7F1EA] md:static md:flex md:min-h-[640px] md:overflow-hidden md:rounded-[26px] md:bg-[#E7F1EA] md:ring-1 md:ring-[#0F2B20]/10`}>
-      <div className="border-b border-[#0F2B20]/8 bg-[#F0F7F3] px-3 pb-2.5 pt-[calc(0.7rem+env(safe-area-inset-top,0px))] md:p-4">
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full text-[#54656f] md:hidden" aria-label="Retour aux discussions">
+    <section
+      className={`${
+        mobileOpen ? "fixed inset-0 z-[220] flex" : "hidden"
+      } flex-col overflow-hidden bg-[#EFEAE2] md:static md:flex md:min-h-[640px] md:rounded-3xl md:ring-1 md:ring-zinc-300/80 shadow-md`}
+      style={{
+        backgroundImage: `radial-gradient(#d1d7db 0.75px, transparent 0.75px)`,
+        backgroundSize: "20px 20px",
+      }}
+    >
+      {/* ── WhatsApp Header ── */}
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-[#F0F2F5] px-3.5 py-2.5 pt-[calc(0.6rem+env(safe-area-inset-top,0px))] md:px-4 md:py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-200/70 md:hidden"
+            aria-label="Retour aux discussions"
+          >
             <ArrowLeft size={20} />
           </button>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0F8F2] text-[#059669]">
-            <UserRound size={19} />
+
+          {/* Avatar avec initiales */}
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-700 font-bold text-white shadow-sm">
+            <span>{getConversationTitle(conversation).slice(0, 1).toUpperCase()}</span>
+            <span
+              className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#F0F2F5] ${
+                isNative ? "bg-emerald-500" : "bg-[#25D366]"
+              }`}
+            />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="truncate text-[1rem] font-extrabold leading-5 text-[#0C271C]">{getConversationTitle(conversation)}</h2>
-              <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
-                isNative ? "bg-[#E8F7EE] text-[#059669]" : "bg-[#25D366]/15 text-[#128C7E]"
-              }`}>
-                {isNative ? "🌐 Boutique" : "💬 WhatsApp"}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h2 className="truncate text-sm font-extrabold text-zinc-900 leading-tight">
+                {getConversationTitle(conversation)}
+              </h2>
+              <span
+                className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[0.6rem] font-black ${
+                  isNative
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-[#25D366]/15 text-[#128C7E]"
+                }`}
+              >
+                {isNative ? "Boutique Web" : "WhatsApp"}
               </span>
             </div>
-            <p className="mt-0.5 truncate text-[0.72rem] font-semibold text-[#4C6B5E]">
-              {isNative ? `Client web (${conversation.display_phone?.slice(0, 16) || "ID unique"})` : (conversation.display_phone || "Numéro inconnu")}
+            <p className="truncate text-[0.68rem] font-medium text-zinc-500">
+              {isBotPaused ? (
+                <span className="font-bold text-amber-700">👤 Vous avez la main</span>
+              ) : (
+                <span className="text-emerald-700 font-semibold">🤖 DJASSAMAN actif</span>
+              )}
+              {hasPhone ? ` · ${conversation.display_phone || rawPhone}` : ""}
             </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {canReply && (
-            <button
-              type="button"
-              onClick={() => (conversation.bot_paused ? onResume(conversation) : onPause(conversation))}
-              disabled={busy === "pause" || busy === "resume"}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#059669] shadow-sm disabled:opacity-50"
-              aria-label={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
-              title={conversation.bot_paused ? "Rendre au bot" : "Prendre la main"}
-            >
-              {busy === "pause" || busy === "resume" ? <Loader2 className="animate-spin" size={14} /> : conversation.bot_paused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
-            </button>
-            )}
-            {hasPhone && (
-            <a
-              href={`tel:${cleanPhone(conversation.customer_phone)}`}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#54656f] no-underline shadow-sm"
-              aria-label="Appeler"
-            >
-              <Phone size={16} />
-            </a>
-            )}
           </div>
         </div>
 
-        {!canReply && <SellerConversationHint paused={conversation.bot_paused} canReply={canReply} />}
-      </div>
+        {/* Header Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Bouton bascule IA / Humain */}
+          {canReply && (
+            <button
+              type="button"
+              onClick={() => (isBotPaused ? onResume(conversation) : onPause(conversation))}
+              disabled={busy === "pause" || busy === "resume"}
+              className={`flex h-8 items-center gap-1 rounded-full px-2.5 text-[0.68rem] font-bold shadow-sm transition active:scale-95 ${
+                isBotPaused
+                  ? "bg-amber-100 text-amber-900 ring-1 ring-amber-300"
+                  : "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300"
+              }`}
+              title={isBotPaused ? "Rendre la main au Bot" : "Mettre en pause le Bot"}
+            >
+              {busy === "pause" || busy === "resume" ? (
+                <Loader2 className="animate-spin" size={13} />
+              ) : isBotPaused ? (
+                <>
+                  <PlayCircle size={13} />
+                  <span className="hidden sm:inline">Rendre au bot</span>
+                </>
+              ) : (
+                <>
+                  <PauseCircle size={13} />
+                  <span className="hidden sm:inline">Prendre la main</span>
+                </>
+              )}
+            </button>
+          )}
 
-      <div className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto bg-[#E7F1EA] px-3 py-3 md:px-5">
-        {lastOrder && <OrderContext order={lastOrder} />}
+          {/* Lien direct WhatsApp */}
+          {whatsAppDirectUrl && (
+            <a
+              href={whatsAppDirectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366]/15 text-[#128C7E] no-underline shadow-sm hover:bg-[#25D366]/25"
+              aria-label="Ouvrir sur WhatsApp"
+              title="Ouvrir sur WhatsApp"
+            >
+              <MessageCircle size={16} />
+            </a>
+          )}
+
+          {/* Appel Téléphonique */}
+          {hasPhone && (
+            <a
+              href={`tel:${rawPhone}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-700 no-underline shadow-sm hover:bg-zinc-100"
+              aria-label="Appeler"
+              title="Appeler"
+            >
+              <Phone size={15} />
+            </a>
+          )}
+        </div>
+      </header>
+
+      {/* ── Chat Messages Body ── */}
+      <div
+        ref={scrollRef}
+        className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto px-3 py-3 md:px-5"
+      >
+        {/* Contexte de commande attachée si présente */}
+        {lastOrder && <OrderContextCard order={lastOrder} />}
+
         {(conversation.messages || []).length === 0 ? (
-          <div className="mx-auto mt-4 max-w-[78%] rounded-[16px] bg-[#fbeec0] px-4 py-3 text-center text-[#54656f] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
-            <MessageCircle className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="mt-2 text-sm font-extrabold text-[#0C271C]">{canReply ? "Prêt à répondre" : "Numéro manquant"}</p>
-            <p className="mt-1 text-xs font-semibold leading-4">{canReply ? "Ecrivez en bas." : "Completez la vente."}</p>
+          <div className="mx-auto my-8 max-w-xs rounded-2xl bg-white/90 p-5 text-center shadow-sm backdrop-blur-sm">
+            <MessageCircle className="mx-auto text-emerald-600" size={32} />
+            <p className="mt-2 text-xs font-bold text-zinc-900">Nouvelle discussion</p>
+            <p className="mt-1 text-[0.72rem] text-zinc-500 leading-relaxed">
+              Tapez un message ci-dessous ou utilisez une réponse rapide pour démarrer la vente.
+            </p>
           </div>
         ) : (
-          (conversation.messages || []).map((message) => (
-            <MessageBubble key={message.id} message={message} />
+          (conversation.messages || []).map((msg) => (
+            <WhatsAppMessageBubble key={msg.id} message={msg} />
           ))
         )}
       </div>
 
-      <div className="bg-[#F0F7F3] p-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] md:p-3">
-        {canReply && <QuickReplyRail templates={responseTemplates} onUseTemplate={setReply} compact />}
-        <div className="mt-2 grid grid-cols-[1fr_auto] items-end gap-2">
-          <textarea
-            value={reply}
-            onChange={(event) => setReply(event.target.value)}
-            placeholder={canReply ? "Message..." : "Numéro indisponible"}
-            disabled={!canReply || busy === "send"}
-            className="max-h-32 min-h-[44px] resize-none rounded-[22px] bg-white px-4 py-3 text-[0.92rem] font-medium leading-5 text-[#0C271C] shadow-sm outline-none placeholder:text-[#4C6B5E]/70 disabled:opacity-60"
-          />
+      {/* ── WhatsApp Bottom Input Bar ── */}
+      <footer className="border-t border-zinc-200/80 bg-[#F0F2F5] p-2.5 pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] md:p-3">
+        {/* Rail de réponses rapides WhatsApp */}
+        {canReply && (
+          <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-0.5">
+            {responseTemplates.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => setReply(tpl.text)}
+                className="flex min-h-[30px] shrink-0 items-center gap-1 rounded-full bg-white px-2.5 text-[0.68rem] font-bold text-zinc-800 shadow-sm ring-1 ring-zinc-200/90 transition hover:bg-zinc-50 active:scale-95"
+              >
+                <Zap size={11} className="text-emerald-600" />
+                <span>{tpl.shortTitle || tpl.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input container style WhatsApp */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center rounded-full bg-white px-4 py-1.5 shadow-sm ring-1 ring-zinc-200/80">
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (reply.trim()) onSend();
+                }
+              }}
+              placeholder={canReply ? "Écrire un message..." : "Numéro client manquant"}
+              disabled={!canReply || busy === "send"}
+              rows={1}
+              className="max-h-24 min-h-[26px] flex-1 resize-none bg-transparent py-1 text-xs font-medium text-zinc-900 outline-none placeholder:text-zinc-400"
+            />
+          </div>
+
+          {/* Bouton d'envoi rond WhatsApp */}
           <button
             type="button"
             onClick={onSend}
             disabled={!canReply || !reply.trim() || busy === "send"}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#059669] text-white shadow-sm disabled:bg-[#AFC4B8] disabled:opacity-70"
-            aria-label="Envoyer le message"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00A884] text-white shadow-md transition hover:bg-[#008f6f] active:scale-95 disabled:bg-zinc-300 disabled:shadow-none"
+            aria-label="Envoyer"
           >
-            {busy === "send" ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
+            {busy === "send" ? (
+              <Loader2 className="animate-spin" size={17} />
+            ) : (
+              <Send size={17} className="translate-x-0.5" />
+            )}
           </button>
         </div>
-        <p className="mt-1 px-2 text-[0.64rem] font-semibold leading-4 text-[#4C6B5E]">
-          {pauseHelp}
-        </p>
-      </div>
+      </footer>
     </section>
   );
 }
 
-
-export function SellerConversationHint({ paused, canReply }) {
-  const content = !canReply
-    ? {
-      title: "Numéro à compléter",
-      body: "La vente reste consultable.",
-      className: "bg-white text-[#0F2B20] ring-1 ring-[#0F2B20]/8",
-    }
-    : paused
-      ? {
-        title: "Vous repondez",
-        body: "Le bot attend.",
-        className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200",
-      }
-      : {
-        title: "Bot actif",
-        body: "Tikchop suit.",
-        className: "bg-[#EAF8F0] text-[#047857] ring-1 ring-emerald-200",
-      };
-
-  return (
-    <div className={`mt-2.5 rounded-xl px-3 py-2 text-xs font-bold leading-4 ${content.className}`}>
-      <p className="font-black">{content.title}</p>
-      <p className="mt-0.5 opacity-75">{content.body}</p>
-    </div>
-  );
-}
-
-
-export function QuickReplyRail({ templates, onUseTemplate, compact = false }) {
-  if (!templates?.length) return null;
-
-  return (
-    <div className={`no-scrollbar flex gap-1.5 overflow-x-auto ${compact ? "pb-0.5" : ""}`}>
-        {templates.slice(0, 6).map((template) => (
-          <button
-            key={template.id}
-            type="button"
-            onClick={() => onUseTemplate(template.text)}
-            className={`min-h-[34px] shrink-0 rounded-full px-3 text-[0.72rem] font-bold ring-1 active:scale-[0.98] ${getTemplateToneClasses(template.tone)}`}
-          >
-            {template.shortTitle || template.title}
-          </button>
-        ))}
-    </div>
-  );
-}
-
-
-export function OrderContext({ order }) {
-  const total = Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
-  return (
-    <div className="mx-auto w-full max-w-[92%] rounded-[14px] bg-white/90 p-3 text-[#0C271C] shadow-[0_1px_1px_rgba(17,27,33,0.12)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="flex items-center gap-2 text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-[#059669]">
-            <ShoppingBag size={15} />
-            Vente
-          </p>
-          <p className="mt-1 text-[1rem] font-extrabold">{order.order_ref || order.id?.slice(0, 8)?.toUpperCase()}</p>
-          <p className="mt-0.5 text-xs font-semibold text-[#4C6B5E]">{order.delivery_zone || order.delivery_address || "Livraison a confirmer"}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[0.95rem] font-extrabold text-[#059669]">{formatPrice(total)}</p>
-          <Link href="/orders" className="mt-2 inline-flex rounded-full bg-[#E8F7EE] px-3 py-1.5 text-[0.68rem] font-extrabold text-[#059669] no-underline">
-            Voir
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function MessageBubble({ message }) {
+// Bulle de message style WhatsApp
+function WhatsAppMessageBubble({ message }) {
   const isOut = message.direction === "out";
   const isBot = message.direction === "bot";
+  const isSeller = isOut || isBot;
   const hasText = Boolean(String(message.text || "").trim());
+  const time = formatTime(message.created_at);
+
   return (
-    <div className={`flex ${isOut || isBot ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[82%] px-3 py-2 shadow-[0_1px_1px_rgba(17,27,33,0.12)] ${
-        isOut
-          ? "rounded-[12px] rounded-br-sm bg-[#F0F8F2] text-[#0C271C]"
-          : isBot
-            ? "rounded-[12px] rounded-br-sm bg-[#f1e8da] text-[#0C271C]"
-            : "rounded-[12px] rounded-bl-sm bg-white text-[#0C271C]"
-      }`}
+    <div className={`flex ${isSeller ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`relative max-w-[82%] rounded-2xl px-3.5 py-2 shadow-[0_1px_1.5px_rgba(11,20,26,0.14)] ${
+          isSeller
+            ? "rounded-tr-xs bg-[#D9FDD3] text-zinc-900"
+            : "rounded-tl-xs bg-white text-zinc-900"
+        }`}
       >
-        {message.media && <MessageMedia media={message.media} dark={isOut || isBot} />}
-        {hasText && <p className={`${message.media ? "mt-2" : ""} whitespace-pre-wrap text-[0.92rem] font-medium leading-5`}>{message.text}</p>}
-        {!hasText && message.media?.caption && (
-          <p className="mt-2 whitespace-pre-wrap text-[0.92rem] font-medium leading-5">{message.media.caption}</p>
+        {/* Badge expéditeur IA / Manuel */}
+        {isSeller && (
+          <div className="mb-1 flex items-center gap-1">
+            <span
+              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.58rem] font-black ${
+                isBot
+                  ? "bg-emerald-600/10 text-emerald-800"
+                  : "bg-zinc-800/10 text-zinc-800"
+              }`}
+            >
+              {isBot ? <Bot size={10} /> : <User size={10} />}
+              {isBot ? "DJASSAMAN IA" : "Vendeur"}
+            </span>
+          </div>
         )}
-        <div className="mt-1 flex items-center justify-end gap-1 text-[0.62rem] font-semibold text-[#4C6B5E]">
-          {isOut ? "Vous" : isBot ? "DJASSAMAN" : "Client"}
-          <span>·</span>
-          <Clock3 size={11} />
-          {formatDateTime(message.created_at)}
+
+        {/* Média */}
+        {message.media && <BubbleMedia media={message.media} />}
+
+        {/* Texte du message */}
+        {hasText && (
+          <p className="whitespace-pre-wrap text-xs font-medium leading-relaxed">
+            {message.text}
+          </p>
+        )}
+
+        {/* Heure et Double Checkmarks */}
+        <div className="mt-1 flex items-center justify-end gap-1 text-[0.6rem] font-semibold text-zinc-500">
+          <span>{time}</span>
+          {isSeller && <CheckCheck size={13} className="text-[#53BDEB]" />}
         </div>
       </div>
     </div>
   );
 }
 
-export function MessageMedia({ media, dark }) {
-  const commonText = dark ? "text-white/80" : "text-[var(--text-dim)]";
-  const shell = dark ? "bg-white/12" : "bg-[var(--surface-soft)]";
-
+// Composant Média WhatsApp
+function BubbleMedia({ media }) {
   if (media.type === "image" && media.url) {
     return (
-      <a href={media.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl">
+      <a
+        href={media.url}
+        target="_blank"
+        rel="noreferrer"
+        className="mb-1.5 block overflow-hidden rounded-xl"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={media.url} alt={media.caption || "Photo envoyee par le client"} className="max-h-72 w-full min-w-40 object-cover" />
+        <img
+          src={media.url}
+          alt={media.caption || "Image"}
+          className="max-h-60 w-full object-cover"
+        />
       </a>
     );
   }
 
   if (media.type === "audio" && media.url) {
     return (
-      <div className={`rounded-2xl ${shell} p-3`}>
-        <div className={`mb-2 flex items-center gap-2 text-xs font-black ${commonText}`}>
-          <Mic size={15} />
-          Vocal client
+      <div className="mb-1.5 rounded-xl bg-black/5 p-2">
+        <div className="mb-1 flex items-center gap-1 text-[0.65rem] font-bold text-zinc-700">
+          <Mic size={13} />
+          <span>Message vocal</span>
         </div>
-        <audio controls src={media.url} className="w-full" />
+        <audio controls src={media.url} className="h-8 w-full" />
       </div>
     );
   }
 
-  if (media.type === "video" && media.url) {
-    return (
-      <video controls src={media.url} className="max-h-72 w-full min-w-40 rounded-2xl bg-black" />
-    );
-  }
-
-  const Icon = media.type === "image" ? ImageIcon : media.type === "video" ? Video : FileText;
   return (
     <a
       href={media.url || undefined}
       target="_blank"
       rel="noreferrer"
-      className={`flex items-center gap-3 rounded-2xl ${shell} p-3 text-sm font-black no-underline ${dark ? "text-white" : "text-[var(--text-main)]"}`}
+      className="mb-1.5 flex items-center gap-2 rounded-xl bg-black/5 p-2 text-xs font-bold text-zinc-800 no-underline"
     >
-      <Icon size={18} />
-      <span className="min-w-0 truncate">{getMediaLabel(media)}</span>
+      <FileText size={16} />
+      <span className="truncate">{getMediaLabel(media)}</span>
     </a>
+  );
+}
+
+// Carte Contexte de Commande
+function OrderContextCard({ order }) {
+  const total =
+    Number(order.total_amount || 0) + Number(order.delivery_fee || 0);
+
+  return (
+    <div className="mx-auto w-full max-w-sm rounded-2xl bg-white/95 p-3 shadow-sm backdrop-blur-sm ring-1 ring-zinc-200">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <ShoppingBag size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-black text-zinc-900">
+              Commande #{order.order_ref || order.id?.slice(0, 6).toUpperCase()}
+            </p>
+            <p className="truncate text-[0.68rem] font-semibold text-emerald-700">
+              {formatPrice(total)} · {order.delivery_zone || "Retrait"}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/orders"
+          className="flex h-7 items-center rounded-full bg-zinc-900 px-2.5 text-[0.65rem] font-bold text-white no-underline hover:bg-zinc-800"
+        >
+          Détails
+        </Link>
+      </div>
+    </div>
   );
 }

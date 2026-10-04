@@ -29,6 +29,7 @@
     "test:background-clean": "node scripts/test-background-clean-flow.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
     "@lottiefiles/react-lottie-player": "^3.6.0",
     "@nobertdev/react-3d-icons": "^1.5.2",
     "@supabase/ssr": "^0.10.3",

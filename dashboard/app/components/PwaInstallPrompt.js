@@ -85,11 +85,7 @@ export default function PwaInstallPrompt({ variant = "floating" }) {
     || pathname === "/onboarding"
     || pathname === "/login"
     || pathname?.startsWith("/account/");
-  const showFloating = variant === "floating"
-    && isMobileViewport
-    && !installed
-    && !dismissed
-    && !isSetupRoute;
+  const showFloating = false;
 
   useEffect(() => {
     if (!showFloating || typeof window === "undefined") return undefined;

@@ -421,58 +421,72 @@ export default function NativeChatClient({ seller }) {
   }
 
   return (
-    <div style={brandStyles} className="mx-auto flex h-[100dvh] max-w-[480px] flex-col overflow-hidden bg-white md:max-w-6xl">
-      <header className="shop-topbar sticky top-0 z-40 -mx-4 px-4 py-3 md:mx-0 md:rounded-b-none md:px-4 md:py-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link href={`/${seller.slug}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[var(--text-main)] shadow-sm" aria-label="Retour à la boutique">
-              <ArrowLeft size={19} />
-            </Link>
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[0.72rem] font-black text-[var(--primary)] ring-1 ring-[#0F2B20]/7 md:h-11 md:w-11">
-              {seller.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
-              ) : (
-                seller.name?.slice(0, 2).toUpperCase() || "TC"
-              )}
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-[1.05rem] font-black leading-5 text-[var(--text-main)]">{seller.name}</h1>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[0.68rem] font-bold leading-3 text-[var(--primary)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-                Djassaman · IA & Vendeur
-              </p>
-            </div>
+    <div
+      className="mx-auto flex h-[100dvh] max-w-[480px] flex-col overflow-hidden bg-[#EFEAE2] md:max-w-4xl md:my-4 md:h-[92vh] md:rounded-3xl md:shadow-xl md:ring-1 md:ring-zinc-300"
+      style={{
+        ...brandStyles,
+        backgroundImage: `radial-gradient(#d1d7db 0.75px, transparent 0.75px)`,
+        backgroundSize: "20px 20px",
+      }}
+    >
+      {/* Header style WhatsApp */}
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-[#F0F2F5] px-3.5 py-2.5 pt-[calc(0.6rem+env(safe-area-inset-top,0px))] md:px-4 md:py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Link
+            href={`/${seller.slug}`}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-200/70"
+            aria-label="Retour à la boutique"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-700 font-bold text-white shadow-sm ring-1 ring-zinc-200">
+            {seller.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={seller.logo_url} alt="Logo" className="h-full w-full object-cover" />
+            ) : (
+              seller.name?.slice(0, 2).toUpperCase() || "TC"
+            )}
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#F0F2F5] bg-[#25D366]" />
           </div>
-          {needsName ? null : (
-            <button
-              type="button"
-              onClick={() => setNeedsName(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[var(--text-main)] shadow-sm"
-              aria-label="Modifier mon nom"
-            >
-              <MessageCircle size={19} />
-            </button>
-          )}
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-extrabold text-zinc-900 leading-tight">
+              {seller.name}
+            </h1>
+            <p className="flex items-center gap-1 text-[0.68rem] font-bold text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              En ligne · DJASSAMAN IA
+            </p>
+          </div>
         </div>
+
+        {needsName ? null : (
+          <button
+            type="button"
+            onClick={() => setNeedsName(true)}
+            className="flex h-8 items-center gap-1 rounded-full bg-white px-2.5 text-[0.68rem] font-bold text-zinc-700 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-50"
+            aria-label="Modifier mon prénom"
+          >
+            <span>{name ? `👤 ${name}` : "Mon nom"}</span>
+          </button>
+        )}
       </header>
 
       {needsName && (
-        <div className="mx-4 mt-3 rounded-2xl bg-[var(--surface-soft)] p-4">
-          <p className="text-sm font-extrabold text-[var(--text-main)]">Comment vous appelez-vous ?</p>
+        <div className="mx-3 mt-2 rounded-2xl bg-white/95 p-3.5 shadow-sm backdrop-blur-sm ring-1 ring-zinc-200">
+          <p className="text-xs font-black text-zinc-900">Comment vous appelez-vous ?</p>
           <div className="mt-2 flex gap-2">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && name.trim() && saveName(name)}
-              placeholder="Votre prénom"
-              className="min-h-[42px] flex-1 rounded-xl border-0 bg-white px-3 text-sm font-semibold outline-none"
+              placeholder="Votre prénom ou pseudo"
+              className="min-h-[38px] flex-1 rounded-xl bg-zinc-100 px-3 text-xs font-semibold text-zinc-900 outline-none placeholder:text-zinc-400"
             />
             <button
               type="button"
               onClick={() => saveName(name)}
               disabled={!name.trim()}
-              className="min-h-[42px] rounded-xl bg-[var(--primary)] px-4 text-sm font-extrabold text-white disabled:bg-[var(--surface-mid)] disabled:text-[var(--outline)]"
+              className="min-h-[38px] rounded-xl bg-[#00A884] px-4 text-xs font-bold text-white shadow-sm disabled:opacity-50"
             >
               OK
             </button>
@@ -480,32 +494,34 @@ export default function NativeChatClient({ seller }) {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
+      {/* Messages Scroll Body */}
+      <main className="no-scrollbar flex-1 space-y-2.5 overflow-y-auto px-3.5 py-3">
         {messages.length === 0 && !typing && (
-          <div className="mx-auto max-w-[360px] rounded-[24px] bg-[var(--surface-soft)] p-4 text-sm font-semibold leading-6 text-[var(--text-dim)]">
-            <p className="font-display text-base font-extrabold text-[var(--text-main)]">
+          <div className="mx-auto my-6 max-w-xs rounded-2xl bg-white/95 p-4 text-center shadow-sm backdrop-blur-sm">
+            <MessageCircle className="mx-auto text-emerald-600" size={30} />
+            <p className="mt-2 font-display text-sm font-black text-zinc-900">
               Bonjour{name ? ` ${name}` : ""} 👋
             </p>
-            <p className="mt-1">
-              Bienvenue sur la messagerie de <span className="font-extrabold text-[var(--text-main)]">{seller.name}</span>.
-              Posez vos questions, envoyez une photo d&apos;un article (📷) ou un vocal (🎤), et passez commande directement ici.
+            <p className="mt-1 text-[0.72rem] text-zinc-500 leading-relaxed">
+              Bienvenue sur la messagerie de <strong className="text-zinc-800">{seller.name}</strong>.
+              Posez vos questions, envoyez une photo d'article (📷) ou un vocal (🎤) pour commander !
             </p>
           </div>
         )}
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {messages.map((message) => {
             const isClient = message.direction === "in";
             return (
               <div key={message.id} className={`flex ${isClient ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[84%] rounded-[18px] px-3.5 py-2.5 text-sm font-medium leading-5 whitespace-pre-line ${
+                  className={`relative max-w-[84%] rounded-2xl px-3.5 py-2 text-xs font-medium leading-relaxed shadow-[0_1px_1.5px_rgba(11,20,26,0.14)] whitespace-pre-line ${
                     isClient
-                      ? "bg-[var(--primary)] text-white rounded-br-[6px]"
-                      : "bg-[#F1F5F0] text-[var(--text-main)] rounded-bl-[6px]"
+                      ? "rounded-tr-xs bg-[#D9FDD3] text-zinc-900"
+                      : "rounded-tl-xs bg-white text-zinc-900"
                   }`}
                 >
-                  {/* Affichage Image / Capture d'écran */}
+                  {/* Affichage Image */}
                   {message.media?.type === "image" && message.media?.url && (
                     <div className="mb-2 overflow-hidden rounded-xl bg-black/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -520,15 +536,19 @@ export default function NativeChatClient({ seller }) {
 
                   {/* Affichage Audio / Message Vocal */}
                   {message.media?.type === "audio" && message.media?.url && (
-                    <div className="mb-2">
-                      <audio controls src={message.media.url} className="h-9 w-full max-w-[240px]" />
+                    <div className="mb-1.5 rounded-xl bg-black/5 p-2">
+                      <div className="mb-1 flex items-center gap-1 text-[0.65rem] font-bold text-zinc-700">
+                        <Mic size={12} />
+                        <span>Message vocal</span>
+                      </div>
+                      <audio controls src={message.media.url} className="h-8 w-full" />
                     </div>
                   )}
 
                   {/* Contenu textuel */}
                   {renderMessageContent(message.text)}
 
-                  <span className={`mt-1 block text-right text-[0.6rem] ${isClient ? "text-white/65" : "text-[var(--text-dim)]"}`}>
+                  <span className={`mt-1 block text-right text-[0.6rem] font-semibold ${isClient ? "text-zinc-500" : "text-zinc-400"}`}>
                     {formatTime(message.created_at)}
                   </span>
                 </div>
@@ -538,17 +558,17 @@ export default function NativeChatClient({ seller }) {
 
           {typing && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-1.5 rounded-[18px] bg-[#F1F5F0] px-4 py-3 text-[var(--text-dim)]">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-current" style={{ animationDelay: "0ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-current" style={{ animationDelay: "150ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-current" style={{ animationDelay: "300ms" }} />
+              <div className="flex items-center gap-1.5 rounded-2xl bg-white px-3.5 py-2 shadow-sm">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" style={{ animationDelay: "0ms" }} />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" style={{ animationDelay: "150ms" }} />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           )}
 
           {imageUploading && (
             <div className="flex justify-end">
-              <div className="flex items-center gap-2 rounded-[18px] bg-[var(--primary)]/20 px-3.5 py-2 text-xs font-bold text-[var(--primary)]">
+              <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-sm">
                 <Loader2 size={14} className="animate-spin" />
                 Analyse de la photo...
               </div>
@@ -560,21 +580,21 @@ export default function NativeChatClient({ seller }) {
       </main>
 
       {error && (
-        <div className="mx-4 mb-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-extrabold text-amber-900">
+        <div className="mx-3 mb-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-extrabold text-amber-900 ring-1 ring-amber-200">
           {error}
         </div>
       )}
 
       {/* Quick replies */}
       {!isRecording && (
-        <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-2 pb-1.5">
+        <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-3 pb-1.5">
           {QUICK_REPLIES.map((reply) => (
             <button
               key={reply}
               type="button"
               onClick={() => sendText(reply)}
               disabled={sending || imageUploading}
-              className="shrink-0 rounded-full border border-[rgba(15,43,32,0.08)] bg-white px-3 py-1.5 text-[0.72rem] font-extrabold text-[var(--text-main)] active:scale-95"
+              className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[0.68rem] font-bold text-zinc-800 shadow-sm ring-1 ring-zinc-200/90 transition hover:bg-zinc-50 active:scale-95"
             >
               {reply}
             </button>
@@ -583,7 +603,7 @@ export default function NativeChatClient({ seller }) {
       )}
 
       {/* Barre d'action inférieure */}
-      <footer className="border-t border-[var(--line)] bg-white px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-2.5">
+      <footer className="border-t border-zinc-200/80 bg-[#F0F2F5] px-3 pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] pt-2">
         <input
           type="file"
           ref={fileInputRef}
@@ -593,10 +613,10 @@ export default function NativeChatClient({ seller }) {
         />
 
         {isRecording ? (
-          <div className="flex items-center justify-between gap-3 rounded-[18px] bg-red-50 px-4 py-2.5 text-red-600">
+          <div className="flex items-center justify-between gap-3 rounded-full bg-red-50 px-4 py-2 text-red-600 ring-1 ring-red-200">
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 animate-ping rounded-full bg-red-500" />
-              <span className="text-sm font-bold">
+              <span className="h-2.5 w-2.5 animate-ping rounded-full bg-red-500" />
+              <span className="text-xs font-bold">
                 Enregistrement ({recordingSeconds}s)
               </span>
             </div>
@@ -604,18 +624,18 @@ export default function NativeChatClient({ seller }) {
               <button
                 type="button"
                 onClick={cancelRecording}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-500 shadow-sm"
                 aria-label="Annuler vocal"
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} />
               </button>
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500 text-white shadow-sm"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white shadow-sm"
                 aria-label="Envoyer vocal"
               >
-                <Square size={14} className="fill-current" />
+                <Square size={13} className="fill-current" />
               </button>
             </div>
           </div>
@@ -625,41 +645,43 @@ export default function NativeChatClient({ seller }) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={sending || imageUploading}
-              className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-main)] transition-colors hover:bg-[var(--surface-mid)] disabled:opacity-50"
-              aria-label="Envoyer une photo / capture d'écran"
-              title="Envoyer une photo ou capture d'écran"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-100 disabled:opacity-50"
+              aria-label="Envoyer une photo"
+              title="Envoyer une photo"
             >
-              <Camera size={20} />
+              <Camera size={17} />
             </button>
 
             <button
               type="button"
               onClick={startRecording}
               disabled={sending || imageUploading}
-              className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-main)] transition-colors hover:bg-[var(--surface-mid)] disabled:opacity-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-100 disabled:opacity-50"
               aria-label="Enregistrer un message vocal"
               title="Message vocal"
             >
-              <Mic size={20} />
+              <Mic size={17} />
             </button>
 
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendText(input)}
-              disabled={sending || imageUploading}
-              placeholder="Écrivez un message..."
-              className="min-h-[46px] flex-1 rounded-[18px] border border-[var(--line)] bg-white px-4 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-            />
+            <div className="flex flex-1 items-center rounded-full bg-white px-3.5 py-1.5 shadow-sm ring-1 ring-zinc-200/80">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendText(input)}
+                disabled={sending || imageUploading}
+                placeholder="Écrivez un message..."
+                className="w-full bg-transparent text-xs font-medium text-zinc-900 outline-none placeholder:text-zinc-400"
+              />
+            </div>
 
             <button
               type="button"
               onClick={() => sendText(input)}
               disabled={sending || imageUploading || !input.trim()}
-              className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-sm disabled:bg-[var(--surface-mid)] disabled:text-[var(--outline)]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A884] text-white shadow-md transition hover:bg-[#008f6f] active:scale-95 disabled:bg-zinc-300 disabled:shadow-none"
               aria-label="Envoyer"
             >
-              <Send size={18} />
+              <Send size={15} className="translate-x-0.5" />
             </button>
           </div>
         )}

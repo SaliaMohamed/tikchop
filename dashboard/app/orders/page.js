@@ -106,8 +106,10 @@ export default function OrdersPage() {
               }`}
             >
               <Icon size={16} />
-              <span className={filter === key ? "" : "sr-only"}>{label}</span>
-              <span className={`text-[10px] font-black ${filter === key ? "text-[#34D399]" : "text-[#059669]"}`}>
+              <span className="text-xs font-bold">{label}</span>
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                filter === key ? "bg-[#34D399] text-[#0F2B20]" : "bg-[#059669]/10 text-[#059669]"
+              }`}>
                 {getFilterCount(key)}
               </span>
             </button>

@@ -1,49 +1,63 @@
 @import "tailwindcss";
 
 /* ============================================================
-   TOKENS — Design system « Émeraude épuré » (iOS moderne)
+   TOKENS — Design system « Glass Émeraude » (Glassmorphism)
    ============================================================
-   Palette : vert émeraude profond, blancs menthe lumineux,
-   surfaces claires aérées, typo soignee. Remplace l'ancien
-   systeme « crème & chaleureux » (terracotta/espresso).
+   Inspiré de Linear × Arc × App Store.
+   Fond sombre végétal profond, primaire émeraude électrique,
+   surfaces en verre translucide, ombres colorées, glow.
    ============================================================ */
 
 :root {
-  /* ── Primary Émeraude ── */
-  --color-primary: #059669;
-  --color-primary-hover: #047857;
-  --color-primary-bright: #10b981;
-  --color-primary-light: #6ee7b7;
-  --color-primary-accent: #34d399;
+  /* ── Primary Émeraude Électrique ── */
+  --color-primary: #00c78e;
+  --color-primary-hover: #00b37e;
+  --color-primary-bright: #34d9a8;
+  --color-primary-light: #6ee7c0;
+  --color-primary-accent: #00dda0;
+  --color-primary-vivid: #00e5aa;
 
-  /* ── Deep Greens ── */
+  /* ── Deep Greens (fond, panels sombres) ── */
   --color-deep: #065f46;
   --color-deep-alt: #047857;
-  --color-deep-mint: #0c8a63;
+  --color-deep-mint: #00a878;
   --color-deep-teal: #065f46;
-  --color-deep-forest: #074b38;
-  --color-deep-dark: #064e3b;
+  --color-deep-forest: #043d2e;
+  --color-deep-dark: #042b20;
 
-  /* ── Espresso → Deep Forest Palette (ink/panels) ── */
-  --color-ink: #0f2b20;
-  --color-dark: #0f2b20;
-  --color-dark-soft: #0a2319;
-  --color-dark-mid: #0c271c;
-  --color-dark-light: #0d291e;
-  --color-dark-surface: #0e2a1f;
-  --color-dark-panel: #0c271c;
-  --color-dark-panel-alt: #0d291e;
-  --color-dark-panel-mid: #0a2319;
-  --color-dark-panel-light: #081a12;
+  /* ── Dark Surface Palette (fond principal app) ── */
+  --color-dark-bg: #07110d;
+  --color-dark-bg-soft: #091510;
+  --color-dark-bg-mid: #0b1a12;
+  --color-dark-surface: #0e2018;
+  --color-dark-panel: #0c1d15;
+  --color-dark-panel-alt: #0d1f16;
+  --color-dark-panel-mid: #0a1b12;
+  --color-dark-panel-light: #081812;
+  --color-ink: #e8f5ef;
+  --color-dark: #07110d;
+  --color-dark-soft: #091510;
+  --color-dark-mid: #0b1a12;
+  --color-dark-light: #0c1d15;
 
-  /* ── Mint Accents & Soft Greens (was neons/mints) ── */
-  --color-neon: #6ee7b7;
-  --color-mint: #e8f7ee;
-  --color-mint-soft: #eaf8f0;
-  --color-mint-light: #e7f6ed;
-  --color-mint-deep: #e6f5ec;
-  --color-mint-dark: #ebf8f0;
-  --color-honeydew: #f2f9f5;
+  /* ── Glass Surfaces ── */
+  --glass-xs:   rgba(255, 255, 255, 0.04);
+  --glass-light: rgba(255, 255, 255, 0.07);
+  --glass-medium: rgba(255, 255, 255, 0.10);
+  --glass-strong: rgba(255, 255, 255, 0.14);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-hover: rgba(255, 255, 255, 0.12);
+  --glass-active: rgba(255, 255, 255, 0.16);
+
+  /* ── Mint Accents & Soft Greens ── */
+  --color-neon: #00e5aa;
+  --color-mint: #0e3328;
+  --color-mint-soft: #0d2f24;
+  --color-mint-light: #112e22;
+  --color-mint-deep: #0c2e22;
+  --color-mint-dark: #0f3527;
+  --color-honeydew: #e8f5ef;
   --color-honeydew-soft: #eef8f2;
   --color-honeydew-light: #f5fbf8;
   --color-honeydew-deep: #f1f8f3;
@@ -56,85 +70,86 @@
   --color-cream: #f0f7f3;
 
   /* ── Backgrounds ── */
-  --color-bg: #f6fbf7;
-  --color-bg-warm: #f6fbf7;
-  --color-bg-paper: #fdfefd;
-  --color-surface: #ffffff;
-  --color-surface-soft: #f4faf6;
-  --color-surface-raised: #ffffff;
-  --color-surface-mid: #e7f1ea;
+  --color-bg: #07110d;
+  --color-bg-warm: #07110d;
+  --color-bg-paper: #0e2018;
+  --color-surface: #0e2018;
+  --color-surface-soft: #0c1d15;
+  --color-surface-raised: #112618;
+  --color-surface-mid: #162e20;
 
-  /* ── Text ── */
-  --color-text: #0f2b20;
-  --color-text-soft: #16382b;
-  --color-text-muted: #54685e;
-  --color-text-subtle: #4c6b5e;
-  --color-text-whisper: #577066;
-  --color-text-quiet: #54685e;
-  --color-text-faint: #4c6b5e;
-  --color-text-shadow: #547064;
+  /* ── Text (sur fond sombre) ── */
+  --color-text: #e8f5ef;
+  --color-text-soft: #d0ebe0;
+  --color-text-muted: rgba(232, 245, 239, 0.55);
+  --color-text-subtle: rgba(232, 245, 239, 0.45);
+  --color-text-whisper: rgba(232, 245, 239, 0.35);
+  --color-text-quiet: rgba(232, 245, 239, 0.55);
+  --color-text-faint: rgba(232, 245, 239, 0.40);
+  --color-text-shadow: rgba(232, 245, 239, 0.50);
 
-  /* ── Accent Gold (douce chaleur complementaire) ── */
-  --color-gold: #e9b949;
-  --color-gold-soft: #dda32e;
-  --color-gold-bright: #f0c460;
-  --color-gold-pale: #f3d472;
+  /* ── Accent Gold (chaleur complémentaire) ── */
+  --color-gold: #f5c842;
+  --color-gold-soft: #e8a820;
+  --color-gold-bright: #f7d462;
+  --color-gold-pale: #fde68a;
 
   /* ── Semantic ── */
-  --color-success: #059669;
-  --color-error: #e5484d;
-  --color-error-alt: #dc3d43;
-  --color-warning: #dda32e;
-  --color-info: #3d93d9;
+  --color-success: #00c78e;
+  --color-error: #f87171;
+  --color-error-alt: #ef4444;
+  --color-warning: #f5c842;
+  --color-info: #60a5fa;
   --color-whatsapp: #25d366;
 
-  /* ── Opacity Tokens (emeraude ink at various alpha) ── */
-  --ink-01: rgba(15, 43, 32, 0.01);
-  --ink-02: rgba(15, 43, 32, 0.02);
-  --ink-04: rgba(15, 43, 32, 0.04);
-  --ink-05: rgba(15, 43, 32, 0.05);
-  --ink-06: rgba(15, 43, 32, 0.06);
-  --ink-08: rgba(15, 43, 32, 0.08);
-  --ink-10: rgba(15, 43, 32, 0.10);
-  --ink-12: rgba(15, 43, 32, 0.12);
-  --ink-15: rgba(15, 43, 32, 0.15);
-  --ink-18: rgba(15, 43, 32, 0.18);
-  --ink-20: rgba(15, 43, 32, 0.20);
-  --ink-30: rgba(15, 43, 32, 0.30);
-  --ink-35: rgba(15, 43, 32, 0.35);
-  --ink-40: rgba(15, 43, 32, 0.40);
-  --ink-55: rgba(15, 43, 32, 0.55);
+  /* ── Opacity Tokens — ink sur fond sombre ── */
+  --ink-01: rgba(232, 245, 239, 0.01);
+  --ink-02: rgba(232, 245, 239, 0.02);
+  --ink-04: rgba(232, 245, 239, 0.04);
+  --ink-05: rgba(232, 245, 239, 0.05);
+  --ink-06: rgba(232, 245, 239, 0.06);
+  --ink-08: rgba(232, 245, 239, 0.08);
+  --ink-10: rgba(232, 245, 239, 0.10);
+  --ink-12: rgba(232, 245, 239, 0.12);
+  --ink-15: rgba(232, 245, 239, 0.15);
+  --ink-18: rgba(232, 245, 239, 0.18);
+  --ink-20: rgba(232, 245, 239, 0.20);
+  --ink-30: rgba(232, 245, 239, 0.30);
+  --ink-35: rgba(232, 245, 239, 0.35);
+  --ink-40: rgba(232, 245, 239, 0.40);
+  --ink-55: rgba(232, 245, 239, 0.55);
 
   /* ── Primary at alpha ── */
-  --primary-08: rgba(5, 150, 105, 0.08);
-  --primary-10: rgba(5, 150, 105, 0.10);
-  --primary-12: rgba(5, 150, 105, 0.12);
-  --primary-15: rgba(5, 150, 105, 0.15);
-  --primary-18: rgba(5, 150, 105, 0.18);
-  --primary-20: rgba(5, 150, 105, 0.20);
-  --primary-25: rgba(5, 150, 105, 0.25);
-  --primary-28: rgba(5, 150, 105, 0.28);
-  --primary-40: rgba(5, 150, 105, 0.40);
+  --primary-08: rgba(0, 199, 142, 0.08);
+  --primary-10: rgba(0, 199, 142, 0.10);
+  --primary-12: rgba(0, 199, 142, 0.12);
+  --primary-15: rgba(0, 199, 142, 0.15);
+  --primary-18: rgba(0, 199, 142, 0.18);
+  --primary-20: rgba(0, 199, 142, 0.20);
+  --primary-22: rgba(0, 199, 142, 0.22);
+  --primary-25: rgba(0, 199, 142, 0.25);
+  --primary-28: rgba(0, 199, 142, 0.28);
+  --primary-40: rgba(0, 199, 142, 0.40);
 
   /* ── Bright accent at alpha ── */
-  --accent-10: rgba(52, 211, 153, 0.10);
-  --accent-16: rgba(52, 211, 153, 0.16);
-  --accent-20: rgba(52, 211, 153, 0.20);
-  --accent-22: rgba(52, 211, 153, 0.22);
-  --accent-24: rgba(52, 211, 153, 0.24);
-  --accent-35: rgba(52, 211, 153, 0.35);
-  --accent-40: rgba(52, 211, 153, 0.40);
+  --accent-10: rgba(52, 217, 168, 0.10);
+  --accent-16: rgba(52, 217, 168, 0.16);
+  --accent-20: rgba(52, 217, 168, 0.20);
+  --accent-22: rgba(52, 217, 168, 0.22);
+  --accent-24: rgba(52, 217, 168, 0.24);
+  --accent-35: rgba(52, 217, 168, 0.35);
+  --accent-40: rgba(52, 217, 168, 0.40);
 
   /* ── Neon at alpha ── */
-  --neon-25: rgba(110, 231, 183, 0.25);
-  --neon-40: rgba(110, 231, 183, 0.40);
+  --neon-25: rgba(0, 229, 170, 0.25);
+  --neon-40: rgba(0, 229, 170, 0.40);
 
   /* ── Gold at alpha ── */
-  --gold-18: rgba(233, 185, 73, 0.18);
-  --gold-20: rgba(233, 185, 73, 0.20);
-  --gold-22: rgba(233, 185, 73, 0.22);
-  --gold-28: rgba(221, 163, 46, 0.28);
-  --gold-34: rgba(221, 163, 46, 0.34);
+  --gold-18: rgba(245, 200, 66, 0.18);
+  --gold-20: rgba(245, 200, 66, 0.20);
+  --gold-22: rgba(245, 200, 66, 0.22);
+  --gold-28: rgba(232, 168, 32, 0.28);
+  --gold-34: rgba(232, 168, 32, 0.34);
 
   /* ── White at alpha ── */
   --white-08: rgba(255, 255, 255, 0.08);
@@ -153,29 +168,30 @@
   --white-92: rgba(255, 255, 255, 0.92);
   --white-94: rgba(255, 255, 255, 0.94);
 
-  /* ── Borders & Lines (Replit-inspired: vert-gris doux) ── */
-  --border-subtle: var(--ink-06);
-  --border-light: var(--ink-05);
-  --border-medium: rgba(160, 205, 185, 0.44);
-  --border-soft: rgba(160, 205, 185, 0.44);
-  --border-muted: rgba(160, 205, 185, 0.52);
-  --border-faint: rgba(160, 205, 185, 0.60);
+  /* ── Borders Glass ── */
+  --border-subtle:  rgba(255, 255, 255, 0.07);
+  --border-light:   rgba(255, 255, 255, 0.06);
+  --border-medium:  rgba(255, 255, 255, 0.10);
+  --border-soft:    rgba(255, 255, 255, 0.10);
+  --border-muted:   rgba(255, 255, 255, 0.12);
+  --border-faint:   rgba(255, 255, 255, 0.14);
 
-  /* ── Shadows (Replit-inspired: douces, aérées, vertes) ── */
-  --shadow-sm: 0 2px 10px var(--ink-04), 0 1px 2px var(--ink-02);
-  --shadow-md: 0 14px 38px var(--ink-05), 0 4px 12px var(--ink-02);
-  --shadow-lg: 0 26px 76px var(--ink-08), 0 8px 26px var(--ink-04);
-  --shadow-green: 0 16px 42px var(--primary-22);
-  --shadow-glow: 0 0 24px var(--neon-40);
-  --shadow-card: 0 16px 42px rgba(20, 35, 30, 0.06);
+  /* ── Shadows Glass & Glow ── */
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 12px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-green: 0 16px 48px rgba(0, 199, 142, 0.28);
+  --shadow-glow: 0 0 28px rgba(0, 199, 142, 0.55), 0 0 8px rgba(0, 199, 142, 0.35);
+  --shadow-glow-primary: 0 8px 32px rgba(0, 199, 142, 0.40), 0 0 0 1px rgba(0, 199, 142, 0.20);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --shadow-card: 0 16px 48px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.07);
 
-  /* ── Radius ── */
-  --radius-sm: 16px;
-  --radius-md: 24px;
-  --radius-lg: 32px;
+  /* ── Radius (plus généreux — style moderne) ── */
+  --radius-sm: 20px;
+  --radius-md: 28px;
+  --radius-lg: 36px;
 
   /* ── Typography ── */
-  /* Replit-inspired: Manrope for headings, DM Sans for body (épuré). */
   --font-display: var(--font-manrope);
   --font-sans: var(--font-dm);
 
@@ -191,20 +207,20 @@
   --accent: var(--color-primary);
   --accent-soft: var(--color-mint-deep);
   --gold: var(--color-gold-bright);
-  --gold-soft: #fdf7e3;
+  --gold-soft: rgba(245, 200, 66, 0.15);
   --info: var(--color-info);
-  --info-soft: #eaf4fb;
+  --info-soft: rgba(96, 165, 250, 0.12);
   --danger: var(--color-error-alt);
-  --danger-soft: #ffebee;
-  --secondary: #54685e;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --secondary: rgba(232, 245, 239, 0.55);
   --background: var(--color-bg);
   --surface: var(--color-surface);
   --surface-soft: var(--color-surface-soft);
   --surface-raised: var(--color-surface-raised);
   --surface-mid: var(--color-surface-mid);
-  --text-main: var(--color-ink);
-  --text-dim: #1c4534;
-  --text-muted: #7d9c8c;
-  --outline: var(--ink-06);
-  --line: var(--ink-04);
+  --text-main: var(--color-text);
+  --text-dim: var(--color-text-soft);
+  --text-muted: var(--color-text-muted);
+  --outline: rgba(255, 255, 255, 0.10);
+  --line: rgba(255, 255, 255, 0.06);
 }

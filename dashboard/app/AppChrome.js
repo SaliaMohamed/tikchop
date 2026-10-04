@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, Bot, Home, LogOut, Package, Plus, ShoppingBag } from "lucide-react";
 import { getDashboardData } from "./actions";
 import { getSellerByOwner } from "./seller-actions";
 import AppIcon3D from "./components/AppIcon3D";
@@ -153,32 +153,69 @@ export default function AppChrome({ children }) {
   return (
     <SellerAccountGate>
       <OfflineBanner />
-      {showMobileTopbar && (
-        <header className="mobile-seller-topbar">
-          <Link href="/dashboard" className="mobile-seller-topbar-back" aria-label="Retour accueil vendeur">
+      <header className="mobile-seller-topbar">
+        {["/delivery-settings", "/payment-settings", "/shop-info", "/social-sharing", "/whatsapp", "/account", "/setup", "/crm"].includes(pathname) ? (
+          <Link href="/plus" className="mobile-seller-topbar-back" aria-label="Retour au menu">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF8F2] text-[#059669]">
               <ArrowLeft size={17} strokeWidth={1.6} />
             </span>
-            <span className="hidden md:inline text-sm font-black text-[#0F2B20]/60">Accueil</span>
+            <span className="hidden md:inline text-sm font-black text-[#0F2B20]/60">Retour</span>
           </Link>
-          <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta}`}>
-            <strong className="tk-slide-down">{mobileMeta}</strong>
+        ) : (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-zinc-200">
+              {seller.logo_url ? (
+                <Image src={seller.logo_url} alt="Logo" fill sizes="36px" className="object-cover" />
+              ) : (
+                <span className="text-xs font-black text-emerald-800">{sellerInitials}</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-extrabold text-zinc-900 leading-none">{seller.name || "Boutique"}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-[0.62rem] font-bold text-emerald-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                En ligne
+              </p>
+            </div>
           </div>
-          <Link href="/plus" className="mobile-seller-topbar-avatar relative overflow-hidden flex items-center justify-center" aria-label="Ouvrir le menu vendeur">
-            {seller.logo_url ? (
-              <Image src={seller.logo_url} alt="Logo" fill sizes="40px" className="object-cover" />
-            ) : (
-              sellerInitials
-            )}
+        )}
+
+        <div className="mobile-seller-topbar-title" aria-label={`Page ${mobileMeta}`}>
+          <strong className="tk-slide-down text-sm font-black text-zinc-900">{mobileMeta}</strong>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {seller.slug && (
+            <Link
+              href={`/${seller.slug}`}
+              target="_blank"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 no-underline"
+              aria-label="Voir la boutique client"
+              title="Voir la boutique client"
+            >
+              <AppIcon3D app="store" size={16} />
+            </Link>
+          )}
+          <Link
+            href="/plus"
+            className={`flex h-9 w-9 items-center justify-center rounded-full ring-1 no-underline ${
+              pathname === "/plus"
+                ? "bg-zinc-900 text-white ring-zinc-900"
+                : "bg-slate-50 text-zinc-700 ring-zinc-200"
+            }`}
+            aria-label="Réglages et menu vendeur"
+            title="Menu & Réglages"
+          >
+            <AppIcon3D app="settings" size={16} />
           </Link>
-        </header>
-      )}
+        </div>
+      </header>
       <nav className="navbar desktop-nav seller-desktop-topbar">
         <BrandLogo href="/dashboard" size="sm" />
         <div className="nav-links">
           <Link href="/dashboard" className="nav-link">Accueil</Link>
-          <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/products" className="nav-link">Articles</Link>
+          <Link href="/add-product" className="nav-link">Publier</Link>
           <Link href="/orders" className="nav-link">Ventes</Link>
           <Link href="/messages" className="nav-link">DJASSAMAN</Link>
           <Link href="/plus" className="nav-link">Plus</Link>
@@ -191,38 +228,62 @@ export default function AppChrome({ children }) {
       </nav>
       <div className="seller-desktop-frame">
         <DesktopSellerSidebar seller={seller} sellerInitials={sellerInitials} pathname={pathname} />
-        <main className={`container ${sellerWorkspaceClass} seller-desktop-main ${showMobileTopbar ? "seller-chrome-main" : ""}`}>
+        <main className={`container ${sellerWorkspaceClass} seller-desktop-main seller-chrome-main`}>
           {pathname !== "/setup" && <SetupResumeBanner />}
           {children}
         </main>
       </div>
       {showMobileTabbar && (
       <nav className="mobile-tabbar" aria-label="Navigation mobile">
-        <Link href="/dashboard" className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><AppIcon3D app="home" size={16} /></span>
+        <Link
+          href="/dashboard"
+          className={`mobile-tabbar-item ${pathname === "/dashboard" ? "is-active" : ""}`}
+        >
+          <span className="mobile-tabbar-icon">
+            <Home size={20} strokeWidth={pathname === "/dashboard" ? 2.3 : 1.7} />
+          </span>
           <span>Accueil</span>
         </Link>
-        <Link href="/orders" className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}>
+        <Link
+          href="/products"
+          className={`mobile-tabbar-item ${pathname === "/products" ? "is-active" : ""}`}
+        >
+          <span className="mobile-tabbar-icon">
+            <Package size={20} strokeWidth={pathname === "/products" ? 2.3 : 1.7} />
+          </span>
+          <span>Articles</span>
+        </Link>
+        <Link
+          href="/add-product"
+          className={`mobile-tabbar-action ${pathname === "/add-product" ? "is-active" : ""}`}
+          aria-label="Publier un article"
+        >
+          <span className="mobile-tabbar-action-btn">
+            <Plus size={20} strokeWidth={2.4} />
+          </span>
+          <span>Publier</span>
+        </Link>
+        <Link
+          href="/orders"
+          className={`mobile-tabbar-item ${pathname === "/orders" ? "is-active" : ""}`}
+        >
           <span className="mobile-tabbar-icon relative">
-            <AppIcon3D app="orders" size={16} />
+            <ShoppingBag size={20} strokeWidth={pathname === "/orders" ? 2.3 : 1.7} />
             {pendingCount > 0 && (
               <span className="mobile-tabbar-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>
             )}
           </span>
           <span>Ventes</span>
         </Link>
-        <Link href="/add-product" className={`mobile-tabbar-action ${publishActive ? "is-active" : ""}`} aria-label="Publier un article">
-          <span className="mobile-tabbar-icon"><AppIcon3D app="plus" size={20} /></span>
-          <span>Publier</span>
-        </Link>
-        <Link href="/messages" className={`mobile-tabbar-item ${messagesActive ? "is-active" : ""}`}>
-          <span className="mobile-tabbar-icon"><AppIcon3D app="messages" size={16} /></span>
+        <Link
+          href="/messages"
+          className={`mobile-tabbar-item ${pathname === "/messages" ? "is-active" : ""}`}
+        >
+          <span className="mobile-tabbar-icon">
+            <Bot size={20} strokeWidth={pathname === "/messages" ? 2.3 : 1.7} />
+          </span>
           <span>DJASSAMAN</span>
         </Link>
-          <Link href="/plus" className={`mobile-tabbar-item ${menuActive ? "is-active" : ""}`}>
-            <span className="mobile-tabbar-icon"><AppIcon3D app="settings" size={16} /></span>
-            <span>Plus</span>
-          </Link>
       </nav>
       )}
       <PwaInstallPrompt />

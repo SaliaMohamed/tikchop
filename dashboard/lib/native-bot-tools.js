@@ -687,52 +687,14 @@ export async function handoffToSeller({ seller, clientId, clientKey, reason = ""
 }
 
 // ---------------------------------------------------------------------------
-// Phase 3 : uploadChatMedia (Cloudinary)
-// Upload une image ou un audio sur Cloudinary
+// Phase 3 : uploadChatMedia (Cloudflare R2 + ImageKit)
+// Upload une image ou un audio depuis base64 vers R2
 // ---------------------------------------------------------------------------
 export async function uploadChatMedia({ base64, mimeType = "image/jpeg" }) {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-  if (!cloudName || !apiKey || !apiSecret || !base64) {
-    return null;
-  }
-
+  if (!base64) return null;
   try {
-    const { createHash } = await import("node:crypto");
-    const timestamp = Math.round(Date.now() / 1000);
-    const isAudio = mimeType.startsWith("audio/");
-    const resourceType = isAudio ? "video" : "image";
-    const publicId = `tikchop/chat-media/${timestamp}-${Math.random().toString(36).slice(2, 8)}`;
-    const signature = createHash("sha1")
-      .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
-      .digest("hex");
-
-    const formData = new FormData();
-    const dataUri = `data:${mimeType};base64,${base64}`;
-    formData.append("file", dataUri);
-    formData.append("api_key", apiKey);
-    formData.append("timestamp", String(timestamp));
-    formData.append("public_id", publicId);
-    formData.append("signature", signature);
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      console.warn("[uploadChatMedia] Cloudinary upload failed:", await res.text().catch(() => ""));
-      return null;
-    }
-
-    const data = await res.json();
-    return {
-      url: data.secure_url,
-      publicId: data.public_id,
-      resourceType: data.resource_type,
-    };
+    const { uploadBase64ToR2 } = await import("./r2-storage.js");
+    return uploadBase64ToR2(base64, mimeType, "chat-media");
   } catch (err) {
     console.warn("[uploadChatMedia] Error:", err.message);
     return null;
